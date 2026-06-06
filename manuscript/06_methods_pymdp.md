@@ -1,4 +1,4 @@
-# pymdp simulation harness {#sec:methods_pymdp}
+# On-policy student: pymdp sophisticated inference {#sec:methods_pymdp}
 
 <!-- sheaf-track:prose -->
 

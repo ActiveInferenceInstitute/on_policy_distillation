@@ -1,4 +1,4 @@
-# T-maze active-inference rollout {#sec:results_si_tmaze}
+# On-policy student rollout (T-maze) {#sec:results_si_tmaze}
 
 <!-- sheaf-track:prose -->
 

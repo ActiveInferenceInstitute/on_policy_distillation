@@ -3,7 +3,7 @@
 
 dpi: 160
 transparent: false
-font_scale: 1.0
+font_scale: 1.25
 grid: true
 
 palette:

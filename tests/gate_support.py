@@ -165,11 +165,17 @@ def ensure_gate_artifacts(project_root: Path) -> None:
     write_sheaf_track_artifacts(project_root)
     out = project_root / "output" / "data" / "manuscript_variables.json"
     out.parent.mkdir(parents=True, exist_ok=True)
-    compose_all_sections(project_root)
-    _hydrate_fixed_point(project_root, out)
-    write_semantic_gluing_outputs(project_root)
-    # NOTE: a second convergence pass here was verified to produce a byte-identical
-    # digest (pass 1 already reaches semantic_issues=0), so it was pure ~22s waste and
-    # has been removed. If the convergence ever stops settling in one pass, restore a
-    # bounded fixpoint loop rather than an unconditional second pass.
+    # Bounded fixpoint loop: the generated layer/attestation tables feed back into
+    # the hydrated variables and the semantic certificate, so re-run compose ->
+    # hydrate -> sheaf-tracks -> semantic until the certificate validates clean
+    # (some configurations -- e.g. a deeper SI horizon -- need more than one pass).
+    from manuscript.sheaf.semantic import validate_semantic_gluing
+
+    for _ in range(4):
+        compose_all_sections(project_root)
+        _hydrate_fixed_point(project_root, out)
+        write_sheaf_track_artifacts(project_root)
+        write_semantic_gluing_outputs(project_root)
+        if not validate_semantic_gluing(project_root):
+            break
     _BOOTSTRAPPED_ROOTS.add(root)

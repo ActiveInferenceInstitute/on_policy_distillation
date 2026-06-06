@@ -4,7 +4,7 @@
 \section*{Results}
 ```
 
-# Mutual-information parameter sweep {#sec:results_mi_sweep}
+# Teacher and student mutual information {#sec:results_mi_sweep}
 
 <!-- sheaf-track:prose -->
 

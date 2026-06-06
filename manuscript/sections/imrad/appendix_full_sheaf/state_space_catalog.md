@@ -4,7 +4,7 @@
 sheaf appendix. Rows: {{state_space_catalog_row_count}}. All finite:
 `{{state_space_catalog_all_finite}}`.
 
-The catalog is the finite-scope boundary for every toy claim in the exemplar.
+The catalog is the finite-scope boundary for every toy claim in the study.
 Each row records a model id, state count, action count, policy count, source
 artifact, and finite flag; the validator recomputes that counts are positive
 and that every row remains finite. This prevents a manuscript sentence about

@@ -4,7 +4,7 @@
 \section*{Methods}
 ```
 
-# Bernoulli–Ising analytical model {#sec:methods_analytical}
+# Teacher and student coupling: the analytical model {#sec:methods_analytical}
 
 <!-- sheaf-track:prose -->
 

@@ -49,7 +49,7 @@ sections:
   kind: section
   imrad: methods
   depth: 1
-  title: "Bernoulli\u2013Ising analytical model"
+  title: "Teacher and student coupling: the analytical model"
   short: anal
   output_name: 05_methods_analytical.md
   tracks:
@@ -65,7 +65,7 @@ sections:
   kind: section
   imrad: methods
   depth: 1
-  title: pymdp simulation harness
+  title: "On-policy student: pymdp sophisticated inference"
   short: pymdp
   output_name: 06_methods_pymdp.md
   tracks:
@@ -81,7 +81,7 @@ sections:
   kind: section
   imrad: methods
   depth: 1
-  title: Lean formalization boundary
+  title: "Machine-checked correspondence (Lean)"
   short: lean
   output_name: 07_methods_lean.md
   tracks:
@@ -96,7 +96,7 @@ sections:
   kind: section
   imrad: methods
   depth: 1
-  title: Sheaf composition
+  title: "Reproducibility methodology"
   short: sheaf
   output_name: 08_methods_sheaf.md
   track_order:
@@ -144,7 +144,7 @@ sections:
   kind: section
   imrad: results
   depth: 1
-  title: Mutual-information parameter sweep
+  title: "Teacher and student mutual information"
   short: mi
   output_name: 10_results_mi_sweep.md
   tracks:
@@ -168,7 +168,7 @@ sections:
   kind: section
   imrad: results
   depth: 1
-  title: T-maze active-inference rollout
+  title: "On-policy student rollout (T-maze)"
   short: tmaze
   output_name: 12_results_si_tmaze.md
   tracks:
@@ -180,7 +180,7 @@ sections:
   kind: section
   imrad: results
   depth: 1
-  title: Validation invariants
+  title: "Validation invariants and statistics"
   short: inv
   output_name: 13_results_invariants.md
   tracks:
@@ -232,7 +232,7 @@ sections:
   kind: section
   imrad: appendix
   depth: 1
-  title: 'Appendix: full track coverage'
+  title: "Supplementary material: reproducibility and full coverage"
   short: proof
   output_name: 16_appendix_full_sheaf.md
   tracks:

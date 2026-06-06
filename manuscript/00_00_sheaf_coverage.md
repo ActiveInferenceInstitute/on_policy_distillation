@@ -18,17 +18,17 @@ This page summarizes which **sheaf fragment tracks** are bound for each IMRAD ro
 ## Methods
 
 - **Methods** *(group)*
--   **Bernoulli–Ising analytical model**
--   **pymdp simulation harness**
--   **Lean formalization boundary**
--   **Sheaf composition**
+-   **Teacher and student coupling: the analytical model**
+-   **On-policy student: pymdp sophisticated inference**
+-   **Machine-checked correspondence (Lean)**
+-   **Reproducibility methodology**
 ## Results
 
 - **Results** *(group)*
--   **Mutual-information parameter sweep**
+-   **Teacher and student mutual information**
 -   **Free-energy decomposition**
--   **T-maze active-inference rollout**
--   **Validation invariants**
+-   **On-policy student rollout (T-maze)**
+-   **Validation invariants and statistics**
 ## Discussion
 
 - **Discussion** *(group)*
@@ -36,7 +36,7 @@ This page summarizes which **sheaf fragment tracks** are bound for each IMRAD ro
 ## Appendix
 
 - **Appendix** *(group)*
--   **Appendix: full track coverage**
+-   **Supplementary material: reproducibility and full coverage**
 
 ![Sheaf track coverage matrix: {{imrad_manifest_rows}} IMRAD rows × {{sheaf_track_count}} fragment columns. Black = present (P), white = absent (—), gray = missing (M). Counts: {{coverage_present}} present / {{coverage_bound}} bound / {{coverage_missing}} missing.](../output/figures/sheaf_coverage_heatmap.png){#fig:sheaf_coverage_heatmap width=95% fig-alt="Heatmap matrix of IMRAD manuscript rows versus {{sheaf_track_count}} sheaf fragment track columns. Black cells mean the track is bound and the fragment file exists; white cells mean the track is not bound; gray cells mean bound but missing. Rows are grouped by IMRAD block with indented subsection labels; column headers list track ids."}
 

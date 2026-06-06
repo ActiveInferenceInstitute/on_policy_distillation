@@ -4,7 +4,7 @@
 \section*{Appendix}
 ```
 
-# Appendix: full track coverage {#sec:appendix_full_sheaf}
+# Supplementary material: reproducibility and full coverage {#sec:appendix_full_sheaf}
 
 <!-- sheaf-track:prose -->
 
@@ -99,19 +99,19 @@ Section rows versus fragment track columns. **P** = present (bound and file exis
 |   Motivation and scope | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 |   Contributions | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | — | P | — | — | — |
 | Methods (group) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-|   Bernoulli–Ising analytical model | P | P | P | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | P | P | — | — | — |
-|   pymdp simulation harness | P | P | — | — | — | P | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | P | P | — | — | — |
-|   Lean formalization boundary | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | P | P | P | P | — | — | — | — | — | — | — |
-|   Sheaf composition | P | P | — | — | P | — | — | P | — | P | P | P | P | P | P | P | P | — | — | — | P | P | — | — | — | — | — | — | — | — | — | — | — |
+|   Teacher and student coupling: the analytical model | P | P | P | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | P | P | — | — | — |
+|   On-policy student: pymdp sophisticated inference | P | P | — | — | — | P | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | P | P | — | — | — |
+|   Machine-checked correspondence (Lean) | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | P | P | P | P | — | — | — | — | — | — | — |
+|   Reproducibility methodology | P | P | — | — | P | — | — | P | — | P | P | P | P | P | P | P | P | — | — | — | P | P | — | — | — | — | — | — | — | — | — | — | — |
 | Results (group) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-|   Mutual-information parameter sweep | P | P | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | — | — | — | — | — |
+|   Teacher and student mutual information | P | P | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | — | — | — | — | — |
 |   Free-energy decomposition | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | — | — | — | — | — |
-|   T-maze active-inference rollout | P | — | — | — | — | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | — | — | — | — | — |
-|   Validation invariants | P | — | P | — | — | — | — | — | P | — | — | — | — | — | — | — | — | P | P | P | — | P | — | — | — | — | P | P | — | — | — | — | — |
+|   On-policy student rollout (T-maze) | P | — | — | — | — | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | — | — | — | — | — |
+|   Validation invariants and statistics | P | — | P | — | — | — | — | — | P | — | — | — | — | — | — | — | — | P | P | P | — | P | — | — | — | — | P | P | — | — | — | — | — |
 | Discussion (group) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 |   Limitations and outlook | P | — | P | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | P |
 | Appendix (group) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-|   Appendix: full track coverage | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P |
+|   Supplementary material: reproducibility and full coverage | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P |
 
 **Totals:** {{coverage_present}} present / {{coverage_bound}} bound / {{coverage_missing}} missing.
 
@@ -131,16 +131,16 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | --- | --- | ---: | ---: | ---: | --- |
 | Motivation and scope | introduction | 1 | 1 | 0 | `fully_sheafed` |
 | Contributions | introduction | 3 | 3 | 0 | `fully_sheafed` |
-| Bernoulli–Ising analytical model | methods | 7 | 7 | 0 | `fully_sheafed` |
-| pymdp simulation harness | methods | 7 | 7 | 0 | `fully_sheafed` |
-| Lean formalization boundary | methods | 6 | 6 | 0 | `fully_sheafed` |
-| Sheaf composition | methods | 14 | 14 | 0 | `fully_sheafed` |
-| Mutual-information parameter sweep | results | 4 | 4 | 0 | `fully_sheafed` |
+| Teacher and student coupling: the analytical model | methods | 7 | 7 | 0 | `fully_sheafed` |
+| On-policy student: pymdp sophisticated inference | methods | 7 | 7 | 0 | `fully_sheafed` |
+| Machine-checked correspondence (Lean) | methods | 6 | 6 | 0 | `fully_sheafed` |
+| Reproducibility methodology | methods | 14 | 14 | 0 | `fully_sheafed` |
+| Teacher and student mutual information | results | 4 | 4 | 0 | `fully_sheafed` |
 | Free-energy decomposition | results | 2 | 2 | 0 | `fully_sheafed` |
-| T-maze active-inference rollout | results | 3 | 3 | 0 | `fully_sheafed` |
-| Validation invariants | results | 9 | 9 | 0 | `fully_sheafed` |
+| On-policy student rollout (T-maze) | results | 3 | 3 | 0 | `fully_sheafed` |
+| Validation invariants and statistics | results | 9 | 9 | 0 | `fully_sheafed` |
 | Limitations and outlook | discussion | 5 | 5 | 0 | `fully_sheafed` |
-| Appendix: full track coverage | appendix | 33 | 33 | 0 | `fully_sheafed` |
+| Supplementary material: reproducibility and full coverage | appendix | 33 | 33 | 0 | `fully_sheafed` |
 
 **Section status:** 12 / 12 composable sections fully sheafed; 0 required bound fragments missing.
 
@@ -315,7 +315,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | Coverage missing | `0` |
 | Policy comparison rows | `2` |
 | Policy grid complete | `True` |
-| Policy posterior rows | `12` |
+| Policy posterior rows | `14` |
 | Policy posterior normalized | `True` |
 | Runtime unexpected warnings | `0` |
 | Graph-world trace agrees | `True` |
@@ -433,7 +433,7 @@ full sheaf appendix. Rows: {{artifact_license_row_count}}. All safe:
 `{{artifact_license_all_safe}}`.
 
 The license audit classifies each generated or source-backed artifact under the
-public exemplar's configured license boundary. It is intentionally conservative:
+public study's configured license boundary. It is intentionally conservative:
 generated local outputs and project-owned source files pass, while an artifact
 outside those public source kinds would need an explicit provenance and license
 row before it could support a manuscript claim.
@@ -504,7 +504,7 @@ counts are caught after composition, not only during source-file linting.
 
 <!-- sheaf-track:lean -->
 
-Lean modules under `lean/TemplateActiveInference/` declare horizon and coupling witnesses. Build with `lake build` in `lean/`; [@fig:lean_boundary_status] summarizes proved versus deferred statements for this boundary fragment.
+The project's Lean boundary modules declare horizon and coupling witnesses. Build with `lake build` in `lean/`; [@fig:lean_boundary_status] summarizes proved versus deferred statements for this boundary fragment.
 
 <!-- sheaf-track:model_checking -->
 
@@ -542,7 +542,7 @@ the theorem-traceability graph tied to generated Lean and model-checking rows.
 sheaf appendix. Rows: {{state_space_catalog_row_count}}. All finite:
 `{{state_space_catalog_all_finite}}`.
 
-The catalog is the finite-scope boundary for every toy claim in the exemplar.
+The catalog is the finite-scope boundary for every toy claim in the study.
 Each row records a model id, state count, action count, policy count, source
 artifact, and finite flag; the validator recomputes that counts are positive
 and that every row remains finite. This prevents a manuscript sentence about

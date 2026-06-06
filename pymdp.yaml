@@ -1,7 +1,7 @@
 profile: full_tmaze_sophisticated_inference
 planner: sophisticated_inference
-planning_horizon: 4
-timesteps: 5
+planning_horizon: 5
+timesteps: 6
 random_seed: 0
 
 environment:
@@ -23,7 +23,7 @@ agent:
   learn_B: false
 
 si_search:
-  horizon: 4
+  horizon: 5
   max_nodes: 5000
   max_branching: 45
   policy_prune_threshold: 0.0
