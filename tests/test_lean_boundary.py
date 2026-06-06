@@ -15,7 +15,7 @@ def test_load_lean_boundary_rows(project_root: Path) -> None:
 
 
 def test_load_lean_boundary_rows_detects_sorry(tmp_path: Path) -> None:
-    lean_dir = tmp_path / "lean" / "TemplateActiveInference"
+    lean_dir = tmp_path / "lean" / "OnPolicyDistillation"
     lean_dir.mkdir(parents=True)
     (lean_dir / "Stub.lean").write_text(
         "theorem broken : True := by\n  sorry\n\ntheorem fine : True := trivial\n",
