@@ -221,7 +221,7 @@ def test_formal_interop_negative_controls(project_root: Path) -> None:
     topology_sweep = project_root / "output" / "data" / "si_graph_world_topology_sweep.json"
     lean_graph = project_root / "output" / "reports" / "lean_graph_world_inventory.json"
     proof = project_root / "output" / "data" / "proof_extraction_index.json"
-    lean_file = project_root / "lean" / "TemplateActiveInference" / "SophisticatedInference.lean"
+    lean_file = project_root / "lean" / "OnPolicyDistillation" / "SophisticatedInference.lean"
     originals = {
         path: path.read_text(encoding="utf-8")
         for path in (model_checking, interop, ontology_alias, topology_sweep, lean_graph, proof, lean_file)

@@ -164,12 +164,12 @@ def test_lean_axioms_catches_native_decide(tmp_path: Path) -> None:
     """native_decide injects Lean.ofReduceBool (not in the whitelist) -> must fail."""
     assert lean_project_present(PROJECT_ROOT)
     shutil.copytree(PROJECT_ROOT / "lean", tmp_path / "lean")
-    target = tmp_path / "lean" / "TemplateActiveInference" / "SophisticatedInference.lean"
+    target = tmp_path / "lean" / "OnPolicyDistillation" / "SophisticatedInference.lean"
     target.write_text(
-        "namespace TemplateActiveInference\n"
+        "namespace OnPolicyDistillation\n"
         "def defaultPolicyLen : Nat := 3\n"
         "theorem sophisticated_requires_horizon : defaultPolicyLen > 1 := by native_decide\n"
-        "end TemplateActiveInference\n",
+        "end OnPolicyDistillation\n",
         encoding="utf-8",
     )
     ok, out = lean_axioms_clean(tmp_path)
@@ -180,12 +180,12 @@ def test_lean_axioms_catches_native_decide(tmp_path: Path) -> None:
 def test_lean_axioms_catches_planted_sorry(tmp_path: Path) -> None:
     assert lean_project_present(PROJECT_ROOT)
     shutil.copytree(PROJECT_ROOT / "lean", tmp_path / "lean")
-    target = tmp_path / "lean" / "TemplateActiveInference" / "SophisticatedInference.lean"
+    target = tmp_path / "lean" / "OnPolicyDistillation" / "SophisticatedInference.lean"
     target.write_text(
-        "namespace TemplateActiveInference\n"
+        "namespace OnPolicyDistillation\n"
         "def defaultPolicyLen : Nat := 3\n"
         "theorem sophisticated_requires_horizon : defaultPolicyLen > 1 := by sorry\n"
-        "end TemplateActiveInference\n",
+        "end OnPolicyDistillation\n",
         encoding="utf-8",
     )
     ok, _ = lean_axioms_clean(tmp_path)
