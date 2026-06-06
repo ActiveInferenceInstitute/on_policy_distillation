@@ -165,6 +165,8 @@ def render_report_markdown(report: CoverageReport, *, project_root: Path) -> str
         for section in report.manifest.sections:
             if section.imrad != current_imrad:
                 current_imrad = section.imrad
+                if lines and lines[-1] != "":
+                    lines.append("")  # blank line so the heading is not absorbed into the prior list
                 lines.append(f"## {_imrad_heading(section.imrad)}")
                 lines.append("")
             indent = "  " * section.depth if section.depth else ""
