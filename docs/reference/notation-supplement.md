@@ -199,7 +199,61 @@ extremes (AKL/ToDi family).
 
 ---
 
-## 9. How the manuscript's toy experiments map onto the thesis
+## 9. Energy-based formulation: VFE and EFE (`firstprinciples.energy`)
+
+Active inference is an energy-based model; on-policy distillation reads off both
+free-energy functionals on a categorical generative model
+$p(s)\,p(o\mid s)$ with preferences $p(o)$.
+
+**Variational free energy** of the student $q(s)$ given observation $o$ has three
+algebraically equal forms (verified to machine precision):
+
+$$
+F[q] = \underbrace{\mathbb{E}_q[-\ln p(o,s)]}_{\text{energy}} - \underbrace{H[q]}_{\text{entropy}}
+     = \underbrace{D_{\mathrm{KL}}(q(s)\,\|\,p(s))}_{\text{complexity}} - \underbrace{\mathbb{E}_q[\ln p(o\mid s)]}_{\text{accuracy}}
+     = \underbrace{D_{\mathrm{KL}}(q(s)\,\|\,p(s\mid o))}_{\text{divergence}} - \underbrace{\ln p(o)}_{\text{log-evidence}}.
+$$
+
+The third (divergence − log-evidence) form is the OPD identity: with $q=\pi_S$
+(student) and the exact privileged posterior $p(s\mid o)=\pi_T$ (teacher), the
+reverse-KL distillation loss $D_{\mathrm{KL}}(\pi_S\|\pi_T)$ **is** the variational
+free energy up to the data-fixed constant $-\ln p(o)$. Minimising the distillation
+loss therefore maximises model evidence; the exact posterior attains
+$F=-\ln p(o)$ (the global minimum), which `energy.build_payload` certifies.
+
+**Expected free energy** of a policy has two equal forms:
+
+$$
+G = \underbrace{D_{\mathrm{KL}}(q(o)\,\|\,p(o))}_{\text{risk}} + \underbrace{\mathbb{E}_{q(s)}[H[p(o\mid s)]]}_{\text{ambiguity}}
+  = -\underbrace{I(o;s)}_{\text{epistemic}} - \underbrace{\mathbb{E}_{q(o)}[\ln p(o)]}_{\text{pragmatic}}.
+$$
+
+Risk is the reward-tilt / KL+RL term (pragmatic value); the epistemic term is the
+state–observation mutual information that on-policy rollouts harvest from the
+novel states the student visits. `energy.efe_report` verifies the two forms agree.
+
+---
+
+## 10. Statistics and Science protocol (`firstprinciples.statistics`, `.privilege`)
+
+Sample-level claims are reported with a percentile **bootstrap** mean CI, a paired
+**permutation** test and exact **sign** test, and **Cohen's $d$** effect size — all
+seeded and deterministic. The privileged-teacher advantage (student belief entropy
+exceeds teacher belief entropy) is confirmed with a strictly positive bootstrap CI
+on the paired difference and $d>0$.
+
+**Privilege-sweep experiment** (`firstprinciples.privilege`, a *Science* cycle):
+*Hypotheses* — (H1) teacher belief entropy falls and (H2) the reverse-KL
+distillation signal grows as the teacher cue becomes more privileged.
+*Method* — sweep teacher `cue_validity` over a grid (student fixed,
+uninformative) and run the real pymdp sophisticated-inference classroom at each
+level. *Measure* — Spearman rank correlation of `cue_validity` against teacher
+belief entropy (expect $\le 0$) and against the distillation signal (expect
+$\ge 0$). The sweep is deterministic per seed.
+
+---
+
+## 11. How the manuscript's toy experiments map onto the thesis
 
 | Experiment (this repo) | Reading under the correspondence |
 | --- | --- |

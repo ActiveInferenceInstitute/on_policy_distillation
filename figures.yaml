@@ -78,6 +78,23 @@ figures:
       {{exposure_bias_terminal_gap:.3f}}. Values are generated from
       `output/data/firstprinciples/exposure_bias_demo.json`.
     width: 0.9
+  energy_decomposition:
+    filename: energy_decomposition.png
+    alt: >-
+      Two-panel energy-based decomposition figure. The left panel shows the
+      variational free energy split into complexity and accuracy bars with the
+      net free energy; the right panel shows the expected free energy split into
+      risk, ambiguity, epistemic, and pragmatic bars, generated from the
+      first-principles energy artifact.
+    caption: >-
+      Energy-based decompositions for the categorical generative model:
+      variational free energy as complexity {{energy_complexity:.3f}} minus
+      accuracy {{energy_accuracy:.3f}} nats (log-evidence
+      {{energy_log_evidence:.3f}}), and expected free energy as risk
+      {{efe_risk:.3f}} plus ambiguity {{efe_ambiguity:.3f}} nats, equivalently
+      minus epistemic {{efe_epistemic:.3f}} minus pragmatic {{efe_pragmatic:.3f}},
+      from `output/data/firstprinciples/energy_demo.json`.
+    width: 0.95
   si_tmaze_actions:
     filename: si_tmaze_actions.png
     alt: >-
@@ -289,6 +306,7 @@ section_figures:
       labeled: false
   results_free_energy:
     - id: free_energy_curve
+    - id: energy_decomposition
   results_invariants:
     - id: invariant_dashboard
   results_si_tmaze:

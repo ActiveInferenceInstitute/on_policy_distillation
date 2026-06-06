@@ -11,11 +11,18 @@ teacher's (or ground-truth) trajectories. The difference is entirely in the
 * on-policy / GKD: states are visited by the **student**, so the loss puts mass
   exactly where the student actually goes and where it errs.
 
-This module is a deterministic, sampling-free model of that contrast on a small
-Markov chain of token-states: visitation distributions are computed in closed
-form, and the GKD objective is the visitation-weighted token divergence under a
-chosen direction (reverse KL by default). It makes the title's clause "the
-variational posterior generates its own observations" a measured quantity.
+This module is a deterministic, sampling-free *stylized illustration* of that
+contrast on a small Markov chain of token-states: visitation distributions are
+computed in closed form, and the GKD objective is the visitation-weighted token
+divergence under a chosen direction (reverse KL by default). Two honesty caveats:
+(1) the on-policy >= off-policy exposure gap is *example-dependent* -- it holds
+for the constructed canonical example (a student that drifts on its own preferred
+states) but the sign is not universal across arbitrary problems; and (2) the
+visitation model uses a transition matrix shared by teacher and student with a
+scalar policy-stickiness reweighting, which is an *analogy* for on-policy
+visitation, not a faithful GKD model where emitted tokens drive the transitions.
+It illustrates -- it does not prove -- the title's "posterior generates its own
+observations" clause.
 """
 
 from __future__ import annotations
@@ -130,7 +137,8 @@ def exposure_bias_gap(problem: GKDProblem, *, horizon: int = 8) -> dict[str, flo
     The on-policy objective up-weights states the student actually visits (where
     it has drifted and errs), so for a student that disagrees with the teacher
     more on its own preferred states, the on-policy loss exceeds the off-policy
-    loss -- the measurable signature of exposure bias that GKD corrects.
+    loss -- a stylized illustration of exposure bias (the gap sign is
+    example-dependent; see the module docstring caveats).
     """
     off = gkd_loss(problem, on_policy=False, horizon=horizon)
     on = gkd_loss(problem, on_policy=True, horizon=horizon)

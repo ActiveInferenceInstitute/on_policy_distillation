@@ -135,6 +135,7 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         "distillation_divergence_geometry": ["output/data/firstprinciples/divergence_demo.json"],
         "exposure_bias_recovery": ["output/data/firstprinciples/exposure_bias_demo.json"],
         "classroom_distillation_signal": ["output/data/firstprinciples/classroom.json"],
+        "energy_decomposition": ["output/data/firstprinciples/energy_demo.json"],
         "sheaf_layers_overview": ["output/data/sheaf_coverage_matrix.json"],
         "sheaf_coverage_heatmap": ["output/data/sheaf_coverage_matrix.json"],
         "invariant_dashboard": ["output/reports/invariants.json"],
@@ -200,6 +201,13 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
             "$.per_step[*].reverse_kl",
             "$.mean_reverse_kl",
         ],
+        "energy_decomposition": [
+            "$.vfe_at_prior.complexity",
+            "$.vfe_at_prior.accuracy",
+            "$.efe.risk",
+            "$.efe.ambiguity",
+            "$.log_evidence",
+        ],
         "sheaf_layers_overview": ["$.tracks", "$.layers", "$.bound_cell_count", "$.validated_cell_count"],
         "sheaf_coverage_heatmap": ["$.rows", "$.track_ids", "$.section_ids", "$.status_matrix"],
         "invariant_dashboard": ["$.invariants", "$.simulation", "$.all_pass"],
@@ -244,6 +252,10 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         ],
         "classroom_distillation_signal": [
             "validate_outputs.firstprinciples_classroom_schema",
+            "test_figures.nonblank_png",
+        ],
+        "energy_decomposition": [
+            "test_firstprinciples_energy.decompositions_agree",
             "test_figures.nonblank_png",
         ],
         "sheaf_layers_overview": ["validate_outputs.canonical_sheaf_track_schemas", "test_figures.nonblank_png"],

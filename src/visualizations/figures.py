@@ -591,6 +591,56 @@ def figure_classroom_distillation_signal(project_root: Path) -> Path:
     return out
 
 
+def figure_energy_decomposition(project_root: Path) -> Path:
+    """Render the VFE and EFE decompositions from the energy demo artifact."""
+    root = project_root.resolve()
+    style = load_figure_style(root)
+    data = json.loads((root / "output" / "data" / "firstprinciples" / "energy_demo.json").read_text(encoding="utf-8"))
+    vfe = data.get("vfe_at_prior") or {}
+    efe = data.get("efe") or {}
+    complexity = float(vfe.get("complexity", 0.0))
+    accuracy = float(vfe.get("accuracy", 0.0))
+    free_energy = float(vfe.get("vfe_complexity_accuracy", complexity - accuracy))
+    risk = float(efe.get("risk", 0.0))
+    ambiguity = float(efe.get("ambiguity", 0.0))
+    epistemic = float(efe.get("epistemic_value", 0.0))
+    pragmatic = float(efe.get("pragmatic_value", 0.0))
+    out = figure_output_path(root, "energy_decomposition")
+    with apply_style(style):
+        fig, axes = plt.subplots(1, 2, figsize=(11.0, 4.6))
+        vfe_ax, efe_ax = axes
+        vfe_labels = ["complexity\n$D_{KL}(q\\|p(s))$", "accuracy\n$E_q[\\ln p(o|s)]$", "VFE\n$F$"]
+        vfe_values = [complexity, accuracy, free_energy]
+        vfe_colors = [style.color("secondary"), style.color("accent"), style.color("primary")]
+        vfe_ax.bar(vfe_labels, vfe_values, color=vfe_colors)
+        vfe_ax.axhline(0.0, color=style.color("reference"), linewidth=0.8)
+        vfe_ax.set_ylabel("nats")
+        vfe_ax.set_title("Variational free energy = complexity - accuracy")
+        for i, v in enumerate(vfe_values):
+            vfe_ax.text(i, v, f"{v:.3f}", ha="center", va="bottom" if v >= 0 else "top", fontsize=8)
+        style_grid(vfe_ax, style)
+
+        efe_labels = ["risk\n$D_{KL}(q(o)\\|p(o))$", "ambiguity\n$E[H[p(o|s)]]$", "epistemic\n$I(o;s)$", "pragmatic\n$E[\\ln p(o)]$"]
+        efe_values = [risk, ambiguity, epistemic, pragmatic]
+        efe_colors = [style.color("fail"), style.color("muted"), style.color("accent"), style.color("secondary")]
+        efe_ax.bar(efe_labels, efe_values, color=efe_colors)
+        efe_ax.axhline(0.0, color=style.color("reference"), linewidth=0.8)
+        efe_ax.set_ylabel("nats")
+        efe_ax.set_title("Expected free energy: risk + ambiguity = -(epistemic + pragmatic)")
+        for i, v in enumerate(efe_values):
+            efe_ax.text(i, v, f"{v:.3f}", ha="center", va="bottom" if v >= 0 else "top", fontsize=8)
+        style_grid(efe_ax, style)
+        fig.text(
+            0.01,
+            0.01,
+            "Source: output/data/firstprinciples/energy_demo.json",
+            fontsize=7.8,
+            color=style.color("muted"),
+        )
+        save_styled_figure(fig, out, style)
+    return out
+
+
 def figure_si_summary(project_root: Path) -> Path:
     """Deprecated alias for ``figure_si_tmaze_actions``."""
     return figure_si_tmaze_actions(project_root)
@@ -1196,6 +1246,7 @@ FIGURE_GENERATORS: dict[str, Callable[[Path], Path | None]] = {
     "distillation_divergence_geometry": figure_distillation_divergence_geometry,
     "exposure_bias_recovery": figure_exposure_bias_recovery,
     "classroom_distillation_signal": figure_classroom_distillation_signal,
+    "energy_decomposition": figure_energy_decomposition,
     "sheaf_layers_overview": figure_sheaf_layers_overview,
     "sheaf_coverage_heatmap": figure_sheaf_coverage_heatmap,
     "invariant_dashboard": figure_invariant_dashboard,

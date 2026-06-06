@@ -2,10 +2,14 @@
 
 A documented failure mode of on-policy / reverse-KL (mode-seeking) distillation
 is *diversity collapse*: temperature-sharpening the student toward its dominant
-mode pushes each problem's correct-answer mass toward 0 or 1, which raises greedy
-single-answer accuracy but lowers Pass@k -- because Pass@k = ``1 - (1 - c)^k`` is
-*concave* in the correct mass ``c``, so spreading samples across uncertain
-problems beats committing. Forward-KL / higher-temperature students preserve
+mode lowers Pass@k -- because Pass@k = ``1 - (1 - c)^k`` is *concave* in the
+correct mass ``c``, so spreading samples across uncertain problems beats
+committing. This module demonstrates exactly that Pass@k half of the tradeoff.
+Greedy Pass@1 here is the argmax (greedy-decode) accuracy, which is
+temperature-*invariant* and acts as the ceiling the collapsing Pass@k falls back
+toward; the complementary "sharpening raises sampling Pass@1" half is a known
+aggregate effect that requires a sampling (not greedy) top-1 metric and is not
+asserted by this artifact. Forward-KL / higher-temperature students preserve
 Pass@k at the cost of sharpness.
 
 We model the student as a temperature-sharpened teacher

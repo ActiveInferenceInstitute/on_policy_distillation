@@ -17,11 +17,13 @@ import numpy as np
 from . import adaptive
 from . import divergences as dv
 from . import diversity
+from . import energy
 from . import exposure_bias as eb
 from . import gkd
 from . import mapping
 from . import reward_tilting as rt
 from . import sdpg
+from . import statistics as stats
 from . import taxonomy
 from . import variational_em
 
@@ -152,6 +154,8 @@ def write_all(root: Path) -> dict[str, Path]:
         "variational_em_demo.json": write_json(root, "variational_em_demo.json", variational_em.build_payload()),
         "diversity_demo.json": write_json(root, "diversity_demo.json", diversity.build_payload()),
         "adaptive_demo.json": write_json(root, "adaptive_demo.json", adaptive.build_payload()),
+        "energy_demo.json": write_json(root, "energy_demo.json", energy.build_payload()),
+        "statistics_demo.json": write_json(root, "statistics_demo.json", stats.build_payload()),
     }
     paths.update(write_markdown_tables(root))
     return paths

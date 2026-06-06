@@ -162,6 +162,9 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
     ablation_sensitivity_data = _load_json(root / "output" / "reports" / "ablation_sensitivity_report.json")
     release_attestation_data = _load_json(root / "output" / "reports" / "release_attestation.json")
     classroom_data = _load_json(root / "output" / "data" / "firstprinciples" / "classroom.json")
+    energy_data = _load_json(root / "output" / "data" / "firstprinciples" / "energy_demo.json")
+    energy_vfe_prior = energy_data.get("vfe_at_prior") or {}
+    energy_efe = energy_data.get("efe") or {}
     exposure_gap = exposure_bias_data.get("gap") or {}
     si_stats = stats_data.get("si_tmaze") or {}
     sweep_stats = stats_data.get("sweep") or {}
@@ -368,6 +371,13 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
         "exposure_bias_terminal_gap": exposure_gap.get("terminal_gap", 0.0),
         "exposure_bias_on_policy_final": exposure_gap.get("on_policy_final", 0.0),
         "exposure_bias_off_policy_final": exposure_gap.get("off_policy_final", 0.0),
+        "energy_complexity": float(energy_vfe_prior.get("complexity", 0.0)),
+        "energy_accuracy": float(energy_vfe_prior.get("accuracy", 0.0)),
+        "energy_log_evidence": float(energy_data.get("log_evidence", 0.0)),
+        "efe_risk": float(energy_efe.get("risk", 0.0)),
+        "efe_ambiguity": float(energy_efe.get("ambiguity", 0.0)),
+        "efe_epistemic": float(energy_efe.get("epistemic_value", 0.0)),
+        "efe_pragmatic": float(energy_efe.get("pragmatic_value", 0.0)),
         "classroom_teacher_cue_validity": classroom_data.get("teacher_cue_validity", 0.0),
         "classroom_student_cue_validity": classroom_data.get("student_cue_validity", 0.0),
         "classroom_teacher_belief_entropy": classroom_data.get("teacher_mean_belief_entropy", 0.0),

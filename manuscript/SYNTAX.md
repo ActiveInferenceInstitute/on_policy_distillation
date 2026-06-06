@@ -51,6 +51,7 @@ Section figures are registry-backed via `figures.yaml` and `section_figures` ren
 | `{#fig:si_tmaze_actions}` | `si_tmaze_actions.png` | `figures.figure_si_tmaze_actions` |
 | `{#fig:si_tmaze_model_matrices}` | `si_tmaze_model_matrices.png` | `figures.figure_si_tmaze_model_matrices` |
 | `{#fig:classroom_distillation_signal}` | `classroom_distillation_signal.png` | `figures.figure_classroom_distillation_signal` |
+| `{#fig:energy_decomposition}` | `energy_decomposition.png` | `figures.figure_energy_decomposition` |
 | `{#fig:invariant_dashboard}` | `invariant_dashboard.png` | `figures_diagrams.figure_invariant_dashboard` |
 | `{#fig:tmaze_schematic}` | `tmaze_schematic.png` | `figures_diagrams.figure_tmaze_schematic` |
 | `{#fig:multi_track_architecture}` | `multi_track_architecture.png` | `figures_diagrams.figure_multi_track_architecture` |

@@ -6,8 +6,10 @@ variational-EM procedure (the MPO structure of Abdolmaleki et al. 2018):
 * E-step (perception): improve a non-parametric target by tilting the current
   student toward reward, ``q(y) proportional to pi_S(y) exp(A(y)/beta)`` -- the
   expected-free-energy preference update of active inference.
-* M-step (action): project the parametric student onto that target by minimising
-  the reverse KL ``D_KL(pi_S || q)``.
+* M-step (action): take a geometric (log-linear) step of the parametric student
+  toward that target -- a partial move along the e-geodesic to ``q`` (a full
+  ``step_size = 1`` lands on it), monotonically decreasing the reverse KL
+  ``D_KL(pi_S || q)`` rather than solving it exactly each step.
 
 Iterating drives the student to the reward-tilted fixed point
 ``pi*(y) proportional to pi_ref(y) exp(R(y)/beta)`` while the variational free
