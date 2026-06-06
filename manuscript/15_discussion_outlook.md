@@ -1,0 +1,58 @@
+```{=latex}
+\phantomsection
+\addcontentsline{toc}{section}{Discussion}
+\section*{Discussion}
+```
+
+# Limitations and outlook {#sec:discussion_outlook}
+
+<!-- sheaf-track:prose -->
+
+## What this demonstrates
+
+The result of this manuscript is a *correspondence*, demonstrated under a *discipline*, not a domain claim about production language models: in the finite objects we study, the formal objects of on-policy distillation and active inference share the same variational roles. Across three toy models every reported number is hydrated from a generated artifact, {{sheaf_law_count}} sheaf axioms are machine-checked before composition, and {{counterexample_count}} negative controls keep each failure path live. We argue that the teacher policy plays the role of the intractable generative model, the student policy plays the role of the variational posterior, and minimising per-token reverse-KL distillation loss on the student's own rollouts is minimising variational free energy by active sampling [@friston2010fep; @parr2022active]. The reverse-KL, mode-seeking objective of GKD-style on-policy distillation [@agarwal2024gkd; @gu2024minillm] is the self-distillation limit; the forward-KL, mode-covering objective of classical teacher-data distillation [@hinton2015distilling] is the SFT limit. No statistic, figure, or cross-track claim here can drift from its artifact without failing a gate before the PDF is built, but the correspondence itself is a structural argument illustrated by minimal models, not an empirical result on LLMs.
+
+## Limitations
+
+The Bernoulli–Ising toy, full TMaze harness, and sheaf composition model are pedagogical. They validate analytical consistency, artifact wiring, renderer dispatch, and manuscript hydration, not empirical claims about biological agents or about production-scale distillation. The Bernoulli–Ising model is a faithful but minimal realisation of teacher–student coupling: the coupling parameter is the channel by which the teacher's privileged variable informs the answer, the mutual information is the teacher–student mutual information, and the entangled-posterior free energy is the distillation objective. It is still a two-variable system, not a sequence model with induced-state distribution shift, exposure bias, tokenisation, long-horizon credit assignment, teacher-selection sensitivity, or TopK-gradient instability [@ross2011dagger; @bengio2015scheduled; @hinton2015distilling; @zhu2026manyfacesopd]. Likewise, the canonical pymdp planner is `{{pymdp_planner}}` with SI search horizon {{si_tmaze_planning_horizon}}; this on-policy agent generates its own observations and acts to minimise expected free energy, with the cue observation standing in for privileged information available in training but not at inference, yet the policy-comparison artifact exposes vanilla rows only as `{{si_policy_comparison_vanilla_role}}` validation evidence without changing the canonical rollout ([@sec:methods_pymdp]). None of these toys exhibits the scale or architecture coupling that governs real reverse-KL distillation; the external report that on-policy distillation can reach comparable accuracy at much lower compute than reinforcement learning [@thinkingmachines2025opd] and the long-context dGRPO proposal [@ramos2026dgrpo] are context, not results reproduced here.
+
+## Sheaf audit and outlook
+
+[@sec:sheaf_coverage] and [@sec:appendix_full_sheaf] make binding state auditable under strict compose validation ([@sec:methods_sheaf]), where the bound objects are the teacher–student context asymmetry made explicit: the Markov blanket separating privileged sensory access from inference-time observation [@vapnik2009lupi; @lopezpaz2016unifying]. Pipeline extensions in `tracks.yaml` `extension_tracks` now write deterministic artifacts: a belief GIF via `render_animation.py` and graph-world SI summary/trace via `simulate_si_graph_world.py`. The appendix row already binds an `animation` sheaf fragment without new manifest rows. The two-agent classroom simulation in `src/firstprinciples` runs a privileged teacher (cue validity {{classroom_teacher_cue_validity}}) against an on-policy student (cue validity {{classroom_student_cue_validity}}) and measures teacher belief entropy {{classroom_teacher_belief_entropy_formatted}} nats versus student {{classroom_student_belief_entropy_formatted}} nats in this toy system, at a mean reverse-KL distillation signal of {{classroom_mean_reverse_kl_formatted}} nats that exemplifies the per-token objective shared by OPSD [@zhao2026opsd], SDPG [@liu2026sdpg; @lauyikfung2026sdpgcode], and internal on-policy alignment [@liu2026oisd], while keeping all measured claims inside the classroom artifact.
+
+Sweep RMSE {{sweep_rmse_mi}} nats and SI goal reached {{si_goal_reached}} summarize measured agreement on the declared grids and rollout. The open problems are exactly those the recent on-policy distillation literature has begun to chart but that our minimal models cannot settle: scaling laws relating distillation temperature, teacher–student mutual information, and sample budget [@thinkingmachines2025opd; @awesomeopd2026; @song2026opdsurvey]; the Pass@1-versus-diversity-collapse tension and teacher/loss sensitivity that the mode-seeking reverse-KL objective sharpens relative to mode-covering forward KL [@agarwal2024gkd; @zhu2026manyfacesopd]; cross-architecture distillation where the generative model and posterior families differ structurally; continual learning without catastrophic forgetting, the homeostatic analogue of self-distillation fine-tuning [@shenfeld2026sdft]; sophisticated inference over the student's own verified traces, rich textual feedback, and internal predictive representations, where beliefs-about-beliefs become teacher conditioning [@zhao2026opsd; @hubotter2026sdpo; @liu2026oisd]; and agentic long-horizon settings where the variational-EM unification [@penaloza2026pidistill; @penaloza2026tutorial], the reinforcement-learning-as-inference view [@levine2018rlinference; @abdolmaleki2018mpo], and joint OPD/RL objectives [@ramos2026dgrpo] would have to be tested against multi-step rollouts. Future work here remains modest: richer graph-world rollouts, larger formal bridges between the $q_\pi$ trace and Lean witnesses, and expanded Lean proofs beyond the boundary witnesses in [@sec:methods_lean].
+
+The discussion ontology binds `coverage_semantics` to the audit matrix in [@sec:sheaf_coverage], `pedagogical_scope` to the non-empirical scope of the toy models, and `sophisticated_inference_planner` to the pymdp harness contract in [@sec:methods_pymdp].
+
+<!-- sheaf-track:simulation -->
+
+Measured pymdp rollout (`{{pymdp_planner}}`, config hash `{{pymdp_config_hash}}`): mean belief entropy {{si_tmaze_mean_belief_entropy_formatted}} nats over {{si_tmaze_steps}} transitions and {{si_tmaze_rollout_timestep_count}} recorded timesteps; goal reached flag {{si_goal_reached}}; action diversity {{si_action_diversity}}; SI tree available {{si_tree_available}}.
+
+Analytical sweep residual RMSE {{sweep_rmse_mi}} nats (max residual {{sweep_max_residual}}). Coverage audit: {{coverage_present}} present / {{coverage_bound}} bound / {{coverage_missing}} missing cells on the IMRAD matrix.
+
+<!-- sheaf-track:scholarship -->
+
+The scholarship matrix is also a scope-control device. It separates conceptual
+lineage from measured evidence: cited sources explain why the toy models are
+relevant, while generated artifacts decide every numerical, figure, and gate
+claim. That split keeps the paper from converting background authority into an
+unsupported empirical result.
+
+<!-- sheaf-track:ontology -->
+
+### Ontology bindings
+
+- `coverage_semantics` → **Coverage matrix semantics**
+- `pedagogical_scope` → **Pedagogical scope**
+- `sophisticated_inference_planner` → **Sophisticated inference planner**
+
+
+<!-- sheaf-track:release_notes -->
+
+### Release notes evidence track
+
+The `release_notes` track keeps release-language claims source-backed by
+validation, semantic, and bundle artifacts. Its evidence artifact is
+`output/reports/release_notes_evidence.json`: it currently records
+{{release_notes_row_count}} rows, with source-backed status
+`{{release_notes_source_backed}}`.

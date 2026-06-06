@@ -1,0 +1,24 @@
+## Compose contract
+
+Each manifest row in `manuscript/sheaf/manifest.yaml` binds fragment tracks from `manuscript/sheaf/tracks.yaml`. A track supplies a renderer, compose order, label, and optional flag; the composer flattens the binding set into one Markdown section for PDF and web output. The machinery is generic, but the manuscript it assembles here argues a specific thesis: that on-policy distillation and active inference are the same variational object, so the composer must keep the analytical toy model, the pymdp rollout, and the self-distillation literature mutually consistent about that single correspondence.
+
+The operational claim is auditable binding: analytical, simulation, pymdp, visualization, Lean, GNN, ontology, scholarship, and optional media fragments attach to each IMRAD row under [@eq:coverage_cell] (**P** present, **—** unbound, **M** missing). This is an applied local-to-global consistency contract in the spirit of cellular sheaf and sheaf-signal-processing work [@curry2014sheaves; @robinson2014topological], but instantiated here as a finite manuscript artifact gate. The same gate forces the teacher-student framing to remain coherent end to end: the Bernoulli-Ising free-energy analysis [@friston2010fep], the sophisticated-inference T-maze rollout [@parr2022active; @dacosta2020discrete], and the on-policy distillation results [@agarwal2024gkd; @thinkingmachines2025opd] each occupy their own track yet must agree on the variational posterior they describe.
+
+## Coverage and figures
+
+[@fig:sheaf_layers_overview] summarizes {{sheaf_track_count}} fragment types and their IMRAD bindings. Generated tables below list every track definition and section×track binding at compose time. The bindings span the full argument: the minimal-model demonstrations (analytical and pymdp tracks) and the scholarship track that situates them against the off-policy baseline [@hinton2015distilling], the reverse-KL turn [@gu2024minillm], and the 2026 self-distillation wave [@zhao2026opsd; @shenfeld2026sdft; @liu2026sdpg].
+
+## Compose commands
+
+```bash
+uv run python scripts/compose_manuscript.py
+uv run python scripts/compose_manuscript.py --validate-only --strict
+```
+
+Each run emits `output/data/sheaf_coverage_matrix.json` and regenerates coverage artifacts. Partial compose (`--section`) is draft-only; the matrix always reflects the full manifest. Coverage totals appear on [@sec:sheaf_coverage]; discussion scope is in [@sec:discussion_outlook].
+
+## Law verification
+
+`--validate-only --strict` runs the structural gate before any fragment is glued. Beyond per-cell coverage, it invokes the sheaf-law oracle (`verify_sheaf_laws`, `src/manuscript/sheaf/laws.py`), which checks {{sheaf_law_count}} axioms — poset, presheaf functoriality, separation, gluing, typing, and compositionality — and reports {{sheaf_laws_verified}}/{{sheaf_law_count}} satisfied for the current manifest. A violation is raised as an error-level issue and aborts the build, so a malformed manifest (a section colliding on an output file, an off-chain block, a mistyped fragment, a fragment shared between sections) can never compose. The formal statements are in the formalism block below; the negative-control suite (`tests/test_sheaf_laws.py`) proves each check is falsifiable.
+
+The semantic layer is separate from those structural laws. `output/data/sheaf_gluing_certificate.json` records cross-track symbols, typed claim evidence, artifact sources, and manuscript-variable restrictions; validation fails when the analytical, pymdp, GNN, ontology, Lean, visualization, or manuscript tracks disagree about a shared symbol or measured claim. This is where the correspondence is held honest at the symbol level: the coupling parameter and mutual information of the analytical toy, the cue-validity privileged-information channel of the T-maze, and the two-agent classroom figures (privileged teacher belief entropy {{classroom_teacher_belief_entropy_formatted}} nats versus the on-policy student's {{classroom_student_belief_entropy_formatted}} nats, mean reverse-KL distillation signal {{classroom_mean_reverse_kl_formatted}} nats) must all restrict consistently onto the shared variational-free-energy and reverse-KL symbols. The certificate keeps these numbers bound as a minimal-model demonstration of the teacher-student correspondence, not as claims about production LLMs. [@fig:semantic_gluing_graph] renders this gluing graph: the configured producers, the generated evidence artifacts, and the validation consumers that read each shared symbol.

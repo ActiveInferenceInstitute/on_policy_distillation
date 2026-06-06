@@ -1,0 +1,1 @@
+See `gnn/si_tmaze.gnn.md` for a GNN view of the full pymdp TMaze hidden-state factors, three observation modalities, $q_\pi$ first-action posterior, belief entropy, and SI tree evidence with ontology bindings.

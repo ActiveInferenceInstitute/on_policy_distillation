@@ -1,0 +1,52 @@
+profile: full_tmaze_sophisticated_inference
+planner: sophisticated_inference
+planning_horizon: 4
+timesteps: 5
+random_seed: 0
+
+environment:
+  reward_condition: 0
+  cue_validity: 0.95
+  reward_probability: 1.0
+  punishment_probability: 1.0
+  dependent_outcomes: true
+  categorical_obs: false
+
+agent:
+  si_policy_len: 1
+  vanilla_policy_len: 4
+  gamma: 3.0
+  inference_algo: fpi
+  action_selection: deterministic
+  sampling_mode: full
+  learn_A: false
+  learn_B: false
+
+si_search:
+  horizon: 4
+  max_nodes: 5000
+  max_branching: 45
+  policy_prune_threshold: 0.0
+  observation_prune_threshold: 0.0001
+  entropy_stop_threshold: 0.0
+  neg_efe_stop_threshold: 10000000000.0
+  kl_threshold: -1.0
+  prune_penalty: 512.0
+  gamma: 3.0
+  topk_obsspace: 10000
+
+logging:
+  enabled: true
+  path: output/logs/pymdp_runs.jsonl
+
+validation_comparison:
+  enabled: true
+  planners:
+    - sophisticated_inference
+    - vanilla
+  seeds:
+    - 0
+
+graph_world:
+  nodes: [start, cue, choice, goal]
+  deterministic: true

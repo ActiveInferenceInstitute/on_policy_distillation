@@ -1,0 +1,9 @@
+loc: HiddenState
+reward_loc: HiddenState
+obs_location: ObservationLikelihood
+obs_outcome: ObservationLikelihood
+obs_cue: ObservationLikelihood
+q_pi: PolicyPosterior
+first_action_prob: PolicyPosterior
+belief_entropy: BeliefEntropy
+si_tree_nodes: PolicyPosterior

@@ -1,0 +1,10 @@
+terms:
+  pedagogical_scope:
+    label: Pedagogical scope
+    description: Analytical and pymdp artifacts validate pipeline wiring, not biological claims.
+  sophisticated_inference_planner:
+    label: Sophisticated inference planner
+    description: Canonical full TMaze rollout uses pymdp si_policy_search and rollout; vanilla rows are validation-comparison only.
+  coverage_semantics:
+    label: Coverage matrix semantics
+    description: Black cells are bound and present; white unbound; gray bound but missing.

@@ -1,0 +1,37 @@
+# Contributions {#sec:intro_contributions}
+
+<!-- sheaf-track:prose -->
+
+## Scientific contributions
+
+We argue that on-policy distillation (OPD) is active inference at the level of the finite variational objects studied here: the intractable teacher policy $\pi_T(y\mid x, I)$ plays the role of the generative model $p(o,s)$, the tractable student family $\pi_S(y\mid x)$ plays the role of the approximate posterior $q(s)$, and the per-token reverse-KL distillation loss is the variational free energy $F = D_{\mathrm{KL}}(q\Vert p) - \log p(o)$ [@friston2010fep; @parr2022active]. This paper substantiates that scoped equivalence with an audited correspondence, executable minimal models, and a source-bound manuscript pipeline. Our contributions are five.
+
+1. **Audited correspondence map** ([@sec:methods_analytical]): a checked, component-by-component identification of the active-inference machinery with the OPD machinery — generative model to teacher, posterior to student, free energy to reverse-KL loss, active sampling to on-policy student rollouts (the posterior generating its own observations), epistemic value to teacher signal on novel student states, pragmatic value to the reward-tilted target $\exp(R/\beta)$, the Markov blanket to teacher/student context asymmetry, privileged sensory access to the privileged information $I$, and sophisticated inference to a teacher conditioned on the student's own verified traces [@dacosta2020discrete; @friston2019generalised; @vapnik2009lupi; @lopezpaz2016unifying; @zhao2026opsd; @liu2026sdpg]. The correspondence is exact for the structures studied here, and we keep all claims scoped to these minimal models and artifacts.
+
+2. **Shared divergence geometry** ([@sec:methods_analytical]): closed-form mutual information $I(\lambda)$ and a free-energy decomposition on a symmetric Bernoulli–Ising toy, with an independent exact-recomputation cross-check ([@sec:results_mi_sweep], [@sec:results_free_energy]). The coupling $\lambda$ couples the teacher's privileged variable to the answer, $I(\lambda)$ is the teacher–student mutual information, and the finite free energy is the distillation objective for this toy. The entangled posterior versus mean-field comparison instantiates the divergence-direction choice that organises the OPD landscape [@awesomeopd2026]: reverse KL is mode-seeking (the MiniLLM/GKD lineage [@gu2024minillm; @agarwal2024gkd]), forward KL is mode-covering (the SFT and classical knowledge-distillation limit [@hinton2015distilling]), and student-induced rollouts address the training/inference mismatch identified in sequential prediction [@ross2011dagger; @bengio2015scheduled].
+
+3. **Reward-tilted-target unification** ([@sec:methods_analytical]): we show that RL-as-inference [@levine2018rlinference; @abdolmaleki2018mpo], active inference, and on-policy distillation all minimise free energy against a target of the same form, with pragmatic value entering as the reward tilt $\exp(R/\beta)$ and the distillation temperature $\beta$ playing the role of the precision $\gamma$ [@millidge2020efe; @penaloza2026pidistill; @penaloza2026tutorial]. This places preference-feedback variants [@hubotter2026sdpo] and the privileged-context self-distillation objective $\mathcal{L} = \mathcal{L}_{\mathrm{clip}} + \beta\, D_{\mathrm{KL}}(\pi(\cdot\mid x)\Vert\pi(\cdot\mid c,x)) + \alpha\, \mathrm{KL}_{\mathrm{ref}}$ [@liu2026sdpg; @lauyikfung2026sdpgcode] inside one variational frame.
+
+4. **Two-agent pymdp classroom** ([@sec:methods_pymdp]): a deterministic pymdp full TMaze rollout under sophisticated inference as the canonical on-policy student — an agent that generates its own observations and acts to minimise expected free energy — with logged $q_\pi$ rows, action marginals, modality observations, matrix/value audit, SI tree diagnostics, and merged invariant gates ([@sec:results_si_tmaze], [@sec:results_invariants]). The cue observation is the privileged information $I$ and `cue_validity` is how privileged it is, following the privileged-information reading of teacher/student asymmetry [@vapnik2009lupi; @lopezpaz2016unifying]. A two-agent "classroom" simulation pits a privileged teacher (`cue_validity` {{classroom_teacher_cue_validity}}) against an on-policy student (`cue_validity` {{classroom_student_cue_validity}}), measuring teacher belief entropy {{classroom_teacher_belief_entropy_formatted}} nats versus the student's {{classroom_student_belief_entropy_formatted}} nats — the privileged advantage predicted by the Markov-blanket asymmetry — at a mean reverse-KL distillation signal of {{classroom_mean_reverse_kl_formatted}} nats. This is a local executable demonstration of the information the student's free energy must close, not a reproduction of production OPD efficiency claims [@thinkingmachines2025opd].
+
+5. **Sheaf-indexed composition** ([@sec:methods_sheaf]): {{sheaf_track_count}} optional fragment types bind to {{imrad_manifest_rows}} manifest rows under [@eq:coverage_cell], with a {{appendix_sheaf_track_count}}-track appendix composability proof ([@sec:appendix_full_sheaf]), so the manuscript that states the correspondence is itself a gate-checked, sheaf-composed artifact whose claims are mechanically traceable.
+
+[@fig:multi_track_architecture] maps the three scientific tracks — the analytical free-energy oracle, the on-policy pymdp student, and the sheaf composition — to {{pipeline_track_count}} pipeline gates and {{sheaf_track_count}} composable fragment renderers. Measured invariant checks: {{invariants_passed}} / {{invariants_total}} passed.
+
+Ontology-facing symbols are checked per model: the Bernoulli toy binds `pi1`, `pi2`, `J`, `gamma`, and `q_joint` — the teacher/student marginals, the coupling, the precision/temperature, and the joint posterior whose entanglement is the distillation signal — while the SI TMaze binds location/reward-location state factors, location/outcome/cue observations, $q_\pi$, first-action marginals, belief entropy, and SI tree evidence to **HiddenState**, **ObservationLikelihood**, **PolicyPosterior**, and **BeliefEntropy** terms ([@fig:gnn_ontology_concordance], [@sec:methods_pymdp]).
+
+<!-- sheaf-track:visualization -->
+
+![Multi-track architecture: analytical, pymdp, and sheaf composition lanes mapped to {{pipeline_track_count}} pipeline gates and {{sheaf_track_count}} composable fragment types.](../output/figures/multi_track_architecture.png){#fig:multi_track_architecture width=95% fig-alt="Process diagram linking three scientific tracks to {{pipeline_track_count}} pipeline gates and {{sheaf_track_count}} sheaf fragment types across {{imrad_manifest_rows}} manifest rows."}
+
+![Toy exposure-bias recovery: off-policy final correctness {{exposure_bias_off_policy_final:.3f}}, on-policy final correctness {{exposure_bias_on_policy_final:.3f}}, terminal gap {{exposure_bias_terminal_gap:.3f}}. Values are generated from `output/data/firstprinciples/exposure_bias_demo.json`.](../output/figures/exposure_bias_recovery.png){#fig:exposure_bias_recovery width=90% fig-alt="Line plot comparing a toy off-policy compounding-error curve with an on-policy correction curve across generated steps. The off-policy curve decays steadily while the on-policy curve approaches a stable fixed point, leaving a labeled terminal recovery gap."}
+
+<!-- sheaf-track:ontology -->
+
+### Ontology bindings
+
+- `expected_free_energy` → **ExpectedFreeEnergy**
+- `location` → **HiddenState**
+- `observation` → **ObservationLikelihood**
+- `policy` → **PolicyPosterior**
+

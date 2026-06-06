@@ -1,0 +1,3 @@
+Given generative matrices $A,B,C,D$, pymdp computes state beliefs $q(s)$ and policy posterior rows $q_\pi$ inside `rollout`. The canonical SI Agent uses `policy_len = {{si_tmaze_policy_len}}`, while `si_policy_search` supplies the effective search horizon $H =$ {{si_tmaze_planning_horizon}} (logged with `num_policies = {{si_tmaze_num_policies}}` and tree metadata in the SI summary artifact; see [@sec:results_si_tmaze]).
+
+The default harness records belief entropy per step and $q_\pi$ first-action probabilities from the sophisticated-inference rollout. Vanilla planning is retained only in `output/data/si_policy_comparison.json` as comparison evidence, not as a manuscript co-primary track.
