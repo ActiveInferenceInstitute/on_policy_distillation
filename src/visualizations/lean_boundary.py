@@ -59,9 +59,9 @@ def load_lean_boundary_rows(project_root: Path) -> list[LeanBoundaryRow]:
         return []
     rows: list[LeanBoundaryRow] = []
     for path in sorted(lean_root.rglob("*.lean")):
-        if path.name in {"lakefile.lean", "TemplateActiveInference.lean"}:
+        if path.name in {"lakefile.lean", "OnPolicyDistillation.lean"}:
             continue
-        if "TemplateActiveInference" not in path.parts:
+        if "OnPolicyDistillation" not in path.parts:
             continue
         rows.extend(_scan_lean_file(path, lean_root))
     return rows

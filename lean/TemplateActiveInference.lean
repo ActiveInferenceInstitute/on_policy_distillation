@@ -1,2 +1,0 @@
-import TemplateActiveInference.BernoulliToy
-import TemplateActiveInference.SophisticatedInference

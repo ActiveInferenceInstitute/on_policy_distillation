@@ -31,11 +31,17 @@ figures:
       panel shows the recompute-minus-closed-form residual versus lambda with a zero
       reference line; the two deterministic estimators agree to machine precision.
     caption: >-
-      Closed-form $I(\lambda)$ and an independent exact recomputation via total correlation for
-      the symmetric Bernoulli-Ising toy across {{param_sweep_grid_points}} grid points up
-      to $\lambda_{\max}$ = {{lambda_max}}; grid maximum {{ising_mi_saturation}} nats. Both estimators
-      are deterministic (no sampling), so the right panel is a cross-implementation
-      agreement check (max residual {{sweep_max_residual}} nats), not a sampling residual.
+      Mutual information between the two coupled spins as a function of coupling strength.
+      Left: closed-form $I(\lambda)$ (solid) and an independent exact recomputation via total
+      correlation (dashed) for the symmetric Bernoulli-Ising toy across
+      {{param_sweep_grid_points}} grid points up to $\lambda_{\max}$ = {{lambda_max}}, rising
+      monotonically toward a grid maximum of {{ising_mi_saturation}} nats as the spins become
+      maximally correlated. This is the minimal model of the teacher--student coupling that
+      on-policy distillation must transmit: the analytic information content the student
+      policy is asked to absorb from the teacher. Right: because both estimators are
+      deterministic (no sampling), the recompute-minus-closed-form residual (max
+      {{sweep_max_residual}} nats) is a cross-implementation agreement check confirming the
+      analytic information measure is reproducible to machine precision, not a sampling error.
     width: 0.9
   free_energy_curve:
     filename: free_energy_curve.png
@@ -45,8 +51,14 @@ figures:
       free energy across the sweep; the minimum is marked with a teal scatter point
       and labeled with the argmin lambda value.
     caption: >-
-      Free energy of the entangled posterior relative to the mean-field prior across
-      the hyperparameter sweep (grid points {{param_sweep_grid_points}}).
+      Variational free energy of the entangled (correlated) posterior measured against a
+      factorized mean-field prior across the coupling sweep ({{param_sweep_grid_points}}
+      grid points), with the argmin marked. The curve quantifies the cost a mean-field
+      student pays for ignoring teacher correlations: free energy grows as the true
+      posterior departs from the factorized approximation, so its minimum locates the
+      coupling regime where on-policy distillation onto an independent student is least
+      lossy. This frames distillation as variational inference -- matching the student to
+      the teacher is the same objective as minimizing free energy in active inference.
     width: 0.9
   distillation_divergence_geometry:
     filename: distillation_divergence_geometry.png
@@ -57,12 +69,18 @@ figures:
       reverse KL values in nats, generated from the first-principles divergence
       artifact.
     caption: >-
-      Divergence geometry for the teacher/student categorical toy: reverse KL
-      {{divergence_reverse_kl:.3f}} nats, forward KL {{divergence_forward_kl:.3f}}
-      nats, Jensen-Shannon {{divergence_jensen_shannon:.3f}} nats, alpha-divergence
-      {{divergence_alpha_0_5:.3f}} nats, and clipped reverse KL
-      {{divergence_clipped_reverse_kl:.3f}} nats from
-      `output/data/firstprinciples/divergence_demo.json`.
+      Divergence geometry for the teacher/student categorical toy. Left: teacher and
+      student policy mass over four action modes, illustrating the mode-covering versus
+      mode-seeking distinction. Right: the same teacher--student pair scored under five
+      divergences -- reverse KL {{divergence_reverse_kl:.3f}} nats, forward KL
+      {{divergence_forward_kl:.3f}} nats, Jensen-Shannon {{divergence_jensen_shannon:.3f}}
+      nats, alpha-divergence {{divergence_alpha_0_5:.3f}} nats, and clipped reverse KL
+      {{divergence_clipped_reverse_kl:.3f}} nats (all from
+      `output/data/firstprinciples/divergence_demo.json`). The spread across measures
+      shows that the choice of distillation objective is not neutral: forward KL forces the
+      student to cover every teacher mode whereas reverse KL lets it concentrate on one,
+      which is exactly the free-energy/expected-free-energy trade-off active inference makes
+      explicit when selecting which teacher behavior an on-policy student should reproduce.
     width: 0.92
   exposure_bias_recovery:
     filename: exposure_bias_recovery.png
@@ -72,11 +90,16 @@ figures:
       decays steadily while the on-policy curve approaches a stable fixed point,
       leaving a labeled terminal recovery gap.
     caption: >-
-      Toy exposure-bias recovery: off-policy final correctness
-      {{exposure_bias_off_policy_final:.3f}}, on-policy final correctness
-      {{exposure_bias_on_policy_final:.3f}}, terminal gap
-      {{exposure_bias_terminal_gap:.3f}}. Values are generated from
-      `output/data/firstprinciples/exposure_bias_demo.json`.
+      Toy model of exposure bias and its on-policy remedy: correctness over generated steps
+      for an off-policy student (trained on teacher-visited states only) versus an on-policy
+      student (corrected on its own rollouts). The off-policy curve decays as compounding
+      errors push the student into states the teacher never demonstrated -- off-policy final
+      correctness {{exposure_bias_off_policy_final:.3f}} -- while the on-policy curve
+      stabilizes at {{exposure_bias_on_policy_final:.3f}}, leaving a terminal recovery gap of
+      {{exposure_bias_terminal_gap:.3f}} (values from
+      `output/data/firstprinciples/exposure_bias_demo.json`). This is the core argument for
+      on-policy distillation, and mirrors active inference's insistence on evaluating beliefs
+      along the agent's own visited trajectory rather than a fixed reference distribution.
     width: 0.9
   energy_decomposition:
     filename: energy_decomposition.png
@@ -87,13 +110,18 @@ figures:
       risk, ambiguity, epistemic, and pragmatic bars, generated from the
       first-principles energy artifact.
     caption: >-
-      Energy-based decompositions for the categorical generative model:
-      variational free energy as complexity {{energy_complexity:.3f}} minus
-      accuracy {{energy_accuracy:.3f}} nats (log-evidence
-      {{energy_log_evidence:.3f}}), and expected free energy as risk
-      {{efe_risk:.3f}} plus ambiguity {{efe_ambiguity:.3f}} nats, equivalently
-      minus epistemic {{efe_epistemic:.3f}} minus pragmatic {{efe_pragmatic:.3f}},
-      from `output/data/firstprinciples/energy_demo.json`.
+      Energy-based decompositions for the categorical generative model, showing the two
+      quantities active inference uses to score perception and action. Left: variational
+      free energy split into complexity {{energy_complexity:.3f}} minus accuracy
+      {{energy_accuracy:.3f}} nats (bounding log-evidence {{energy_log_evidence:.3f}}) --
+      the perceptual cost of fitting the student's beliefs to the teacher signal. Right:
+      expected free energy split into risk {{efe_risk:.3f}} plus ambiguity
+      {{efe_ambiguity:.3f}} nats, equivalently minus epistemic {{efe_epistemic:.3f}} minus
+      pragmatic {{efe_pragmatic:.3f}} (from
+      `output/data/firstprinciples/energy_demo.json`). Reading distillation through this
+      lens, the complexity/accuracy and risk/ambiguity terms make explicit that an
+      on-policy student is simultaneously matching the teacher's outputs (accuracy/pragmatic)
+      and reducing its own uncertainty about unvisited states (epistemic).
     width: 0.95
   si_tmaze_actions:
     filename: si_tmaze_actions.png
@@ -103,9 +131,15 @@ figures:
       first-action probabilities from q-pi for all five location actions. The cue action
       is the initial argmax under SI search horizon {{si_tmaze_planning_horizon}}.
     caption: >-
-      Canonical SI action selection and q-pi first-action marginals for the full
-      pymdp TMaze rollout (agent policy length {{si_tmaze_policy_len}}, SI search horizon
-      {{si_tmaze_planning_horizon}}).
+      Canonical sophisticated-inference action selection for the full pymdp TMaze rollout
+      (agent policy length {{si_tmaze_policy_len}}, SI search horizon
+      {{si_tmaze_planning_horizon}}). Left: selected action index per timestep. Right:
+      first-action marginals from the policy posterior over all five location actions. The
+      initial argmax is the cue action -- the agent first acts to gather information about
+      the reward location before committing to a goal arm. This is the teacher behavior an
+      on-policy student must learn to reproduce: distilling a policy that values
+      information-seeking, the epistemic drive that expected-free-energy minimization
+      supplies and that pure reward-matching distillation would miss.
     width: 0.9
   si_belief_entropy_curve:
     filename: si_belief_entropy_curve.png
@@ -115,7 +149,14 @@ figures:
       {{si_tmaze_rollout_timestep_count}} rollout records under the canonical
       {{pymdp_planner}} planner.
     caption: >-
-      Belief entropy over time for the T-maze rollout (mean {{si_tmaze_mean_belief_entropy_formatted}} nats).
+      Belief entropy in nats over the course of the pymdp T-maze rollout (mean
+      {{si_tmaze_mean_belief_entropy_formatted}} nats), tracing how the agent's uncertainty
+      about the hidden reward location collapses once the cue is observed. The downward
+      trend is the epistemic payoff of the cue action made quantitative: the teacher resolves
+      uncertainty before exploiting it. An on-policy student that only mimicked terminal
+      actions would not inherit this uncertainty-reduction trajectory, underscoring why
+      distilling active-inference policies requires matching the belief-update dynamics, not
+      just the outputs.
     width: 0.9
   si_obs_action_trace:
     filename: si_obs_action_trace.png
@@ -126,7 +167,13 @@ figures:
     caption: >-
       Multimodal observation and action traces for the full TMaze rollout
       ({{si_tmaze_observation_modality_count}} observation modalities; action diversity
-      {{si_action_diversity}}).
+      {{si_action_diversity}}). Upper: location, outcome, and cue observation indices over
+      time. Lower: the selected action index and names. Together the panels show the closed
+      perception--action loop that produces the teacher's behavior -- cue-driven observations
+      gate which actions are chosen -- and constitute the demonstration record an on-policy
+      student is distilled against. Capturing this joint observation--action structure, rather
+      than a marginal action policy, is what makes the active-inference teacher faithfully
+      reproducible.
     width: 0.9
   sheaf_coverage_heatmap:
     filename: sheaf_coverage_heatmap.png
@@ -137,10 +184,15 @@ figures:
       but missing. Rows are grouped by IMRAD block with indented subsection labels;
       column headers list track ids.
     caption: >-
-      Sheaf track coverage matrix: {{imrad_manifest_rows}} IMRAD rows ×
-      {{sheaf_track_count}} fragment columns. Black = present (P), white = absent (—),
-      gray = missing (M). Counts: {{coverage_present}} present / {{coverage_bound}} bound /
-      {{coverage_missing}} missing.
+      Sheaf track coverage matrix mapping {{imrad_manifest_rows}} IMRAD manuscript rows
+      against {{sheaf_track_count}} composable fragment-track columns: black = present (P),
+      white = absent (—), gray = bound-but-missing (M), with counts {{coverage_present}}
+      present / {{coverage_bound}} bound / {{coverage_missing}} missing. The matrix is the
+      gluing record showing which evidence fragment is locally attached to each manuscript
+      section. Reading it as a sheaf condition, a consistent (fully present, zero-missing)
+      column set is what licenses gluing the local toy results, Lean witnesses, and pymdp
+      rollouts into one globally coherent active-inference argument about on-policy
+      distillation.
     width: 0.95
   sheaf_layers_overview:
     filename: sheaf_layers_overview.png
@@ -151,10 +203,14 @@ figures:
       with black present, white absent, and gray missing cells across
       {{imrad_manifest_rows}} manifest rows and {{sheaf_track_count}} tracks.
     caption: >-
-      Sheaf layers overview: registry stack (compose order, renderer ids) and IMRAD binding
-      heatmap for {{sheaf_track_count}} fragment types across {{imrad_manifest_rows}} manifest
-      rows ({{coverage_present}} present / {{coverage_bound}} bound / {{coverage_missing}}
-      missing).
+      Sheaf layers overview. Left: the registry stack of {{sheaf_track_count}} composable
+      fragment types in compose order with their renderer ids, the ordered base over which
+      the manuscript sheaf is assembled. Right: the IMRAD section-binding heatmap across
+      {{imrad_manifest_rows}} manifest rows ({{coverage_present}} present / {{coverage_bound}}
+      bound / {{coverage_missing}} missing). Together the panels show how heterogeneous local
+      evidence -- analytical, pymdp, and Lean fragments -- is layered and bound section by
+      section, the constructive mechanism by which the multi-track active-inference and
+      on-policy-distillation argument is glued into a single coherent document.
     width: 0.98
   invariant_dashboard:
     filename: invariant_dashboard.png
@@ -162,8 +218,14 @@ figures:
       Horizontal bar checklist of analytical and simulation invariant names with pass or fail
       status. {{invariants_passed}} of {{invariants_total}} checks pass on the merged report.
     caption: >-
-      Invariant dashboard: {{invariants_passed}} / {{invariants_total}} merged analytical and
-      simulation checks from the validation registry.
+      Invariant dashboard summarizing pass/fail status for every analytical and simulation
+      check in the validation registry: {{invariants_passed}} of {{invariants_total}} merged
+      checks pass on the combined report. These invariants are the machine-enforced
+      correctness conditions -- conservation of probability mass, divergence non-negativity,
+      free-energy bounds, and rollout consistency -- that bind the on-policy-distillation
+      claims to the active-inference math. An all-green dashboard certifies that the
+      executable evidence underwriting the manuscript actually satisfies the theory it
+      reports.
     width: 0.9
   tmaze_schematic:
     filename: tmaze_schematic.png
@@ -172,10 +234,14 @@ figures:
       two reward-location states, three observation modalities, and SI search horizon
       {{si_tmaze_planning_horizon}}.
     caption: >-
-      Full pymdp TMaze generative-process schematic: {{si_tmaze_location_state_count}}
+      Schematic of pymdp's full TMaze generative process: {{si_tmaze_location_state_count}}
       location states/actions, {{si_tmaze_reward_location_state_count}} reward-location
-      states, cue validity {{si_tmaze_cue_validity}}, and SI search horizon
-      {{si_tmaze_planning_horizon}}.
+      states, three observation modalities, cue validity {{si_tmaze_cue_validity}}, and SI
+      search horizon {{si_tmaze_planning_horizon}}. The diagram lays out the hidden states,
+      observations, and controllable transitions that define the teacher's task, including
+      the cue arm whose validity determines how informative the epistemic action is. It fixes
+      the world model in which the active-inference teacher is computed and, in turn, the
+      task structure an on-policy student must operate within to be distilled faithfully.
     width: 0.85
   si_tmaze_model_matrices:
     filename: si_tmaze_model_matrices.png
@@ -184,9 +250,14 @@ figures:
       A and B factors, shapes, and dependencies; right panel shows A, B, and D
       normalization checks around unit probability mass.
     caption: >-
-      Full TMaze matrix/value audit: {{si_tmaze_matrix_shape_summary}} with labeled
-      dependencies, C preferences, D priors, and normalization checks generated from
-      `output/data/si_tmaze_model_matrices.json`.
+      Full TMaze generative-model matrix and value audit. Left: the labeled A (likelihood)
+      and B (transition) factors with shapes {{si_tmaze_matrix_shape_summary}} and their
+      state dependencies, alongside C preferences and D priors. Right: A, B, and D
+      normalization checks confirming each conditional distribution sums to unit probability
+      mass (from `output/data/si_tmaze_model_matrices.json`). The audit exposes the exact
+      parameters that generate the teacher's behavior and verifies they are valid
+      probabilities, so the active-inference policy being distilled rests on a well-formed
+      generative model rather than an unchecked numerical artifact.
     width: 0.92
   classroom_distillation_signal:
     filename: classroom_distillation_signal.png
@@ -196,12 +267,17 @@ figures:
       teacher and on-policy student policies. The right panel is a heatmap of
       teacher probability minus student probability by action and classroom step.
     caption: >-
-      Two-agent classroom distillation signal over {{classroom_step_count}} steps:
-      teacher cue validity {{classroom_teacher_cue_validity}}, student cue validity
-      {{classroom_student_cue_validity}}, mean reverse KL
-      {{classroom_mean_reverse_kl_formatted}} nats, mean Jensen-Shannon
-      {{classroom_mean_jensen_shannon:.3f}} nats, agreement rows
-      {{classroom_agreement_count}}.
+      Two-agent classroom distillation signal over {{classroom_step_count}} steps between a
+      privileged teacher (cue validity {{classroom_teacher_cue_validity}}) and an on-policy
+      student (cue validity {{classroom_student_cue_validity}}). Left: per-step reverse KL,
+      forward KL, and Jensen-Shannon divergence between the teacher and student policies
+      (mean reverse KL {{classroom_mean_reverse_kl_formatted}} nats, mean Jensen-Shannon
+      {{classroom_mean_jensen_shannon:.3f}} nats, {{classroom_agreement_count}} agreement
+      rows). Right: a heatmap of teacher-minus-student action probability by action and step,
+      localizing where the student diverges. The figure operationalizes on-policy
+      distillation as a per-step divergence signal evaluated along the student's own
+      trajectory, the same active-inference principle of scoring beliefs on visited states
+      rather than the teacher's idealized path.
     width: 0.94
   multi_track_architecture:
     filename: multi_track_architecture.png
@@ -209,16 +285,28 @@ figures:
       Process diagram linking three scientific tracks to {{pipeline_track_count}} pipeline gates
       and {{sheaf_track_count}} sheaf fragment types across {{imrad_manifest_rows}} manifest rows.
     caption: >-
-      Multi-track architecture: analytical, pymdp, and sheaf composition lanes mapped to
-      {{pipeline_track_count}} pipeline gates and {{sheaf_track_count}} composable fragment types.
+      Multi-track architecture diagram linking the three scientific tracks -- analytical
+      derivations, pymdp simulation, and sheaf composition -- to {{pipeline_track_count}}
+      pipeline gates and {{sheaf_track_count}} composable fragment types across
+      {{imrad_manifest_rows}} manifest rows. It shows how independent lines of evidence flow
+      through validation gates into a single sheaf-composed manuscript. This is the structural
+      claim of the exemplar: the active-inference reading of on-policy distillation is
+      supported simultaneously by closed-form analysis, executable rollouts, and
+      machine-checked Lean witnesses, glued rather than asserted.
     width: 0.95
   lean_boundary_status:
     filename: lean_boundary_status.png
     alt: >-
       Table figure listing Lean modules, declaration kinds, names, and proved versus sorry status
-      under lean/TemplateActiveInference/.
+      under lean/OnPolicyDistillation/.
     caption: >-
-      Lean formalization boundary: module witnesses checked by lake build.
+      Lean formalization boundary: a table of modules, declaration kinds, names, and
+      proved-versus-sorry status under `lean/OnPolicyDistillation/`, each row a witness
+      checked by `lake build`. Proved rows mark the claims about the distillation/active-inference
+      correspondence that are machine-verified, while any sorry row honestly demarcates the
+      edge of what is formally established. The figure makes the trust boundary explicit:
+      the theory underwriting on-policy distillation here is not merely stated but compiled,
+      so its formal core stands on a checker rather than on prose.
     width: 0.9
   gnn_ontology_concordance:
     filename: gnn_ontology_concordance.png
@@ -226,7 +314,13 @@ figures:
       Layered concordance diagram linking analytical symbols, GNN variables from
       bernoulli_toy.gnn.md ({{gnn_spec_version}}), and Active Inference Ontology terms.
     caption: >-
-      GNN $\leftrightarrow$ ontology concordance for the Bernoulli–Ising toy ({{gnn_spec_version}}).
+      Concordance diagram aligning the analytical symbols of the Bernoulli--Ising toy with the
+      generative-model variables declared in `bernoulli_toy.gnn.md` ({{gnn_spec_version}}) and
+      their corresponding Active Inference Ontology terms. The three-layer mapping certifies
+      that the equations in the manuscript, the executable GNN specification, and the shared
+      ontology vocabulary all refer to the same entities. This naming concordance is what lets
+      the on-policy-distillation toy be read as a bona fide active-inference model rather than
+      a loose analogy, giving every quantity a single cross-track-stable identity.
     width: 0.9
   semantic_gluing_graph:
     filename: semantic_gluing_graph.png
@@ -235,8 +329,14 @@ figures:
       artifacts, manuscript consumers, and validation gates for the semantic sheaf
       gluing certificate.
     caption: >-
-      Semantic gluing graph: configured producers, generated evidence artifacts, and
-      validation consumers for the multi-track sheaf certificate.
+      Semantic gluing graph tracing the dependency chain from configured analysis scripts
+      (producers) through the generated evidence artifacts to the manuscript consumers and
+      validation gates that close the multi-track sheaf certificate. Each edge records a
+      provenance link, so the graph is the auditable trail showing every figure and number is
+      derived from a declared producer and re-checked downstream. It is the operational
+      embodiment of the sheaf gluing condition: only when producers, artifacts, and consumers
+      agree along every edge does the assembled active-inference / on-policy-distillation
+      argument certify as globally consistent.
     width: 0.95
   theorem_traceability_graph:
     filename: theorem_traceability_graph.png
@@ -246,8 +346,14 @@ figures:
       model witness count; all theorem rows have resolved dependency edges:
       {{proof_dependency_all_resolved}}.
     caption: >-
-      Theorem traceability graph generated from {{theorem_traceability_row_count}}
-      linked theorem rows and {{proof_dependency_edge_count}} proof-dependency edges.
+      Theorem traceability graph generated from {{theorem_traceability_row_count}} linked
+      theorem rows and {{proof_dependency_edge_count}} proof-dependency edges, with each row
+      connecting a Lean theorem to its proof-dependency edge count and finite-model witness
+      count (all theorem rows have resolved dependency edges:
+      {{proof_dependency_all_resolved}}). The graph exposes the deductive backbone of the
+      formal track -- which lemmas each distillation/active-inference theorem rests on and
+      which finite models witness it. Fully resolved dependencies certify that the
+      machine-checked claims form a closed, gap-free chain rather than isolated assertions.
     width: 0.95
   causal_ablation_heatmap:
     filename: causal_ablation_heatmap.png
@@ -256,9 +362,14 @@ figures:
       toy graph topologies, columns are perturbation types, and each cell shows the
       maximum absolute deterministic effect sourced from generated JSON rows.
     caption: >-
-      Causal-ablation heatmap: {{ablation_sensitivity_row_count}} source-backed rows
-      joined to sensitivity and uncertainty artifacts; all effects source-backed:
-      {{ablation_sensitivity_source_backed}}.
+      Causal-ablation heatmap over {{ablation_sensitivity_row_count}} source-backed rows
+      joined to the sensitivity and uncertainty artifacts (all effects source-backed:
+      {{ablation_sensitivity_source_backed}}). Rows are toy graph topologies, columns are
+      perturbation types, and each cell reports the maximum absolute deterministic effect of
+      that intervention. The map shows which structural assumptions of the generative model
+      the distillation outcome is sensitive to and which it is robust against, grounding the
+      active-inference claims in measured causal dependence rather than correlation and
+      flagging where on-policy behavior would shift under model misspecification.
     width: 0.92
   scholarship_source_map:
     filename: scholarship_source_map.png
@@ -268,10 +379,15 @@ figures:
       artifact; green borders mark rows with bibliography entries, manuscript citations,
       registered tracks, bound manuscript sections, and existing artifacts.
     caption: >-
-      Scholarship source map: {{scholarship_source_count}} source rows across
-      {{scholarship_method_role_count}} method roles and
-      {{scholarship_source_family_count}} source families. Connected status:
-      {{scholarship_sources_connected}}.
+      Scholarship source map linking {{scholarship_source_count}} bibliography source rows
+      across {{scholarship_method_role_count}} method roles and
+      {{scholarship_source_family_count}} source families to their generated evidence
+      artifacts (connected status: {{scholarship_sources_connected}}); green borders mark rows
+      with a bibliography entry, manuscript citation, registered track, bound section, and
+      existing artifact. The map ties each external reference -- on-policy distillation and
+      active-inference literature alike -- to a concrete place where the exemplar uses or
+      tests it. A fully connected map evidences that the scholarship is load-bearing rather
+      than decorative, with every cited claim wired to executable or formal support.
     width: 0.95
   graphical_abstract:
     filename: graphical_abstract.png
@@ -282,8 +398,14 @@ figures:
       gates. A lower strip shows the deterministic publication spine from analysis
       through copy-out.
     caption: >-
-      Graphical abstract: active inference scholarship, executable toy evidence,
-      sheaf-composed manuscript structure, and deterministic validation gates.
+      Graphical abstract for the exemplar, with four connected panels summarizing
+      source-backed active-inference scholarship, executable toy evidence, sheaf-composed
+      manuscript structure, and deterministic validation gates, above a lower strip showing
+      the publication spine from analysis through copy-out. Read left to right, it states the
+      thesis end to end: on-policy distillation is cast as variational free-energy
+      minimization under active inference, demonstrated on minimal toys and pymdp rollouts,
+      machine-checked in Lean, and glued into one reproducible manuscript whose every claim
+      passes an automated gate.
     width: 0.96
 
 section_figures:

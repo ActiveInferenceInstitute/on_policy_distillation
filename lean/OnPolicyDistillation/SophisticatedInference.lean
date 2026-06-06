@@ -1,4 +1,4 @@
-namespace TemplateActiveInference
+namespace OnPolicyDistillation
 
 /-- Planning horizon for sophisticated inference (policy length > 1). -/
 def defaultPolicyLen : Nat := 3
@@ -146,4 +146,4 @@ theorem two_policy_posterior_weights_sum_to_two :
     twoPolicyPosteriorWeights.foldl Nat.add 0 = 2 := by
   rfl
 
-end TemplateActiveInference
+end OnPolicyDistillation

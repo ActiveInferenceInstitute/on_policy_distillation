@@ -145,7 +145,7 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
             "output/data/pymdp_policy_posterior_grid.json",
         ],
         "multi_track_architecture": ["tracks.yaml", "manuscript/sheaf/tracks.yaml"],
-        "lean_boundary_status": ["lean/TemplateActiveInference"],
+        "lean_boundary_status": ["lean/OnPolicyDistillation"],
         "gnn_ontology_concordance": ["gnn", "manuscript/sections/imrad"],
         "semantic_gluing_graph": [
             "output/data/validation_dependency_graph.json",
@@ -218,7 +218,7 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
             "$.known_warning_count",
         ],
         "multi_track_architecture": ["tracks.yaml:tracks", "manuscript/sheaf/tracks.yaml:tracks"],
-        "lean_boundary_status": ["lean/TemplateActiveInference/*.lean"],
+        "lean_boundary_status": ["lean/OnPolicyDistillation/*.lean"],
         "gnn_ontology_concordance": ["gnn/*.gnn.md", "manuscript/sections/imrad/*/ontology.yaml"],
         "semantic_gluing_graph": [
             "$.artifacts",

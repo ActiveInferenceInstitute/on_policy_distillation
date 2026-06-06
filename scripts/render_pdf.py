@@ -108,10 +108,14 @@ def main() -> int:
     variables = generate_variables(PROJECT_ROOT, require_analysis_outputs=False)
     resolved_dir = write_resolved_manuscript(PROJECT_ROOT, variables)
 
-    # 3. concatenate composed+hydrated sections in lexical (manifest) order.
+    # 3. concatenate composed+hydrated sections in lexical (manifest) order, but
+    #    relocate the sheaf-coverage metadata page to the end as supplement so the
+    #    abstract leads the scientific paper.
     sections = sorted(p for p in resolved_dir.glob("[0-9][0-9]_*.md"))
     if not sections:
         sections = sorted(p for p in manuscript_dir.glob("[0-9][0-9]_*.md"))
+    coverage_pages = [p for p in sections if "sheaf_coverage" in p.name]
+    sections = [p for p in sections if "sheaf_coverage" not in p.name] + coverage_pages
     combined_md = out_pdf_dir / "_standalone_combined.md"
     combined_md.write_text("\n\n".join(p.read_text(encoding="utf-8") for p in sections), encoding="utf-8")
 
@@ -159,7 +163,8 @@ def main() -> int:
         cmd += ["--filter", crossref]
     bib = manuscript_dir / "references.bib"
     if bib.is_file():
-        cmd += ["--citeproc", "--bibliography", str(bib)]
+        # link-citations makes every in-text citation a hyperlink to its bibliography entry.
+        cmd += ["--citeproc", "--bibliography", str(bib), "-M", "link-citations=true", "-M", "reference-section-title=References"]
 
     print("rendering (standalone):", " ".join(cmd))
     result = subprocess.run(cmd, cwd=PROJECT_ROOT)

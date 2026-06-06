@@ -1027,7 +1027,7 @@ def figure_graphical_abstract(project_root: Path) -> Path:
 
     background = "#eef2ff"
     with apply_style(style):
-        fig = plt.figure(figsize=(14.0, 7.0), facecolor=background)
+        fig = plt.figure(figsize=(15.0, 7.6), facecolor=background)
         ax = fig.add_axes((0.0, 0.0, 1.0, 1.0))
         ax.set_xlim(0, 14.0)
         ax.set_ylim(0, 7.0)
@@ -1052,7 +1052,7 @@ def figure_graphical_abstract(project_root: Path) -> Path:
             0.55,
             6.48,
             "On-Policy Distillation is Active Inference",
-            fontsize=22,
+            fontsize=26,
             fontweight="bold",
             color="white",
             va="center",
@@ -1061,7 +1061,7 @@ def figure_graphical_abstract(project_root: Path) -> Path:
             0.58,
             6.08,
             "The variational posterior generates its own observations; the generative model is conditioned on privileged beliefs.",
-            fontsize=10.5,
+            fontsize=12.5,
             color="#dbeafe",
             va="center",
         )
@@ -1069,7 +1069,7 @@ def figure_graphical_abstract(project_root: Path) -> Path:
             13.45,
             6.42,
             f"{counts['sheaf_track_count']} tracks",
-            fontsize=11,
+            fontsize=13,
             fontweight="bold",
             color="#bfdbfe",
             ha="right",
@@ -1133,13 +1133,13 @@ def figure_graphical_abstract(project_root: Path) -> Path:
                     alpha=0.92,
                 )
             )
-            ax.text(x + 0.18, y + height - 0.82, title, fontsize=10.8, fontweight="bold", color=color)
+            ax.text(x + 0.18, y + height - 0.82, title, fontsize=12.8, fontweight="bold", color=color)
             for line_idx, line in enumerate(lines):
                 ax.text(
                     x + 0.2,
                     y + height - 1.2 - line_idx * 0.36,
-                    textwrap.fill(line, width=36),
-                    fontsize=7.6,
+                    textwrap.fill(line, width=30),
+                    fontsize=9.6,
                     color=style.color("primary"),
                     va="top",
                 )

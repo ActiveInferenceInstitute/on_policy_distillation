@@ -14,6 +14,29 @@ This section is the **composability proof** for the manifest-indexed sheaf model
 
 The proof is a publication-systems check ([@eq:appendix_track_count]). It demonstrates that heterogeneous fragments share one registry, manifest, renderer dispatch path, coverage matrix, and hydration boundary; it does not assert that every track carries equal scientific weight, nor that the analytical and T-maze demonstrations [@dacosta2020discrete] license claims beyond these minimal models and artifacts. The machinery guarantees only that the structural mapping — variational free energy to reverse-KL distillation loss, active sampling to on-policy student rollouts [@gu2024minillm], privileged information to the teacher's Markov-blanket asymmetry — is rendered coherently across tracks, leaving the scientific weight of each correspondence to the sections that carry it.
 
+### Supplemental table: energy decomposition
+
+The full variational- and expected-free-energy decomposition for the minimal model (referenced from [@sec:energy_decompositions]) is tabulated here. As elsewhere, these are nats from a faithful minimal-model demonstration, not production measurements.
+
+| Functional | Stream A | A (nats) | Stream B | B (nats) | Scalar (nats) |
+| --- | --- | --- | --- | --- | --- |
+| VFE ($F$) | complexity | {{energy_complexity:.3f}} | accuracy | {{energy_accuracy:.3f}} | log-evidence {{energy_log_evidence:.3f}} |
+| EFE (risk/ambiguity) | risk | {{efe_risk:.3f}} | ambiguity | {{efe_ambiguity:.3f}} | — |
+| EFE (epistemic/pragmatic) | epistemic | {{efe_epistemic:.3f}} | pragmatic | {{efe_pragmatic:.3f}} | — |
+
+### Supplemental table: empirical OPD-vs-RL benchmark (literature-reported)
+
+The literature-reported AIME-24 benchmark (referenced from the discussion) is tabulated here. These are external empirical results reported by @thinkingmachines2025opd, not measured in this manuscript; only the toy-model statistics reported elsewhere here are hydrated from our own generated artifacts.
+
+| Quantity (literature-reported) | On-policy distillation | Reinforcement learning |
+| --- | --- | --- |
+| AIME-24 accuracy (percent) | {{empirical_opd_aime24:.1f}} | {{empirical_rl_aime24:.1f}} |
+| Accuracy gain over RL (points) | {{empirical_aime24_gain_over_rl:.1f}} | — |
+| Training cost (GPU-hours) | {{empirical_opd_gpu_hours:.0f}} | {{empirical_rl_gpu_hours:.0f}} |
+| Compute reduction vs RL | {{empirical_compute_reduction:.1f}}x | 1.0x |
+
+Table: AIME-24 accuracy and training cost for on-policy distillation versus reinforcement learning, as reported by @thinkingmachines2025opd. These are external empirical results, not measured in this manuscript; only the toy-model statistics reported elsewhere here are hydrated from our own generated artifacts.
+
 <!-- sheaf-track:formalism -->
 
 For each track $t \in \mathcal{T}_{\mathrm{Full}}$, the appendix row binds a fragment path $f(t)$ and the composer emits `<!-- sheaf-track:t -->` before the rendered body. Generated renderers such as `section_figures` and markdown renderers pass through the same `resolve_track_body()` dispatch, so the appendix exercises the common compose interface rather than a bespoke appendix path.
@@ -480,27 +503,27 @@ counts are caught after composition, not only during source-file linting.
 
 ![](../output/figures/ising_mi_curve.png){width=90%}
 
-*Reproduced from [@fig:ising_mi_curve]. Closed-form $I(\lambda)$ and an independent exact recomputation via total correlation for the symmetric Bernoulli-Ising toy across {{param_sweep_grid_points}} grid points up to $\lambda_{\max}$ = {{lambda_max}}; grid maximum {{ising_mi_saturation}} nats. Both estimators are deterministic (no sampling), so the right panel is a cross-implementation agreement check (max residual {{sweep_max_residual}} nats), not a sampling residual.*
+*Reproduced from [@fig:ising_mi_curve]. Mutual information between the two coupled spins as a function of coupling strength. Left: closed-form $I(\lambda)$ (solid) and an independent exact recomputation via total correlation (dashed) for the symmetric Bernoulli-Ising toy across {{param_sweep_grid_points}} grid points up to $\lambda_{\max}$ = {{lambda_max}}, rising monotonically toward a grid maximum of {{ising_mi_saturation}} nats as the spins become maximally correlated. This is the minimal model of the teacher--student coupling that on-policy distillation must transmit: the analytic information content the student policy is asked to absorb from the teacher. Right: because both estimators are deterministic (no sampling), the recompute-minus-closed-form residual (max {{sweep_max_residual}} nats) is a cross-implementation agreement check confirming the analytic information measure is reproducible to machine precision, not a sampling error.*
 
 ![](../output/figures/si_tmaze_actions.png){width=90%}
 
-*Reproduced from [@fig:si_tmaze_actions]. Canonical SI action selection and q-pi first-action marginals for the full pymdp TMaze rollout (agent policy length {{si_tmaze_policy_len}}, SI search horizon {{si_tmaze_planning_horizon}}).*
+*Reproduced from [@fig:si_tmaze_actions]. Canonical sophisticated-inference action selection for the full pymdp TMaze rollout (agent policy length {{si_tmaze_policy_len}}, SI search horizon {{si_tmaze_planning_horizon}}). Left: selected action index per timestep. Right: first-action marginals from the policy posterior over all five location actions. The initial argmax is the cue action -- the agent first acts to gather information about the reward location before committing to a goal arm. This is the teacher behavior an on-policy student must learn to reproduce: distilling a policy that values information-seeking, the epistemic drive that expected-free-energy minimization supplies and that pure reward-matching distillation would miss.*
 
 ![](../output/figures/si_tmaze_model_matrices.png){width=92%}
 
-*Reproduced from [@fig:si_tmaze_model_matrices]. Full TMaze matrix/value audit: {{si_tmaze_matrix_shape_summary}} with labeled dependencies, C preferences, D priors, and normalization checks generated from `output/data/si_tmaze_model_matrices.json`.*
+*Reproduced from [@fig:si_tmaze_model_matrices]. Full TMaze generative-model matrix and value audit. Left: the labeled A (likelihood) and B (transition) factors with shapes {{si_tmaze_matrix_shape_summary}} and their state dependencies, alongside C preferences and D priors. Right: A, B, and D normalization checks confirming each conditional distribution sums to unit probability mass (from `output/data/si_tmaze_model_matrices.json`). The audit exposes the exact parameters that generate the teacher's behavior and verifies they are valid probabilities, so the active-inference policy being distilled rests on a well-formed generative model rather than an unchecked numerical artifact.*
 
-![Theorem traceability graph generated from {{theorem_traceability_row_count}} linked theorem rows and {{proof_dependency_edge_count}} proof-dependency edges.](../output/figures/theorem_traceability_graph.png){#fig:theorem_traceability_graph width=95% fig-alt="Three-column graph generated from theorem traceability and proof dependency JSON. Each row links a Lean theorem to its proof-dependency edge count and finite model witness count; all theorem rows have resolved dependency edges: {{proof_dependency_all_resolved}}."}
+![Theorem traceability graph generated from {{theorem_traceability_row_count}} linked theorem rows and {{proof_dependency_edge_count}} proof-dependency edges, with each row connecting a Lean theorem to its proof-dependency edge count and finite-model witness count (all theorem rows have resolved dependency edges: {{proof_dependency_all_resolved}}). The graph exposes the deductive backbone of the formal track -- which lemmas each distillation/active-inference theorem rests on and which finite models witness it. Fully resolved dependencies certify that the machine-checked claims form a closed, gap-free chain rather than isolated assertions.](../output/figures/theorem_traceability_graph.png){#fig:theorem_traceability_graph width=95% fig-alt="Three-column graph generated from theorem traceability and proof dependency JSON. Each row links a Lean theorem to its proof-dependency edge count and finite model witness count; all theorem rows have resolved dependency edges: {{proof_dependency_all_resolved}}."}
 
-![Causal-ablation heatmap: {{ablation_sensitivity_row_count}} source-backed rows joined to sensitivity and uncertainty artifacts; all effects source-backed: {{ablation_sensitivity_source_backed}}.](../output/figures/causal_ablation_heatmap.png){#fig:causal_ablation_heatmap width=92% fig-alt="Heatmap generated from the causal ablation and sensitivity reports. Rows are toy graph topologies, columns are perturbation types, and each cell shows the maximum absolute deterministic effect sourced from generated JSON rows."}
+![Causal-ablation heatmap over {{ablation_sensitivity_row_count}} source-backed rows joined to the sensitivity and uncertainty artifacts (all effects source-backed: {{ablation_sensitivity_source_backed}}). Rows are toy graph topologies, columns are perturbation types, and each cell reports the maximum absolute deterministic effect of that intervention. The map shows which structural assumptions of the generative model the distillation outcome is sensitive to and which it is robust against, grounding the active-inference claims in measured causal dependence rather than correlation and flagging where on-policy behavior would shift under model misspecification.](../output/figures/causal_ablation_heatmap.png){#fig:causal_ablation_heatmap width=92% fig-alt="Heatmap generated from the causal ablation and sensitivity reports. Rows are toy graph topologies, columns are perturbation types, and each cell shows the maximum absolute deterministic effect sourced from generated JSON rows."}
 
 ![](../output/figures/scholarship_source_map.png){width=95%}
 
-*Reproduced from [@fig:scholarship_source_map]. Scholarship source map: {{scholarship_source_count}} source rows across {{scholarship_method_role_count}} method roles and {{scholarship_source_family_count}} source families. Connected status: {{scholarship_sources_connected}}.*
+*Reproduced from [@fig:scholarship_source_map]. Scholarship source map linking {{scholarship_source_count}} bibliography source rows across {{scholarship_method_role_count}} method roles and {{scholarship_source_family_count}} source families to their generated evidence artifacts (connected status: {{scholarship_sources_connected}}); green borders mark rows with a bibliography entry, manuscript citation, registered track, bound section, and existing artifact. The map ties each external reference -- on-policy distillation and active-inference literature alike -- to a concrete place where the exemplar uses or tests it. A fully connected map evidences that the scholarship is load-bearing rather than decorative, with every cited claim wired to executable or formal support.*
 
 ![](../output/figures/sheaf_coverage_heatmap.png){width=95%}
 
-*Reproduced from [@fig:sheaf_coverage_heatmap]. Sheaf track coverage matrix: {{imrad_manifest_rows}} IMRAD rows × {{sheaf_track_count}} fragment columns. Black = present (P), white = absent (—), gray = missing (M). Counts: {{coverage_present}} present / {{coverage_bound}} bound / {{coverage_missing}} missing.*
+*Reproduced from [@fig:sheaf_coverage_heatmap]. Sheaf track coverage matrix mapping {{imrad_manifest_rows}} IMRAD manuscript rows against {{sheaf_track_count}} composable fragment-track columns: black = present (P), white = absent (—), gray = bound-but-missing (M), with counts {{coverage_present}} present / {{coverage_bound}} bound / {{coverage_missing}} missing. The matrix is the gluing record showing which evidence fragment is locally attached to each manuscript section. Reading it as a sheaf condition, a consistent (fully present, zero-missing) column set is what licenses gluing the local toy results, Lean witnesses, and pymdp rollouts into one globally coherent active-inference argument about on-policy distillation.*
 
 <!-- sheaf-track:lean -->
 

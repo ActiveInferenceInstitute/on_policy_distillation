@@ -294,7 +294,7 @@ def build_ontology_profile_matrix(project_root: Path) -> dict[str, Any]:
 
 
 def _lean_files(root: Path) -> list[Path]:
-    return sorted((root / "lean" / "TemplateActiveInference").glob("*.lean"))
+    return sorted((root / "lean" / "OnPolicyDistillation").glob("*.lean"))
 
 
 def _lean_text(root: Path) -> str:

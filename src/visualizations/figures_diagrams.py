@@ -240,7 +240,7 @@ def figure_lean_boundary_status(project_root: Path) -> Path:
     root = project_root.resolve()
     rows = load_lean_boundary_rows(root)
     if not rows:
-        raise FileNotFoundError("no Lean boundary modules under lean/TemplateActiveInference/")
+        raise FileNotFoundError("no Lean boundary modules under lean/OnPolicyDistillation/")
     table_data = [[row.module, row.kind, row.name, row.status] for row in rows]
     with styled_figure(root, "lean_boundary_status") as (style, out):
         fig_h = max(2.8, 0.35 * len(rows) + 1.0)

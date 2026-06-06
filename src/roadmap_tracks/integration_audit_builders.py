@@ -167,7 +167,7 @@ def build_cross_track_symbol_table(project_root: Path) -> dict[str, Any]:
                     "gnn_term": gnn_term,
                     "section_ontology_term": section_term,
                     "json_field": variable,
-                    "lean_namespace": "TemplateActiveInference",
+                    "lean_namespace": "OnPolicyDistillation",
                     "shape_declared": bool(var.dims),
                     "dtype_declared": bool(var.dtype),
                     "ontology_declared": bool(gnn_term),

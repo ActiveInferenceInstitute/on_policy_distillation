@@ -1,7 +1,7 @@
 import Lake
 open Lake DSL
 
-package «TemplateActiveInference» where
+package «OnPolicyDistillation» where
 
-lean_lib «TemplateActiveInference» where
-  roots := #[`TemplateActiveInference]
+lean_lib «OnPolicyDistillation» where
+  roots := #[`OnPolicyDistillation]

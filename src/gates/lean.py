@@ -11,7 +11,7 @@ from pathlib import Path
 # `native_decide`) -- means the proof is not closed by the kernel alone.
 _AXIOM_WHITELIST = frozenset({"propext", "Classical.choice", "Quot.sound"})
 
-_DEFAULT_AUDITED_DECLS = ("TemplateActiveInference.sophisticated_requires_horizon",)
+_DEFAULT_AUDITED_DECLS = ("OnPolicyDistillation.sophisticated_requires_horizon",)
 
 
 def lean_project_present(project_root: Path) -> bool:
@@ -52,12 +52,12 @@ def lean_axioms_clean(
     if not lean_project_present(project_root):
         return True, "lean project absent -- skipped"
     lean_dir = project_root.resolve() / "lean"
-    module_dir = lean_dir / "TemplateActiveInference"
+    module_dir = lean_dir / "OnPolicyDistillation"
     sources: list[str] = []
     for path in sorted(module_dir.glob("*.lean")):
         text = path.read_text(encoding="utf-8")
         sources.extend(
-            line for line in text.splitlines() if not line.lstrip().startswith("import TemplateActiveInference")
+            line for line in text.splitlines() if not line.lstrip().startswith("import OnPolicyDistillation")
         )
     body = "\n".join(sources) + "\n" + "\n".join(f"#print axioms {d}" for d in declarations) + "\n"
 

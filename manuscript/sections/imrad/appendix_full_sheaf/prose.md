@@ -3,3 +3,26 @@ This section is the **composability proof** for the manifest-indexed sheaf model
 **Supplemental concordance and metadata tables.** To keep the main body prose-led, the large concordance and metadata tables are kept as separate, single-source markdown files rather than inlined: the active-inference $\leftrightarrow$ on-policy-distillation correspondence map (`output/data/firstprinciples/correspondence_table.md`), the on-policy-distillation method taxonomy (`output/data/firstprinciples/taxonomy_table.md`), the literature-reported empirical benchmark (`output/data/firstprinciples/benchmark_table.md`), and the integrated notation/formalism supplement (`docs/reference/notation-supplement.md`). Each is regenerated from the `firstprinciples` package and the manuscript variables, so the supplemental tables never drift from the artifacts that produced them. The GNN $\leftrightarrow$ ontology concordance and the sheaf coverage/scholarship matrices remain in their generated form under `output/data/`.
 
 The proof is a publication-systems check ([@eq:appendix_track_count]). It demonstrates that heterogeneous fragments share one registry, manifest, renderer dispatch path, coverage matrix, and hydration boundary; it does not assert that every track carries equal scientific weight, nor that the analytical and T-maze demonstrations [@dacosta2020discrete] license claims beyond these minimal models and artifacts. The machinery guarantees only that the structural mapping — variational free energy to reverse-KL distillation loss, active sampling to on-policy student rollouts [@gu2024minillm], privileged information to the teacher's Markov-blanket asymmetry — is rendered coherently across tracks, leaving the scientific weight of each correspondence to the sections that carry it.
+
+### Supplemental table: energy decomposition
+
+The full variational- and expected-free-energy decomposition for the minimal model (referenced from [@sec:energy_decompositions]) is tabulated here. As elsewhere, these are nats from a faithful minimal-model demonstration, not production measurements.
+
+| Functional | Stream A | A (nats) | Stream B | B (nats) | Scalar (nats) |
+| --- | --- | --- | --- | --- | --- |
+| VFE ($F$) | complexity | {{energy_complexity:.3f}} | accuracy | {{energy_accuracy:.3f}} | log-evidence {{energy_log_evidence:.3f}} |
+| EFE (risk/ambiguity) | risk | {{efe_risk:.3f}} | ambiguity | {{efe_ambiguity:.3f}} | — |
+| EFE (epistemic/pragmatic) | epistemic | {{efe_epistemic:.3f}} | pragmatic | {{efe_pragmatic:.3f}} | — |
+
+### Supplemental table: empirical OPD-vs-RL benchmark (literature-reported)
+
+The literature-reported AIME-24 benchmark (referenced from the discussion) is tabulated here. These are external empirical results reported by @thinkingmachines2025opd, not measured in this manuscript; only the toy-model statistics reported elsewhere here are hydrated from our own generated artifacts.
+
+| Quantity (literature-reported) | On-policy distillation | Reinforcement learning |
+| --- | --- | --- |
+| AIME-24 accuracy (percent) | {{empirical_opd_aime24:.1f}} | {{empirical_rl_aime24:.1f}} |
+| Accuracy gain over RL (points) | {{empirical_aime24_gain_over_rl:.1f}} | — |
+| Training cost (GPU-hours) | {{empirical_opd_gpu_hours:.0f}} | {{empirical_rl_gpu_hours:.0f}} |
+| Compute reduction vs RL | {{empirical_compute_reduction:.1f}}x | 1.0x |
+
+Table: AIME-24 accuracy and training cost for on-policy distillation versus reinforcement learning, as reported by @thinkingmachines2025opd. These are external empirical results, not measured in this manuscript; only the toy-model statistics reported elsewhere here are hydrated from our own generated artifacts.

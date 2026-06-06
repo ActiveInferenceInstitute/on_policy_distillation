@@ -74,13 +74,30 @@ def figure_sheaf_coverage_heatmap(
     payload = coverage_heatmap_payload(root)
     if payload is None:
         return None
+    # Show only the science-bearing fragment tracks (drop build-machinery columns
+    # such as release_bundle / diffoscope / gate_ergonomics that are not relevant
+    # to the scientific argument); the full registry is the supplement's concern.
+    from dataclasses import replace as _replace
+
+    science_tracks = [
+        "prose", "formalism", "simulation", "pymdp", "interop", "gnn", "ontology",
+        "lean", "model_checking", "theorem_traceability", "proof_extraction",
+        "scholarship", "visualization",
+    ]
+    keep = [i for i, t in enumerate(payload.track_ids) if t in science_tracks]
+    if keep and len(keep) < len(payload.track_ids):
+        payload = _replace(
+            payload,
+            track_ids=[payload.track_ids[i] for i in keep],
+            grid=[[row[i] for i in keep] for row in payload.grid],
+        )
     cfg = payload.cfg
     style = load_figure_style(root)
     n_rows = len(payload.y_labels)
     n_cols = len(payload.track_ids)
     row_height = cfg.heatmap.row_height
-    fig_height = max(4.5, n_rows * row_height + 2.0)
-    fig_width = max(7.5, n_cols * 0.85 + 2.8)
+    fig_height = max(5.0, n_rows * row_height + 2.2)
+    fig_width = max(8.5, n_cols * 1.15 + 3.0)
     out = output_path or root / "output" / "figures" / "sheaf_coverage_heatmap.png"
     dpi = max(style.dpi, cfg.heatmap.dpi)
     with apply_style(style):
@@ -89,10 +106,11 @@ def figure_sheaf_coverage_heatmap(
             ax,
             payload,
             root,
-            title=cfg.report.title,
+            title="Science-bearing fragment-track coverage",
             show_legend=True,
             show_row_pct=True,
             boundary_width=1.2,
+            label_fontsize=11,
         )
         fig.tight_layout()
         save_figure_png(fig, out, dpi=dpi)

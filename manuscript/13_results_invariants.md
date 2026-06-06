@@ -36,7 +36,7 @@ The matrix is scoped to deterministic study models. It is useful as a cross-trac
 
 <!-- sheaf-track:visualization -->
 
-![Invariant dashboard: {{invariants_passed}} / {{invariants_total}} merged analytical and simulation checks from the validation registry.](../output/figures/invariant_dashboard.png){#fig:invariant_dashboard width=90% fig-alt="Horizontal bar checklist of analytical and simulation invariant names with pass or fail status. {{invariants_passed}} of {{invariants_total}} checks pass on the merged report."}
+![Invariant dashboard summarizing pass/fail status for every analytical and simulation check in the validation registry: {{invariants_passed}} of {{invariants_total}} merged checks pass on the combined report. These invariants are the machine-enforced correctness conditions -- conservation of probability mass, divergence non-negativity, free-energy bounds, and rollout consistency -- that bind the on-policy-distillation claims to the active-inference math. An all-green dashboard certifies that the executable evidence underwriting the manuscript actually satisfies the theory it reports.](../output/figures/invariant_dashboard.png){#fig:invariant_dashboard width=90% fig-alt="Horizontal bar checklist of analytical and simulation invariant names with pass or fail status. {{invariants_passed}} of {{invariants_total}} checks pass on the merged report."}
 
 <!-- sheaf-track:state_space_catalog -->
 
