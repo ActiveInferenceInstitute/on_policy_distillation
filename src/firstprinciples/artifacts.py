@@ -17,6 +17,7 @@ import numpy as np
 from . import adaptive
 from . import divergences as dv
 from . import diversity
+from . import empirical
 from . import energy
 from . import exposure_bias as eb
 from . import gkd
@@ -134,6 +135,7 @@ def write_markdown_tables(root: Path) -> dict[str, Path]:
     for name, text in (
         ("correspondence_table.md", mapping.markdown_table()),
         ("taxonomy_table.md", taxonomy.markdown_table()),
+        ("benchmark_table.md", empirical.markdown_table()),
     ):
         path = directory / name
         path.write_text(text, encoding="utf-8")
@@ -156,6 +158,7 @@ def write_all(root: Path) -> dict[str, Path]:
         "adaptive_demo.json": write_json(root, "adaptive_demo.json", adaptive.build_payload()),
         "energy_demo.json": write_json(root, "energy_demo.json", energy.build_payload()),
         "statistics_demo.json": write_json(root, "statistics_demo.json", stats.build_payload()),
+        "empirical_benchmark.json": write_json(root, "empirical_benchmark.json", empirical.build_payload()),
     }
     paths.update(write_markdown_tables(root))
     return paths

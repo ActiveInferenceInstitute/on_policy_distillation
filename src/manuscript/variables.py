@@ -165,6 +165,16 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
     energy_data = _load_json(root / "output" / "data" / "firstprinciples" / "energy_demo.json")
     energy_vfe_prior = energy_data.get("vfe_at_prior") or {}
     energy_efe = energy_data.get("efe") or {}
+    gkd_data = _load_json(root / "output" / "data" / "firstprinciples" / "gkd_demo.json")
+    gkd_gap = gkd_data.get("reverse_kl") or {}
+    diversity_data = _load_json(root / "output" / "data" / "firstprinciples" / "diversity_demo.json")
+    em_data = _load_json(root / "output" / "data" / "firstprinciples" / "variational_em_demo.json")
+    adaptive_data = _load_json(root / "output" / "data" / "firstprinciples" / "adaptive_demo.json")
+    statistics_data = _load_json(root / "output" / "data" / "firstprinciples" / "statistics_demo.json")
+    statistics_ci = statistics_data.get("advantage_bootstrap_ci") or {}
+    statistics_perm = statistics_data.get("paired_permutation") or {}
+    empirical_data = _load_json(root / "output" / "data" / "firstprinciples" / "empirical_benchmark.json")
+    empirical_gain = empirical_data.get("accuracy_gain") or {}
     exposure_gap = exposure_bias_data.get("gap") or {}
     si_stats = stats_data.get("si_tmaze") or {}
     sweep_stats = stats_data.get("sweep") or {}
@@ -378,6 +388,28 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
         "efe_ambiguity": float(energy_efe.get("ambiguity", 0.0)),
         "efe_epistemic": float(energy_efe.get("epistemic_value", 0.0)),
         "efe_pragmatic": float(energy_efe.get("pragmatic_value", 0.0)),
+        "gkd_on_policy_loss": float(gkd_gap.get("on_policy_loss", 0.0)),
+        "gkd_off_policy_loss": float(gkd_gap.get("off_policy_loss", 0.0)),
+        "gkd_exposure_gap": float(gkd_gap.get("exposure_gap", 0.0)),
+        "diversity_sharpest_pass_at_k": float(diversity_data.get("sharpest_pass_at_k", 0.0)),
+        "diversity_flattest_pass_at_k": float(diversity_data.get("flattest_pass_at_k", 0.0)),
+        "diversity_greedy_pass_at_1": float(diversity_data.get("greedy_pass_at_1", 0.0)),
+        "em_iterations": int(em_data.get("iterations", 0)),
+        "em_final_gap": float(em_data.get("final_gap_to_target", 0.0)),
+        "em_monotone_descent": bool(em_data.get("monotone_descent", False)),
+        "adaptive_reverse_fraction": float(adaptive_data.get("reverse_fraction", 0.0)),
+        "adaptive_total": float(adaptive_data.get("adaptive_total", 0.0)),
+        "statistics_advantage_ci_low": float(statistics_ci.get("ci_low", 0.0)),
+        "statistics_advantage_ci_high": float(statistics_ci.get("ci_high", 0.0)),
+        "statistics_advantage_point": float(statistics_ci.get("point", 0.0)),
+        "statistics_cohens_d": float(statistics_data.get("cohens_d_student_minus_teacher", 0.0)),
+        "statistics_permutation_p": float(statistics_perm.get("p_value", 1.0)),
+        "empirical_opd_aime24": float(empirical_data.get("opd_aime24", 0.0)),
+        "empirical_rl_aime24": float(empirical_data.get("rl_aime24", 0.0)),
+        "empirical_opd_gpu_hours": float(empirical_data.get("opd_gpu_hours", 0.0) or 0.0),
+        "empirical_rl_gpu_hours": float(empirical_data.get("rl_gpu_hours", 0.0) or 0.0),
+        "empirical_compute_reduction": float(empirical_data.get("compute_reduction_factor", 0.0)),
+        "empirical_aime24_gain_over_rl": float(empirical_gain.get("aime24_over_rl", 0.0)),
         "classroom_teacher_cue_validity": classroom_data.get("teacher_cue_validity", 0.0),
         "classroom_student_cue_validity": classroom_data.get("student_cue_validity", 0.0),
         "classroom_teacher_belief_entropy": classroom_data.get("teacher_mean_belief_entropy", 0.0),
