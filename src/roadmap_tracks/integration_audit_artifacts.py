@@ -136,6 +136,8 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         "exposure_bias_recovery": ["output/data/firstprinciples/exposure_bias_demo.json"],
         "classroom_distillation_signal": ["output/data/firstprinciples/classroom.json"],
         "energy_decomposition": ["output/data/firstprinciples/energy_demo.json"],
+        "parallel_convergence": ["output/data/firstprinciples/parallel_demo.json"],
+        "diversity_tradeoff": ["output/data/firstprinciples/diversity_demo.json"],
         "sheaf_layers_overview": ["output/data/sheaf_coverage_matrix.json"],
         "sheaf_coverage_heatmap": ["output/data/sheaf_coverage_matrix.json"],
         "invariant_dashboard": ["output/reports/invariants.json"],
@@ -208,6 +210,17 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
             "$.efe.ambiguity",
             "$.log_evidence",
         ],
+        "parallel_convergence": [
+            "$.loss_trajectory",
+            "$.active_inference_teacher_posterior",
+            "$.ml_distilled_student",
+            "$.max_abs_difference",
+        ],
+        "diversity_tradeoff": [
+            "$.temperatures",
+            "$.pass_at_k",
+            "$.greedy_pass_at_1",
+        ],
         "sheaf_layers_overview": ["$.tracks", "$.layers", "$.bound_cell_count", "$.validated_cell_count"],
         "sheaf_coverage_heatmap": ["$.rows", "$.track_ids", "$.section_ids", "$.status_matrix"],
         "invariant_dashboard": ["$.invariants", "$.simulation", "$.all_pass"],
@@ -256,6 +269,14 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         ],
         "energy_decomposition": [
             "test_firstprinciples_energy.decompositions_agree",
+            "test_figures.nonblank_png",
+        ],
+        "parallel_convergence": [
+            "test_firstprinciples_parallel.test_parallel_payload_frameworks_agree",
+            "test_figures.nonblank_png",
+        ],
+        "diversity_tradeoff": [
+            "test_firstprinciples_dynamics.test_diversity_tradeoff_payload",
             "test_figures.nonblank_png",
         ],
         "sheaf_layers_overview": ["validate_outputs.canonical_sheaf_track_schemas", "test_figures.nonblank_png"],

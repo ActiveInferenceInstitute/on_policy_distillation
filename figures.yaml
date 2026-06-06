@@ -123,6 +123,40 @@ figures:
       on-policy student is simultaneously matching the teacher's outputs (accuracy/pragmatic)
       and reducing its own uncertainty about unvisited states (epistemic).
     width: 0.95
+  parallel_convergence:
+    filename: parallel_convergence.png
+    alt: >-
+      Two-panel figure. Left: the reverse-KL on-policy-distillation loss versus gradient
+      step on a logarithmic axis, decaying toward zero as a jax-autodiff student is trained.
+      Right: grouped bars comparing the active-inference exact posterior with the
+      machine-learning-distilled student over the hidden states; the bars coincide.
+    caption: >-
+      One scenario solved in two frameworks. A standard machine-learning loop (jax
+      automatic differentiation on the reverse-KL distillation loss) drives a student
+      policy to the active-inference exact posterior $p(s\mid o)$: the per-step reverse KL
+      decays to zero (left) and the distilled student matches the posterior to within
+      {{parallel_max_abs_difference:.4f}} (right), its variational free energy reaching
+      {{parallel_student_free_energy:.3f}} nats -- the evidence bound
+      $-\ln p(o) = {{parallel_neg_log_evidence:.3f}}$. The reverse-KL distillation gradient
+      is the variational free-energy gradient, so the correspondence is executed rather than
+      asserted. Source: `output/data/firstprinciples/parallel_demo.json`.
+    width: 0.95
+  diversity_tradeoff:
+    filename: diversity_tradeoff.png
+    alt: >-
+      Line plot of sampling Pass@k versus student temperature on a logarithmic x-axis, with a
+      dashed horizontal line for the temperature-invariant greedy Pass@1. Pass@k rises with
+      temperature and collapses toward the greedy ceiling as the student sharpens.
+    caption: >-
+      The diversity-collapse tradeoff of mode-seeking distillation, evaluated over a problem
+      ensemble. Greedy Pass@1 (dashed, {{diversity_greedy_pass_at_1:.3f}}) is
+      temperature-invariant; sampling Pass@k falls from {{diversity_flattest_pass_at_k:.3f}}
+      at the flattest temperature to {{diversity_sharpest_pass_at_k:.3f}} at the sharpest,
+      because Pass@k is concave in the correct-answer mass. Aggressive reverse-KL sharpening
+      therefore raises single-answer commitment while collapsing Pass@k -- the
+      Pass@1-versus-Pass@k tension active inference frames as precision (inverse temperature).
+      Source: `output/data/firstprinciples/diversity_demo.json`.
+    width: 0.9
   si_tmaze_actions:
     filename: si_tmaze_actions.png
     alt: >-
@@ -421,6 +455,7 @@ section_figures:
   methods_pymdp:
     - id: tmaze_schematic
     - id: si_tmaze_model_matrices
+    - id: parallel_convergence
   methods_lean:
     - id: lean_boundary_status
   results_mi_sweep:
@@ -431,6 +466,7 @@ section_figures:
     - id: energy_decomposition
   results_invariants:
     - id: invariant_dashboard
+    - id: diversity_tradeoff
   results_si_tmaze:
     - id: si_belief_entropy_curve
     - id: si_obs_action_trace

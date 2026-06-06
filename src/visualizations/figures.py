@@ -641,6 +641,68 @@ def figure_energy_decomposition(project_root: Path) -> Path:
     return out
 
 
+def figure_parallel_convergence(project_root: Path) -> Path:
+    """Two frameworks, one answer: ML distillation converging to the AIF posterior."""
+    root = project_root.resolve()
+    style = load_figure_style(root)
+    data = json.loads((root / "output" / "data" / "firstprinciples" / "parallel_demo.json").read_text(encoding="utf-8"))
+    steps = [int(s) for s in data.get("trajectory_steps") or []]
+    losses = [max(float(v), 1e-12) for v in data.get("loss_trajectory") or []]
+    teacher = [float(v) for v in data.get("active_inference_teacher_posterior") or []]
+    student = [float(v) for v in data.get("ml_distilled_student") or []]
+    out = figure_output_path(root, "parallel_convergence")
+    with apply_style(style):
+        fig, axes = plt.subplots(1, 2, figsize=(11.0, 4.6), gridspec_kw={"width_ratios": [1.25, 1.0]})
+        loss_ax, bar_ax = axes
+        loss_ax.semilogy(steps, losses, marker="o", linewidth=2.2, color=style.color("accent"))
+        loss_ax.set_xlabel("Gradient step")
+        loss_ax.set_ylabel(r"reverse KL $D_{KL}(\pi_S\|\pi_T)$ (nats)")
+        loss_ax.set_title("ML reverse-KL distillation (jax autodiff) converges")
+        style_grid(loss_ax, style)
+
+        idx = np.arange(len(teacher))
+        width = 0.38
+        bar_ax.bar(idx - width / 2, teacher, width, label="active inference: posterior $p(s\\mid o)$", color=style.color("secondary"))
+        bar_ax.bar(idx + width / 2, student, width, label="ML: distilled student $\\pi_S$", color=style.color("accent"))
+        bar_ax.set_xticks(list(idx))
+        bar_ax.set_xticklabels([f"state {i}" for i in idx])
+        bar_ax.set_ylabel("probability")
+        bar_ax.set_title("Same solution in both frameworks")
+        bar_ax.legend(frameon=False, fontsize=9, loc="upper right")
+        for i, (t, s) in enumerate(zip(teacher, student, strict=False)):
+            bar_ax.text(i - width / 2, t, f"{t:.2f}", ha="center", va="bottom", fontsize=8)
+            bar_ax.text(i + width / 2, s, f"{s:.2f}", ha="center", va="bottom", fontsize=8)
+        style_grid(bar_ax, style)
+        fig.text(0.01, 0.01, "Source: output/data/firstprinciples/parallel_demo.json", fontsize=8.0, color=style.color("muted"))
+        save_styled_figure(fig, out, style)
+    return out
+
+
+def figure_diversity_tradeoff(project_root: Path) -> Path:
+    """Pass@1 (greedy, temperature-invariant) vs Pass@k (collapses under sharpening)."""
+    root = project_root.resolve()
+    style = load_figure_style(root)
+    data = json.loads((root / "output" / "data" / "firstprinciples" / "diversity_demo.json").read_text(encoding="utf-8"))
+    temps = [float(t) for t in data.get("temperatures") or []]
+    pass_k = [float(v) for v in data.get("pass_at_k") or []]
+    greedy = float(data.get("greedy_pass_at_1", 0.0))
+    k = int(data.get("k", 0))
+    out = figure_output_path(root, "diversity_tradeoff")
+    with apply_style(style):
+        fig, ax = plt.subplots(figsize=(8.4, 4.6))
+        ax.plot(temps, pass_k, marker="o", linewidth=2.4, color=style.color("accent"), label=f"sampling Pass@{k}")
+        ax.axhline(greedy, color=style.color("secondary"), linewidth=2.0, linestyle="--", label="greedy Pass@1 (temperature-invariant)")
+        ax.set_xscale("log")
+        ax.set_xlabel(r"student temperature $\tau$ (low = mode-seeking / reverse-KL)")
+        ax.set_ylabel("success probability")
+        ax.set_title(f"Diversity collapse: sharpening lowers Pass@{k} toward the greedy ceiling")
+        ax.legend(frameon=False, fontsize=9, loc="best")
+        style_grid(ax, style)
+        fig.text(0.01, 0.01, "Source: output/data/firstprinciples/diversity_demo.json", fontsize=8.0, color=style.color("muted"))
+        save_styled_figure(fig, out, style)
+    return out
+
+
 def figure_si_summary(project_root: Path) -> Path:
     """Deprecated alias for ``figure_si_tmaze_actions``."""
     return figure_si_tmaze_actions(project_root)
@@ -1269,6 +1331,8 @@ FIGURE_GENERATORS: dict[str, Callable[[Path], Path | None]] = {
     "exposure_bias_recovery": figure_exposure_bias_recovery,
     "classroom_distillation_signal": figure_classroom_distillation_signal,
     "energy_decomposition": figure_energy_decomposition,
+    "parallel_convergence": figure_parallel_convergence,
+    "diversity_tradeoff": figure_diversity_tradeoff,
     "sheaf_layers_overview": figure_sheaf_layers_overview,
     "sheaf_coverage_heatmap": figure_sheaf_coverage_heatmap,
     "invariant_dashboard": figure_invariant_dashboard,
