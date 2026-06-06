@@ -26,9 +26,9 @@ with symmetric Ising coupling $J$ and deformation parameter $\lambda$. Reading $
 
 $$
 I(\lambda)=\sum_k H(q_k)-H(q_\lambda)=\log 2 - H_b(\sigma(\lambda)),
-$$
+$$ {#eq:mutual_information}
 
-vanishing at $\lambda=0$ ($\sigma=\tfrac12$, independent streams — the teacher conveys no privileged signal, the SFT-style off-policy limit [@hinton2015distilling]) and saturating at $\log 2$ as $\lambda\to\infty$ ($\sigma\to1$, perfectly entangled — the teacher fully determines the student target, the self-distillation limit). $I(\lambda)$ is therefore the quantity an on-policy distiller transfers per token: it is the epistemic value of teacher feedback on student-generated states, and it upper-bounds the reverse-KL signal that the executable classroom demonstration reports. These claims are limited to this analytical model and its companion artifacts; they are a faithful minimal-model demonstration of the correspondence, not a measurement on production LLMs. These symbols are the rows of `analytical_assumption_index.json`, so the derivation is auditable rather than asserted.
+[@eq:mutual_information] vanishes at $\lambda=0$ ($\sigma=\tfrac12$, independent streams — the teacher conveys no privileged signal, the SFT-style off-policy limit [@hinton2015distilling]) and saturates at $\log 2$ as $\lambda\to\infty$ ($\sigma\to1$, perfectly entangled — the teacher fully determines the student target, the self-distillation limit). $I(\lambda)$ is therefore the quantity an on-policy distiller transfers per token: it is the epistemic value of teacher feedback on student-generated states, and it upper-bounds the reverse-KL signal that the executable classroom demonstration reports. These claims are limited to this analytical model and its companion artifacts; they are a faithful minimal-model demonstration of the correspondence, not a measurement on production LLMs. These symbols are the rows of `analytical_assumption_index.json`, so the derivation is auditable rather than asserted.
 
 <!-- sheaf-track:simulation -->
 

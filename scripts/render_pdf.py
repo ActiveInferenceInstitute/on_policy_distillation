@@ -33,6 +33,62 @@ if str(SRC) not in sys.path:
 from manuscript.render_helpers import extract_preamble, geometry_string  # noqa: E402
 
 
+def _tex_escape(text: str) -> str:
+    """Escape the LaTeX special characters that occur in metadata strings."""
+    for char, repl in (("\\", r"\textbackslash{}"), ("&", r"\&"), ("%", r"\%"), ("$", r"\$"),
+                        ("#", r"\#"), ("_", r"\_"), ("{", r"\{"), ("}", r"\}"), ("~", r"\textasciitilde{}")):
+        text = text.replace(char, repl)
+    return text
+
+
+def build_cover_tex(config: dict, project_root: Path) -> str:
+    """Build a standalone title page: title, subtitle, author block, graphical abstract."""
+    paper = config.get("paper") or {}
+    title = _tex_escape(str(paper.get("title") or "Manuscript"))
+    subtitle = _tex_escape(str(paper.get("subtitle") or ""))
+    version = _tex_escape(str(paper.get("version") or ""))
+    date = _tex_escape(str(paper.get("date") or ""))
+    front = (config.get("front_matter") or {}).get("graphical_abstract") or {}
+    abstract_img = project_root / "output" / "figures" / "graphical_abstract.png"
+    caption = _tex_escape(str(front.get("caption") or ""))
+
+    author_lines: list[str] = []
+    for author in config.get("authors") or []:
+        name = _tex_escape(str(author.get("name") or ""))
+        affil = _tex_escape(str(author.get("affiliation") or ""))
+        email = _tex_escape(str(author.get("email") or ""))
+        orcid = _tex_escape(str(author.get("orcid") or ""))
+        meta = " \\quad ".join(part for part in (f"\\texttt{{{email}}}" if email else "",
+                                                 f"ORCID:~{orcid}" if orcid else "") if part)
+        author_lines.append(
+            f"{{\\large\\bfseries {name}\\par}}\n"
+            + (f"{{\\normalsize {affil}\\par}}\n" if affil else "")
+            + (f"{{\\small {meta}\\par}}\n" if meta else "")
+            + "\\vspace{0.6em}\n"
+        )
+    authors_block = "".join(author_lines)
+    footer = " \\,\\textbullet\\, ".join(part for part in (f"Version {version}" if version else "", date) if part)
+
+    abstract_block = ""
+    if front.get("enabled") and abstract_img.is_file():
+        abstract_block = (
+            "\\vspace{1.0em}\n"
+            f"\\includegraphics[width=0.97\\textwidth,height=0.52\\textheight,keepaspectratio]{{{abstract_img}}}\\par\n"
+            + (f"\\vspace{{0.5em}}{{\\footnotesize {caption}\\par}}\n" if caption else "")
+        )
+
+    return (
+        f"\\hypersetup{{pdftitle={{{title}}}}}\n"
+        "\\begin{titlepage}\n\\centering\n\\vspace*{0.3in}\n"
+        f"{{\\LARGE\\bfseries {title}\\par}}\n\\vspace{{0.5em}}\n"
+        + (f"{{\\large\\itshape {subtitle}\\par}}\n\\vspace{{1.4em}}\n" if subtitle else "\\vspace{1.0em}\n")
+        + authors_block
+        + (f"\\vspace{{0.4em}}{{\\small {footer}\\par}}\n" if footer else "")
+        + abstract_block
+        + "\\end{titlepage}\n"
+    )
+
+
 def main() -> int:
     for tool in ("pandoc", "xelatex"):
         if shutil.which(tool) is None:
@@ -66,7 +122,11 @@ def main() -> int:
     config = yaml.safe_load((manuscript_dir / "config.yaml").read_text(encoding="utf-8")) or {}
     title = str((config.get("paper") or {}).get("title") or "Manuscript")
 
-    pdf_out = out_pdf_dir / "template_active_inference_standalone.pdf"
+    # Custom title page: author block + graphical abstract, inserted before body.
+    cover_tex = out_pdf_dir / "_standalone_cover.tex"
+    cover_tex.write_text(build_cover_tex(config, PROJECT_ROOT), encoding="utf-8")
+
+    pdf_out = out_pdf_dir / "on_policy_distillation.pdf"
     cmd = [
         "pandoc",
         str(combined_md),
@@ -78,6 +138,8 @@ def main() -> int:
         "--number-sections",
         "-H",
         str(header_tex),
+        "--include-before-body",
+        str(cover_tex),
         "-V",
         f"geometry:{geometry_string(manuscript_dir / 'config.yaml')}",
         # Red hyperlinks — self-contained, no LaTeX post-processing needed.
@@ -89,10 +151,9 @@ def main() -> int:
         "urlcolor=red",
         "-V",
         "citecolor=red",
-        "-M",
-        f"title={title}",
         f"--resource-path={manuscript_dir}",
     ]
+    _ = title  # title is rendered by the custom cover page, not pandoc's \maketitle
     crossref = shutil.which("pandoc-crossref")
     if crossref:
         cmd += ["--filter", crossref]

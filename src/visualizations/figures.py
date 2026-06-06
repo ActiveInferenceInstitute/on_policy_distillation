@@ -1009,14 +1009,20 @@ def figure_graphical_abstract(project_root: Path) -> Path:
     dependency = _json_or_empty(root / "output" / "data" / "validation_dependency_graph.json")
     variables = _json_or_empty(root / "output" / "data" / "manuscript_variables.json")
     validation = _json_or_empty(root / "output" / "reports" / "validation_report.json")
+    fp = root / "output" / "data" / "firstprinciples"
+    energy_d = _json_or_empty(fp / "energy_demo.json")
+    classroom_d = _json_or_empty(fp / "classroom.json")
+    empirical_d = _json_or_empty(fp / "empirical_benchmark.json")
+    vfe_d = energy_d.get("vfe_at_prior") or {}
+    efe_d = energy_d.get("efe") or {}
 
-    source_count = int(scholarship.get("source_count", 0) or variables.get("scholarship_source_count", 0) or 0)
-    edge_count = len(dependency.get("edges") or [])
-    validation_status = "validated" if validation.get("all_passed") or validation.get("status") == "passed" else "gated"
-    coverage_short = (
-        f"{counts['coverage_present']} present | "
-        f"{counts['coverage_bound']} bound | {counts['coverage_missing']} missing"
-    )
+    def _f(value: object, fmt: str = ".2f") -> str:
+        try:
+            return format(float(value), fmt)  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            return "--"
+
+    _ = (scholarship, dependency, validation)  # retained inputs; numbers now sourced from firstprinciples artifacts
     out = figure_output_path(root, "graphical_abstract")
 
     background = "#eef2ff"
@@ -1045,7 +1051,7 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         ax.text(
             0.55,
             6.48,
-            "Active Inference Multi-Track Exemplar",
+            "On-Policy Distillation is Active Inference",
             fontsize=22,
             fontweight="bold",
             color="white",
@@ -1054,7 +1060,7 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         ax.text(
             0.58,
             6.08,
-            "One generated object joins scholarship, executable toy evidence, formal checks, sheaf layers, and release gates.",
+            "The variational posterior generates its own observations; the generative model is conditioned on privileged beliefs.",
             fontsize=10.5,
             color="#dbeafe",
             va="center",
@@ -1073,13 +1079,13 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         hub_x, hub_y = 7.0, 3.65
         ax.add_patch(Circle((hub_x, hub_y), 1.05, facecolor="#111827", edgecolor="#93c5fd", linewidth=2.4))
         ax.add_patch(Circle((hub_x, hub_y), 0.74, facecolor="#1e3a8a", edgecolor="#c7d2fe", linewidth=1.4))
-        ax.text(hub_x, hub_y + 0.18, "Sheaf", fontsize=18, fontweight="bold", color="white", ha="center")
-        ax.text(hub_x, hub_y - 0.18, "composition", fontsize=10.5, color="#dbeafe", ha="center")
+        ax.text(hub_x, hub_y + 0.2, "reverse KL", fontsize=13, fontweight="bold", color="white", ha="center")
+        ax.text(hub_x, hub_y - 0.1, "= free energy", fontsize=11, color="#dbeafe", ha="center")
         ax.text(
             hub_x,
-            hub_y - 0.53,
-            f"{counts['imrad_manifest_rows']} rows | {counts['coverage_bound']} bound",
-            fontsize=8.2,
+            hub_y - 0.5,
+            r"$D_{KL}(\pi_S\|\pi_T)=F$",
+            fontsize=8.6,
             color="#bfdbfe",
             ha="center",
         )
@@ -1155,8 +1161,12 @@ def figure_graphical_abstract(project_root: Path) -> Path:
             3.08,
             3.25,
             2.18,
-            "Scholarship spine",
-            ["FEP and active-inference lineage", f"{source_count} source bindings", "Toy-only claim scope"],
+            "Correspondence",
+            [
+                "teacher pi_T = generative model p(o,s)",
+                "student pi_S = posterior q(s)",
+                "privileged context = Markov blanket",
+            ],
             style.color("secondary"),
             (3.97, 4.15),
         )
@@ -1165,8 +1175,12 @@ def figure_graphical_abstract(project_root: Path) -> Path:
             0.74,
             3.25,
             2.12,
-            "Executable evidence",
-            ["Bernoulli-Ising oracle", "pymdp T-maze traces", "GNN and ontology round trips"],
+            "Two-agent classroom",
+            [
+                f"teacher entropy {_f(classroom_d.get('teacher_mean_belief_entropy'), '.3f')} nats",
+                f"student entropy {_f(classroom_d.get('student_mean_belief_entropy'), '.3f')} nats",
+                f"distillation signal {_f(classroom_d.get('mean_reverse_kl'), '.2f')} nats",
+            ],
             style.color("accent"),
             (4.19, 1.92),
         )
@@ -1175,8 +1189,12 @@ def figure_graphical_abstract(project_root: Path) -> Path:
             3.08,
             3.28,
             2.18,
-            "Formal witnesses",
-            ["Lean boundary checks", "Finite model witnesses", "Traceability rows"],
+            "Energy decomposition",
+            [
+                f"VFE = complexity {_f(vfe_d.get('complexity'), '.2f')} - accuracy {_f(vfe_d.get('accuracy'), '.2f')}",
+                f"EFE risk {_f(efe_d.get('risk'), '.2f')} + ambiguity {_f(efe_d.get('ambiguity'), '.2f')}",
+                f"epistemic {_f(efe_d.get('epistemic_value'), '.2f')} + pragmatic {_f(efe_d.get('pragmatic_value'), '.2f')}",
+            ],
             "#7c3aed",
             (9.8, 4.15),
         )
@@ -1185,8 +1203,12 @@ def figure_graphical_abstract(project_root: Path) -> Path:
             0.74,
             3.36,
             2.12,
-            "Publication gates",
-            [f"{edge_count} dependency edges", f"Output {validation_status}", coverage_short],
+            "Empirical (reported)",
+            [
+                f"AIME'24 OPD {_f(empirical_d.get('opd_aime24'), '.1f')} vs RL {_f(empirical_d.get('rl_aime24'), '.1f')}",
+                f"{_f(empirical_d.get('compute_reduction_factor'), '.1f')}x less compute",
+                "dense per-token vs sparse scalar reward",
+            ],
             style.color("pass"),
             (9.63, 1.92),
         )

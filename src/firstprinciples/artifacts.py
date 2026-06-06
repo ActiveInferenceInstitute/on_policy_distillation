@@ -22,6 +22,7 @@ from . import energy
 from . import exposure_bias as eb
 from . import gkd
 from . import mapping
+from . import parallel
 from . import reward_tilting as rt
 from . import sdpg
 from . import statistics as stats
@@ -159,6 +160,7 @@ def write_all(root: Path) -> dict[str, Path]:
         "energy_demo.json": write_json(root, "energy_demo.json", energy.build_payload()),
         "statistics_demo.json": write_json(root, "statistics_demo.json", stats.build_payload()),
         "empirical_benchmark.json": write_json(root, "empirical_benchmark.json", empirical.build_payload()),
+        "parallel_demo.json": write_json(root, "parallel_demo.json", parallel.build_payload()),
     }
     paths.update(write_markdown_tables(root))
     return paths

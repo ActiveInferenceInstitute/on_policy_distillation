@@ -175,6 +175,7 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
     statistics_perm = statistics_data.get("paired_permutation") or {}
     empirical_data = _load_json(root / "output" / "data" / "firstprinciples" / "empirical_benchmark.json")
     empirical_gain = empirical_data.get("accuracy_gain") or {}
+    parallel_data = _load_json(root / "output" / "data" / "firstprinciples" / "parallel_demo.json")
     exposure_gap = exposure_bias_data.get("gap") or {}
     si_stats = stats_data.get("si_tmaze") or {}
     sweep_stats = stats_data.get("sweep") or {}
@@ -410,6 +411,10 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
         "empirical_rl_gpu_hours": float(empirical_data.get("rl_gpu_hours", 0.0) or 0.0),
         "empirical_compute_reduction": float(empirical_data.get("compute_reduction_factor", 0.0)),
         "empirical_aime24_gain_over_rl": float(empirical_gain.get("aime24_over_rl", 0.0)),
+        "parallel_max_abs_difference": float(parallel_data.get("max_abs_difference", 0.0)),
+        "parallel_student_free_energy": float(parallel_data.get("student_free_energy", 0.0)),
+        "parallel_neg_log_evidence": float(parallel_data.get("neg_log_evidence", 0.0)),
+        "parallel_frameworks_agree": bool(parallel_data.get("frameworks_agree", False)),
         "classroom_teacher_cue_validity": classroom_data.get("teacher_cue_validity", 0.0),
         "classroom_student_cue_validity": classroom_data.get("student_cue_validity", 0.0),
         "classroom_teacher_belief_entropy": classroom_data.get("teacher_mean_belief_entropy", 0.0),
