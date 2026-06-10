@@ -179,9 +179,9 @@ def figure_exposure_bias_recovery(project_root: Path) -> Path:
                 color=style.color("reference"),
             )
         ax.set_xlabel("Generated step")
-        ax.set_ylabel("Expected correctness")
+        ax.set_ylabel("Expected correctness (closed form)")
         ax.set_ylim(0.0, 1.02)
-        ax.set_title("On-policy correction arrests compounding error")
+        ax.set_title("Per-step expected correctness: off-policy vs on-policy training (toy drift model)")
         style_grid(ax, style)
         ax.legend(frameon=False, fontsize=style.font_size("legend"))
         fig.text(

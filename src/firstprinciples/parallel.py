@@ -106,7 +106,12 @@ def build_payload() -> dict[str, object]:
     model = _canonical_model()
     o = 0
     teacher = posterior(model, o)  # active-inference target (VFE minimiser)
-    result = ml_distill_to_teacher(teacher)
+    # Optimization metadata travels with the artifact so figure captions can
+    # hydrate exactness/convergence details instead of asserting them.
+    opt_lr = 0.5
+    opt_steps = 800
+    opt_tol = 1e-5
+    result = ml_distill_to_teacher(teacher, steps=opt_steps, lr=opt_lr, tol=opt_tol)
     student = np.asarray(result.student, dtype=np.float64)
     max_abs_diff = float(np.max(np.abs(student - teacher)))
     f_student, _, _ = vfe_complexity_accuracy(student, model, o)
@@ -123,6 +128,13 @@ def build_payload() -> dict[str, object]:
         "trajectory_steps": result.trajectory_steps,
         "student_free_energy": f_student,
         "neg_log_evidence": neg_log_evidence,
+        "optimizer": {
+            "method": "full-batch gradient descent (jax.grad on reverse KL)",
+            "learning_rate": opt_lr,
+            "max_steps": opt_steps,
+            "stop_tolerance": opt_tol,
+            "deterministic": True,
+        },
         "free_energy_matches_minimum": bool(abs(f_student - neg_log_evidence) < 1e-3),
         "frameworks_agree": bool(max_abs_diff < 1e-3 and result.converged),
         "ok": bool(max_abs_diff < 1e-3 and abs(f_student - neg_log_evidence) < 1e-3),

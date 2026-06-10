@@ -27,7 +27,7 @@ EXPECTED_SCHOLARSHIP_KEYS: tuple[str, ...] = (
     "millidge2021walkthrough",
     "dacosta2020discrete",
     "vanoostrum2024discrete_active_inference",
-    "friston2019generalised",
+    "friston2021sophisticated",
     "parr2019generalised",
     "millidge2020efe",
     "millidge2020active_control",
@@ -111,7 +111,7 @@ EXPECTED_SCHOLARSHIP_KEYS: tuple[str, ...] = (
     "tian2026vicur",
     "liu2026visual_advantage_opd",
     "liu2026oisd",
-    "pymdp2024",
+    "pymdp2022",
     "gnn2023",
     "koudahl2023synthetic",
     "curry2014sheaves",
@@ -123,6 +123,12 @@ EXPECTED_SCHOLARSHIP_KEYS: tuple[str, ...] = (
     "rosiak2022sheaf_examples",
     "cox2026fragmented_risk_sheaf",
     "cohen1988power",
+    "huszar2015hownot",
+    "ranzato2016sequence",
+    "he2021selfrecovery",
+    "biehl2020critique",
+    "holtzman2019degeneration",
+    "wu2026lightningopd",
 )
 
 _BASE_SCHOLARSHIP_SOURCES: tuple[dict[str, Any], ...] = (
@@ -417,7 +423,7 @@ _BASE_SCHOLARSHIP_SOURCES: tuple[dict[str, Any], ...] = (
         "claim_boundary": "finite toy state spaces only",
     },
     {
-        "citation_key": "friston2019generalised",
+        "citation_key": "friston2021sophisticated",
         "source_kind": "primary_article",
         "source_family": "sophisticated_inference",
         "method_role": "recursive_expected_free_energy_planning",
@@ -787,7 +793,7 @@ _BASE_SCHOLARSHIP_SOURCES: tuple[dict[str, Any], ...] = (
         "claim_boundary": "internal self-distillation context only; classroom metrics remain toy evidence",
     },
     {
-        "citation_key": "pymdp2024",
+        "citation_key": "pymdp2022",
         "source_kind": "primary_article",
         "source_family": "pymdp_implementation",
         "method_role": "pymdp_library_methodology",
@@ -1243,7 +1249,76 @@ _REDTEAM_REVIEW_SOURCES: tuple[dict[str, Any], ...] = (
 )
 
 
-SCHOLARSHIP_SOURCES: tuple[dict[str, Any], ...] = _BASE_SCHOLARSHIP_SOURCES + _REDTEAM_REVIEW_SOURCES
+# Sources added in response to the 2026-06-10 external manuscript review:
+# countervailing exposure-bias / scheduled-sampling / FEP-critique / diversity
+# literature plus a primary offline-OPD efficiency reference. Every entry was
+# live-verified (arXiv abs page or DOI redirect) before inclusion.
+_RUN5_REVIEW_SOURCES: tuple[dict[str, Any], ...] = (
+    {
+        "citation_key": "huszar2015hownot",
+        "source_kind": "primary_preprint",
+        "source_family": "sequence_training_critique",
+        "method_role": "scheduled_sampling_objection",
+        "tracks": ["prose", "scholarship"],
+        "artifact": "output/data/firstprinciples/exposure_bias_demo.json",
+        "manuscript_sections": ["intro_motivation", "discussion_outlook"],
+        "claim_boundary": "counter-citation: scheduled sampling cited as lineage, not settled solution",
+    },
+    {
+        "citation_key": "ranzato2016sequence",
+        "source_kind": "primary_conference",
+        "source_family": "sequence_training_critique",
+        "method_role": "sequence_level_objective",
+        "tracks": ["prose", "scholarship"],
+        "artifact": "output/data/firstprinciples/exposure_bias_demo.json",
+        "manuscript_sections": ["intro_motivation"],
+        "claim_boundary": "historical sequence-level train/test mismatch lineage only",
+    },
+    {
+        "citation_key": "he2021selfrecovery",
+        "source_kind": "primary_conference",
+        "source_family": "sequence_training_critique",
+        "method_role": "exposure_bias_counterweight",
+        "tracks": ["prose", "scholarship"],
+        "artifact": "output/data/firstprinciples/exposure_bias_demo.json",
+        "manuscript_sections": ["intro_motivation", "discussion_outlook"],
+        "claim_boundary": "counter-citation: exposure-bias severity is task-dependent; motivational use only",
+    },
+    {
+        "citation_key": "biehl2020critique",
+        "source_kind": "primary_article",
+        "source_family": "free_energy_principle_critique",
+        "method_role": "blanket_interpretation_boundary",
+        "tracks": ["prose", "scholarship"],
+        "artifact": "output/data/scholarship_source_matrix.json",
+        "manuscript_sections": ["intro_motivation", "intro_contributions", "discussion_outlook"],
+        "claim_boundary": "limitation citation: blanket readings constrained to toy probabilistic interpretation",
+    },
+    {
+        "citation_key": "holtzman2019degeneration",
+        "source_kind": "primary_conference",
+        "source_family": "neural_generation_diversity",
+        "method_role": "diversity_collapse_context",
+        "tracks": ["prose", "scholarship"],
+        "artifact": "output/data/firstprinciples/diversity_demo.json",
+        "manuscript_sections": ["discussion_outlook"],
+        "claim_boundary": "adjacent generation-diversity literature; no decoding experiment is run here",
+    },
+    {
+        "citation_key": "wu2026lightningopd",
+        "source_kind": "primary_preprint",
+        "source_family": "opd_efficiency",
+        "method_role": "offline_opd_teacher_consistency",
+        "tracks": ["prose", "scholarship"],
+        "artifact": "output/data/firstprinciples/opd_taxonomy.json",
+        "manuscript_sections": ["discussion_outlook"],
+        "claim_boundary": "external efficiency context only; no production-scale claim is reproduced",
+    },
+)
+
+SCHOLARSHIP_SOURCES: tuple[dict[str, Any], ...] = (
+    _BASE_SCHOLARSHIP_SOURCES + _REDTEAM_REVIEW_SOURCES + _RUN5_REVIEW_SOURCES
+)
 
 
 def _load_yaml(path: Path) -> dict[str, Any]:

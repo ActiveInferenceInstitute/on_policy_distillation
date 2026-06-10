@@ -127,6 +127,7 @@ promotion rule above.
 | ~~`AI-APPENDIX-HYDRATE-1`~~ | Integration | **DONE (pre-Run-4):** counterexample, manuscript_staleness, and assumption_index cells all carry `{{tokens}}` (verified 2026-06-10) | composed appendix | token gate | edited hydrated output hides stale value |
 | ~~`AI-APPENDIX-FIGURES-1`~~ | Visualization | **DONE (pre-Run-4):** `theorem_traceability_graph` and `causal_ablation_heatmap` registered, generated, and bound in `appendix_full_sheaf` (verified 2026-06-10) | `figures.yaml` + generators | `test_figure_generators_match_registry` | figure lacks source artifact |
 | `AI-HYGIENE-1` | Cleanup | Tolerance SSOT, duplicate skipif decorator, GNN `_parse_param_blocks` tests, poset-law prose sharpening, Bernoulli 8-symbol enumeration via `{{bernoulli_ontology_term_count}}` | n/a | full suite + ruff/mypy | n/a |
+| `REVIEW-FIGURE-RELOCATION-1` | Visualization | 2026-06-10 external review suggests moving dense dashboard figures (multi-track architecture, full correspondence dictionary, labeled taxonomy scatter) to a supplement with simplified main-text versions at venue-submission time; deliberately NOT done now — the current PDF's genre is an auditable artifact paper where provenance figures are load-bearing | figures.yaml `section_figures` | compose + figure gates stay green after any relocation | figure lacks source artifact |
 
 ## Known residual (2026-06-02): full-suite artifact-isolation flakiness
 

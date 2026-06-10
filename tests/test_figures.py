@@ -221,7 +221,7 @@ def test_interpretive_figures_expose_formula_signs_and_caveats(project_root: Pat
     assert "not a universal KL law" in divergence_source
     assert "universal KL outcome" in registry["distillation_divergence_geometry"].caption
     assert "G = risk + ambiguity - value" in energy_source
-    assert "G = risk + ambiguity - epistemic - pragmatic" in registry["energy_decomposition"].caption
+    assert "G = risk + ambiguity = -(epistemic + pragmatic)" in registry["energy_decomposition"].caption
     assert "max_display_families = 12" in scholarship_source
     assert "print-condensed" in registry["scholarship_source_map"].caption
 

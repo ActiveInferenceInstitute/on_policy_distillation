@@ -89,7 +89,11 @@ figures:
       geometry rather than asserting a universal KL outcome. The spread across measures
       shows that the choice of distillation objective is not neutral: forward KL, reverse
       KL, alpha divergence, and clipping weight support mismatch differently, and the
-      realized behavior remains support- and optimization-dependent.
+      realized behavior remains support- and optimization-dependent. Implementation
+      convention: inputs are projected onto the probability simplex, KL uses
+      $0\log 0 = 0$ and returns infinity on support violations rather than smoothing
+      (no epsilon is added); the illustrative pair here has full support, so all values
+      are finite and deterministic.
     width: 0.92
   exposure_bias_recovery:
     filename: exposure_bias_recovery.png
@@ -99,15 +103,19 @@ figures:
       decays steadily while the on-policy curve approaches a stable fixed point,
       leaving a labeled terminal recovery gap.
     caption: >-
-      Toy model of exposure bias and its on-policy remedy: correctness over generated steps
-      for an off-policy student (trained on teacher-visited states only) versus an on-policy
-      student (corrected on its own rollouts). The off-policy curve decays as compounding
-      errors push the student into states the teacher never demonstrated -- off-policy final
-      correctness {{exposure_bias_off_policy_final:.3f}} -- while the on-policy curve
-      stabilizes at {{exposure_bias_on_policy_final:.3f}}, leaving a terminal recovery gap of
+      Toy model of exposure bias and its on-policy remedy: expected correctness — the
+      closed-form per-step probability that the student emits the teacher-correct token
+      under the two-state drift model — over generated steps for an off-policy student
+      (trained on teacher-visited states only) versus an on-policy student (corrected on
+      its own rollouts). The off-policy curve decays as compounding errors push the student
+      into states the teacher never demonstrated -- off-policy final correctness
+      {{exposure_bias_off_policy_final:.3f}} -- while the on-policy curve stabilizes at
+      {{exposure_bias_on_policy_final:.3f}}, leaving a terminal recovery gap of
       {{exposure_bias_terminal_gap:.3f}} (values from
-      `output/data/firstprinciples/exposure_bias_demo.json`). This is the core argument for
-      on-policy distillation, and mirrors active inference's insistence on evaluating beliefs
+      `output/data/firstprinciples/exposure_bias_demo.json`). Both curves are deterministic
+      closed forms, so no uncertainty intervals apply. This is the motivating argument for
+      on-policy distillation — with the caveat that the empirical severity of exposure bias
+      is task-dependent — and mirrors active inference's insistence on evaluating beliefs
       along the agent's own visited trajectory rather than a fixed reference distribution.
     width: 0.9
   energy_decomposition:
@@ -129,9 +137,12 @@ figures:
       unexplained zero. Right:
       expected free energy split into risk {{efe_risk:.3f}} plus ambiguity
       {{efe_ambiguity:.3f}} nats, equivalently subtracting epistemic {{efe_epistemic:.3f}}
-      and pragmatic {{efe_pragmatic:.3f}} value under the sign convention
-      $G = risk + ambiguity - epistemic - pragmatic$ (from
-      `output/data/firstprinciples/energy_demo.json`). Reading distillation through this
+      and pragmatic {{efe_pragmatic:.3f}} value. Sign key: risk and ambiguity are
+      penalties (positive bars worsen $G$), epistemic and pragmatic are values
+      (positive bars improve $G$), under the exact identity
+      $G = risk + ambiguity = -(epistemic + pragmatic)$ as decomposed in
+      `output/data/firstprinciples/energy_demo.json`; all bars are deterministic
+      closed-form evaluations in nats. Reading distillation through this
       lens, the complexity/accuracy and risk/ambiguity terms make explicit that an
       on-policy student is simultaneously matching the teacher's outputs (accuracy/pragmatic)
       and reducing its own uncertainty about unvisited states (epistemic).
@@ -147,12 +158,16 @@ figures:
       One scenario solved in two frameworks. A standard machine-learning loop (jax
       automatic differentiation on the reverse-KL distillation loss) drives a student
       policy to the active-inference exact posterior $p(s\mid o)$: the per-step reverse KL
-      decays to zero (left) and the distilled student matches the posterior to within
-      {{parallel_max_abs_difference:.1e}} (right), its variational free energy reaching
-      {{parallel_student_free_energy:.3f}} nats -- the evidence bound
-      $-\ln p(o) = {{parallel_neg_log_evidence:.3f}}$. The reverse-KL distillation gradient
-      is the variational free-energy gradient, so the correspondence is executed rather than
-      asserted. Source: `output/data/firstprinciples/parallel_demo.json`.
+      decays toward zero (left panel, logarithmic y-axis) and the distilled student matches
+      the posterior to within {{parallel_max_abs_difference:.1e}} (right), its variational
+      free energy reaching {{parallel_student_free_energy:.3f}} nats -- the evidence bound
+      $-\ln p(o) = {{parallel_neg_log_evidence:.3f}}$. Optimization: full-batch gradient
+      descent at learning rate {{parallel_opt_learning_rate}}, at most
+      {{parallel_opt_max_steps}} steps with early stop at loss tolerance
+      {{parallel_opt_stop_tolerance:.0e}}; the run is fully deterministic (no sampling), so
+      no uncertainty intervals apply. The reverse-KL distillation gradient is the variational
+      free-energy gradient, so the correspondence is executed rather than asserted.
+      Source: `output/data/firstprinciples/parallel_demo.json`.
     width: 0.95
   diversity_tradeoff:
     filename: diversity_tradeoff.png
@@ -165,9 +180,13 @@ figures:
       ensemble. Greedy Pass-at-1 (dashed, {{diversity_greedy_pass_at_1:.3f}}) is
       temperature-invariant; sampling Pass-at-k falls from {{diversity_flattest_pass_at_k:.3f}}
       at the flattest temperature to {{diversity_sharpest_pass_at_k:.3f}} at the sharpest,
-      because $Pass@k = 1-(1-p)^k$ for independent samples. Aggressive sharpening can
-      raise single-answer commitment while lowering multi-sample coverage -- the
-      Pass-at-1-versus-Pass-at-k tension active inference frames as precision (inverse temperature).
+      because $Pass@k = 1-(1-p)^k$ for independent samples. Every curve is derived
+      analytically from the declared temperature-sharpened ensemble (closed form, no
+      sampling): this panel is an exact calculation over the toy problem ensemble, not an
+      empirical measurement. Aggressive sharpening can raise single-answer commitment while
+      lowering multi-sample coverage -- the Pass-at-1-versus-Pass-at-k tension active
+      inference frames as precision (inverse temperature), adjacent to the broader
+      generation literature on objective- and decoding-induced diversity loss.
       Source: `output/data/firstprinciples/diversity_demo.json`.
     width: 0.9
   privilege_dose_response:

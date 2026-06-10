@@ -1,9 +1,3 @@
-```{=latex}
-\phantomsection
-\addcontentsline{toc}{section}{Appendix}
-\section*{Appendix}
-```
-
 # Supplementary material: reproducibility methodology {#sec:methods_sheaf}
 
 <!-- sheaf-track:prose -->
@@ -152,7 +146,7 @@ primitives [@kullback1951information; @jordan1999variational; @blei2017variation
 Markov-blanket, and active-inference references [@friston2006fep; @friston2010fep;
 @friston2013life; @kirchhoff2018markov; @rao1999predictive; @buckley2017mathreview;
 @friston2017process; @friston2017curiosity; @friston2018deep_temporal;
-@millidge2021walkthrough; @dacosta2020discrete; @friston2019generalised;
+@millidge2021walkthrough; @dacosta2020discrete; @friston2021sophisticated;
 @parr2019generalised; @millidge2020efe; @champion2024efe_unification;
 @sajid2021demystified; @sajid2021bayesian_design; @devries2025efe_planning_vi;
 @parr2022active; @smith2022tutorial; @tschantz2020scaling_active_inference;
@@ -180,7 +174,7 @@ empirical reasoning-distillation and speculative-KD context [@qwen2025technical_
 @thinkingmachines2025opd; @deepseek2025r1; @xu2024speculative_kd],
 OPD landscape indexes [@awesomeopd2026;
 @song2026opdsurvey; @zhu2026manyfacesopd; @ramos2026dgrpo; @liu2026oisd],
-implementation and notation anchors [@pymdp2024; @gnn2023; @koudahl2023synthetic],
+implementation and notation anchors [@pymdp2022; @gnn2023; @koudahl2023synthetic],
 applied sheaf sources [@curry2014sheaves; @speranzon2018contracts;
 @robinson2014topological; @robinson2017sensor_sheaf; @phillips2019sheaving;
 @fong2019applied_category; @rosiak2022sheaf_examples; @cox2026fragmented_risk_sheaf],

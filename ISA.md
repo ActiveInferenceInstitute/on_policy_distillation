@@ -1,9 +1,9 @@
 ---
 project: active_inference_on_policy_distillation
-task: "Run-4 comprehensive hardening: re-derived aggregates, graphical thesis figures, closed-form observable, manuscript/metadata/docs polish"
+task: "Run-5: external-review claim calibration, countervailing citations, proposition box, figure rigor, bib hygiene"
 effort: E5
 phase: complete
-progress: 61/64
+progress: 79/82
 mode: algorithm
 started: 2026-06-10
 updated: 2026-06-10
@@ -172,6 +172,26 @@ PDF render all green afterward.
 - [x] ISC-63: Anti: baseline not regressed — zero previously-passing tests now failing.
 - [x] ISC-64: Memory updated (project-opd-active-inference-state) with Run-4 outcome.
 
+### D10 — Run-5: external-review response (2026-06-10)
+- [x] ISC-65: Abstract opener states the scoped reading ("admits a scoped active-inference reading that is exact in the finite models studied here"), not a bare identity.
+- [x] ISC-66: Abstract distinguishes VFE (realized-rollout loss) from EFE (action/planning) explicitly.
+- [x] ISC-67: "Same induced-distribution repair" → "closely related … objectives and empirical regimes differ" in abstract and intro; severity-contested caveat present.
+- [x] ISC-68: Scheduled-sampling counter-citation (Huszár) + sequence-level lineage (Ranzato) + self-recovery counterweight (He) cited in intro; He also in limitations.
+- [x] ISC-69: Blanket language bounded with Biehl + Aguilera in intro, contributions, and limitations; "no physical/biological boundary claim".
+- [x] ISC-70: Holtzman anchors the diversity-collapse discussion.
+- [x] ISC-71: Lightning OPD cited as offline-OPD/teacher-consistency context (live-verified arXiv 2604.13010).
+- [x] ISC-72: All 6 new references live-verified before inclusion; bib entries carry locators; scholarship matrix keys + typed rows added; gate green.
+- [x] ISC-73: Proposition (scoped correspondence) block in methods formalism with assumptions (A1)–(A4) and proved/numerical/interpretive classification; contributions text points to it.
+- [x] ISC-74: Reward-tilted unification reframed as "structured family", not "single objective".
+- [x] ISC-75: MI claim softened to "interpretable ceiling for this toy binary coupling"; no general communication bound asserted.
+- [x] ISC-76: Cue privilege reframed as differential cue reliability in contributions and results; epistemic term framed as "one formal lens".
+- [x] ISC-77: Conclusion "conclusive" → "strongly supported and made unusually auditable" with explicit outside-the-models boundary.
+- [x] ISC-78: Preprint-epistemics sentence in discussion (source-kind machine-readable pointer).
+- [x] ISC-79: Figure rigor: exposure title/ylabel descriptive + correctness defined + deterministic note; parallel caption carries hydrated optimizer metadata + log-scale note; energy caption has exact sign-identity key; divergence caption states zero/support convention; diversity caption states analytic provenance.
+- [x] ISC-80: Bib hygiene: friston2019generalised → friston2021sophisticated and pymdp2024 → pymdp2022 renamed across every call-site.
+- [x] ISC-81: Anti: no review item adopted that contradicts live data or project genre without a logged decision (title kept; figure relocation deferred via TODO row REVIEW-FIGURE-RELOCATION-1).
+- [x] ISC-82: Full chain green; validate ALL TRUE; suite green; PDF renders with 0 dangling crossrefs; work committed pathspec-only; memory updated.
+
 ## Test Strategy
 
 | isc | type | check | threshold | tool |
@@ -236,6 +256,29 @@ PDF render all green afterward.
   cover — blanked, reserve-DOI-first comment added).
 - 2026-06-10: **Chunk-2 failure was the doc-contract doing its job**: the new figures were
   missing from README/AGENTS/SYNTAX figure lists; fixed all three surfaces, contract green.
+- 2026-06-10 (Run-5): **Title kept against the review's top recommendation — show-the-math.**
+  The review's hard requirement is that claim surfaces be scoped; the title is the project's
+  deliberate sharp thesis, the subtitle already scopes it, and the abstract's first sentence
+  now carries the scoped reading explicitly ("admits a scoped active-inference reading that is
+  exact in the finite models studied here"). A declarative title over a rigorously scoped body
+  is a legitimate genre choice; renaming the paper would also break the project/repo identity.
+- 2026-06-10 (Run-5): **All 6 review-supplied references live-verified before inclusion**
+  (arXiv abs pages fetched; EMNLP DOI resolved to the exact paper; Entropy DOI redirect
+  resolved to the right journal/volume/article). The review's "Lightning OPD" (arXiv
+  2604.13010) is REAL — verified rather than assumed fabricated.
+- 2026-06-10 (Run-5): **Qwen/Thinking Machines citations kept** — the manuscript already
+  frames them as external context with "We did not measure any of the following ourselves";
+  the Thinking Machines post publishes its own BibTeX and is the primary source for its own
+  replication. Review's "primary-source-only" intent judged satisfied.
+- 2026-06-10 (Run-5): **Figure relocation deferred, captions hardened instead** — moving
+  dashboard figures to a supplement is a venue-submission decision; tracked as TODO row
+  REVIEW-FIGURE-RELOCATION-1. The sign-convention "G = risk+ambiguity−epistemic−pragmatic"
+  phrasing in the old energy caption was actually WRONG as an equation (double-counting);
+  replaced with the exact identity G = risk+ambiguity = −(epistemic+pragmatic), verified
+  against the live artifact (0.9335 = 0.5108+0.4227 = −(0.2704−1.2040)).
+- 2026-06-10 (Run-5): **Bib hygiene** — the review's "semantically mismatched key" located:
+  friston2019generalised held the Sophisticated Inference (2021) paper; renamed to
+  friston2021sophisticated (and pymdp2024 → pymdp2022) across every call-site.
 
 ## Changelog
 
