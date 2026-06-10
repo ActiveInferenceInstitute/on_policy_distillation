@@ -1,12 +1,14 @@
-# Reproducibility methodology {#sec:methods_sheaf}
+# Supplementary material: reproducibility methodology {#sec:methods_sheaf}
 
 <!-- sheaf-track:prose -->
 
 ## Compose contract
 
+This standalone supplement documents the reproducibility methodology behind the rendered paper. The preceding full-coverage supplement ([@sec:appendix_full_sheaf]) proves that the maximal appendix row can bind all registered fragment families; this section instead explains the operational contract that makes those fragments reproducible: where data are generated, how variables are hydrated, which validators run, and how failed gates block the PDF.
+
 Each manifest row in `manuscript/sheaf/manifest.yaml` binds fragment tracks from `manuscript/sheaf/tracks.yaml`. A track supplies a renderer, compose order, label, and optional flag; the composer flattens the binding set into one Markdown section for PDF and web output. The machinery is generic, but the manuscript it assembles here argues a specific thesis: that on-policy distillation and active inference are the same variational object, so the composer must keep the analytical toy model, the pymdp rollout, and the self-distillation literature mutually consistent about that single correspondence.
 
-The operational claim is auditable binding: analytical, simulation, pymdp, visualization, Lean, GNN, ontology, scholarship, and optional media fragments attach to each IMRAD row under [@eq:coverage_cell] (**P** present, **—** unbound, **M** missing). This is an applied local-to-global consistency contract in the spirit of cellular sheaf and sheaf-signal-processing work [@curry2014sheaves; @robinson2014topological], but instantiated here as a finite manuscript artifact gate. The same gate forces the teacher-student framing to remain coherent end to end: the Bernoulli-Ising free-energy analysis [@friston2010fep], the sophisticated-inference T-maze rollout [@parr2022active; @dacosta2020discrete], and the on-policy distillation results [@agarwal2024gkd; @thinkingmachines2025opd] each occupy their own track yet must agree on the variational posterior they describe.
+The operational claim is auditable binding: analytical, simulation, pymdp, visualization, Lean, GNN, ontology, scholarship, and optional media fragments attach to each IMRAD row under [@eq:coverage_cell] (**P** present, **—** unbound, **M** missing). This is an applied local-to-global consistency and composition-contract use of sheaf language in the spirit of cellular sheaves, sheaf-theoretic contracts, sheaf-signal-processing work, sensor-integration sheaves, semantic sheaving, and applied compositionality references [@curry2014sheaves; @speranzon2018contracts; @robinson2014topological; @robinson2017sensor_sheaf; @phillips2019sheaving; @fong2019applied_category; @rosiak2022sheaf_examples; @cox2026fragmented_risk_sheaf], but instantiated here as a finite manuscript artifact gate. The same gate forces the teacher-student framing to remain coherent end to end: the Bernoulli-Ising free-energy analysis [@friston2006fep; @friston2010fep], the sophisticated-inference T-maze rollout [@parr2022active; @dacosta2020discrete], and the on-policy distillation results [@agarwal2024gkd; @thinkingmachines2025opd] each occupy their own track yet must agree on the variational posterior they describe.
 
 ## Coverage and figures
 
@@ -45,7 +47,7 @@ The **presheaf** $\mathcal{F}$ is a contravariant functor on $P$ — $\mathcal{F
 The coverage cell is
 
 $$
-B(s,t) \in \{\mathrm{P}, \mathrm{—}, \mathrm{M}\}
+B(s,t) \in \{\mathrm{P}, \text{--}, \mathrm{M}\}
 $$ {#eq:coverage_cell}
 
 derived from $F_s(t)$ and filesystem existence at compose time: **P** when a bound fragment exists, **—** when the track is unbound for that row, and **M** when a bound path is missing. The current regenerated matrix reports {{coverage_present}} present / {{coverage_bound}} bound / {{coverage_missing}} missing cells. Registry size: $|\mathcal{T}| = {{sheaf_track_count}}$ types across {{imrad_manifest_rows}} IMRAD manifest rows ({{imrad_group_count}} group rows, {{composed_section_count}} composing sections).
@@ -65,7 +67,7 @@ Each law is paired with a negative control in `tests/test_sheaf_laws.py` — a s
 
 ### Scope (what is and is not claimed)
 
-These laws verify the sheaf *axioms* on a finite base poset. They do **not** compute sheaf *cohomology* ($H^0$/$H^1$, Čech complexes, derived functors); "sheaf" here names the verified separation-and-gluing structure of a multi-track coverage assignment, not a cohomological invariant. Formal track definitions and section×track bindings appear in the generated tables below.
+These laws verify the sheaf *axioms* on a finite base poset. They do **not** compute sheaf *cohomology* ($H^0$/$H^1$, Čech complexes, derived functors); "sheaf" here names the verified separation-and-gluing structure of a multi-track coverage assignment, not a cohomological invariant. The applied contracts reading is limited to the same finite local-to-global assembly discipline [@speranzon2018contracts], not a claim that the manuscript instantiates a full systems-of-systems semantics. Formal track definitions and section×track bindings appear in the generated tables below.
 
 Semantic gluing then checks agreement of the glued content: coverage counts, manuscript variables, typed claim predicates, pymdp mode/hash, Bernoulli GNN ontology, and SI T-maze GNN ontology. This certificate is a content-level audit over the same base, not an additional topological law.
 
@@ -75,7 +77,7 @@ Semantic gluing then checks agreement of the glued content: coverage counts, man
 
 ![Semantic gluing graph tracing the dependency chain from configured analysis scripts (producers) through the generated evidence artifacts to the manuscript consumers and validation gates that close the multi-track sheaf certificate. Each edge records a provenance link, so the graph is the auditable trail showing every figure and number is derived from a declared producer and re-checked downstream. It is the operational embodiment of the sheaf gluing condition: only when producers, artifacts, and consumers agree along every edge does the assembled active-inference / on-policy-distillation argument certify as globally consistent.](../output/figures/semantic_gluing_graph.png){#fig:semantic_gluing_graph width=95% fig-alt="Dependency diagram linking configured analysis scripts to generated evidence artifacts, manuscript consumers, and validation gates for the semantic sheaf gluing certificate."}
 
-![Scholarship source map linking {{scholarship_source_count}} bibliography source rows across {{scholarship_method_role_count}} method roles and {{scholarship_source_family_count}} source families to their generated evidence artifacts (connected status: {{scholarship_sources_connected}}); green borders mark rows with a bibliography entry, manuscript citation, registered track, bound section, and existing artifact. The map ties each external reference -- on-policy distillation and active-inference literature alike -- to a concrete place where the exemplar uses or tests it. A fully connected map evidences that the scholarship is load-bearing rather than decorative, with every cited claim wired to executable or formal support.](../output/figures/scholarship_source_map.png){#fig:scholarship_source_map width=95% fig-alt="Four-column source map generated from the scholarship source matrix. Each row links a bibliography key to a source family, method role, and generated evidence artifact; green borders mark rows with bibliography entries, manuscript citations, registered tracks, bound manuscript sections, and existing artifacts."}
+![Condensed scholarship source map for {{scholarship_source_count}} bibliography source rows across {{scholarship_method_role_count}} method roles and {{scholarship_source_family_count}} source families (connected status: {{scholarship_sources_connected}}). The rendered figure is intentionally print-condensed: it shows the largest source families plus an aggregated long-tail row, where those families bind into generated artifact buckets, and the distribution of source kinds; the full row-level contract remains in `output/data/scholarship_source_matrix.json`. The map ties each external reference -- on-policy distillation and active-inference literature alike -- to a concrete place where the exemplar uses or tests it, evidencing load-bearing scholarship rather than decorative citation.](../output/figures/scholarship_source_map.png){#fig:scholarship_source_map width=95% fig-alt="Condensed source map generated from the scholarship source matrix. The left panel shows the highest-count source families plus an aggregated long-tail row, the middle panel shows where those families bind into generated artifact buckets, and the right panel summarizes source kinds."}
 
 <!-- sheaf-track:provenance -->
 
@@ -135,20 +137,47 @@ records {{scholarship_source_count}} source rows across
 {{scholarship_method_role_count}} method roles and
 {{scholarship_source_family_count}} source families; [@fig:scholarship_source_map]
 renders the resulting source-to-artifact map. The row set connects foundational
-free-energy and active-inference references [@friston2010fep; @buckley2017mathreview;
-@dacosta2020discrete; @friston2019generalised; @parr2019generalised; @millidge2020efe;
-@parr2022active; @smith2022tutorial], the sequential distribution-shift and
-distillation lineage [@ross2011dagger; @bengio2015scheduled; @hinton2015distilling;
-@gu2024minillm; @agarwal2024gkd], reinforcement-learning-as-inference bridges
-[@levine2018rlinference; @abdolmaleki2018mpo], privileged-information sources
-[@vapnik2009lupi; @lopezpaz2016unifying; @penaloza2026pidistill; @penaloza2026tutorial],
-recent self-distillation references [@zhao2026opsd; @shenfeld2026sdft;
-@hubotter2026sdpo; @liu2026sdpg; @lauyikfung2026sdpgcode], OPD landscape indexes
-[@thinkingmachines2025opd; @awesomeopd2026; @song2026opdsurvey;
-@zhu2026manyfacesopd; @ramos2026dgrpo; @liu2026oisd], implementation and
-notation anchors [@pymdp2024; @gnn2023], and applied sheaf sources
-[@curry2014sheaves; @robinson2014topological] to the exact artifact or method role
-they support.
+KL, variational-inference, model-compression, sequence-KD, and policy-distillation
+primitives [@kullback1951information; @jordan1999variational; @blei2017variational;
+@bucila2006model_compression; @kim2016sequence_kd; @rusu2016policy_distillation;
+@czarnecki2019distilling_policy], foundational free-energy, predictive-coding,
+Markov-blanket, and active-inference references [@friston2006fep; @friston2010fep;
+@friston2013life; @kirchhoff2018markov; @rao1999predictive; @buckley2017mathreview;
+@friston2017process; @friston2017curiosity; @friston2018deep_temporal;
+@millidge2021walkthrough; @dacosta2020discrete; @friston2019generalised;
+@parr2019generalised; @millidge2020efe; @champion2024efe_unification;
+@sajid2021demystified; @sajid2021bayesian_design; @devries2025efe_planning_vi;
+@parr2022active; @smith2022tutorial; @tschantz2020scaling_active_inference;
+@friston2021interesting_observations; @aguilera2022particular_fep;
+@parr2020markov_blankets_thermo], the sequential
+distribution-shift, behavioral-cloning, and distillation lineage
+[@pomerleau1989alvinn; @ross2010efficient_imitation; @ross2011dagger;
+@sun2017aggrevated; @bengio2015scheduled; @arora2022exposure;
+@rohatgi2025next_token_barrier; @pozzi2025exposure_distill;
+@hinton2015distilling; @stanton2021kd_work; @gu2024minillm; @agarwal2024gkd;
+@yang2024sdft_gap; @ko2024distillm; @ko2025distillm2; @wu2024rethinking_kl_kd],
+reinforcement-learning/control-as-inference, MaxEnt-IRL, and
+preference-tilt bridges [@todorov2008duality; @toussaint2009trajectory_inference;
+@ziebart2008maxent_irl; @levine2018rlinference; @abdolmaleki2018mpo;
+@millidge2020active_control; @odonoghue2020rl_prob_inference;
+@millidge2020iterative_amortised; @tschantz2020rl_active_inference;
+@haarnoja2018sac; @ziegler2019humanprefs; @rafailov2023dpo],
+privileged-information sources
+[@vapnik2009lupi; @lopezpaz2016unifying; @cai2024privileged_pomdp;
+@penaloza2026pidistill; @penaloza2026tutorial],
+recent self-distillation and entropy/hybrid OPD references [@zhao2026opsd; @shenfeld2026sdft;
+@hubotter2026sdpo; @liu2026sdpg; @lauyikfung2026sdpgcode; @jin2026entropy_opd;
+@zhu2026hpd; @oh2026vopd; @xing2026tropd; @jang2026veto; @ye2025blackbox_opd],
+empirical reasoning-distillation and speculative-KD context [@qwen2025technical_report;
+@thinkingmachines2025opd; @deepseek2025r1; @xu2024speculative_kd],
+OPD landscape indexes [@awesomeopd2026;
+@song2026opdsurvey; @zhu2026manyfacesopd; @ramos2026dgrpo; @liu2026oisd],
+implementation and notation anchors [@pymdp2024; @gnn2023; @koudahl2023synthetic],
+applied sheaf sources [@curry2014sheaves; @speranzon2018contracts;
+@robinson2014topological; @robinson2017sensor_sheaf; @phillips2019sheaving;
+@fong2019applied_category; @rosiak2022sheaf_examples; @cox2026fragmented_risk_sheaf],
+and statistical-method reporting [@cohen1988power]
+to the exact artifact or method role they support.
 
 The validation claim is deliberately narrow: every row must have a bibliography
 entry with a DOI or URL, a manuscript citation, a registered sheaf track, a bound
@@ -224,16 +253,16 @@ Section rows versus fragment track columns. **P** = present (bound and file exis
 |   Teacher and student coupling: the analytical model | P | P | P | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | P | P | — | — | — |
 |   On-policy student: pymdp sophisticated inference | P | P | — | — | — | P | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | P | P | — | — | — |
 |   Machine-checked correspondence (Lean) | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | P | P | P | P | — | — | — | — | — | — | — |
-|   Reproducibility methodology | P | P | — | — | P | — | — | P | — | P | P | P | P | P | P | P | P | — | — | — | P | P | — | — | — | — | — | — | — | — | — | — | — |
 | Results (group) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 |   Teacher and student mutual information | P | P | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | — | — | — | — | — |
 |   Free-energy decomposition | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | — | — | — | — | — |
 |   On-policy student rollout (T-maze) | P | — | — | — | — | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | — | — | — | — | — |
-|   Validation invariants and statistics | P | — | P | — | — | — | — | — | P | — | — | — | — | — | — | — | — | P | P | P | — | P | — | — | — | — | P | P | — | — | — | — | — |
 | Discussion (group) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 |   Limitations and outlook | P | — | P | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | P |
 | Appendix (group) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-|   Supplementary material: reproducibility and full coverage | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P |
+|   Supplementary material: full coverage and concordance | P | P | P | P | — | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | — | P | — | — | — | — | P | P | — | — | — | — | — |
+|   Supplementary material: reproducibility methodology | P | P | — | — | P | — | — | P | — | P | P | P | P | P | P | P | P | — | — | — | P | P | — | — | — | — | — | — | — | — | — | — | — |
+|   Supplementary material: validation invariants and statistics | P | — | P | — | — | — | — | — | P | — | — | — | — | — | — | — | — | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P |
 
 **Totals:** {{coverage_present}} present / {{coverage_bound}} bound / {{coverage_missing}} missing.
 
@@ -256,13 +285,13 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | Teacher and student coupling: the analytical model | methods | 7 | 7 | 0 | `fully_sheafed` |
 | On-policy student: pymdp sophisticated inference | methods | 7 | 7 | 0 | `fully_sheafed` |
 | Machine-checked correspondence (Lean) | methods | 6 | 6 | 0 | `fully_sheafed` |
-| Reproducibility methodology | methods | 14 | 14 | 0 | `fully_sheafed` |
 | Teacher and student mutual information | results | 4 | 4 | 0 | `fully_sheafed` |
 | Free-energy decomposition | results | 2 | 2 | 0 | `fully_sheafed` |
 | On-policy student rollout (T-maze) | results | 3 | 3 | 0 | `fully_sheafed` |
-| Validation invariants and statistics | results | 9 | 9 | 0 | `fully_sheafed` |
 | Limitations and outlook | discussion | 5 | 5 | 0 | `fully_sheafed` |
-| Supplementary material: reproducibility and full coverage | appendix | 33 | 33 | 0 | `fully_sheafed` |
+| Supplementary material: full coverage and concordance | appendix | 22 | 22 | 0 | `fully_sheafed` |
+| Supplementary material: reproducibility methodology | appendix | 14 | 14 | 0 | `fully_sheafed` |
+| Supplementary material: validation invariants and statistics | appendix | 19 | 19 | 0 | `fully_sheafed` |
 
 **Section status:** 12 / 12 composable sections fully sheafed; 0 required bound fragments missing.
 
@@ -273,10 +302,10 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | --- | --- | ---: | ---: | ---: | ---: | --- |
 | `prose` | `markdown` | 12 | 12 | 0 | 0 | `complete` |
 | `formalism` | `markdown` | 5 | 5 | 0 | 0 | `complete` |
-| `simulation` | `markdown` | 5 | 5 | 0 | 9 | `complete` |
+| `simulation` | `markdown` | 5 | 5 | 0 | 19 | `complete` |
 | `assumption_index` | `markdown` | 2 | 2 | 0 | 1 | `complete` |
-| `layers` | `layers_report` | 2 | 2 | 0 | 1 | `complete` |
-| `pymdp` | `markdown` | 3 | 3 | 0 | 15 | `complete` |
+| `layers` | `layers_report` | 1 | 1 | 0 | 1 | `complete` |
+| `pymdp` | `markdown` | 3 | 3 | 0 | 19 | `complete` |
 | `interop` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
 | `provenance` | `markdown` | 2 | 2 | 0 | 12 | `complete` |
 | `replay_matrix` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
@@ -314,10 +343,10 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | --- | --- | --- | --- | --- |
 | `registry_loaded` | `sheaf.registry` | `registered_tracks` | `ok` | 33 tracks |
 | `manifest_loaded` | `sheaf.manifest` | `manifest_sections` | `ok` | 17 sections |
-| `coverage_matrix_built` | `sheaf.coverage` | `output/data/sheaf_coverage_matrix.json` | `ok` | 94 present cells |
+| `coverage_matrix_built` | `sheaf.coverage` | `output/data/sheaf_coverage_matrix.json` | `ok` | 93 present cells |
 | `section_status_matrix_built` | `sheaf.status` | `output/data/sheaf_section_status_matrix.json` | `ok` | 561 section-track cells |
-| `layers_renderer_bound` | `sheaf.layers_report` | `manuscript/08_methods_sheaf.md` | `ok` | methods sheaf layer tables |
-| `semantic_artifacts_indexed` | `sheaf.semantic` | `output/data/validation_dependency_graph.json` | `ok` | 94 artifact producer rows |
+| `layers_renderer_bound` | `sheaf.layers_report` | `manuscript/19_supplement_reproducibility.md` | `ok` | methods sheaf layer tables |
+| `semantic_artifacts_indexed` | `sheaf.semantic` | `output/data/validation_dependency_graph.json` | `ok` | 110 artifact producer rows |
 | `validation_gates_indexed` | `gates` | `output/data/validation_gate_index.json` | `ok` | 3 gate groups |
 | `manuscript_sections_composed` | `sheaf.compose` | `manuscript/*.md` | `ok` | 16 composed markdown files |
 
@@ -334,10 +363,10 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `sheaf_coverage_matrix` | `output/data/sheaf_coverage_matrix.json` | `generate_figures.py` | validate_outputs, validate_manuscript |
 | `sheaf_gluing_certificate` | `output/data/sheaf_gluing_certificate.json` | `generate_sheaf_tracks.py` | validate_manuscript, validate_outputs |
 | `sheaf_evidence_crosswalk` | `output/data/sheaf_evidence_crosswalk.json` | `generate_sheaf_tracks.py` | validate_manuscript, validate_outputs |
+| `evidence_field_index` | `output/data/evidence_field_index.json` | `generate_sheaf_tracks.py` | validate_outputs, validate_manuscript |
 | `validation_dependency_graph` | `output/data/validation_dependency_graph.json` | `generate_sheaf_tracks.py` | validate_manuscript, validate_outputs |
-| `semantic_gluing_graph_figure` | `output/figures/semantic_gluing_graph.png` | `generate_figures.py` | validate_outputs, figure_registry |
 
-**Claim rows:** 87 typed evidence claims.
+**Claim rows:** 98 typed evidence claims.
 
 <!-- sheaf-layers:artifact-producers -->
 ## Artifact producer graph
@@ -353,14 +382,17 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `output/data/cross_track_symbol_table.json` | `generate_integration_audit.py` | Yes | methods_sheaf, appendix_full_sheaf |
 | `output/data/evidence_field_index.json` | `generate_sheaf_tracks.py` | Yes | methods_sheaf, appendix_full_sheaf |
 | `output/data/figure_source_map.json` | `generate_integration_audit.py` | Yes | methods_sheaf, appendix_full_sheaf |
+| `output/data/firstprinciples/benchmark_table.md` | `generate_firstprinciples.py` | Yes | appendix_full_sheaf |
 | `output/data/firstprinciples/classroom.json` | `generate_firstprinciples.py` | Yes | intro_motivation, results_si_tmaze, discussion_outlook |
 | `output/data/firstprinciples/correspondence_map.json` | `generate_firstprinciples.py` | Yes | intro_contributions, methods_analytical, methods_sheaf, discussion_outlook |
 | `output/data/firstprinciples/correspondence_table.md` | `generate_firstprinciples.py` | Yes | methods_sheaf, appendix_full_sheaf |
 | `output/data/firstprinciples/divergence_demo.json` | `generate_firstprinciples.py` | Yes | methods_analytical, discussion_outlook |
+| `output/data/firstprinciples/empirical_benchmark.json` | `generate_firstprinciples.py` | Yes | discussion_outlook, appendix_full_sheaf |
 | `output/data/firstprinciples/exposure_bias_demo.json` | `generate_firstprinciples.py` | Yes | intro_motivation, methods_pymdp, discussion_outlook |
 | `output/data/firstprinciples/opd_taxonomy.json` | `generate_firstprinciples.py` | Yes | intro_motivation, methods_sheaf, discussion_outlook |
 | `output/data/firstprinciples/reward_tilting_demo.json` | `generate_firstprinciples.py` | Yes | methods_analytical, discussion_outlook |
 | `output/data/firstprinciples/sdpg_demo.json` | `generate_firstprinciples.py` | Yes | methods_analytical, discussion_outlook |
+| `output/data/firstprinciples/statistics_demo.json` | `generate_firstprinciples.py` | Yes | results_invariants, appendix_full_sheaf |
 | `output/data/firstprinciples/taxonomy_table.md` | `generate_firstprinciples.py` | Yes | methods_sheaf, appendix_full_sheaf |
 | `output/data/gnn_roundtrip_report.json` | `generate_formal_interop_tracks.py` | Yes | methods_pymdp, appendix_full_sheaf |
 | `output/data/interop_roundtrip_report.json` | `generate_sheaf_tracks.py` | Yes | methods_pymdp, appendix_full_sheaf |
@@ -445,7 +477,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | Lean all proved | `True` |
 | GNN ontology ok | `True` |
 | Configured producers ok | `True` |
-| Semantic certificate ok | `None` |
+| Semantic certificate ok | `not evaluated` |
 | Dependency edges ok | `True` |
 | Track scope complete | `True` |
 | Empirical adapter blocked | `True` |
@@ -477,6 +509,32 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `evidence_fields` | live | `output/data/evidence_field_index.json` | `output/data/evidence_field_index.json` | `validate_outputs, validate_manuscript` | missing_typed_claim |
 | `formalism` | live | `manuscript/sheaf/manifest.yaml` | `manuscript/sheaf/manifest.yaml` | `validate_manuscript` | missing_fragment_coverage |
 | `gate_ergonomics` | live | `output/data/validation_gate_index.json` | `output/data/validation_gate_index.json` | `validate_outputs, validate_manuscript` | gate_ergonomics_unindexed |
+| `gnn` | live | `output/reports/gnn_lint_report.json` | `output/reports/gnn_lint_report.json` | `validate_outputs` | missing_fragment_coverage |
+| `interop` | live | `output/data/interop_roundtrip_report.json` | `output/data/interop_roundtrip_report.json` | `validate_outputs` | interop_shape_loss |
+| `layers` | optional | `output/data/sheaf_coverage_matrix.json` | `output/data/sheaf_coverage_matrix.json` | `validate_outputs, validate_manuscript` | missing_fragment_coverage |
+| `lean` | live | `output/reports/lean_theorem_inventory.json` | `output/reports/lean_theorem_inventory.json` | `validate_outputs` | missing_fragment_coverage |
+| `manuscript_staleness` | live | `output/reports/manuscript_staleness_report.json` | `output/reports/manuscript_staleness_report.json` | `validate_outputs, validate_manuscript` | missing_fragment_coverage |
+| `model_checking` | live | `output/reports/model_checking_witnesses.json` | `output/reports/model_checking_witnesses.json` | `validate_outputs` | missed_model_checking_counterexample |
+| `ontology` | live | `output/data/ontology_profile_matrix.json` | `output/data/ontology_profile_matrix.json` | `validate_outputs` | missing_fragment_coverage |
+| `proof_extraction` | live | `output/data/proof_extraction_index.json` | `output/data/proof_extraction_index.json` | `validate_outputs, validate_manuscript` | proof_extraction_missing_statement |
+| `prose` | live | `manuscript/sheaf/manifest.yaml` | `manuscript/sheaf/manifest.yaml` | `validate_manuscript` | missing_fragment_coverage |
+| `provenance` | live | `output/data/artifact_provenance.json` | `output/data/artifact_provenance.json` | `validate_manuscript, validate_outputs` | missing_sheaf_track_producer |
+| `pymdp` | live | `output/data/si_policy_comparison.json` | `output/data/si_policy_comparison.json` | `validate_outputs` | missing_fragment_coverage |
+| `release_bundle` | live | `output/reports/release_bundle_manifest.json` | `output/reports/release_bundle_manifest.json` | `validate_outputs, validate_manuscript` | release_bundle_parity_failure |
+| `release_notes` | live | `output/reports/release_notes_evidence.json` | `output/reports/release_notes_evidence.json` | `validate_outputs, validate_manuscript` | release_notes_claim_failed_gate_passed |
+| `replay_matrix` | live | `output/reports/replay_matrix.json` | `output/reports/replay_matrix.json` | `validate_outputs, validate_manuscript` | replay_mismatch |
+| `scholarship` | live | `output/data/scholarship_source_matrix.json` | `output/data/scholarship_source_matrix.json` | `validate_outputs, validate_manuscript` | missing_scholarship_source_binding |
+| `sensitivity` | live | `output/data/sensitivity_sweep.json` | `output/data/sensitivity_sweep.json` | `validate_outputs` | missing_sensitivity_cell |
+| `simulation` | live | `output/data/analytical_observable_sweep.json` | `output/data/analytical_observable_sweep.json` | `validate_outputs` | missing_fragment_coverage |
+| `state_space_catalog` | live | `output/data/state_space_catalog.json` | `output/data/state_space_catalog.json` | `validate_outputs, validate_manuscript` | state_space_catalog_missing_finite_space |
+| `theorem_traceability` | live | `output/data/theorem_traceability_matrix.json` | `output/data/theorem_traceability_matrix.json` | `validate_outputs, validate_manuscript` | theorem_traceability_unlinked |
+| `uncertainty` | live | `output/data/uncertainty_summary.json` | `output/data/uncertainty_summary.json` | `validate_outputs` | unnormalized_uncertainty_row |
+| `visualization` | live | `output/data/figure_source_map.json` | `output/data/figure_source_map.json` | `validate_outputs, validate_manuscript` | missing_fragment_coverage |
+| `empirical_adapter` | blocked | `output/reports/blocked_scope_manifest.json` | `output/data/empirical_adapter_manifest.json` | `blocked_scope_manifest.all_blocked` | empirical claim appears without manifest |
+| `private_or_restricted_data` | blocked | `output/reports/blocked_scope_manifest.json` | `output/data/private_data_provenance_manifest.json` | `blocked_scope_manifest.all_blocked` | private data artifact appears without provenance manifest |
+| `network_dependent_research` | blocked | `output/reports/blocked_scope_manifest.json` | `output/data/network_replay_manifest.json` | `blocked_scope_manifest.all_blocked` | network-derived claim appears without replay manifest |
+| `llm_generated_evidence` | blocked | `output/reports/blocked_scope_manifest.json` | `output/data/llm_evidence_audit.json` | `blocked_scope_manifest.all_blocked` | LLM-generated evidence appears as a validation source |
+| `non_toy_model_claims` | blocked | `output/reports/blocked_scope_manifest.json` | `output/data/non_toy_model_scope_manifest.json` | `blocked_scope_manifest.all_blocked` | non-toy result claim appears outside future-only scope |
 
 **Improvement rows:** 38.
 

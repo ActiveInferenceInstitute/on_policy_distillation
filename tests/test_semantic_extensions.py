@@ -9,6 +9,8 @@ import pytest
 from PIL import Image, ImageChops, ImageSequence
 
 
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_validate_all_gnn_ontology_covers_si_tmaze(project_root: Path) -> None:
     from ontology.bindings import validate_all_gnn_ontology
 
@@ -24,6 +26,8 @@ def test_validate_all_gnn_ontology_covers_si_tmaze(project_root: Path) -> None:
         gnn_path.write_text(original, encoding="utf-8")
 
 
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_validate_all_gnn_ontology_rejects_extra_section_alias(project_root: Path) -> None:
     from ontology.bindings import validate_all_gnn_ontology
 
@@ -39,9 +43,13 @@ def test_validate_all_gnn_ontology_rejects_extra_section_alias(project_root: Pat
 
 
 @pytest.mark.requires_pymdp
+@pytest.mark.render_slow
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_policy_comparison_artifact_records_comparison_only_planners(project_root: Path) -> None:
     from simulation.si_runner import pymdp_available
     from simulation.si_artifacts import write_policy_comparison
+    from simulation.pymdp_config import load_pymdp_config
 
     if not pymdp_available():
         pytest.skip("pymdp not installed")
@@ -53,13 +61,15 @@ def test_policy_comparison_artifact_records_comparison_only_planners(project_roo
     assert payload["scope"] == "comparison_only"
     assert payload["canonical_planner"] == "sophisticated_inference"
     assert {row["planner"] for row in payload["runs"]} == {"sophisticated_inference", "vanilla"}
-    assert {row["horizon"] for row in payload["runs"]} == {4}
+    assert {row["horizon"] for row in payload["runs"]} == {load_pymdp_config(project_root).planning_horizon}
     assert all("goal_reached" in row and "mean_belief_entropy" in row for row in payload["runs"])
     assert all(row["role"] == "validation_comparison" for row in payload["runs"])
     assert payload["summary"]["run_count"] == 2
     assert payload["summary"]["vanilla_role"] == "comparison_only"
 
 
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_graph_world_extension_writes_real_summary_and_trace(project_root: Path) -> None:
     from simulation.graph_world import write_graph_world_artifacts
 
@@ -74,6 +84,9 @@ def test_graph_world_extension_writes_real_summary_and_trace(project_root: Path)
     assert "not_implemented" not in json.dumps(summary)
 
 
+@pytest.mark.render_slow
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_animation_extension_renders_distinct_trace_frames(project_root: Path) -> None:
     from simulation.graph_world import write_graph_world_artifacts
     from visualizations.animation import (
@@ -96,6 +109,9 @@ def test_animation_extension_renders_distinct_trace_frames(project_root: Path) -
     assert validate_animation_frame_deltas(project_root) == []
 
 
+@pytest.mark.render_slow
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_animation_frame_delta_manifest_rejects_static_manifest(project_root: Path) -> None:
     from simulation.graph_world import write_graph_world_artifacts
     from visualizations.animation import (
@@ -120,6 +136,8 @@ def test_animation_frame_delta_manifest_rejects_static_manifest(project_root: Pa
     assert any("static adjacent frames" in issue or "stale" in issue for issue in issues)
 
 
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_validate_outputs_rejects_graph_world_summary_trace_mismatch(project_root: Path) -> None:
     from gates.validation import validate_outputs
     from simulation.graph_world import write_graph_world_artifacts
@@ -137,6 +155,8 @@ def test_validate_outputs_rejects_graph_world_summary_trace_mismatch(project_roo
     assert checks["si_graph_world_schema"] is False
 
 
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_pymdp_runtime_diagnostics_captures_known_warning_and_rejects_unexpected(
     project_root: Path,
 ) -> None:
@@ -183,6 +203,9 @@ def test_pymdp_runtime_diagnostics_captures_known_warning_and_rejects_unexpected
             diagnostics_path.write_text(original, encoding="utf-8")
 
 
+@pytest.mark.render_slow
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_policy_comparison_uses_configured_grid_and_writes_posterior_rows(project_root: Path) -> None:
     from simulation.pymdp_config import load_pymdp_config
     from simulation.si_artifacts import write_policy_comparison, write_policy_posterior_grid
@@ -205,6 +228,9 @@ def test_policy_comparison_uses_configured_grid_and_writes_posterior_rows(projec
     assert {row["planner"] for row in posterior["rows"]} == {"sophisticated_inference", "vanilla"}
 
 
+@pytest.mark.render_slow
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_validate_outputs_rejects_unnormalized_policy_posterior(project_root: Path) -> None:
     from gates.validation import validate_outputs
     from simulation.si_artifacts import write_policy_comparison, write_policy_posterior_grid

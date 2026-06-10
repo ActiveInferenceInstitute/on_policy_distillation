@@ -1,11 +1,9 @@
-# AGENTS — Discussion Outlook
+# Discussion Outlook Fragment Notes
 
-Local automation guidance for the `discussion_outlook` IMRaD **Discussion** section.
+Editable source for manifest section `discussion_outlook`, composed to
+`manuscript/15_discussion_outlook.md`.
 
-- **Scope:** manuscript prose fragments for this section only.
-- **Invariants:** every quantitative claim must trace to a generated artifact
-  (validated by `infrastructure.validation.evidence_registry`); do not introduce
-  unbound numbers or fabricated citations.
-- **Rendering:** fragments here are assembled by the rendering pipeline; edit the
-  source fragments, never the assembled `output/` copies.
-- **Tracks:** keep cross-track (analytical / pymdp / sheaf) claims consistent.
+- Keep future-work claims scoped to deterministic toy artifacts unless validated
+  generated outputs are added.
+- Use hydrated `{{token}}` values for measured quantities.
+- Section bindings live in `../../../sheaf/manifest.yaml`.

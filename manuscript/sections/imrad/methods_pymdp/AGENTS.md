@@ -1,11 +1,9 @@
-# AGENTS — Methods Pymdp
+# Methods pymdp Fragment Notes
 
-Local automation guidance for the `methods_pymdp` IMRaD **Methods** section.
+Editable source for manifest section `methods_pymdp`, composed to
+`manuscript/06_methods_pymdp.md`.
 
-- **Scope:** manuscript prose fragments for this section only.
-- **Invariants:** every quantitative claim must trace to a generated artifact
-  (validated by `infrastructure.validation.evidence_registry`); do not introduce
-  unbound numbers or fabricated citations.
-- **Rendering:** fragments here are assembled by the rendering pipeline; edit the
-  source fragments, never the assembled `output/` copies.
-- **Tracks:** keep cross-track (analytical / pymdp / sheaf) claims consistent.
+- Keep planner claims aligned with `pymdp.yaml` and `src/simulation/si_runner.py`.
+- Vanilla planning is comparison-only; the canonical profile is
+  `full_tmaze_sophisticated_inference`.
+- Section bindings live in `../../../sheaf/manifest.yaml`.

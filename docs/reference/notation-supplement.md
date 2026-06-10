@@ -40,7 +40,10 @@ content of the title, and it is checked numerically in
 `firstprinciples.reward_tilting.free_energy_against_tilted` (zero at the target)
 and `verify_optimality` (the target beats all perturbations).
 
-References: @levine2018rlinference, @abdolmaleki2018mpo, @friston2010fep, @parr2022active.
+References: @levine2018rlinference, @abdolmaleki2018mpo,
+@todorov2008duality, @toussaint2009trajectory_inference, @ziebart2008maxent_irl,
+@millidge2020active_control, @haarnoja2018sac, @ziegler2019humanprefs,
+@rafailov2023dpo, @friston2006fep, @friston2010fep, @parr2022active.
 
 ---
 
@@ -57,6 +60,8 @@ References: @levine2018rlinference, @abdolmaleki2018mpo, @friston2010fep, @parr2
 | $G$ | expected free energy | distillation + reward (KL+RL) objective |
 | $\gamma$ | precision / inverse temperature | distillation temperature $1/\beta$ |
 | Markov blanket | conditional-independence boundary | teacher/student context asymmetry |
+| predictive-coding hierarchy | top-down prediction / bottom-up error | teacher target / student residual correction |
+| control-as-inference posterior | reward-tilted policy posterior | KL-constrained RLHF / OPD target |
 | epistemic value | information gain | teacher signal on novel student states |
 | pragmatic value | prior preference $\log p(o)$ | reward tilt $\exp(R/\beta)$ |
 
@@ -67,15 +72,15 @@ The machine-readable version of this dictionary is
 
 ## 3. Divergence geometry
 
-For categorical $p,q$ on the same support, with $D_{\mathrm{KL}}(q\|p)=\sum_i q_i\log\frac{q_i}{p_i}$:
+For categorical $p,q$ on the same support, with $D_{\mathrm{KL}}(q\|p)=\sum_i q_i\log\frac{q_i}{p_i}$, the primitive is the Kullback-Leibler information divergence [@kullback1951information], and the use of a tractable $q$ follows the variational-inference tradition [@jordan1999variational; @blei2017variational]:
 
 | Name | Definition | Behaviour | OPD role | Module |
 | --- | --- | --- | --- | --- |
 | Forward KL | $D_{\mathrm{KL}}(p_T\|q_S)$ | mode-covering | SFT / vanilla KD limit (@hinton2015distilling) | `divergences.forward_kl` |
 | Reverse KL | $D_{\mathrm{KL}}(q_S\|p_T)$ | mode-seeking | self-distillation / free energy (@gu2024minillm) | `divergences.reverse_kl` |
-| Jensen–Shannon | $\tfrac12 D_{\mathrm{KL}}(p\|m)+\tfrac12 D_{\mathrm{KL}}(q\|m)$, $m=\tfrac{p+q}{2}$ | symmetric, bounded | DistiLLM family | `divergences.jensen_shannon` |
-| Skew KL | $D_{\mathrm{KL}}\!\big(p\,\|\,(1-\alpha)p+\alpha q\big)$ | finite under zeros | stabilised KD | `divergences.skew_kl` |
-| $\alpha$-divergence | $\tfrac{1-\sum_i p_i^{\alpha}q_i^{1-\alpha}}{\alpha(1-\alpha)}$ | interpolates FKL/RKL | adaptive objectives | `divergences.alpha_divergence` |
+| Jensen–Shannon | $\tfrac12 D_{\mathrm{KL}}(p\|m)+\tfrac12 D_{\mathrm{KL}}(q\|m)$, $m=\tfrac{p+q}{2}$ | symmetric, bounded | DistiLLM family (@ko2024distillm) | `divergences.jensen_shannon` |
+| Skew KL | $D_{\mathrm{KL}}\!\big(p\,\|\,(1-\alpha)p+\alpha q\big)$ | finite under zeros | stabilised KD / DistiLLM (@ko2024distillm) | `divergences.skew_kl` |
+| $\alpha$-divergence | $\tfrac{1-\sum_i p_i^{\alpha}q_i^{1-\alpha}}{\alpha(1-\alpha)}$ | interpolates FKL/RKL | adaptive, entropy-aware, and hybrid objectives (@jin2026entropy_opd; @zhu2026hpd) | `divergences.alpha_divergence` |
 | Clipped pointwise KL | $\sum_i \mathrm{clip}\!\big(q_i(\log q_i-\log p_i),\,\pm c\big)$ | bounds per-token mass | OPSD (@zhao2026opsd) | `divergences.clipped_pointwise_kl` |
 
 **Why reverse KL is the default.** It is mode-seeking, it is exactly zero iff
@@ -116,9 +121,12 @@ policy conditioned on privileged context $c$**, and the student (no context)
 descends the reverse KL toward it. Crucially this signal is *dense* — a gradient
 component at every vocabulary entry where teacher and student disagree — whereas
 a scalar reward supplies exactly one. That density (quantified in
-`firstprinciples.sdpg.signal_density`) is why on-policy distillation beats RL at a
-fraction of the compute (@thinkingmachines2025opd: 74.4% vs 67.6% AIME'24 at ~1/10
-the GPU-hours). Default hyperparameters mirror the reference implementation
+`firstprinciples.sdpg.signal_density`) is the mechanism-level reason the
+literature-reported Qwen table can show OPD above RL at lower compute
+(@qwen2025technical_report: 74.4% vs 67.6% AIME'24, 1,800 vs 17,920 GPU-hours,
+as relayed by @thinkingmachines2025opd). Thinking Machines' own contextual
+replication is separate: about 70% AIME'24 in roughly 150 steps, framed as a
+9-30x efficiency range. Default hyperparameters mirror the reference implementation
 ($\beta=\alpha=10^{-3}$; `KL_MODE` $\in\{$fkl, rkl, ufkl, urkl$\}$).
 
 ---
@@ -127,8 +135,15 @@ the GPU-hours). Default hyperparameters mirror the reference implementation
 
 Train a student only on teacher/ground-truth trajectories (off-policy) and it
 never visits the off-distribution states its own sampling produces; errors
-compound and it cannot recover. Active inference makes the same diagnosis for
-passive Bayesian updating. Modelling on-track/off-track as a two-state chain
+compound and it cannot recover. This is the behavioral-cloning/imitation-learning
+failure mode before it is the LLM exposure-bias failure mode
+(@pomerleau1989alvinn; @ross2010efficient_imitation; @ross2011dagger;
+@bengio2015scheduled; @arora2022exposure; @pozzi2025exposure_distill), and it
+also marks the limit of model compression, sequence KD, and policy distillation
+when the student is never trained on states it induces
+(@bucila2006model_compression; @hinton2015distilling; @kim2016sequence_kd;
+@rusu2016policy_distillation; @czarnecki2019distilling_policy). Active inference makes the same
+diagnosis for passive Bayesian updating. Modelling on-track/off-track as a two-state chain
 (`firstprinciples.exposure_bias`), the off-policy survival probability decays
 geometrically toward zero while the on-policy student — which *generates its own
 observations* and learns to recover — converges to a positive plateau
@@ -148,9 +163,10 @@ per-decision **reverse KL** between the student's and teacher's action
 distributions is the variational free energy the student descends to absorb the
 teacher's privileged belief. Measured: teacher belief entropy $0.247$ nats $<$
 student $0.347$ nats (privileged advantage), mean distillation signal $6.28$
-nats. The cue is the Markov blanket; the rollout is the posterior generating its
-own observations; the reverse KL is the loss — the title, instantiated and
-measured.
+nats. The cue is the Markov blanket (@kirchhoff2018markov); the rollout is the
+posterior generating its own observations; the reverse KL is the loss — the
+title, instantiated and measured. The teacher/student entropy gap is a local toy
+measurement, not a reproduction of entropy-aware OPD results (@jin2026entropy_opd).
 
 ---
 
@@ -178,9 +194,9 @@ observations.
 **8.2 Variational EM / $\pi$-Distill (`firstprinciples.variational_em`).** The
 MPO/EM cycle alternates an E-step (improve a non-parametric target by the
 advantage relative to $\pi_{\mathrm{ref}}$, $A = R - \beta\log(\pi_S/\pi_{\mathrm{ref}})$,
-so the target is the reward-tilted $\pi^\*$ for *any* current student) and an
+so the target is the reward-tilted $\pi^{*}$ for *any* current student) and an
 M-step (reverse-KL projection of $\pi_S$ onto it). The variational free energy
-$D_{\mathrm{KL}}(\pi_S\|\pi^\*)$ decreases monotonically to zero — an executable,
+$D_{\mathrm{KL}}(\pi_S\|\pi^{*})$ decreases monotonically to zero — an executable,
 audited certificate of the perception/action loop.
 
 **8.3 Diversity collapse, Pass@1 vs Pass@k (`firstprinciples.diversity`).** With a
@@ -195,7 +211,8 @@ direction from the student's local uncertainty: reverse KL where confident
 (entropy below the batch median — commit), forward KL where uncertain (explore).
 This is precision-weighting of the epistemic/pragmatic balance applied
 token-wise; the adaptive objective lies between the all-forward and all-reverse
-extremes (AKL/ToDi family).
+extremes (AKL/ToDi family), and is the toy analogue of entropy-aware and hybrid
+OPD design choices (@jin2026entropy_opd; @zhu2026hpd).
 
 ---
 
@@ -238,9 +255,12 @@ novel states the student visits. `energy.efe_report` verifies the two forms agre
 
 Sample-level claims are reported with a percentile **bootstrap** mean CI, a paired
 **permutation** test and exact **sign** test, and **Cohen's $d$** effect size — all
-seeded and deterministic. The privileged-teacher advantage (student belief entropy
-exceeds teacher belief entropy) is confirmed with a strictly positive bootstrap CI
-on the paired difference and $d>0$.
+seeded and deterministic [@cohen1988power]. The privileged-teacher advantage
+(student belief entropy exceeds teacher belief entropy) is confirmed with a
+strictly positive bootstrap CI on the paired difference, $n=6$ matched classroom
+pairs, a two-sided paired permutation test with 5,000 seeded permutations, and
+$d>0$. These are toy-classroom inferential summaries, not population claims about
+production LLM distillation.
 
 **Privilege-sweep experiment** (`firstprinciples.privilege`, a *Science* cycle):
 *Hypotheses* — (H1) teacher belief entropy falls and (H2) the reverse-KL

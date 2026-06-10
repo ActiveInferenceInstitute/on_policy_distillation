@@ -11,7 +11,6 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
-import re
 import subprocess
 from functools import lru_cache
 from itertools import product
@@ -20,119 +19,18 @@ from typing import Any
 
 import yaml
 
-SHEAF_TRACK_PRODUCER = "generate_sheaf_tracks.py"
-CANONICAL_SCHEMA = "template_active_inference.canonical_sheaf_tracks.v1"
-SEMANTIC_SCHEMA = "template_active_inference.semantic_gluing.v2"
-DEPENDENCY_SCHEMA = "template_active_inference.validation_dependency_graph.v1"
-VERSIONED_TRACK_RE = re.compile(r"(?:^|_)v[2-9]$")
-
-CANONICAL_TRACKS: tuple[str, ...] = (
-    "provenance",
-    "replay_matrix",
-    "sensitivity",
-    "uncertainty",
-    "counterexample",
-    "model_checking",
-    "interop",
-    "adversarial_audit",
-    "evidence_fields",
-    "release_bundle",
-    "theorem_traceability",
-    "gate_ergonomics",
-    "scholarship",
-    "artifact_diffoscope",
-    "proof_extraction",
-    "state_space_catalog",
-    "causal_ablation",
-    "artifact_license",
-    "release_notes",
+from .sheaf_track_contracts import (
+    CANONICAL_ARTIFACTS,
+    CANONICAL_SCHEMA,
+    CANONICAL_TRACKS,
+    DEPENDENCY_SCHEMA,
+    LEGACY_ARTIFACTS,
+    OPTIONAL_CLAIM_EXEMPT_TRACKS,
+    REQUIRED_EDGE_TYPES,
+    SEMANTIC_SCHEMA,
+    SHEAF_TRACK_PRODUCER,
+    VERSIONED_TRACK_RE,
 )
-
-CANONICAL_ARTIFACTS: dict[str, str] = {
-    "provenance": "output/data/artifact_provenance.json",
-    "replay_matrix": "output/reports/replay_matrix.json",
-    "sensitivity": "output/data/sensitivity_sweep.json",
-    "uncertainty": "output/data/uncertainty_summary.json",
-    "counterexample": "output/reports/counterexample_matrix.json",
-    "model_checking": "output/reports/model_checking_witnesses.json",
-    "interop": "output/data/interop_roundtrip_report.json",
-    "adversarial_audit": "output/reports/adversarial_audit.json",
-    "semantic": "output/data/sheaf_gluing_certificate.json",
-    "dependency": "output/data/validation_dependency_graph.json",
-    "section_status": "output/data/sheaf_section_status_matrix.json",
-    "render_log": "output/reports/sheaf_render_log.json",
-    "track_improvement_scope": "output/data/track_improvement_scope.json",
-    "blocked_scope_manifest": "output/reports/blocked_scope_manifest.json",
-    "evidence_fields": "output/data/evidence_field_index.json",
-    "release_bundle": "output/reports/release_bundle_manifest.json",
-    "theorem_traceability": "output/data/theorem_traceability_matrix.json",
-    "gate_ergonomics": "output/data/validation_gate_index.json",
-    "scholarship": "output/data/scholarship_source_matrix.json",
-    "artifact_diffoscope": "output/reports/artifact_diffoscope.json",
-    "proof_extraction": "output/data/proof_extraction_index.json",
-    "state_space_catalog": "output/data/state_space_catalog.json",
-    "causal_ablation": "output/data/causal_ablation_matrix.json",
-    "artifact_license": "output/reports/artifact_license_audit.json",
-    "release_notes": "output/reports/release_notes_evidence.json",
-    "proof_dependency_graph": "output/data/proof_dependency_graph.json",
-    "state_transition_table": "output/data/state_transition_table.json",
-    "ablation_sensitivity_report": "output/reports/ablation_sensitivity_report.json",
-    "release_attestation": "output/reports/release_attestation.json",
-}
-
-LEGACY_ARTIFACTS: tuple[str, ...] = (
-    "output/data/artifact_lineage_v2.json",
-    "output/data/artifact_bundle_lineage_v3.json",
-    "output/data/sensitivity_sweep_v2.json",
-    "output/data/sensitivity_sweep_v3.json",
-    "output/data/uncertainty_summary_v2.json",
-    "output/data/uncertainty_calibration_v3.json",
-    "output/reports/counterexample_matrix_v2.json",
-    "output/reports/counterexample_fixture_matrix_v3.json",
-    "output/reports/model_checking_witnesses_v2.json",
-    "output/reports/model_checking_witnesses_v3.json",
-    "output/data/interop_roundtrip_v2.json",
-    "output/data/interop_roundtrip_v3.json",
-    "output/reports/adversarial_audit_v2.json",
-    "output/reports/adversarial_probe_matrix_v3.json",
-    "output/reports/replay_matrix_v2.json",
-    "output/data/sheaf_gluing_certificate_v3.json",
-    "output/data/sheaf_gluing_certificate_v4.json",
-    "output/data/sheaf_gluing_certificate_v5.json",
-    "output/data/validation_dependency_graph_v2.json",
-    "output/data/validation_dependency_graph_v3.json",
-    "output/data/validation_dependency_graph_v4.json",
-    "output/data/track_improvement_scope_v2.json",
-    "output/reports/blocked_scope_manifest_v2.json",
-)
-
-REQUIRED_EDGE_TYPES: tuple[str, ...] = (
-    "producer_to_track",
-    "track_to_artifact",
-    "artifact_to_bundle",
-    "artifact_to_token",
-    "token_to_claim",
-    "claim_to_section",
-    "validator_to_negative_control",
-    "fixture_to_expected_failure",
-    "model_to_witness",
-    "ontology_to_roundtrip",
-    "figure_to_source",
-    "scholarship_to_method",
-    "scholarship_to_artifact",
-    "output_to_copied_output",
-)
-
-OPTIONAL_CLAIM_EXEMPT_TRACKS: set[str] = {
-    "prose",
-    "formalism",
-    "simulation",
-    "layers",
-    "visualization",
-    "animation",
-    "animation_delta",
-    "manuscript_staleness",
-}
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -244,7 +142,7 @@ def _claim_ids_by_track(root: Path) -> dict[str, list[str]]:
 
 
 def _artifact_maps() -> tuple[dict[str, str], dict[str, tuple[str, ...]], dict[str, tuple[str, ...]]]:
-    from manuscript.sheaf.semantic import ARTIFACT_CONSUMERS, ARTIFACT_GATES, ARTIFACT_PRODUCERS
+    from artifact_contracts import ARTIFACT_CONSUMERS, ARTIFACT_GATES, ARTIFACT_PRODUCERS
 
     return ARTIFACT_PRODUCERS, ARTIFACT_CONSUMERS, ARTIFACT_GATES
 
@@ -1445,23 +1343,29 @@ def _canonical_restrictions(root: Path) -> dict[str, bool]:
     }
 
 
-def write_sheaf_track_artifacts(project_root: Path) -> dict[str, Path]:
+def write_sheaf_track_artifacts(
+    project_root: Path,
+    *,
+    refresh_dependencies: bool = True,
+    refresh_hydration: bool = True,
+) -> dict[str, Path]:
     root = project_root.resolve()
     from roadmap_tracks.scholarship import write_scholarship_source_matrix
     from roadmap_tracks.supplemental import write_supplemental_artifacts
 
-    try:
-        from roadmap_tracks import (
-            write_formal_interop_artifacts,
-            write_integration_audit_artifacts,
-            write_toy_sweep_artifacts,
-        )
+    if refresh_dependencies:
+        try:
+            from roadmap_tracks import (
+                write_formal_interop_artifacts,
+                write_integration_audit_artifacts,
+                write_toy_sweep_artifacts,
+            )
 
-        write_toy_sweep_artifacts(root)
-        write_formal_interop_artifacts(root)
-        write_integration_audit_artifacts(root)
-    except (ImportError, OSError, ValueError, KeyError):
-        pass
+            write_toy_sweep_artifacts(root)
+            write_formal_interop_artifacts(root)
+            write_integration_audit_artifacts(root)
+        except (ImportError, OSError, ValueError, KeyError):
+            pass
 
     _remove_legacy_artifacts(root)
     paths: dict[str, Path] = {}
@@ -1522,76 +1426,116 @@ def write_sheaf_track_artifacts(project_root: Path) -> dict[str, Path]:
         paths["semantic"] = _write_json(root / CANONICAL_ARTIFACTS["semantic"], build_semantic_gluing_certificate(root))
     except (ImportError, OSError, ValueError, KeyError):
         pass
-    try:
-        from roadmap_tracks.integration_audit import write_integration_audit_artifacts
+    if refresh_dependencies:
+        try:
+            from roadmap_tracks.integration_audit import write_integration_audit_artifacts
 
-        write_integration_audit_artifacts(root)
-        paths["counterexample"] = _write_json(
-            root / CANONICAL_ARTIFACTS["counterexample"],
-            build_counterexample_matrix(root),
-        )
-        paths["adversarial"] = _write_json(
-            root / CANONICAL_ARTIFACTS["adversarial_audit"],
-            build_adversarial_audit(root),
-        )
-        paths["evidence_fields"] = _write_json(
-            root / CANONICAL_ARTIFACTS["evidence_fields"],
-            build_evidence_field_index(root),
-        )
-        paths["release_bundle"] = _write_json(
-            root / CANONICAL_ARTIFACTS["release_bundle"],
-            build_release_bundle_manifest(root),
-        )
-        paths.update(write_supplemental_artifacts(root))
-        paths["artifact_diffoscope"] = root / CANONICAL_ARTIFACTS["artifact_diffoscope"]
-        paths["artifact_license"] = root / CANONICAL_ARTIFACTS["artifact_license"]
-        paths["release_notes"] = root / CANONICAL_ARTIFACTS["release_notes"]
-        paths["scholarship"] = write_scholarship_source_matrix(root)
-        paths["proof_extraction"] = root / CANONICAL_ARTIFACTS["proof_extraction"]
-        paths["state_space_catalog"] = root / CANONICAL_ARTIFACTS["state_space_catalog"]
-        paths["causal_ablation"] = root / CANONICAL_ARTIFACTS["causal_ablation"]
-        paths["track_improvement_scope"] = _write_json(
-            root / CANONICAL_ARTIFACTS["track_improvement_scope"],
-            build_track_improvement_scope(root),
-        )
-        paths["replay_matrix"] = _write_json(root / CANONICAL_ARTIFACTS["replay_matrix"], build_replay_matrix(root))
-        paths["provenance"] = _write_json(root / CANONICAL_ARTIFACTS["provenance"], build_artifact_provenance(root))
-        paths["dependency"] = _write_json(
-            root / CANONICAL_ARTIFACTS["dependency"], build_validation_dependency_graph(root)
-        )
-        status_paths = write_sheaf_status_outputs(root)
-        paths.update(status_paths)
-        from manuscript.sheaf.semantic import build_evidence_crosswalk, build_semantic_gluing_certificate
+            write_integration_audit_artifacts(root)
+            paths["counterexample"] = _write_json(
+                root / CANONICAL_ARTIFACTS["counterexample"],
+                build_counterexample_matrix(root),
+            )
+            paths["adversarial"] = _write_json(
+                root / CANONICAL_ARTIFACTS["adversarial_audit"],
+                build_adversarial_audit(root),
+            )
+            paths["evidence_fields"] = _write_json(
+                root / CANONICAL_ARTIFACTS["evidence_fields"],
+                build_evidence_field_index(root),
+            )
+            paths["release_bundle"] = _write_json(
+                root / CANONICAL_ARTIFACTS["release_bundle"],
+                build_release_bundle_manifest(root),
+            )
+            paths.update(write_supplemental_artifacts(root))
+            paths["artifact_diffoscope"] = root / CANONICAL_ARTIFACTS["artifact_diffoscope"]
+            paths["artifact_license"] = root / CANONICAL_ARTIFACTS["artifact_license"]
+            paths["release_notes"] = root / CANONICAL_ARTIFACTS["release_notes"]
+            paths["scholarship"] = write_scholarship_source_matrix(root)
+            paths["proof_extraction"] = root / CANONICAL_ARTIFACTS["proof_extraction"]
+            paths["state_space_catalog"] = root / CANONICAL_ARTIFACTS["state_space_catalog"]
+            paths["causal_ablation"] = root / CANONICAL_ARTIFACTS["causal_ablation"]
+            paths["track_improvement_scope"] = _write_json(
+                root / CANONICAL_ARTIFACTS["track_improvement_scope"],
+                build_track_improvement_scope(root),
+            )
+            paths["replay_matrix"] = _write_json(root / CANONICAL_ARTIFACTS["replay_matrix"], build_replay_matrix(root))
+            paths["provenance"] = _write_json(root / CANONICAL_ARTIFACTS["provenance"], build_artifact_provenance(root))
+            paths["dependency"] = _write_json(
+                root / CANONICAL_ARTIFACTS["dependency"], build_validation_dependency_graph(root)
+            )
+            status_paths = write_sheaf_status_outputs(root)
+            paths.update(status_paths)
+            from manuscript.sheaf.semantic import build_evidence_crosswalk, build_semantic_gluing_certificate
 
-        _refresh_hydrated_manuscript(root)
-        status_paths = write_sheaf_status_outputs(root)
-        paths.update(status_paths)
-        paths["crosswalk"] = _write_json(
-            root / "output" / "data" / "sheaf_evidence_crosswalk.json", build_evidence_crosswalk(root)
-        )
-        paths["semantic"] = _write_json(root / CANONICAL_ARTIFACTS["semantic"], build_semantic_gluing_certificate(root))
-        _refresh_hydrated_manuscript(root)
-        status_paths = write_sheaf_status_outputs(root)
-        paths.update(status_paths)
-        paths["semantic"] = _write_json(root / CANONICAL_ARTIFACTS["semantic"], build_semantic_gluing_certificate(root))
-        paths.update(write_supplemental_artifacts(root))
-        _refresh_hydrated_manuscript(root)
-        paths["provenance"] = _write_json(root / CANONICAL_ARTIFACTS["provenance"], build_artifact_provenance(root))
-        paths["dependency"] = _write_json(
-            root / CANONICAL_ARTIFACTS["dependency"], build_validation_dependency_graph(root)
-        )
-        paths["semantic"] = _write_json(root / CANONICAL_ARTIFACTS["semantic"], build_semantic_gluing_certificate(root))
-        paths.update(write_supplemental_artifacts(root))
-        _refresh_hydrated_manuscript(root)
-        paths["provenance"] = _write_json(root / CANONICAL_ARTIFACTS["provenance"], build_artifact_provenance(root))
-        paths["dependency"] = _write_json(
-            root / CANONICAL_ARTIFACTS["dependency"], build_validation_dependency_graph(root)
-        )
-        paths["semantic"] = _write_json(root / CANONICAL_ARTIFACTS["semantic"], build_semantic_gluing_certificate(root))
-    except (ImportError, OSError, ValueError, KeyError):
-        pass
+            if refresh_hydration:
+                _refresh_hydrated_manuscript(root)
+            status_paths = write_sheaf_status_outputs(root)
+            paths.update(status_paths)
+            paths["crosswalk"] = _write_json(
+                root / "output" / "data" / "sheaf_evidence_crosswalk.json", build_evidence_crosswalk(root)
+            )
+            paths["semantic"] = _write_json(
+                root / CANONICAL_ARTIFACTS["semantic"], build_semantic_gluing_certificate(root)
+            )
+            if refresh_hydration:
+                _refresh_hydrated_manuscript(root)
+            status_paths = write_sheaf_status_outputs(root)
+            paths.update(status_paths)
+            paths["semantic"] = _write_json(
+                root / CANONICAL_ARTIFACTS["semantic"], build_semantic_gluing_certificate(root)
+            )
+            paths.update(write_supplemental_artifacts(root))
+            if refresh_hydration:
+                _refresh_hydrated_manuscript(root)
+            paths["provenance"] = _write_json(root / CANONICAL_ARTIFACTS["provenance"], build_artifact_provenance(root))
+            paths["dependency"] = _write_json(
+                root / CANONICAL_ARTIFACTS["dependency"], build_validation_dependency_graph(root)
+            )
+            paths["semantic"] = _write_json(
+                root / CANONICAL_ARTIFACTS["semantic"], build_semantic_gluing_certificate(root)
+            )
+            paths.update(write_supplemental_artifacts(root))
+            if refresh_hydration:
+                _refresh_hydrated_manuscript(root)
+            paths["provenance"] = _write_json(root / CANONICAL_ARTIFACTS["provenance"], build_artifact_provenance(root))
+            paths["dependency"] = _write_json(
+                root / CANONICAL_ARTIFACTS["dependency"], build_validation_dependency_graph(root)
+            )
+            paths["semantic"] = _write_json(
+                root / CANONICAL_ARTIFACTS["semantic"], build_semantic_gluing_certificate(root)
+            )
+            paths.update(write_supplemental_artifacts(root))
+            paths["semantic"] = _write_json(
+                root / CANONICAL_ARTIFACTS["semantic"], build_semantic_gluing_certificate(root)
+            )
+        except (ImportError, OSError, ValueError, KeyError):
+            pass
     _remove_legacy_artifacts(root)
     return paths
 
 
-from .sheaf_track_validation import validate_sheaf_track_artifacts  # noqa: E402,F401
+def validate_sheaf_track_artifacts(project_root: Path, *, validate_saved_certificate: bool = True) -> list[str]:
+    """Compatibility facade for canonical sheaf-track validation."""
+    from .sheaf_track_validation import validate_sheaf_track_artifacts as _validate
+
+    return _validate(project_root, validate_saved_certificate=validate_saved_certificate)
+
+
+def load_sheaf_track_payloads(project_root: Path) -> dict[str, dict]:
+    """Compatibility facade for loading canonical sheaf-track payloads once."""
+    from .sheaf_track_validation import load_sheaf_track_payloads as _load
+
+    return _load(project_root)
+
+
+def validate_sheaf_track_payloads(
+    project_root: Path,
+    payloads: dict[str, dict],
+    *,
+    validate_saved_certificate: bool = True,
+) -> list[str]:
+    """Compatibility facade for validating preloaded canonical sheaf-track payloads."""
+    from .sheaf_track_validation import validate_sheaf_track_payloads as _validate
+
+    return _validate(project_root, payloads, validate_saved_certificate=validate_saved_certificate)

@@ -1,4 +1,4 @@
-# template_active_inference docs
+# active_inference_on_policy_distillation docs
 
 Documentation for the public Active Inference multi-track exemplar (analytical,
 pymdp, sheaf manuscript, Lean/GNN/ontology, provenance, replay matrix,
@@ -19,6 +19,21 @@ and adversarial audit) composed into a sheaf manuscript.
 Run the project:
 
 ```bash
-uv run python -m pytest projects/templates/template_active_inference/tests -q
-./run.sh --pipeline --project template_active_inference --core-only --skip-infra
+uv run --extra dev python -m pytest tests/ -m "not artifact_slow and not render_slow" --no-cov
+uv run --extra dev python -m pytest tests/ -m "not artifact_slow" --no-cov
+uv run python -m pytest tests -q
+uv run python scripts/validate_outputs.py
+```
+
+The fast lane excludes tests that perform full fixed-point artifact writes or
+mutate shared generated artifacts. The tighter edit loop also excludes expensive
+rendering, animation, rollout, and large-compose checks. The full coverage gate
+remains authoritative.
+
+Render through the sibling template checkout after linking sidecar projects:
+
+```bash
+cd ../../../template
+uv run python -m infrastructure.orchestration link-projects
+uv run python scripts/03_render_pdf.py --project working/active_inference_on_policy_distillation
 ```

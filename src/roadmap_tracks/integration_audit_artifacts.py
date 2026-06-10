@@ -8,6 +8,7 @@ defined here, so existing imports continue to resolve unchanged.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -125,9 +126,28 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
     root = project_root.resolve()
     from visualizations.figure_registry import load_figure_registry
 
+    token_re = re.compile(r"\{\{([A-Za-z_][A-Za-z0-9_]*)")
+
+    def _image_dimensions(rel: str) -> dict[str, int | None]:
+        path = root / rel
+        if not path.is_file():
+            return {"width_px": None, "height_px": None}
+        try:
+            from PIL import Image
+
+            with Image.open(path) as img:
+                width, height = img.size
+        except Exception:
+            return {"width_px": None, "height_px": None}
+        return {"width_px": int(width), "height_px": int(height)}
+
     sources = {
         "ising_mi_curve": ["output/data/parameter_sweep.csv"],
-        "free_energy_curve": ["src/analytical/decomposition.py"],
+        "free_energy_curve": [
+            "output/data/parameter_sweep.csv",
+            "src/analytical/decomposition.py",
+            "src/analytical/free_energy.py",
+        ],
         "si_belief_entropy_curve": ["output/data/si_tmaze_trace.json"],
         "si_obs_action_trace": ["output/data/si_tmaze_summary.json"],
         "si_tmaze_actions": ["output/data/si_tmaze_summary.json"],
@@ -143,10 +163,14 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         "invariant_dashboard": ["output/reports/invariants.json"],
         "tmaze_schematic": [
             "pymdp.yaml",
-            "output/reports/pymdp_runtime_diagnostics.json",
-            "output/data/pymdp_policy_posterior_grid.json",
+            "output/data/si_tmaze_summary.json",
+            "output/data/si_tmaze_model_matrices.json",
         ],
-        "multi_track_architecture": ["tracks.yaml", "manuscript/sheaf/tracks.yaml"],
+        "multi_track_architecture": [
+            "tracks.yaml",
+            "manuscript/sheaf/tracks.yaml",
+            "output/data/manuscript_variables.json",
+        ],
         "lean_boundary_status": ["lean/OnPolicyDistillation"],
         "gnn_ontology_concordance": ["gnn", "manuscript/sections/imrad"],
         "semantic_gluing_graph": [
@@ -164,8 +188,10 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         ],
         "scholarship_source_map": ["output/data/scholarship_source_matrix.json", "manuscript/references.bib"],
         "graphical_abstract": [
-            "output/data/scholarship_source_matrix.json",
-            "output/data/sheaf_coverage_matrix.json",
+            "manuscript/sheaf/tracks.yaml",
+            "output/data/manuscript_variables.json",
+            "output/data/firstprinciples/classroom.json",
+            "output/data/firstprinciples/energy_demo.json",
             "output/data/validation_dependency_graph.json",
         ],
     }
@@ -177,6 +203,9 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         ],
         "free_energy_curve": [
             "decomposition.free_energy_against_entangled_prior",
+            "free_energy.kl_divergence",
+            "free_energy.total_correlation",
+            "parameter_sweep.csv:lambda",
             "analytical.hyperparameters.lambda_grid",
         ],
         "si_belief_entropy_curve": ["$.steps[*].belief_entropy"],
@@ -225,12 +254,21 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         "sheaf_coverage_heatmap": ["$.rows", "$.track_ids", "$.section_ids", "$.status_matrix"],
         "invariant_dashboard": ["$.invariants", "$.simulation", "$.all_pass"],
         "tmaze_schematic": [
-            "pymdp.yaml:environment",
-            "pymdp.yaml:si_search",
-            "$.rows[*].q_pi",
-            "$.known_warning_count",
+            "pymdp.yaml:planning_horizon",
+            "pymdp.yaml:agent.si_policy_len",
+            "output/data/si_tmaze_summary.json:$.planning_horizon",
+            "output/data/si_tmaze_summary.json:$.policy_len",
+            "output/data/si_tmaze_model_matrices.json:$.A_shapes",
+            "output/data/si_tmaze_model_matrices.json:$.B_shapes",
+            "output/data/si_tmaze_model_matrices.json:$.environment",
         ],
-        "multi_track_architecture": ["tracks.yaml:tracks", "manuscript/sheaf/tracks.yaml:tracks"],
+        "multi_track_architecture": [
+            "tracks.yaml:tracks",
+            "manuscript/sheaf/tracks.yaml:tracks",
+            "$.free_energy_mean_field_gap_max",
+            "$.si_tmaze_policy_entropy_drop_after_cue",
+            "$.proof_extraction_theorem_count",
+        ],
         "lean_boundary_status": ["lean/OnPolicyDistillation/*.lean"],
         "gnn_ontology_concordance": ["gnn/*.gnn.md", "manuscript/sections/imrad/*/ontology.yaml"],
         "semantic_gluing_graph": [
@@ -242,10 +280,11 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         "causal_ablation_heatmap": ["$.rows[*].topology", "$.rows[*].perturbation", "$.rows[*].effect"],
         "scholarship_source_map": ["$.rows[*].citation_key", "$.rows[*].method_role", "$.rows[*].artifact"],
         "graphical_abstract": [
-            "$.source_count",
-            "$.edges",
-            "$.coverage_bound",
-            "$.all_required_edge_types_present",
+            "$.proof_extraction_theorem_count",
+            "$.sheaf_laws_verified",
+            "$.figure_source_coverage_count",
+            "$.teacher_mean_belief_entropy",
+            "$.vfe_at_prior",
         ],
     }
     validation_gates = {
@@ -285,7 +324,12 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
             "test_figures.nonblank_png",
         ],
         "invariant_dashboard": ["validate_outputs.invariants_all_pass", "test_figures.nonblank_png"],
-        "tmaze_schematic": ["validate_outputs.pymdp_policy_posterior_grid_schema", "test_figures.nonblank_png"],
+        "tmaze_schematic": [
+            "validate_outputs.si_summary_schema",
+            "validate_outputs.si_tmaze_model_matrices_schema",
+            "test_figures.tmaze_schematic_uses_configured_horizon",
+            "test_figures.nonblank_png",
+        ],
         "multi_track_architecture": ["validate_outputs.track_improvement_scope_schema", "test_figures.nonblank_png"],
         "lean_boundary_status": ["validate_outputs.lean_theorem_inventory_schema", "test_figures.nonblank_png"],
         "gnn_ontology_concordance": ["validate_outputs.gnn_lint_schema", "test_figures.nonblank_png"],
@@ -308,16 +352,35 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         source_exists = {rel: (root / rel).exists() for rel in row_sources}
         row_fields = source_fields.get(figure_id, [])
         row_gates = validation_gates.get(figure_id, [])
+        output_rel = f"output/figures/{spec.filename}"
+        caption_tokens = sorted(set(token_re.findall(spec.caption)))
+        alt_tokens = sorted(set(token_re.findall(spec.alt)))
+        dimensions = _image_dimensions(output_rel)
+        metadata_complete = bool(spec.caption.strip()) and bool(spec.alt.strip()) and spec.width > 0
         rows.append(
             {
                 "figure_id": figure_id,
-                "output": f"output/figures/{spec.filename}",
+                "label": f"fig:{figure_id}",
+                "output": output_rel,
                 "generator": f"visualizations.figures::{figure_id}",
+                "caption": spec.caption,
+                "alt": spec.alt,
+                "caption_token_count": len(caption_tokens),
+                "alt_token_count": len(alt_tokens),
+                "variable_tokens": sorted(set(caption_tokens + alt_tokens)),
+                "width": spec.width,
+                "image_width_px": dimensions["width_px"],
+                "image_height_px": dimensions["height_px"],
+                "metadata_complete": metadata_complete
+                and dimensions["width_px"] is not None
+                and dimensions["height_px"] is not None,
                 "sources": row_sources,
                 "source_fields": row_fields,
+                "source_field_count": len(row_fields),
                 "source_path_status": source_exists,
                 "source_paths_exist": bool(row_sources) and all(source_exists.values()),
                 "validation_gates": row_gates,
+                "validation_gate_count": len(row_gates),
                 "mapped": bool(row_sources)
                 and bool(row_fields)
                 and bool(row_gates)
@@ -331,6 +394,7 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         "figure_count": len(rows),
         "registry_figure_ids": sorted(registry),
         "all_figures_mapped": all(row["mapped"] for row in rows),
+        "all_figure_metadata_complete": all(row["metadata_complete"] for row in rows),
     }
 
 
@@ -363,7 +427,12 @@ def _figure_source_rows_complete(project_root: Path, payload: dict[str, Any]) ->
     registry_ids = set(load_figure_registry(root))
     rows = payload.get("rows") or []
     row_ids = {str(row.get("figure_id", "")) for row in rows}
-    if not rows or row_ids != registry_ids or int(payload.get("figure_count", 0) or 0) != len(registry_ids):
+    if (
+        not rows
+        or row_ids != registry_ids
+        or int(payload.get("figure_count", 0) or 0) != len(registry_ids)
+        or payload.get("all_figure_metadata_complete") is not True
+    ):
         return False
     for row in rows:
         output = str(row.get("output", ""))
@@ -372,19 +441,52 @@ def _figure_source_rows_complete(project_root: Path, payload: dict[str, Any]) ->
         gates = row.get("validation_gates") or []
         if not (
             row.get("mapped") is True
+            and row.get("metadata_complete") is True
             and row.get("source_paths_exist") is True
+            and str(row.get("label", "")) == f"fig:{row.get('figure_id')}"
             and str(row.get("generator", "")).startswith("visualizations.figures::")
             and output.startswith("output/figures/")
             and (root / output).is_file()
+            and int(row.get("image_width_px", 0) or 0) > 0
+            and int(row.get("image_height_px", 0) or 0) > 0
+            and float(row.get("width", 0.0) or 0.0) > 0
             and sources
             and row.get("source_fields")
+            and int(row.get("source_field_count", 0) or 0) == len(row.get("source_fields") or [])
             and gates
+            and int(row.get("validation_gate_count", 0) or 0) == len(gates)
         ):
             return False
         if set(source_status) != set(sources):
             return False
         for rel, recorded_exists in source_status.items():
             if recorded_exists is not True or not (root / str(rel)).exists():
+                return False
+        if row.get("figure_id") == "tmaze_schematic":
+            required_sources = {
+                "pymdp.yaml",
+                "output/data/si_tmaze_summary.json",
+                "output/data/si_tmaze_model_matrices.json",
+            }
+            required_fields = {
+                "pymdp.yaml:planning_horizon",
+                "pymdp.yaml:agent.si_policy_len",
+                "output/data/si_tmaze_summary.json:$.planning_horizon",
+                "output/data/si_tmaze_summary.json:$.policy_len",
+                "output/data/si_tmaze_model_matrices.json:$.A_shapes",
+                "output/data/si_tmaze_model_matrices.json:$.B_shapes",
+                "output/data/si_tmaze_model_matrices.json:$.environment",
+            }
+            required_gates = {
+                "validate_outputs.si_summary_schema",
+                "validate_outputs.si_tmaze_model_matrices_schema",
+                "test_figures.tmaze_schematic_uses_configured_horizon",
+            }
+            if not (
+                required_sources.issubset(set(sources))
+                and required_fields.issubset(set(row.get("source_fields") or []))
+                and required_gates.issubset(set(gates))
+            ):
                 return False
     return True
 

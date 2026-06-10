@@ -93,7 +93,7 @@ def build_integration_dependency_graph(project_root: Path) -> dict[str, Any]:
 
 def build_producer_completeness(project_root: Path) -> dict[str, Any]:
     root = project_root.resolve()
-    from manuscript.sheaf.semantic import ARTIFACT_PRODUCERS
+    from artifact_contracts import ARTIFACT_PRODUCERS
 
     configured = set(_analysis_scripts(root))
     rows = [

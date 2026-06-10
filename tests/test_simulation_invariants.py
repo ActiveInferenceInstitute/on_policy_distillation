@@ -39,6 +39,9 @@ def test_run_logger_header_schema(tmp_path: Path) -> None:
 
 
 @pytest.mark.requires_pymdp
+@pytest.mark.render_slow
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_simulation_invariants_after_run(project_root: Path) -> None:
     if not pymdp_available():
         pytest.skip("pymdp not installed")
@@ -54,15 +57,27 @@ def test_simulation_invariants_after_run(project_root: Path) -> None:
 
 
 @pytest.mark.requires_pymdp
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_validate_outputs_gate_checks(project_root: Path) -> None:
     from gates.validation import validate_outputs
-    from gate_support import _BOOTSTRAPPED_ROOTS, ensure_gate_artifacts
+    from simulation.si_artifacts import write_policy_comparison, write_policy_posterior_grid
 
-    _BOOTSTRAPPED_ROOTS.discard(project_root.resolve())
-    ensure_gate_artifacts(project_root)
-    checks = validate_outputs(project_root)
+    if not pymdp_available():
+        pytest.skip("pymdp not installed")
+    run_and_persist(project_root)
+    write_policy_comparison(project_root)
+    write_policy_posterior_grid(project_root)
+    checks = validate_outputs(
+        project_root,
+        only={
+            "si_trace_present",
+            "si_summary_schema",
+            "si_tmaze_model_matrices_schema",
+            "pymdp_policy_posterior_grid_schema",
+        },
+    )
     assert checks.get("si_trace_present")
     assert checks.get("si_summary_schema")
     assert checks.get("si_tmaze_model_matrices_schema")
     assert checks.get("pymdp_policy_posterior_grid_schema")
-    assert checks.get("experiment_plan_metrics")

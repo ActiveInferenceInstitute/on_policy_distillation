@@ -14,7 +14,7 @@ The **presheaf** $\mathcal{F}$ is a contravariant functor on $P$ — $\mathcal{F
 The coverage cell is
 
 $$
-B(s,t) \in \{\mathrm{P}, \mathrm{—}, \mathrm{M}\}
+B(s,t) \in \{\mathrm{P}, \text{--}, \mathrm{M}\}
 $$ {#eq:coverage_cell}
 
 derived from $F_s(t)$ and filesystem existence at compose time: **P** when a bound fragment exists, **—** when the track is unbound for that row, and **M** when a bound path is missing. The current regenerated matrix reports {{coverage_present}} present / {{coverage_bound}} bound / {{coverage_missing}} missing cells. Registry size: $|\mathcal{T}| = {{sheaf_track_count}}$ types across {{imrad_manifest_rows}} IMRAD manifest rows ({{imrad_group_count}} group rows, {{composed_section_count}} composing sections).
@@ -34,6 +34,6 @@ Each law is paired with a negative control in `tests/test_sheaf_laws.py` — a s
 
 ### Scope (what is and is not claimed)
 
-These laws verify the sheaf *axioms* on a finite base poset. They do **not** compute sheaf *cohomology* ($H^0$/$H^1$, Čech complexes, derived functors); "sheaf" here names the verified separation-and-gluing structure of a multi-track coverage assignment, not a cohomological invariant. Formal track definitions and section×track bindings appear in the generated tables below.
+These laws verify the sheaf *axioms* on a finite base poset. They do **not** compute sheaf *cohomology* ($H^0$/$H^1$, Čech complexes, derived functors); "sheaf" here names the verified separation-and-gluing structure of a multi-track coverage assignment, not a cohomological invariant. The applied contracts reading is limited to the same finite local-to-global assembly discipline [@speranzon2018contracts], not a claim that the manuscript instantiates a full systems-of-systems semantics. Formal track definitions and section×track bindings appear in the generated tables below.
 
 Semantic gluing then checks agreement of the glued content: coverage counts, manuscript variables, typed claim predicates, pymdp mode/hash, Bernoulli GNN ontology, and SI T-maze GNN ontology. This certificate is a content-level audit over the same base, not an additional topological law.

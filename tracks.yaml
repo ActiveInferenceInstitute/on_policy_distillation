@@ -9,7 +9,7 @@ sheaf:
 tracks:
   - id: lean
     label: Lean boundary fragment
-    paths: [lean/TemplateActiveInference]
+    paths: [lean/OnPolicyDistillation]
     gate: build_lean
     required: true
   - id: analytical

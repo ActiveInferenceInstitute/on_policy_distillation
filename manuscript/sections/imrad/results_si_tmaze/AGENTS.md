@@ -1,11 +1,9 @@
-# AGENTS — Results Si Tmaze
+# Results SI T-maze Fragment Notes
 
-Local automation guidance for the `results_si_tmaze` IMRaD **Results** section.
+Editable source for manifest section `results_si_tmaze`, composed to
+`manuscript/12_results_si_tmaze.md`.
 
-- **Scope:** manuscript prose fragments for this section only.
-- **Invariants:** every quantitative claim must trace to a generated artifact
-  (validated by `infrastructure.validation.evidence_registry`); do not introduce
-  unbound numbers or fabricated citations.
-- **Rendering:** fragments here are assembled by the rendering pipeline; edit the
-  source fragments, never the assembled `output/` copies.
-- **Tracks:** keep cross-track (analytical / pymdp / sheaf) claims consistent.
+- Keep rollout claims aligned with `si_tmaze_summary.json`, trace artifacts,
+  model-matrix audit, graph-world artifacts, and first-principles classroom JSON.
+- Use hydrated `{{token}}` values for all measured quantities.
+- Section bindings live in `../../../sheaf/manifest.yaml`.

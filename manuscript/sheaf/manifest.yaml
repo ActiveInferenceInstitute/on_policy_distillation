@@ -91,14 +91,125 @@ sections:
     theorem_traceability: manuscript/sections/imrad/methods_lean/theorem_traceability.md
     proof_extraction: manuscript/sections/imrad/methods_lean/proof_extraction.md
     visualization: manuscript/sections/imrad/methods_lean/visualization.md
-- id: methods_sheaf
+- id: results
   order: 8
+  kind: group
+  imrad: results
+  depth: 0
+  compose: false
+  title: Results
+  short: res
+  output_name: _group_results.md
+  tracks: {}
+- id: results_mi_sweep
+  order: 9
   kind: section
-  imrad: methods
+  imrad: results
   depth: 1
-  title: "Reproducibility methodology"
+  title: "Teacher and student mutual information"
+  short: mi
+  output_name: 10_results_mi_sweep.md
+  tracks:
+    prose: manuscript/sections/imrad/results_mi_sweep/prose.md
+    formalism: manuscript/sections/imrad/results_mi_sweep/formalism.md
+    simulation: manuscript/sections/imrad/results_mi_sweep/simulation.md
+    visualization: manuscript/sections/imrad/results_mi_sweep/visualization.md
+- id: results_free_energy
+  order: 10
+  kind: section
+  imrad: results
+  depth: 1
+  title: Free-energy decomposition
+  short: fe
+  output_name: 11_results_free_energy.md
+  tracks:
+    prose: manuscript/sections/imrad/results_free_energy/prose.md
+    visualization: manuscript/sections/imrad/results_free_energy/visualization.md
+- id: results_si_tmaze
+  order: 11
+  kind: section
+  imrad: results
+  depth: 1
+  title: "On-policy student rollout (T-maze)"
+  short: tmaze
+  output_name: 12_results_si_tmaze.md
+  tracks:
+    prose: manuscript/sections/imrad/results_si_tmaze/prose.md
+    pymdp: manuscript/sections/imrad/results_si_tmaze/pymdp.md
+    visualization: manuscript/sections/imrad/results_si_tmaze/visualization.md
+- id: discussion
+  order: 12
+  kind: group
+  imrad: discussion
+  depth: 0
+  compose: false
+  title: Discussion
+  short: disc
+  output_name: _group_discussion.md
+  tracks: {}
+- id: discussion_outlook
+  order: 13
+  kind: section
+  imrad: discussion
+  depth: 1
+  title: Limitations and outlook
+  short: outlook
+  output_name: 15_discussion_outlook.md
+  tracks:
+    prose: manuscript/sections/imrad/discussion_outlook/prose.md
+    simulation: manuscript/sections/imrad/discussion_outlook/simulation.md
+    ontology: manuscript/sections/imrad/discussion_outlook/ontology.yaml
+    scholarship: manuscript/sections/imrad/discussion_outlook/scholarship.md
+    release_notes: manuscript/sections/imrad/discussion_outlook/release_notes.md
+- id: appendix
+  order: 14
+  kind: group
+  imrad: appendix
+  depth: 0
+  compose: false
+  title: Appendix
+  short: appendix
+  output_name: _group_appendix.md
+  tracks: {}
+- id: appendix_full_sheaf
+  order: 15
+  kind: section
+  imrad: appendix
+  depth: 1
+  title: "Supplementary material: full coverage and concordance"
+  short: proof
+  output_name: 18_supplement_full_coverage.md
+  tracks:
+    prose: manuscript/sections/imrad/appendix_full_sheaf/prose.md
+    formalism: manuscript/sections/imrad/appendix_full_sheaf/formalism.md
+    simulation: manuscript/sections/imrad/appendix_full_sheaf/simulation.md
+    pymdp: manuscript/sections/imrad/appendix_full_sheaf/pymdp.md
+    interop: manuscript/sections/imrad/appendix_full_sheaf/interop.md
+    provenance: manuscript/sections/imrad/appendix_full_sheaf/provenance.md
+    replay_matrix: manuscript/sections/imrad/appendix_full_sheaf/replay_matrix.md
+    counterexample: manuscript/sections/imrad/appendix_full_sheaf/counterexample.md
+    adversarial_audit: manuscript/sections/imrad/appendix_full_sheaf/adversarial_audit.md
+    release_bundle: manuscript/sections/imrad/appendix_full_sheaf/release_bundle.md
+    gate_ergonomics: manuscript/sections/imrad/appendix_full_sheaf/gate_ergonomics.md
+    artifact_diffoscope: manuscript/sections/imrad/appendix_full_sheaf/artifact_diffoscope.md
+    artifact_license: manuscript/sections/imrad/appendix_full_sheaf/artifact_license.md
+    scholarship: manuscript/sections/imrad/appendix_full_sheaf/scholarship.md
+    evidence_fields: manuscript/sections/imrad/appendix_full_sheaf/evidence_fields.md
+    assumption_index: manuscript/sections/imrad/appendix_full_sheaf/assumption_index.md
+    sensitivity: manuscript/sections/imrad/appendix_full_sheaf/sensitivity.md
+    uncertainty: manuscript/sections/imrad/appendix_full_sheaf/uncertainty.md
+    benchmark: manuscript/sections/imrad/appendix_full_sheaf/benchmark.md
+    state_space_catalog: manuscript/sections/imrad/appendix_full_sheaf/state_space_catalog.md
+    causal_ablation: manuscript/sections/imrad/appendix_full_sheaf/causal_ablation.md
+    visualization: manuscript/sections/imrad/appendix_full_sheaf/visualization.md
+- id: methods_sheaf
+  order: 16
+  kind: section
+  imrad: appendix
+  depth: 1
+  title: "Supplementary material: reproducibility methodology"
   short: sheaf
-  output_name: 08_methods_sheaf.md
+  output_name: 19_supplement_reproducibility.md
   track_order:
   - prose
   - formalism
@@ -129,60 +240,14 @@ sections:
     scholarship: manuscript/sections/imrad/methods_sheaf/scholarship.md
     manuscript_staleness: manuscript/sections/imrad/methods_sheaf/manuscript_staleness.md
     layers: manuscript/sections/imrad/methods_sheaf/layers.md
-- id: results
-  order: 9
-  kind: group
-  imrad: results
-  depth: 0
-  compose: false
-  title: Results
-  short: res
-  output_name: _group_results.md
-  tracks: {}
-- id: results_mi_sweep
-  order: 10
-  kind: section
-  imrad: results
-  depth: 1
-  title: "Teacher and student mutual information"
-  short: mi
-  output_name: 10_results_mi_sweep.md
-  tracks:
-    prose: manuscript/sections/imrad/results_mi_sweep/prose.md
-    formalism: manuscript/sections/imrad/results_mi_sweep/formalism.md
-    simulation: manuscript/sections/imrad/results_mi_sweep/simulation.md
-    visualization: manuscript/sections/imrad/results_mi_sweep/visualization.md
-- id: results_free_energy
-  order: 11
-  kind: section
-  imrad: results
-  depth: 1
-  title: Free-energy decomposition
-  short: fe
-  output_name: 11_results_free_energy.md
-  tracks:
-    prose: manuscript/sections/imrad/results_free_energy/prose.md
-    visualization: manuscript/sections/imrad/results_free_energy/visualization.md
-- id: results_si_tmaze
-  order: 12
-  kind: section
-  imrad: results
-  depth: 1
-  title: "On-policy student rollout (T-maze)"
-  short: tmaze
-  output_name: 12_results_si_tmaze.md
-  tracks:
-    prose: manuscript/sections/imrad/results_si_tmaze/prose.md
-    pymdp: manuscript/sections/imrad/results_si_tmaze/pymdp.md
-    visualization: manuscript/sections/imrad/results_si_tmaze/visualization.md
 - id: results_invariants
-  order: 13
+  order: 17
   kind: section
-  imrad: results
+  imrad: appendix
   depth: 1
-  title: "Validation invariants and statistics"
+  title: "Supplementary material: validation invariants and statistics"
   short: inv
-  output_name: 13_results_invariants.md
+  output_name: 20_supplement_validation_statistics.md
   tracks:
     prose: manuscript/sections/imrad/results_invariants/prose.md
     simulation: manuscript/sections/imrad/results_invariants/simulation.md
@@ -193,72 +258,6 @@ sections:
     state_space_catalog: manuscript/sections/imrad/results_invariants/state_space_catalog.md
     causal_ablation: manuscript/sections/imrad/results_invariants/causal_ablation.md
     visualization: manuscript/sections/imrad/results_invariants/visualization.md
-- id: discussion
-  order: 14
-  kind: group
-  imrad: discussion
-  depth: 0
-  compose: false
-  title: Discussion
-  short: disc
-  output_name: _group_discussion.md
-  tracks: {}
-- id: discussion_outlook
-  order: 15
-  kind: section
-  imrad: discussion
-  depth: 1
-  title: Limitations and outlook
-  short: outlook
-  output_name: 15_discussion_outlook.md
-  tracks:
-    prose: manuscript/sections/imrad/discussion_outlook/prose.md
-    simulation: manuscript/sections/imrad/discussion_outlook/simulation.md
-    ontology: manuscript/sections/imrad/discussion_outlook/ontology.yaml
-    scholarship: manuscript/sections/imrad/discussion_outlook/scholarship.md
-    release_notes: manuscript/sections/imrad/discussion_outlook/release_notes.md
-- id: appendix
-  order: 16
-  kind: group
-  imrad: appendix
-  depth: 0
-  compose: false
-  title: Appendix
-  short: appendix
-  output_name: _group_appendix.md
-  tracks: {}
-- id: appendix_full_sheaf
-  order: 17
-  kind: section
-  imrad: appendix
-  depth: 1
-  title: "Supplementary material: reproducibility and full coverage"
-  short: proof
-  output_name: 16_appendix_full_sheaf.md
-  tracks:
-    prose: manuscript/sections/imrad/appendix_full_sheaf/prose.md
-    formalism: manuscript/sections/imrad/appendix_full_sheaf/formalism.md
-    simulation: manuscript/sections/imrad/appendix_full_sheaf/simulation.md
-    pymdp: manuscript/sections/imrad/appendix_full_sheaf/pymdp.md
-    interop: manuscript/sections/imrad/appendix_full_sheaf/interop.md
-    provenance: manuscript/sections/imrad/appendix_full_sheaf/provenance.md
-    replay_matrix: manuscript/sections/imrad/appendix_full_sheaf/replay_matrix.md
-    counterexample: manuscript/sections/imrad/appendix_full_sheaf/counterexample.md
-    adversarial_audit: manuscript/sections/imrad/appendix_full_sheaf/adversarial_audit.md
-    release_bundle: manuscript/sections/imrad/appendix_full_sheaf/release_bundle.md
-    gate_ergonomics: manuscript/sections/imrad/appendix_full_sheaf/gate_ergonomics.md
-    artifact_diffoscope: manuscript/sections/imrad/appendix_full_sheaf/artifact_diffoscope.md
-    artifact_license: manuscript/sections/imrad/appendix_full_sheaf/artifact_license.md
-    scholarship: manuscript/sections/imrad/appendix_full_sheaf/scholarship.md
-    evidence_fields: manuscript/sections/imrad/appendix_full_sheaf/evidence_fields.md
-    assumption_index: manuscript/sections/imrad/appendix_full_sheaf/assumption_index.md
-    sensitivity: manuscript/sections/imrad/appendix_full_sheaf/sensitivity.md
-    uncertainty: manuscript/sections/imrad/appendix_full_sheaf/uncertainty.md
-    benchmark: manuscript/sections/imrad/appendix_full_sheaf/benchmark.md
-    state_space_catalog: manuscript/sections/imrad/appendix_full_sheaf/state_space_catalog.md
-    causal_ablation: manuscript/sections/imrad/appendix_full_sheaf/causal_ablation.md
-    visualization: manuscript/sections/imrad/appendix_full_sheaf/visualization.md
-    layers: manuscript/sections/imrad/appendix_full_sheaf/layers.md
     lean: manuscript/sections/imrad/appendix_full_sheaf/lean.md
     model_checking: manuscript/sections/imrad/appendix_full_sheaf/model_checking.md
     theorem_traceability: manuscript/sections/imrad/appendix_full_sheaf/theorem_traceability.md

@@ -1,12 +1,10 @@
 # Methods Sheaf
 
-IMRaD **Methods** section of the Active Inference multi-track manuscript
-(`projects/templates/template_active_inference`). This directory holds the Markdown
-fragment(s) for the `methods_sheaf` section, which the renderer assembles into the
-combined manuscript across the analytical, pymdp, and sheaf tracks.
+Method fragments for manifest section `methods_sheaf`.
 
-- **Role in IMRaD:** Methods.
-- **Edit:** the `.md` fragment(s) in this directory; numbers must trace to
-  generated artifacts (the evidence registry binds manuscript numbers to data).
-- **Assembled by:** the manuscript injection / rendering pipeline — do not hand-
-  edit assembled output under `output/`.
+- Source fragments here compose to `manuscript/19_supplement_reproducibility.md`.
+- Bound tracks include provenance, counterexample, adversarial audit, evidence
+  fields, release bundle, gate ergonomics, diffoscope, license, scholarship,
+  manuscript staleness, and generated layer tables.
+- `layers.md` and `visualization.md` are renderer stubs; generated bodies come
+  from `layers_report` and `section_figures`.

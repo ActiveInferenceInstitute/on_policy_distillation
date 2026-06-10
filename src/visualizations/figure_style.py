@@ -25,6 +25,28 @@ _DEFAULT_PALETTE: dict[str, str] = {
     "header_bg": "#e2e8f0",
 }
 
+_FONT_ROLE_MULTIPLIERS: dict[str, float] = {
+    "title": 1.12,
+    "subtitle": 1.0,
+    "label": 1.0,
+    "tick": 0.9,
+    "legend": 0.82,
+    "annotation": 0.78,
+    "small": 0.74,
+    "source": 0.7,
+    "dense": 0.64,
+    "table": 0.7,
+    "hero": 2.05,
+}
+
+_FONT_ROLE_MINIMUMS: dict[str, float] = {
+    "annotation": 11.0,
+    "small": 10.5,
+    "source": 10.0,
+    "dense": 9.5,
+    "table": 10.0,
+}
+
 
 @dataclass(frozen=True)
 class FigureStyleConfig:
@@ -37,15 +59,31 @@ class FigureStyleConfig:
     def color(self, role: str, fallback: str = "#111827") -> str:
         return str(self.palette.get(role, fallback))
 
+    @property
+    def base_font_size(self) -> float:
+        return 10.0 * float(self.font_scale)
+
+    def font_size(self, role: str = "label") -> float:
+        """Return a named figure font size in points.
+
+        Figure generators use this instead of one-off small literals so dense
+        diagrams remain readable after the global PDF typography changes.
+        """
+        base = self.base_font_size
+        multiplier = _FONT_ROLE_MULTIPLIERS.get(role, 1.0)
+        minimum = _FONT_ROLE_MINIMUMS.get(role, 0.0)
+        return max(minimum, base * multiplier)
+
     def rc_params(self) -> dict[str, Any]:
-        base = 10.0 * float(self.font_scale)
+        base = self.base_font_size
         return {
             "font.size": base,
-            "axes.titlesize": base * 1.05,
-            "axes.labelsize": base,
-            "xtick.labelsize": base * 0.9,
-            "ytick.labelsize": base * 0.9,
-            "legend.fontsize": base * 0.8,
+            "axes.titlesize": self.font_size("title"),
+            "axes.labelsize": self.font_size("label"),
+            "xtick.labelsize": self.font_size("tick"),
+            "ytick.labelsize": self.font_size("tick"),
+            "legend.fontsize": self.font_size("legend"),
+            "figure.titlesize": base * 1.18,
         }
 
 

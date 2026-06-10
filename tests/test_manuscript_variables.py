@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 import subprocess
 import sys
 
@@ -27,8 +28,20 @@ def test_generate_variables_with_outputs() -> None:
     assert vars_["scholarship_source_count"] >= 8
     assert vars_["scholarship_sources_connected"] is True
     assert vars_["opd_taxonomy_method_count"] >= 8
+    statistics = json.loads(
+        (root / "output" / "data" / "firstprinciples" / "statistics_demo.json").read_text(encoding="utf-8")
+    )
+    assert vars_["statistics_sample_size"] == statistics["sample_size"]
+    assert vars_["statistics_permutation_count"] == 5000
+    assert vars_["empirical_direct_bibkey"] == "qwen2025technical_report"
+    assert vars_["empirical_relay_bibkey"] == "thinkingmachines2025opd"
+    assert vars_["empirical_tm_replication_aime24"] == 70.0
+    assert vars_["empirical_tm_replication_steps"] == 150
     assert vars_["hardcoded_variables_all_auto_injected"] is True
     assert vars_["hardcoded_variable_issue_count"] == 0
+    assert float(vars_["free_energy_mean_field_gap_max"]) > 0.0
+    assert float(vars_["free_energy_exact_target_max_abs"]) < 1e-12
+    assert float(vars_["free_energy_gap_equals_mi_max_abs"]) < 1e-12
     assert float(vars_["divergence_reverse_kl"]) >= 0.0
     assert float(vars_["exposure_bias_terminal_gap"]) > 0.0
     assert vars_["classroom_teacher_cue_validity"] >= vars_["classroom_student_cue_validity"]
@@ -41,6 +54,10 @@ def test_generate_variables_with_outputs() -> None:
     assert vars_["si_tmaze_q_pi_row_count"] >= 1
     assert vars_["si_tmaze_action_probability_row_count"] >= 1
     assert vars_["si_tmaze_observation_modality_count"] == 3
+    assert float(vars_["si_tmaze_policy_entropy_mean"]) >= 0.0
+    assert "si_tmaze_cue_observed_step" in vars_
+    assert "si_tmaze_reward_observed_step" in vars_
+    assert isinstance(vars_["si_tmaze_cue_before_reward"], bool)
     assert vars_["si_tree_available"] == 1
     assert vars_["pymdp_config_hash"]
     assert "pymdp_mode" not in vars_
@@ -140,6 +157,7 @@ def test_generate_variables_requires_analysis_outputs(tmp_path: Path) -> None:
         generate_variables(tmp_path, require_analysis_outputs=True)
 
 
+@pytest.mark.artifact_slow
 def test_generate_manuscript_variables_reaches_semantic_fixed_point(project_root: Path) -> None:
     """The hydration entry point must leave semantic/sheaf validators converged."""
     from manuscript.sheaf.semantic import validate_semantic_gluing

@@ -1,11 +1,9 @@
-# AGENTS — Results Invariants
+# Results Invariants Fragment Notes
 
-Local automation guidance for the `results_invariants` IMRaD **Results** section.
+Editable source for manifest section `results_invariants`, composed to
+`manuscript/20_supplement_validation_statistics.md`.
 
-- **Scope:** manuscript prose fragments for this section only.
-- **Invariants:** every quantitative claim must trace to a generated artifact
-  (validated by `infrastructure.validation.evidence_registry`); do not introduce
-  unbound numbers or fabricated citations.
-- **Rendering:** fragments here are assembled by the rendering pipeline; edit the
-  source fragments, never the assembled `output/` copies.
-- **Tracks:** keep cross-track (analytical / pymdp / sheaf) claims consistent.
+- Keep invariant, replay, sensitivity, uncertainty, benchmark, state-space, and
+  causal-ablation claims tied to generated artifacts.
+- Use hydrated `{{token}}` values for all measured quantities.
+- Section bindings live in `../../../sheaf/manifest.yaml`.

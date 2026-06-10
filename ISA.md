@@ -138,10 +138,10 @@ is not — leaving the project green (≥153 tests) and the sheaf claim fully ea
 | ISC-1 | import | module imports | no error | `uv run python -c` |
 | ISC-10 | oracle | live laws all-pass | 0 violations | `uv run python -c verify_sheaf_laws` |
 | ISC-13 | gate | strict compose exits 0 | rc==0 | `compose_manuscript.py --validate-only --strict` |
-| ISC-16..21 | test | pytest law tests + neg controls | all pass | `uv run pytest tests/test_sheaf_laws.py` |
+| ISC-16..21 | test | pytest law tests + neg controls | all pass | `uv run python -m pytest tests/test_sheaf_laws.py` |
 | ISC-22 | grep | no mock imports | 0 matches | `grep -rn mock tests/test_sheaf_laws.py` |
 | ISC-24..30 | read | prose contains required statements | present | `Read`/`grep` composed output |
-| ISC-36 | suite | full baseline | ≥153 pass | `uv run pytest tests/` |
+| ISC-36 | suite | full baseline | full project suite passes | `uv run python -m pytest tests/` |
 | ISC-41 | lint | ruff+mypy clean | 0 errors | `uvx ruff check`, `uv run mypy` |
 | ISC-38..40 | audit | advisor + Forge + Cato | no unaddressed critical | Inference.ts / Agent |
 

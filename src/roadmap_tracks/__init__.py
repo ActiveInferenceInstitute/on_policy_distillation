@@ -10,11 +10,14 @@ from .integration_audit import (
     write_manuscript_staleness_report,
 )
 from .sheaf_tracks import (
+    load_sheaf_track_payloads,
     validate_sheaf_track_artifacts,
+    validate_sheaf_track_payloads,
     write_sheaf_track_artifacts,
 )
 from .scholarship import (
     validate_scholarship_source_matrix,
+    validate_scholarship_source_matrix_payload,
     write_scholarship_source_matrix,
 )
 from .supplemental import (
@@ -30,7 +33,10 @@ __all__ = [
     "validate_formal_interop_artifacts",
     "validate_integration_audit_artifacts",
     "validate_sheaf_track_artifacts",
+    "load_sheaf_track_payloads",
+    "validate_sheaf_track_payloads",
     "validate_scholarship_source_matrix",
+    "validate_scholarship_source_matrix_payload",
     "validate_supplemental_artifacts",
     "validate_toy_sweep_artifacts",
     "write_formal_interop_artifacts",

@@ -3,38 +3,54 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
+import pytest
+
 from gates.validation import validate_manuscript
-from gate_support import refresh_generated_gate_artifacts
 
 
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_validate_manuscript_claim_ledger_missing_file_negative(project_root: Path, tmp_path: Path) -> None:
     ledger = project_root / "data" / "claim_ledger.yaml"
     backup = tmp_path / "claim_ledger.yaml.bak"
+    original_stat = ledger.stat()
     backup.write_text(ledger.read_text(encoding="utf-8"), encoding="utf-8")
     try:
         ledger.unlink()
-        checks = validate_manuscript(project_root)
+        checks = validate_manuscript(project_root, only={"claim_ledger_valid"})
         assert checks["claim_ledger_valid"] is False
     finally:
         ledger.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
-        refresh_generated_gate_artifacts(project_root)
+        os.utime(ledger, ns=(original_stat.st_atime_ns, original_stat.st_mtime_ns))
 
 
-def test_validate_manuscript_claim_ledger_negative(project_root: Path) -> None:
-    target = project_root / "output" / "figures" / "sheaf_layers_overview.png"
-    backup_exists = target.is_file()
-    backup_bytes = target.read_bytes() if backup_exists else b""
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_validate_manuscript_claim_ledger_negative(project_root: Path, tmp_path: Path) -> None:
+    ledger = project_root / "data" / "claim_ledger.yaml"
+    backup = tmp_path / "claim_ledger.yaml.bak"
+    original_stat = ledger.stat()
+    backup.write_text(ledger.read_text(encoding="utf-8"), encoding="utf-8")
+    broken_claim = """
+- id: deliberately_missing_claim_evidence
+  statement: Negative control claim points at a missing artifact.
+  path: output/figures/not_a_real_claim_figure.png
+  section: methods_sheaf
+  tracks:
+  - visualization
+  evidence:
+    predicate: file_exists
+"""
     try:
-        if backup_exists:
-            target.unlink()
-        checks = validate_manuscript(project_root)
+        ledger.write_text(backup.read_text(encoding="utf-8") + broken_claim, encoding="utf-8")
+        checks = validate_manuscript(project_root, only={"claim_ledger_valid"})
         assert checks["claim_ledger_valid"] is False
     finally:
-        if backup_exists:
-            target.write_bytes(backup_bytes)
-        refresh_generated_gate_artifacts(project_root)
+        ledger.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+        os.utime(ledger, ns=(original_stat.st_atime_ns, original_stat.st_mtime_ns))
 
 
 def test_typed_claim_evidence_exercises_success_predicates(tmp_path: Path) -> None:

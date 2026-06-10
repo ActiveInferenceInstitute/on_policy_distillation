@@ -41,6 +41,12 @@ def main(argv: list[str] | None = None) -> int:
         path = write_classroom_artifact(PROJECT_ROOT, result)
         print(f"classroom.json: {path}")
         print(f"classroom mean reverse-KL (distillation signal): {result.mean_reverse_kl:.4f} nats")
+        stats_path = artifacts.write_statistics_artifact(
+            PROJECT_ROOT,
+            result.teacher_belief_entropies,
+            result.student_belief_entropies,
+        )
+        print(f"statistics_demo.json: {stats_path} (from measured classroom entropies)")
     return 0
 
 

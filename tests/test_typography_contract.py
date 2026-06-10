@@ -88,6 +88,7 @@ def test_margins_are_config_driven_single_source() -> None:
     geometry = (config.get("metadata") or {}).get("geometry")
     assert geometry, "config.yaml metadata.geometry must declare page margins"
     assert "margin" in geometry, f"unexpected geometry value: {geometry!r}"
+    assert "bottom=" in geometry, f"bottom margin must be explicitly larger: {geometry!r}"
 
     latex = _fenced_latex(PREAMBLE.read_text())
     assert "\\geometry" not in latex, "preamble must NOT declare \\geometry (config owns margins)"

@@ -1,8 +1,8 @@
-# AGENTS.md — template_active_inference
+# AGENTS.md — active_inference_on_policy_distillation
 
-Multi-track Active Inference public exemplar. Manuscript sections follow an **IMRAD outline** composed from stable canonical sheaf fragment tracks (prose, formalism, simulation, assumption index, pymdp, interop, provenance, replay matrix, counterexample, adversarial audit, evidence fields, scholarship, release bundle, gate ergonomics, sensitivity, uncertainty, benchmark, manuscript staleness, visualization, Lean, model checking, theorem traceability, GNN, ontology, animation, animation delta).
+Research project: *On-Policy Distillation is Active Inference* — a multi-track, sheaf-composed manuscript and code base built from the Active Inference multi-track exemplar. Manuscript sections follow an **IMRAD outline** composed from stable canonical sheaf fragment tracks (prose, formalism, simulation, assumption index, pymdp, interop, provenance, replay matrix, counterexample, adversarial audit, evidence fields, scholarship, release bundle, gate ergonomics, sensitivity, uncertainty, benchmark, manuscript staleness, visualization, Lean, model checking, theorem traceability, GNN, ontology, animation, animation delta).
 
-Decision memory and verifier hardening follow [`docs/rules/memory_and_decision_records.md`](../../../docs/rules/memory_and_decision_records.md): use nearby `WHY:` comments only for surprising local choices, keep volatile counts generated, and add negative controls for verifier-like gates.
+Decision memory and verifier hardening follow [`docs/rules/memory_and_decision_records.md`](../../../template/docs/rules/memory_and_decision_records.md): use nearby `WHY:` comments only for surprising local choices, keep volatile counts generated, and add negative controls for verifier-like gates.
 
 ## Sheaf composition (registry-driven)
 
@@ -148,7 +148,7 @@ outputs are added and validated.
 
 **Visualizations** (`src/visualizations/`): `figure_registry.py` (YAML SSOT + `write_figure_registry_json`), `figure_helpers.py` (`styled_figure`), `figures_diagrams.py`, `lean_boundary.py`, `figures.py` (`FIGURE_GENERATORS`, current registry parity comes from `figures.yaml`), `figures_sheaf_{payload,draw}.py`. `generate_all_figures()` emits `output/figures/figure_registry.json` for validation; `generate_integration_audit.py` emits `output/data/figure_source_map.json` and `output/reports/figure_hash_manifest.json` so figures remain tied to source artifacts.
 
-**Appendix proof:** `appendix_full_sheaf` binds the registry tracks required for the full proof row (all except optional `layers`) → `16_appendix_full_sheaf.md`. Registry size is injected from live counts rather than hand-authored here.
+**Appendix proof:** `appendix_full_sheaf` binds the registry tracks required for the full proof row (all except optional `layers`) → `18_supplement_full_coverage.md`. `methods_sheaf` is now the standalone reproducibility supplement → `19_supplement_reproducibility.md`; `results_invariants` follows it as the validation-statistics supplement → `20_supplement_validation_statistics.md`. Registry size is injected from live counts rather than hand-authored here.
 
 Edit fragments only under [`manuscript/sections/imrad/`](manuscript/sections/imrad/). Manual closing section: [`manuscript/17_conclusion.md`](manuscript/17_conclusion.md) (outside the matrix).
 
@@ -166,19 +166,19 @@ Edit fragments only under [`manuscript/sections/imrad/`](manuscript/sections/imr
 | `src/validation_spine/` | Provenance hashes, deterministic replay, and counterexample matrix artifacts |
 | `src/roadmap_tracks/` | Promoted toy sweep, formal interop, integration-audit, and canonical sheaf-track artifacts |
 | `gnn/*.gnn.md` | GNN source files |
-| `lean/TemplateActiveInference/` | Lean witnesses — `build_lean` gate runs `lake build` when `lean/lakefile.lean` exists; absent Lean tree skips cleanly |
+| `lean/OnPolicyDistillation/` | Lean witnesses — `build_lean` gate runs `lake build` when `lean/lakefile.lean` exists; absent Lean tree skips cleanly |
 | `scripts/` | Thin orchestrators only (extension tracks delegate to `src/visualizations/animation.py`, `src/simulation/graph_world.py`) |
 
 ## Commands
 
 ```bash
 uv run python scripts/compose_manuscript.py
-uv run pytest tests/ --cov=src --cov-fail-under=90
+uv run python -m pytest tests/ --cov=src --cov-fail-under=90
 uv run python scripts/validate_outputs.py
 ```
 
 ## Parent docs
 
 - Root [`AGENTS.md`](../../AGENTS.md)
-- [Publishing guide](../../../docs/guides/publishing-guide.md) · [Zenodo DOI strategy](../../../docs/guides/zenodo-doi-strategy.md)
+- [Publishing guide](../../../template/docs/guides/publishing-guide.md) · [Zenodo DOI strategy](../../../template/docs/guides/zenodo-doi-strategy.md)
 - [`tracks.yaml`](tracks.yaml)

@@ -9,8 +9,8 @@ The manuscript is a **sheaf-composed** multi-track document with configurable se
 ## Quick start
 
 ```bash
-uv sync --directory projects/active/active_inference_on_policy_distillation --extra dev
-cd projects/active/active_inference_on_policy_distillation
+uv sync --directory working/active_inference_on_policy_distillation --extra dev
+cd working/active_inference_on_policy_distillation
 uv run python scripts/compose_manuscript.py
 uv run python scripts/run_analytical_sweep.py
 uv run python scripts/simulate_si_tmaze.py
@@ -26,14 +26,34 @@ uv run python scripts/generate_sheaf_tracks.py
 uv run python scripts/generate_firstprinciples.py        # OPD<->AI artifacts; add --classroom for the two-agent pymdp rollout
 uv run python scripts/z_generate_manuscript_variables.py
 uv run python scripts/generate_method_inventory.py
-uv run pytest tests/ --cov=src --cov-fail-under=90
+uv run python -m pytest tests/ --cov=src --cov-fail-under=90
 ```
 
-From repo root:
+For local iteration that does not need the full fixed-point artifact writers,
+use the fast lane:
 
 ```bash
-uv run python scripts/01_run_tests.py --project active/active_inference_on_policy_distillation
-./run.sh --project active/active_inference_on_policy_distillation --pipeline --core-only
+uv run --extra dev python -m pytest tests/ -m "not artifact_slow" --no-cov
+```
+
+For the tighter daily edit loop that also skips full figure rendering, animation,
+pymdp rollout, and large manuscript-compose checks:
+
+```bash
+uv run --extra dev python -m pytest tests/ -m "not artifact_slow and not render_slow" --no-cov
+```
+
+The coverage command above remains the release gate; `artifact_slow` covers
+full artifact writes, fixed-point validation, and tests that mutate shared
+generated artifacts. `render_slow` covers read-only but expensive render,
+animation, rollout, and large-compose checks.
+
+From the sibling `../template` checkout after linking sidecar projects:
+
+```bash
+uv run python -m infrastructure.orchestration link-projects
+uv run python scripts/01_run_tests.py --project working/active_inference_on_policy_distillation
+./run.sh --project working/active_inference_on_policy_distillation --pipeline --core-only
 ```
 
 ## Sheaf composition
@@ -57,7 +77,7 @@ track-improvement scope, and adversarial/scope audits. Live track IDs are stable
 canonical names; future work improves those tracks rather than adding `_vN`
 siblings.
 
-Section [`16_appendix_full_sheaf.md`](manuscript/16_appendix_full_sheaf.md) binds the appendix manifest row as a composability proof; live counts are injected through manuscript variables, not hand-authored in this README. Optional `layers` is methods-only; `animation` is bound in the appendix row as a sheaf fragment.
+Section [`18_supplement_full_coverage.md`](manuscript/18_supplement_full_coverage.md) binds the appendix manifest row as a composability proof; live counts are injected through manuscript variables, not hand-authored in this README. Reproducibility methodology is now a standalone supplement at [`19_supplement_reproducibility.md`](manuscript/19_supplement_reproducibility.md), followed by validation statistics at [`20_supplement_validation_statistics.md`](manuscript/20_supplement_validation_statistics.md). Optional `layers` is bound in the reproducibility supplement; `animation` is bound in the full-coverage appendix row as a sheaf fragment.
 
 The reproducible rendering contract is documented in
 [`docs/reference/rendering-reproducibility.md`](docs/reference/rendering-reproducibility.md):

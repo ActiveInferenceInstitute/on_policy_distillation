@@ -1,12 +1,8 @@
 # Results Invariants
 
-IMRaD **Results** section of the Active Inference multi-track manuscript
-(`projects/templates/template_active_inference`). This directory holds the Markdown
-fragment(s) for the `results_invariants` section, which the renderer assembles into the
-combined manuscript across the analytical, pymdp, and sheaf tracks.
+Result fragments for manifest section `results_invariants`.
 
-- **Role in IMRaD:** Results.
-- **Edit:** the `.md` fragment(s) in this directory; numbers must trace to
-  generated artifacts (the evidence registry binds manuscript numbers to data).
-- **Assembled by:** the manuscript injection / rendering pipeline — do not hand-
-  edit assembled output under `output/`.
+- Source fragments here compose to `manuscript/20_supplement_validation_statistics.md`.
+- Bound tracks: prose, simulation, replay matrix, sensitivity, uncertainty,
+  benchmark, state-space catalog, causal ablation, and visualization.
+- Keep pass/fail and row-count claims bound to generated reports.

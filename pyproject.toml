@@ -29,6 +29,9 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-v --tb=short --strict-markers"
 markers = [
+    "artifact_slow: full fixed-point or artifact-write tests kept out of the fast local lane",
+    "render_slow: figure rendering, animation, rollout, or large-compose tests kept out of the daily edit loop",
+    "mutates_artifacts: tests that temporarily mutate generated or tracked artifact files",
     "requires_pymdp: tests that import inferactively-pymdp",
     "timeout(seconds): per-test timeout for artifact write/validate isolation checks",
 ]

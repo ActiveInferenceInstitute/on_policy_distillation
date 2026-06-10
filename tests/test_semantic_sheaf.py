@@ -3,9 +3,20 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
+import pytest
+
 from gate_support import ensure_gate_artifacts
+
+pytestmark = pytest.mark.artifact_slow
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _semantic_gate_artifacts_ready() -> None:
+    root = Path(__file__).resolve().parents[1]
+    ensure_gate_artifacts(root, verify=True)
 
 
 def test_semantic_certificate_covers_tracks_symbols_and_variables(project_root: Path) -> None:
@@ -55,18 +66,22 @@ def test_semantic_gluing_rejects_wrong_si_ontology(project_root: Path) -> None:
     ensure_gate_artifacts(project_root)
     ontology_path = project_root / "manuscript" / "sections" / "imrad" / "methods_pymdp" / "ontology.yaml"
     original = ontology_path.read_text(encoding="utf-8")
+    stat = ontology_path.stat()
     try:
         ontology_path.write_text(original.replace("q_pi: PolicyPosterior", "q_pi: HiddenState"), encoding="utf-8")
         issues = validate_semantic_gluing(project_root)
         assert any("si_tmaze" in issue and "PolicyPosterior" in issue for issue in issues)
     finally:
+        # Restore bytes AND mtime: a newer-looking source file makes the saved
+        # staleness report look stale and poisons the next test in this file.
         ontology_path.write_text(original, encoding="utf-8")
+        os.utime(ontology_path, (stat.st_atime, stat.st_mtime))
 
 
 def test_semantic_certificate_is_written_as_generated_artifact(project_root: Path) -> None:
     from manuscript.sheaf.semantic import write_semantic_gluing_outputs
 
-    ensure_gate_artifacts(project_root)
+    ensure_gate_artifacts(project_root, verify=True)
     paths = write_semantic_gluing_outputs(project_root)
     path = paths["certificate"]
     payload = json.loads(path.read_text(encoding="utf-8"))
@@ -282,7 +297,7 @@ def test_validate_manuscript_checks_semantic_certificate(project_root: Path) -> 
     from gates.validation import validate_manuscript
     from manuscript.sheaf.semantic import write_semantic_gluing_certificate
 
-    ensure_gate_artifacts(project_root)
+    ensure_gate_artifacts(project_root, verify=True)
     write_semantic_gluing_certificate(project_root)
     checks = validate_manuscript(project_root)
 

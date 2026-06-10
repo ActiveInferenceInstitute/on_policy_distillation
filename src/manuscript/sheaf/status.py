@@ -51,7 +51,7 @@ def _claim_indexes(root: Path) -> tuple[dict[str, list[str]], dict[str, list[str
 
 def _artifact_indexes(root: Path) -> tuple[dict[str, str], dict[str, list[str]], dict[str, list[str]]]:
     try:
-        from manuscript.sheaf.semantic import ARTIFACT_CONSUMERS, ARTIFACT_GATES, ARTIFACT_PRODUCERS
+        from artifact_contracts import ARTIFACT_CONSUMERS, ARTIFACT_GATES, ARTIFACT_PRODUCERS
     except ImportError:
         return {}, {}, {}
     producers = dict(ARTIFACT_PRODUCERS)
@@ -173,6 +173,7 @@ def build_sheaf_section_status_matrix(project_root: Path) -> dict[str, Any]:
         )
 
     composable = [row for row in section_summaries if row["compose"]]
+    methods_sheaf_output = "manuscript/19_supplement_reproducibility.md"
     return {
         "schema": STATUS_MATRIX_SCHEMA,
         "sections": section_summaries,
@@ -201,6 +202,7 @@ def build_sheaf_render_log(project_root: Path) -> dict[str, Any]:
     root = project_root.resolve()
     matrix = build_sheaf_section_status_matrix(root)
     producers, _, artifacts_by_gate = _artifact_indexes(root)
+    methods_sheaf_output = "manuscript/19_supplement_reproducibility.md"
     manuscript_outputs = sorted(
         path.relative_to(root).as_posix() for path in (root / "manuscript").glob("[0-9][0-9]_*.md")
     )
@@ -241,8 +243,8 @@ def build_sheaf_render_log(project_root: Path) -> dict[str, Any]:
             "event_id": "layers_renderer_bound",
             "component": "sheaf.layers_report",
             "input": "output/data/sheaf_section_status_matrix.json",
-            "output": "manuscript/08_methods_sheaf.md",
-            "status": "ok" if (root / "manuscript" / "08_methods_sheaf.md").is_file() else "failed",
+            "output": methods_sheaf_output,
+            "status": "ok" if (root / methods_sheaf_output).is_file() else "failed",
             "detail": "methods sheaf layer tables",
         },
         {

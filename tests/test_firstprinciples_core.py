@@ -183,8 +183,19 @@ def test_mapping_is_sound_and_queryable() -> None:
     payload = mapping.build_payload()
     assert payload["ok"] is True
     assert payload["row_count"] == len(mapping.CORRESPONDENCES)
+    assert payload["row_count"] >= 22
+    assert mapping.lookup("Kullback-Leibler information divergence").shared_object == (
+        "directional KL between two categorical laws"
+    )
+    assert "preference" in mapping.lookup("Direct preference posterior").opd_counterpart.lower()
     row = mapping.lookup("Markov blanket")
     assert "asymmetry" in row.opd_counterpart.lower()
+    assert "context distillation" in mapping.lookup("Context-conditioned teacher").note.lower()
+    assert "evidence" in mapping.lookup("Transferable versus shortcut privilege").shared_object.lower()
+    assert "coverage" in mapping.lookup("Expected free energy risk/ambiguity split").opd_counterpart.lower()
+    assert "universal law" in mapping.lookup("Divergence direction and estimator reliability").note
+    assert "reliable" in mapping.lookup("Long-horizon teacher reliability").note
+    assert "finite consistency" in mapping.lookup("Sheaf local-to-global gluing").shared_object
     with pytest.raises(KeyError):
         mapping.lookup("not a real component")
     assert "Active inference" in mapping.markdown_table()
@@ -201,5 +212,29 @@ def test_taxonomy_structure() -> None:
     assert sdpg_method.bibkey == "liu2026sdpg"
     assert taxonomy.loss_share_total() == pytest.approx(1.0, abs=1e-9)
     assert "SDPG" in taxonomy.markdown_table()
+    acronyms = {m.acronym for m in taxonomy.METHODS}
+    assert {
+        "SeqKD",
+        "PD",
+        "DPD",
+        "DPO",
+        "SpecKD",
+        "DeepSeek-R1",
+        "Qwen3",
+        "GAD",
+        "vOPD",
+        "TrOPD",
+        "Veto",
+        "OPD-Recipe",
+        "StableOPD",
+        "ATESD",
+        "OPCD",
+        "EDGE-OPD",
+        "SOD",
+        "OPSDL",
+        "ViCuR",
+        "VA-OPD",
+        "DistiLLM-2",
+    } <= acronyms
     # Hinton KD is the off-policy baseline.
     assert taxonomy.METHODS[0].on_policy is False

@@ -1,6 +1,6 @@
 # Standalone repository guide
 
-This template is designed to live on its own — copy `projects/templates/template_active_inference/`
+This project is designed to live on its own — copy `working/active_inference_on_policy_distillation/`
 out of the monorepo and it is a complete, runnable GitHub repository. **No code under
 `src/`, `scripts/`, or `tests/` imports the monorepo's `infrastructure/` layer or any
 sibling project** — enforced by `tests/test_self_contained.py` (a static AST scan plus a
@@ -10,7 +10,7 @@ clean-room import with `infrastructure` blocked).
 
 | Step | Command | Depends on |
 | --- | --- | --- |
-| Tests + coverage | `uv run pytest tests/` | project `src/` only |
+| Tests + coverage | `uv run python -m pytest tests/` | project `src/` only |
 | Analytical sweep | `uv run python scripts/run_analytical_sweep.py` | numpy/scipy |
 | pymdp T-maze rollout | `uv run python scripts/simulate_si_tmaze.py` | inferactively-pymdp |
 | Statistics + figures | `uv run python scripts/compute_statistics.py && uv run python scripts/generate_figures.py` | matplotlib |
@@ -21,7 +21,7 @@ clean-room import with `infrastructure` blocked).
 ## Self-contained rendering
 
 `scripts/render_pdf.py` composes, hydrates, and renders the manuscript to
-`output/pdf/template_active_inference_standalone.pdf` using only this project's code plus
+`output/pdf/on_policy_distillation.pdf` using only this project's code plus
 the external `pandoc` and `xelatex` tools. Typography is read from project-owned sources:
 
 - **Margins** — `manuscript/config.yaml` → `metadata.geometry`.
@@ -46,4 +46,4 @@ binding lives in data, not code:
 To reuse the engine in another project, copy `src/manuscript/sheaf/` and supply your own
 manifest/registry/figures YAML — the engine reads them; it hard-codes none of this project's
 content. Keeping the engine *in the project* (rather than in shared infrastructure) is a
-deliberate choice: it is what makes this template copy-out-and-run standalone.
+deliberate choice: it is what makes this project copy-out-and-run standalone.

@@ -249,7 +249,15 @@ def verify_claim_bindings(project_root: Path) -> list[str]:
                 f"but recorded rollout planner={summary_planner!r}"
             )
 
-    invariants_section = root / "manuscript" / "13_results_invariants.md"
+    manifest_path = root / "manuscript" / "sheaf" / "manifest.yaml"
+    if manifest_path.is_file():
+        from manuscript.sheaf.manifest import load_manifest
+
+        manifest = load_manifest(manifest_path, project_root=root)
+        invariants_output = next(s.output_name for s in manifest.sections if s.id == "results_invariants")
+    else:
+        invariants_output = "20_supplement_validation_statistics.md"
+    invariants_section = root / "manuscript" / invariants_output
     if invariants_section.is_file() and "merged" in invariants_section.read_text(encoding="utf-8").lower():
         from manuscript.invariant_counts import invariants_are_merged
 

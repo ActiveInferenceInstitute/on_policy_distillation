@@ -1,12 +1,9 @@
-# Methods Pymdp
+# Methods pymdp
 
-IMRaD **Methods** section of the Active Inference multi-track manuscript
-(`projects/templates/template_active_inference`). This directory holds the Markdown
-fragment(s) for the `methods_pymdp` section, which the renderer assembles into the
-combined manuscript across the analytical, pymdp, and sheaf tracks.
+Method fragments for manifest section `methods_pymdp`.
 
-- **Role in IMRaD:** Methods.
-- **Edit:** the `.md` fragment(s) in this directory; numbers must trace to
-  generated artifacts (the evidence registry binds manuscript numbers to data).
-- **Assembled by:** the manuscript injection / rendering pipeline — do not hand-
-  edit assembled output under `output/`.
+- Source fragments here compose to `manuscript/06_methods_pymdp.md`.
+- Bound tracks: prose, formalism, pymdp, interop, GNN, ontology, and
+  visualization.
+- Measured claims come from the generated pymdp summary, trace, matrix audit, and
+  runtime diagnostics.

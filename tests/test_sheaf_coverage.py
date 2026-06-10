@@ -96,11 +96,11 @@ def test_write_coverage_page() -> None:
     assert "sheaf_coverage_heatmap.png" in text
     # pandoc-crossref owns numbering: one {#fig:} label with the caption text, no hand label.
     assert "{#fig:sheaf_coverage_heatmap" in text
-    assert "Sheaf track coverage matrix:" in text
+    assert "Sheaf track coverage matrix mapping" in text
     assert "Coverage overview." not in text
     assert "Figure 4." not in text
     assert "Heatmap matrix of IMRAD manuscript rows" in text
-    assert "16_appendix_full_sheaf.md" in text
+    assert "18_supplement_full_coverage.md" in text
     assert "{{appendix_sheaf_track_count}}" in text
     assert collect_malformed_token_names(text) == []
     assert "{{coverage_present}}" in text
@@ -119,3 +119,4 @@ def test_figure_registry_includes_si_and_layers_figures() -> None:
     appendix_refs = load_section_figures(root)["appendix_full_sheaf"]
     assert any(ref.figure_id == "theorem_traceability_graph" for ref in appendix_refs)
     assert any(ref.figure_id == "causal_ablation_heatmap" for ref in appendix_refs)
+    assert all(ref.figure_id != "ising_mi_curve" for ref in appendix_refs)

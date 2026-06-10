@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from manuscript.sheaf.coverage import build_coverage_matrix
 from manuscript.sheaf.layers_report import (
     render_binding_matrix_table,
+    render_semantic_restrictions_table,
     render_sheaf_layers_markdown,
+    render_track_improvement_scope_table,
     render_track_registry_table,
 )
 from manuscript.sheaf.manifest import load_manifest
@@ -54,3 +57,22 @@ def test_render_sheaf_layers_markdown(project_root: Path) -> None:
     assert "<!-- sheaf-layers:track-status -->" in md
     assert "<!-- sheaf-layers:render-log -->" in md
     assert "| Symbol | Coverage color | Meaning |" in md
+
+
+def test_track_improvement_scope_table_renders_all_live_rows(project_root: Path) -> None:
+    payload = json.loads((project_root / "output" / "data" / "track_improvement_scope.json").read_text(encoding="utf-8"))
+
+    table = render_track_improvement_scope_table(project_root)
+
+    assert "<!-- sheaf-layers:track-improvement-scope -->" in table
+    for row in payload["improvement_roadmap"]:
+        assert f"`{row['track_id']}`" in table
+    assert f"**Improvement rows:** {payload['improvement_row_count']}." in table
+
+
+def test_semantic_restrictions_table_replaces_missing_values_with_status(project_root: Path) -> None:
+    table = render_semantic_restrictions_table(project_root)
+
+    assert "<!-- sheaf-layers:semantic-restrictions -->" in table
+    assert "| Semantic certificate ok | `not evaluated` |" in table
+    assert "`None`" not in table

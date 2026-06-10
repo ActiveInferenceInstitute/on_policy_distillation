@@ -20,10 +20,10 @@ proven to reject bad input, not just accept good input.
 
 | Key | Contract |
 | --- | --- |
-| `methods_sheaf_layers` | Composed `08_methods_sheaf.md` contains `sheaf_layers_overview.png` plus HTML markers `<!-- sheaf-layers:registry -->`, `<!-- sheaf-layers:binding-matrix -->`, `<!-- sheaf-layers:legend -->` |
+| `methods_sheaf_layers` | Composed `19_supplement_reproducibility.md` contains `sheaf_layers_overview.png` plus HTML markers `<!-- sheaf-layers:registry -->`, `<!-- sheaf-layers:binding-matrix -->`, `<!-- sheaf-layers:legend -->` |
 | `manuscript_tokens_registered` | Every `{{token}}` under `manuscript/*.md` maps to a key from `generate_variables()` |
 | `resolved_manuscript_hydrated` | `output/manuscript/*.md` contains no unresolved `{{` placeholders after `z_generate_manuscript_variables.py` |
-| `full_sheaf_appendix_tracks` | `16_appendix_full_sheaf.md` contains every `sheaf-track:{id}` marker bound in the `appendix_full_sheaf` manifest section; counts come from the manifest/registry |
+| `full_sheaf_appendix_tracks` | `18_supplement_full_coverage.md` contains every `sheaf-track:{id}` marker bound in the `appendix_full_sheaf` manifest section; counts come from the manifest/registry |
 
 Negative controls: `test_validate_manuscript_methods_sheaf_layers_negative` (registry marker) and `test_validate_manuscript_methods_sheaf_layers_negative_markers` (binding-matrix, legend, figure path).
 

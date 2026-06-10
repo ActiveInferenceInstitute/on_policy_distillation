@@ -13,7 +13,7 @@ rendering reproducibility, replay expectations, and artifact provenance.
   and generated outputs in [`../../output/`](../../output/).
 - Treat [`method-inventory.md`](method-inventory.md) as generated. Update it
   with [`../../scripts/generate_method_inventory.py`](../../scripts/generate_method_inventory.py)
-  and verify with `--check`.
+  and review the diff.
 - Keep [`rendering-reproducibility.md`](rendering-reproducibility.md) aligned
   with the live render, replay, figure registry, copied-output, and sheaf
   artifact contracts.
@@ -23,8 +23,6 @@ rendering reproducibility, replay expectations, and artifact provenance.
 ## Verification
 
 ```bash
-uv run --directory projects/templates/template_active_inference \
-  python scripts/generate_method_inventory.py --check
-uv run --directory projects/templates/template_active_inference \
-  python scripts/validate_outputs.py
+uv run python scripts/generate_method_inventory.py
+uv run python scripts/validate_outputs.py
 ```

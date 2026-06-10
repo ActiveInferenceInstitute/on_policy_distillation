@@ -1,12 +1,9 @@
-# Imrad
+# IMRAD Fragment Sources
 
-IMRaD **Manuscript Section** section of the Active Inference multi-track manuscript
-(`projects/templates/template_active_inference`). This directory holds the Markdown
-fragment(s) for the `imrad` section, which the renderer assembles into the
-combined manuscript across the analytical, pymdp, and sheaf tracks.
+Editable per-section sources for the sheaf-composed manuscript.
 
-- **Role in IMRaD:** Manuscript Section.
-- **Edit:** the `.md` fragment(s) in this directory; numbers must trace to
-  generated artifacts (the evidence registry binds manuscript numbers to data).
-- **Assembled by:** the manuscript injection / rendering pipeline — do not hand-
-  edit assembled output under `output/`.
+- `../../sheaf/manifest.yaml` maps each section to its track fragments and
+  composed output name.
+- `../../sheaf/tracks.yaml` defines track order, renderers, and optional tracks.
+- Run `uv run python scripts/compose_manuscript.py --validate-only --strict` from
+  the repo root after fragment or manifest changes.

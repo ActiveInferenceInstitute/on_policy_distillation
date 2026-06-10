@@ -107,6 +107,7 @@ def run_em(
 
 
 def build_payload() -> dict[str, object]:
+    """Build the canonical `firstprinciples.variational_em_demo` artifact payload."""
     reference = np.array([0.25, 0.25, 0.25, 0.25], dtype=np.float64)
     reward = np.array([2.0, 0.5, -0.5, -2.0], dtype=np.float64)
     result = run_em(reference, reward, beta=1.0)

@@ -112,4 +112,5 @@ def run_privilege_sweep(project_root: Path, config: PrivilegeSweepConfig | None 
 
 
 def build_payload(project_root: Path, config: PrivilegeSweepConfig | None = None) -> dict[str, Any]:
+    """Build the canonical privilege-sweep artifact payload by running the sweep."""
     return run_privilege_sweep(project_root, config)

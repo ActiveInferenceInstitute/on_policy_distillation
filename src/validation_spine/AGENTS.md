@@ -16,12 +16,13 @@ metadata, replay provenance, and release-facing provenance drift checks.
 - A new required artifact needs a producer, a fingerprinted provenance row, a
   validation rule, and a negative-control test before manuscript prose may rely
   on it.
-- Project-local `output/` is scratch. Copied public deliverables live under
-  [`../../../../../output/templates/template_active_inference/`](../../../../../output/templates/template_active_inference/)
-  after the root pipeline copy stage.
+- Project-local `output/` is scratch. Copied public deliverables live under the
+  sibling template checkout's `output/working/active_inference_on_policy_distillation/`
+  path after the root pipeline copy stage; that output path is generated and may
+  not exist before a render.
 
 ## Verification
 
 ```bash
-uv run --directory projects/templates/template_active_inference pytest tests/test_validation_spine.py tests/test_track_consolidation.py -q --tb=short
+uv run python -m pytest tests/test_validation_spine.py tests/test_track_consolidation.py -q --tb=short
 ```

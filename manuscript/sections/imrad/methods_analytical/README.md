@@ -1,7 +1,8 @@
-# Bernoulli coupling section fragments
+# Methods Analytical
 
-Per-track sources for the Bernoulli coupling section.
+Method fragments for manifest section `methods_analytical`.
 
-- `prose.md` — narrative. `formalism.md` — closed-form math.
-- `gnn.md` — GNN model description. `ontology.yaml` — term bindings.
-- `simulation.md` — numeric/simulation results. `visualization.md` — figures.
+- Source fragments here compose to `manuscript/05_methods_analytical.md`.
+- Bound tracks: prose, formalism, simulation, assumption index, visualization,
+  GNN, and ontology.
+- Keep the analytical derivation, GNN description, and ontology terms aligned.

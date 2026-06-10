@@ -7,6 +7,27 @@ from pathlib import Path
 
 from gates.artifact_manifest import REQUIRED_OUTPUTS
 
+SUPPORTED_SELECTED_OUTPUT_CHECKS = {
+    *(str(Path(rel).as_posix()) for rel in REQUIRED_OUTPUTS),
+    "si_invariants_all_pass",
+    "invariants_all_pass",
+    "simulation_invariants_all_pass",
+    "si_trace_present",
+    "si_summary_schema",
+    "si_tmaze_model_matrices_schema",
+    "pymdp_policy_posterior_grid_schema",
+    "figure_source_map_schema",
+    "figure_hash_manifest_schema",
+    "firstprinciples_empirical_benchmark_schema",
+    "firstprinciples_statistics_schema",
+    "firstprinciples_classroom_schema",
+    "firstprinciples_benchmark_table_present",
+    "toy_sweep_track_schemas",
+    "formal_interop_track_schemas",
+    "integration_audit_track_schemas",
+    "canonical_sheaf_track_schemas",
+}
+
 
 def _read_json(path: Path) -> dict:
     if not path.exists():
@@ -16,6 +37,20 @@ def _read_json(path: Path) -> dict:
     except (json.JSONDecodeError, UnicodeDecodeError):
         return {}
     return data if isinstance(data, dict) else {}
+
+
+def _as_float(value: object, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _as_int(value: object, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
 
 
 def _pymdp_logging_expected(root: Path) -> bool:
@@ -57,7 +92,220 @@ def _figure_hash_manifest_ok(root: Path, payload: dict) -> bool:
     )
 
 
-def validate_outputs(project_root: Path) -> dict[str, bool]:
+def _proof_extraction_ok(proof_extraction: dict, lean_theorems: dict) -> bool:
+    proof_rows = proof_extraction.get("rows") or []
+    lean_rows = lean_theorems.get("rows") or []
+    extracted = {str(row.get("theorem")) for row in proof_rows if row.get("theorem")}
+    inventory = {str(row.get("name")) for row in lean_rows if row.get("name")}
+    return (
+        proof_extraction.get("schema") == "template_active_inference.proof_extraction_index.v1"
+        and proof_extraction.get("all_extracted") is True
+        and proof_extraction.get("all_constructive") is True
+        and proof_extraction.get("all_inventory_theorems_extracted") is True
+        and proof_extraction.get("missing_inventory_theorems") == []
+        and proof_extraction.get("extra_extracted_theorems") == []
+        and int(proof_extraction.get("theorem_count", -1) or -1) == int(lean_theorems.get("theorem_count", -2) or -2)
+        and int(proof_extraction.get("inventory_theorem_count", -1) or -1)
+        == int(lean_theorems.get("theorem_count", -2) or -2)
+        and bool(inventory)
+        and extracted == inventory
+    )
+
+
+def _firstprinciples_classroom_ok(payload: dict) -> bool:
+    from firstprinciples.classroom import validate_classroom_payload
+
+    return validate_classroom_payload(payload)
+
+
+def _validate_outputs_selected(root: Path, selected: set[str]) -> dict[str, bool]:
+    checks: dict[str, bool] = {}
+    required_by_key = {str(Path(rel).as_posix()): root / rel for rel in REQUIRED_OUTPUTS}
+    for key in selected & set(required_by_key):
+        checks[key] = required_by_key[key].exists()
+
+    if "si_invariants_all_pass" in selected:
+        summary_path = root / "output" / "data" / "si_tmaze_summary.json"
+        si_inv_path = root / "output" / "reports" / "si_invariants.json"
+        if summary_path.exists() and not si_inv_path.exists():
+            checks["si_invariants_all_pass"] = False
+        elif si_inv_path.exists():
+            checks["si_invariants_all_pass"] = bool(_read_json(si_inv_path).get("all_pass"))
+        else:
+            checks["si_invariants_all_pass"] = False
+
+    if "invariants_all_pass" in selected or "simulation_invariants_all_pass" in selected:
+        inv = _read_json(root / "output" / "reports" / "invariants.json")
+        if "invariants_all_pass" in selected:
+            checks["invariants_all_pass"] = bool(inv.get("all_pass"))
+        if "simulation_invariants_all_pass" in selected:
+            checks["simulation_invariants_all_pass"] = all((inv.get("simulation") or {}).values())
+
+    if "si_trace_present" in selected or "si_summary_schema" in selected:
+        summary = _read_json(root / "output" / "data" / "si_tmaze_summary.json")
+        trace = _read_json(root / "output" / "data" / "si_tmaze_trace.json")
+        steps = int(summary.get("steps", 0))
+        rollout_timestep_count = int(summary.get("rollout_timestep_count", 0) or 0)
+        trace_steps = trace.get("steps") or []
+        if "si_trace_present" in selected:
+            checks["si_trace_present"] = len(trace_steps) == rollout_timestep_count and steps >= 1
+        if "si_summary_schema" in selected:
+            checks["si_summary_schema"] = (
+                summary.get("schema") == "template_active_inference.si_tmaze_summary.v2"
+                and steps >= 1
+                and rollout_timestep_count == steps + 1
+                and float(summary.get("mean_belief_entropy", -1.0)) >= 0.0
+                and summary.get("planner") == "sophisticated_inference"
+                and summary.get("profile") == "full_tmaze_sophisticated_inference"
+                and summary.get("tree_available") is True
+                and bool(summary.get("q_pi_by_step"))
+                and bool(summary.get("action_probabilities"))
+                and set((summary.get("observations_by_modality") or {})) == {"location", "outcome", "cue"}
+                and all(abs(float(sum(row)) - 1.0) <= 1e-6 for row in summary.get("q_pi_by_step") or [])
+                and "config" in summary
+                and "mode" not in summary
+            )
+
+    if "si_tmaze_model_matrices_schema" in selected:
+        matrices = _read_json(root / "output" / "data" / "si_tmaze_model_matrices.json")
+        checks["si_tmaze_model_matrices_schema"] = (
+            matrices.get("schema") == "template_active_inference.si_tmaze_model_matrices.v1"
+            and matrices.get("A_shapes") == [[5, 5], [3, 5, 2], [3, 5, 2]]
+            and matrices.get("B_shapes") == [[5, 5, 5], [2, 2, 1]]
+            and matrices.get("dependencies", {}).get("A") == [[0], [0, 1], [0, 1]]
+            and matrices.get("dependencies", {}).get("B") == [[0], [1]]
+            and all(check.get("normalized") is True for check in matrices.get("normalization_checks") or [])
+        )
+
+    if "pymdp_policy_posterior_grid_schema" in selected:
+        posterior = _read_json(root / "output" / "data" / "pymdp_policy_posterior_grid.json")
+        rows = posterior.get("rows") or []
+        checks["pymdp_policy_posterior_grid_schema"] = (
+            posterior.get("schema") == "template_active_inference.pymdp_policy_posterior_grid.v1"
+            and bool(rows)
+            and posterior.get("scope") == "comparison_only"
+            and posterior.get("all_available_posteriors_normalized") is True
+            and posterior.get("all_unavailable_rows_explained") is True
+            and all(
+                (not row.get("posterior_available")) or abs(float(sum(row.get("q_pi") or [])) - 1.0) <= 1e-9
+                for row in rows
+            )
+        )
+
+    if "figure_source_map_schema" in selected:
+        checks["figure_source_map_schema"] = _figure_source_map_ok(
+            root,
+            _read_json(root / "output" / "data" / "figure_source_map.json"),
+        )
+    if "figure_hash_manifest_schema" in selected:
+        checks["figure_hash_manifest_schema"] = _figure_hash_manifest_ok(
+            root,
+            _read_json(root / "output" / "reports" / "figure_hash_manifest.json"),
+        )
+
+    if "firstprinciples_empirical_benchmark_schema" in selected:
+        fp_empirical = _read_json(root / "output" / "data" / "firstprinciples" / "empirical_benchmark.json")
+        fp_empirical_rows = fp_empirical.get("rows") or []
+        fp_replication = fp_empirical.get("thinking_machines_replication") or {}
+        fp_efficiency_min = _as_float(fp_replication.get("efficiency_range_min"), -1.0)
+        fp_efficiency_max = _as_float(fp_replication.get("efficiency_range_max"), -1.0)
+        checks["firstprinciples_empirical_benchmark_schema"] = (
+            fp_empirical.get("schema") == "firstprinciples.empirical_benchmark.v1"
+            and fp_empirical.get("direct_bibkey") == "qwen2025technical_report"
+            and fp_empirical.get("relayed_by_bibkey") == "thinkingmachines2025opd"
+            and _as_int(fp_empirical.get("row_count"), -1) == 3
+            and len(fp_empirical_rows) == 3
+            and all(
+                row.get("bibkey") == "qwen2025technical_report"
+                and row.get("relayed_by") == "thinkingmachines2025opd"
+                for row in fp_empirical_rows
+            )
+            and fp_replication.get("bibkey") == "thinkingmachines2025opd"
+            and _as_float(fp_replication.get("aime24_accuracy"), 0.0) > 0.0
+            and _as_int(fp_replication.get("training_steps"), 0) > 0
+            and 0.0 < fp_efficiency_min <= fp_efficiency_max
+        )
+
+    if "firstprinciples_statistics_schema" in selected:
+        fp_statistics = _read_json(root / "output" / "data" / "firstprinciples" / "statistics_demo.json")
+        fp_permutation = fp_statistics.get("paired_permutation") or {}
+        checks["firstprinciples_statistics_schema"] = (
+            fp_statistics.get("schema") == "firstprinciples.statistics_demo.v1"
+            and _as_int(fp_statistics.get("sample_size"), 0) > 0
+            and _as_int(fp_permutation.get("n_perm"), 0) > 0
+            and fp_statistics.get("effect_size_reference") == "cohen1988power"
+            and bool(fp_statistics.get("effect_size"))
+            and bool(fp_statistics.get("claim_scope"))
+        )
+
+    if "firstprinciples_classroom_schema" in selected:
+        checks["firstprinciples_classroom_schema"] = _firstprinciples_classroom_ok(
+            _read_json(root / "output" / "data" / "firstprinciples" / "classroom.json")
+        )
+
+    if "firstprinciples_benchmark_table_present" in selected:
+        fp_benchmark_table_path = root / "output" / "data" / "firstprinciples" / "benchmark_table.md"
+        fp_benchmark_table = (
+            fp_benchmark_table_path.read_text(encoding="utf-8") if fp_benchmark_table_path.is_file() else ""
+        )
+        checks["firstprinciples_benchmark_table_present"] = (
+            fp_benchmark_table_path.is_file()
+            and "qwen2025technical_report" in fp_benchmark_table
+            and "thinkingmachines2025opd" in fp_benchmark_table
+            and "AIME'24" in fp_benchmark_table
+        )
+
+    if "toy_sweep_track_schemas" in selected:
+        from roadmap_tracks import validate_toy_sweep_artifacts
+
+        checks["toy_sweep_track_schemas"] = not validate_toy_sweep_artifacts(root)
+    if "formal_interop_track_schemas" in selected:
+        from roadmap_tracks import validate_formal_interop_artifacts
+
+        checks["formal_interop_track_schemas"] = not validate_formal_interop_artifacts(root)
+    if "integration_audit_track_schemas" in selected:
+        from roadmap_tracks import validate_integration_audit_artifacts
+
+        checks["integration_audit_track_schemas"] = not validate_integration_audit_artifacts(root)
+    if "canonical_sheaf_track_schemas" in selected:
+        from roadmap_tracks import validate_sheaf_track_artifacts
+
+        checks["canonical_sheaf_track_schemas"] = not validate_sheaf_track_artifacts(root)
+
+    return checks
+
+
+def validate_outputs_selected_strict(project_root: Path, only: set[str]) -> dict[str, bool]:
+    """Validate selected output keys without falling back to the full gate.
+
+    Public ``validate_outputs(..., only=...)`` keeps compatibility by falling
+    back for keys that do not have a lazy implementation. Tests that assert
+    runtime behavior should call this helper so new selected keys cannot
+    accidentally reintroduce a full validation pass.
+    """
+    selected = set(only)
+    unsupported = selected - SUPPORTED_SELECTED_OUTPUT_CHECKS
+    if unsupported:
+        raise KeyError(f"unsupported lazy output check keys: {sorted(unsupported)}")
+    checks = _validate_outputs_selected(project_root.resolve(), selected)
+    missing = selected - set(checks)
+    if missing:
+        raise AssertionError(f"lazy output checks did not return requested keys: {sorted(missing)}")
+    return checks
+
+
+def validate_outputs(project_root: Path, *, only: set[str] | None = None) -> dict[str, bool]:
+    root = project_root.resolve()
+    if only is not None:
+        selected = set(only)
+        selected_checks = _validate_outputs_selected(root, selected)
+        if selected <= set(selected_checks):
+            return selected_checks
+        return {key: value for key, value in _validate_outputs_full(root).items() if key in selected}
+    return _validate_outputs_full(root)
+
+
+def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     root = project_root.resolve()
     required = [root / rel for rel in REQUIRED_OUTPUTS]
     checks = {str(p.relative_to(root)): p.exists() for p in required}
@@ -280,6 +528,9 @@ def validate_outputs(project_root: Path) -> dict[str, bool]:
     fp_exposure = _read_json(root / "output" / "data" / "firstprinciples" / "exposure_bias_demo.json")
     fp_classroom = _read_json(root / "output" / "data" / "firstprinciples" / "classroom.json")
     fp_taxonomy = _read_json(root / "output" / "data" / "firstprinciples" / "opd_taxonomy.json")
+    fp_statistics = _read_json(root / "output" / "data" / "firstprinciples" / "statistics_demo.json")
+    fp_empirical = _read_json(root / "output" / "data" / "firstprinciples" / "empirical_benchmark.json")
+    fp_benchmark_table_path = root / "output" / "data" / "firstprinciples" / "benchmark_table.md"
     proof_dependency = _read_json(root / "output" / "data" / "proof_dependency_graph.json")
     transition_table = _read_json(root / "output" / "data" / "state_transition_table.json")
     ablation_sensitivity = _read_json(root / "output" / "reports" / "ablation_sensitivity_report.json")
@@ -410,9 +661,7 @@ def validate_outputs(project_root: Path) -> dict[str, bool]:
         and artifact_diffoscope.get("all_equal") is True
     )
     checks["proof_extraction_index_schema"] = (
-        proof_extraction.get("schema") == "template_active_inference.proof_extraction_index.v1"
-        and proof_extraction.get("all_extracted") is True
-        and proof_extraction.get("all_constructive") is True
+        _proof_extraction_ok(proof_extraction, lean_theorems)
     )
     checks["state_space_catalog_schema"] = (
         state_space_catalog.get("schema") == "template_active_inference.state_space_catalog.v1"
@@ -450,16 +699,49 @@ def validate_outputs(project_root: Path) -> dict[str, bool]:
         and exposure_gap.get("off_policy_collapses") is True
         and float(exposure_gap.get("terminal_gap", -1.0)) > 0.0
     )
-    checks["firstprinciples_classroom_schema"] = (
-        fp_classroom.get("schema") == "firstprinciples.classroom.v1"
-        and fp_classroom.get("ok") is True
-        and fp_classroom.get("privileged_advantage") is True
-        and bool(fp_classroom.get("per_step"))
-    )
+    checks["firstprinciples_classroom_schema"] = _firstprinciples_classroom_ok(fp_classroom)
     checks["firstprinciples_taxonomy_schema"] = (
         fp_taxonomy.get("schema") == "firstprinciples.opd_taxonomy.v1"
         and int(fp_taxonomy.get("method_count", 0) or 0) >= 8
         and int(fp_taxonomy.get("on_policy_count", 0) or 0) >= 1
+    )
+    fp_empirical_rows = fp_empirical.get("rows") or []
+    fp_replication = fp_empirical.get("thinking_machines_replication") or {}
+    fp_efficiency_min = _as_float(fp_replication.get("efficiency_range_min"), -1.0)
+    fp_efficiency_max = _as_float(fp_replication.get("efficiency_range_max"), -1.0)
+    checks["firstprinciples_empirical_benchmark_schema"] = (
+        fp_empirical.get("schema") == "firstprinciples.empirical_benchmark.v1"
+        and fp_empirical.get("direct_bibkey") == "qwen2025technical_report"
+        and fp_empirical.get("relayed_by_bibkey") == "thinkingmachines2025opd"
+        and _as_int(fp_empirical.get("row_count"), -1) == 3
+        and len(fp_empirical_rows) == 3
+        and all(
+            row.get("bibkey") == "qwen2025technical_report"
+            and row.get("relayed_by") == "thinkingmachines2025opd"
+            for row in fp_empirical_rows
+        )
+        and fp_replication.get("bibkey") == "thinkingmachines2025opd"
+        and _as_float(fp_replication.get("aime24_accuracy"), 0.0) > 0.0
+        and _as_int(fp_replication.get("training_steps"), 0) > 0
+        and 0.0 < fp_efficiency_min <= fp_efficiency_max
+    )
+    fp_permutation = fp_statistics.get("paired_permutation") or {}
+    checks["firstprinciples_statistics_schema"] = (
+        fp_statistics.get("schema") == "firstprinciples.statistics_demo.v1"
+        and _as_int(fp_statistics.get("sample_size"), 0) > 0
+        and _as_int(fp_permutation.get("n_perm"), 0) > 0
+        and fp_statistics.get("effect_size_reference") == "cohen1988power"
+        and bool(fp_statistics.get("effect_size"))
+        and bool(fp_statistics.get("claim_scope"))
+    )
+    fp_benchmark_table = (
+        fp_benchmark_table_path.read_text(encoding="utf-8") if fp_benchmark_table_path.is_file() else ""
+    )
+    checks["firstprinciples_benchmark_table_present"] = (
+        fp_benchmark_table_path.is_file()
+        and "qwen2025technical_report" in fp_benchmark_table
+        and "thinkingmachines2025opd" in fp_benchmark_table
+        and "AIME'24" in fp_benchmark_table
     )
     checks["proof_dependency_graph_schema"] = (
         proof_dependency.get("schema") == "template_active_inference.proof_dependency_graph.v1"
@@ -564,6 +846,9 @@ def validate_outputs(project_root: Path) -> dict[str, bool]:
             "artifact_license_audit_schema",
             "release_notes_evidence_schema",
             "scholarship_source_matrix_schema",
+            "firstprinciples_empirical_benchmark_schema",
+            "firstprinciples_statistics_schema",
+            "firstprinciples_benchmark_table_present",
             "proof_dependency_graph_schema",
             "state_transition_table_schema",
             "ablation_sensitivity_report_schema",

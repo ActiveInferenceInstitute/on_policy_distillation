@@ -20,14 +20,29 @@ from manuscript.sheaf.cli import build_parser, run_compose_cli
 _parse_missing = parse_missing
 
 
+@pytest.mark.render_slow
 def test_compose_writes_markdown_sections(tmp_path: Path) -> None:
     root = Path(__file__).resolve().parents[1]
     out = tmp_path / "manuscript"
     result = compose_all_sections(root, manuscript_dir=out)
     assert len(result.paths) == 12
     text = (out / "06_methods_pymdp.md").read_text(encoding="utf-8")
-    assert "pymdp simulation harness" in text
+    assert "pymdp full TMaze sophisticated-inference validation profile" in text
     assert "sheaf-track:pymdp" in text
+
+
+def test_supplement_sequence_keeps_reproducibility_before_validation() -> None:
+    root = Path(__file__).resolve().parents[1]
+    manifest = load_manifest(root / "manuscript" / "sheaf" / "manifest.yaml")
+    sections = {section.id: section for section in manifest.sections}
+
+    assert sections["appendix_full_sheaf"].output_name == "18_supplement_full_coverage.md"
+    assert sections["methods_sheaf"].output_name == "19_supplement_reproducibility.md"
+    assert sections["results_invariants"].output_name == "20_supplement_validation_statistics.md"
+    assert sections["appendix_full_sheaf"].order < sections["methods_sheaf"].order
+    assert sections["methods_sheaf"].order < sections["results_invariants"].order
+    assert sections["methods_sheaf"].imrad == "appendix"
+    assert sections["results_invariants"].imrad == "appendix"
 
 
 def test_discussion_ontology_renders_labels_not_raw_yaml() -> None:
@@ -237,6 +252,7 @@ sections:
     assert "missing" in captured.err
 
 
+@pytest.mark.render_slow
 def test_full_section_compose_contains_all_markers() -> None:
     root = Path(__file__).resolve().parents[1]
     manifest = load_manifest(root / "manuscript" / "sheaf" / "manifest.yaml")
@@ -247,23 +263,25 @@ def test_full_section_compose_contains_all_markers() -> None:
         assert f"sheaf-track:{track_id}" in text
 
 
+@pytest.mark.render_slow
 def test_compose_emits_imrad_dividers_and_section_labels(tmp_path: Path) -> None:
     root = Path(__file__).resolve().parents[1]
     out = tmp_path / "manuscript"
     compose_all_sections(root, manuscript_dir=out)
     methods_text = (out / "05_methods_analytical.md").read_text(encoding="utf-8")
     assert "\\section*{Methods}" in methods_text
-    assert "# Bernoulli–Ising analytical model {#sec:methods_analytical}" in methods_text
+    assert "# Teacher and student coupling: the analytical model {#sec:methods_analytical}" in methods_text
     intro_text = (out / "02_intro_motivation.md").read_text(encoding="utf-8")
     assert "\\section*{Introduction}" in intro_text
     assert "{#sec:intro_motivation}" in intro_text
 
 
+@pytest.mark.render_slow
 def test_composed_methods_sheaf_contains_figure_and_tables(tmp_path: Path) -> None:
     root = Path(__file__).resolve().parents[1]
     out = tmp_path / "manuscript"
     compose_all_sections(root, manuscript_dir=out)
-    text = (out / "08_methods_sheaf.md").read_text(encoding="utf-8")
+    text = (out / "19_supplement_reproducibility.md").read_text(encoding="utf-8")
     assert "sheaf_layers_overview.png" in text
     assert "<!-- sheaf-layers:registry -->" in text
     assert "<!-- sheaf-layers:binding-matrix -->" in text

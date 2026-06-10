@@ -93,7 +93,7 @@ def test_binding_flags_planner_mismatch(tmp_path: Path) -> None:
 def test_binding_flags_merged_claim_without_simulation(tmp_path: Path) -> None:
     """A section that says 'merged' but ships no simulation invariants is rejected."""
     (tmp_path / "manuscript").mkdir(parents=True, exist_ok=True)
-    (tmp_path / "manuscript" / "13_results_invariants.md").write_text(
+    (tmp_path / "manuscript" / "20_supplement_validation_statistics.md").write_text(
         "Checks pass in the merged validation report.\n", encoding="utf-8"
     )
     (tmp_path / "output" / "reports").mkdir(parents=True, exist_ok=True)
@@ -106,7 +106,7 @@ def test_binding_flags_merged_claim_without_simulation(tmp_path: Path) -> None:
 
 def test_binding_passes_merged_claim_with_simulation(tmp_path: Path) -> None:
     (tmp_path / "manuscript").mkdir(parents=True, exist_ok=True)
-    (tmp_path / "manuscript" / "13_results_invariants.md").write_text(
+    (tmp_path / "manuscript" / "20_supplement_validation_statistics.md").write_text(
         "Checks pass in the merged validation report.\n", encoding="utf-8"
     )
     (tmp_path / "output" / "reports").mkdir(parents=True, exist_ok=True)
@@ -119,7 +119,7 @@ def test_binding_passes_merged_claim_with_simulation(tmp_path: Path) -> None:
 def test_binding_flags_merged_claim_with_relabeled_block(tmp_path: Path) -> None:
     """Content membership: a non-SI block parked under 'simulation' is NOT 'merged'."""
     (tmp_path / "manuscript").mkdir(parents=True, exist_ok=True)
-    (tmp_path / "manuscript" / "13_results_invariants.md").write_text(
+    (tmp_path / "manuscript" / "20_supplement_validation_statistics.md").write_text(
         "Checks pass in the merged validation report.\n", encoding="utf-8"
     )
     (tmp_path / "output" / "reports").mkdir(parents=True, exist_ok=True)

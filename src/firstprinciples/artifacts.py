@@ -38,6 +38,7 @@ __all__ = [
     "write_json",
     "write_all",
     "write_markdown_tables",
+    "write_statistics_artifact",
 ]
 
 ARTIFACT_DIR = ("output", "data", "firstprinciples")
@@ -129,6 +130,21 @@ def sdpg_demo() -> dict[str, Any]:
     }
 
 
+def write_statistics_artifact(
+    root: Path,
+    teacher_entropy: list[float],
+    student_entropy: list[float],
+) -> Path:
+    """Write ``statistics_demo.json`` from measured classroom belief entropies.
+
+    Lives outside :func:`write_all` because the inferential summary is only
+    honest when fed the per-decision entropies of a classroom rollout that
+    actually ran — there is deliberately no synthetic fallback.
+    """
+    payload = stats.build_payload(teacher_entropy, student_entropy)
+    return write_json(root, "statistics_demo.json", payload)
+
+
 def write_markdown_tables(root: Path) -> dict[str, Path]:
     """Write the correspondence and taxonomy markdown tables."""
     directory = _dir(root)
@@ -158,7 +174,6 @@ def write_all(root: Path) -> dict[str, Path]:
         "diversity_demo.json": write_json(root, "diversity_demo.json", diversity.build_payload()),
         "adaptive_demo.json": write_json(root, "adaptive_demo.json", adaptive.build_payload()),
         "energy_demo.json": write_json(root, "energy_demo.json", energy.build_payload()),
-        "statistics_demo.json": write_json(root, "statistics_demo.json", stats.build_payload()),
         "empirical_benchmark.json": write_json(root, "empirical_benchmark.json", empirical.build_payload()),
         "parallel_demo.json": write_json(root, "parallel_demo.json", parallel.build_payload()),
     }

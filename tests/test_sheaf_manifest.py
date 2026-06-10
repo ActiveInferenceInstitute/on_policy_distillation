@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from gates.validation import validate_manuscript
 from manuscript.sheaf import (
     SheafManifest,
@@ -21,7 +23,9 @@ def test_manifest_loads_imrad_sections() -> None:
     assert manifest.sections[0].id == "intro"
     assert manifest.sections[0].kind == "group"
     appendix = next(s for s in manifest.sections if s.id == "appendix_full_sheaf")
-    assert len(appendix.tracks) == 33
+    registry = load_track_registry(root / manifest.registry_path)
+    assert len(registry.tracks) == 33
+    assert len(appendix.tracks) == 22
     assert sum(1 for s in manifest.sections if s.should_compose()) == 12
     # Every IMRAD block now carries a group row (uniform base poset).
     assert sum(1 for s in manifest.sections if s.kind == "group") == 5
@@ -175,6 +179,7 @@ def test_strict_validate_fails_on_gray(tmp_path: Path) -> None:
     assert any(i.code == "coverage_missing" for i in validation)
 
 
+@pytest.mark.render_slow
 def test_group_rows_skip_compose(tmp_path: Path) -> None:
     root = Path(__file__).resolve().parents[1]
     result = compose_all_sections(root, manuscript_dir=tmp_path / "manuscript")
@@ -183,9 +188,10 @@ def test_group_rows_skip_compose(tmp_path: Path) -> None:
     assert "02_intro_motivation.md" in names
 
 
+@pytest.mark.artifact_slow
 def test_validate_manuscript_strict_coverage() -> None:
     root = Path(__file__).resolve().parents[1]
-    ensure_gate_artifacts(root)
+    ensure_gate_artifacts(root, verify=True)
     checks = validate_manuscript(root)
     assert checks["sheaf_valid"]
     assert checks["coverage_matrix_valid"]

@@ -15,6 +15,7 @@ from manuscript.sheaf import (
     load_manifest,
     validate_manifest,
 )
+from manuscript.sheaf.models import ManifestIssue
 from orchestration.coverage_pipeline import ensure_coverage_artifacts
 
 
@@ -129,6 +130,17 @@ def run_compose_cli(
     )
     if args.validate_only:
         issues = validate_manifest(manifest, project_root, strict_coverage=args.strict)
+        if args.strict:
+            from gates.manuscript_checks import unresolved_citation_keys
+
+            for key in unresolved_citation_keys(project_root):
+                issues.append(
+                    ManifestIssue(
+                        "error",
+                        "unresolved_citation_key",
+                        f"Unresolved bibliography citation key: @{key}",
+                    )
+                )
         _emit_issues(issues)
         if issues_have_errors(issues):
             return 1

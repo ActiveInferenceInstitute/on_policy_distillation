@@ -30,3 +30,19 @@ def tmp_output(tmp_path: Path) -> Path:
     for sub in ("data", "figures", "simulations", "reports", "web"):
         (out / sub).mkdir(parents=True, exist_ok=True)
     return out
+
+
+@pytest.fixture(autouse=True)
+def isolate_mutating_artifact_tests(request: pytest.FixtureRequest):
+    """Prevent artifact mutation tests from reusing stale bootstrap state."""
+    if request.node.get_closest_marker("mutates_artifacts") is None:
+        yield
+        return
+    from gate_support import _BOOTSTRAPPED_ROOTS
+
+    root = PROJECT_ROOT.resolve()
+    _BOOTSTRAPPED_ROOTS.discard(root)
+    try:
+        yield
+    finally:
+        _BOOTSTRAPPED_ROOTS.discard(root)

@@ -1,5 +1,10 @@
-# Bernoulli Coupling Fragment Notes
+# Methods Analytical Fragment Notes
 
-All fragments describe the SAME model. Numbers in `prose.md`/`simulation.md` are
-hydrated tokens from generated artifacts; `formalism.md` must match the analytical
-track and the GNN spec. Keep `ontology.yaml` aligned with `src/ontology`.
+Editable source for manifest section `methods_analytical`, composed to
+`manuscript/05_methods_analytical.md`.
+
+- All fragments describe the same Bernoulli-Ising coupling model.
+- `formalism.md` must match `src/analytical/`, the GNN fragment, and
+  `ontology.yaml`.
+- Numbers in prose and simulation fragments must be hydrated tokens or generated
+  artifact claims.

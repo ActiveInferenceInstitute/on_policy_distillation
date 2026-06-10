@@ -125,6 +125,7 @@ def _ensemble() -> list[Problem]:
 
 
 def build_payload() -> dict[str, object]:
+    """Build the canonical `firstprinciples.diversity_demo` artifact payload."""
     problems = _ensemble()
     temperatures = [0.25, 0.5, 1.0, 2.0, 4.0]
     curve = diversity_tradeoff(problems, temperatures, k=8)

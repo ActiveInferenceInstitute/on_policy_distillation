@@ -9,6 +9,6 @@ Deterministic artifact contracts for the Active Inference exemplar's validation 
 ## Verification
 
 ```bash
-uv run pytest tests/test_validation_spine.py -q
+uv run python -m pytest tests/test_validation_spine.py -q
 uv run python scripts/generate_validation_spine.py
 ```

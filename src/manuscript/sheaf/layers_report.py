@@ -122,6 +122,9 @@ def render_artifact_producer_table(project_root: Path) -> str:
 def render_semantic_restrictions_table(project_root: Path) -> str:
     from manuscript.sheaf.semantic import build_semantic_gluing_certificate
 
+    def _cell(value: object) -> str:
+        return "not evaluated" if value is None else str(value)
+
     restrictions = build_semantic_gluing_certificate(project_root).get("restrictions") or {}
     rows = [
         ("Coverage missing", restrictions.get("coverage_missing")),
@@ -157,7 +160,7 @@ def render_semantic_restrictions_table(project_root: Path) -> str:
         "| Restriction | Value |",
         "| --- | --- |",
     ]
-    lines.extend(f"| {name} | `{value}` |" for name, value in rows)
+    lines.extend(f"| {name} | `{_cell(value)}` |" for name, value in rows)
     lines.append("")
     return "\n".join(lines)
 
@@ -167,6 +170,7 @@ def render_track_improvement_scope_table(project_root: Path) -> str:
 
     path = project_root / "output" / "data" / "track_improvement_scope.json"
     payload = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+    roadmap = payload.get("improvement_roadmap") or []
     lines = [
         "<!-- sheaf-layers:track-improvement-scope -->",
         "## Track improvement scope",
@@ -174,14 +178,23 @@ def render_track_improvement_scope_table(project_root: Path) -> str:
         "| Track | Status | Current proof | Next artifact | Gate | Negative control |",
         "| --- | --- | --- | --- | --- | --- |",
     ]
-    for row in (payload.get("improvement_roadmap") or [])[:12]:
+    for row in roadmap:
         lines.append(
             "| "
             f"`{row.get('track_id')}` | {row.get('status')} | `{row.get('current_proof')}` | "
             f"`{row.get('next_proving_artifact')}` | `{row.get('gate_or_predicate')}` | "
             f"{row.get('negative_control')} |"
         )
-    lines.extend(["", f"**Improvement rows:** {payload.get('improvement_row_count', 0)}.", ""])
+    rendered = len(roadmap)
+    total = int(payload.get("improvement_row_count", rendered) or 0)
+    if rendered < total:
+        footer = (
+            f"**Improvement rows:** first {rendered} of {total} shown; "
+            "full table in `output/data/track_improvement_scope.json`."
+        )
+    else:
+        footer = f"**Improvement rows:** {total}."
+    lines.extend(["", footer, ""])
     return "\n".join(lines)
 
 

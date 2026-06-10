@@ -61,10 +61,45 @@ def test_paired_sign_test_all_zero() -> None:
 
 
 def test_statistics_payload_ok() -> None:
-    payload = stats.build_payload()
+    teacher = [0.21, 0.25, 0.19, 0.27, 0.23, 0.20]
+    student = [0.34, 0.36, 0.31, 0.38, 0.33, 0.30]
+    payload = stats.build_payload(teacher, student)
     assert payload["schema"] == stats.SCHEMA
     assert payload["ok"] is True
+    assert payload["sample_size"] == 6
+    assert payload["paired_permutation"]["n"] == 6
+    assert payload["paired_permutation"]["n_perm"] == 5000
+    assert payload["effect_size_reference"] == "cohen1988power"
+    assert payload["claim_scope"].startswith("toy-classroom")
     assert payload["cohens_d_student_minus_teacher"] > 0.0
+    assert payload["teacher_entropy"] == teacher  # echoes its measured inputs
+
+
+def test_statistics_payload_ok_is_not_a_significance_claim() -> None:
+    teacher = [0.69, 0.10, 0.10, 0.10]
+    student = [0.69, 0.69, 0.00, 0.00]
+    payload = stats.build_payload(teacher, student)
+    assert payload["ok"] is True
+    assert payload["advantage_bootstrap_ci"]["ci_low"] < 0.0
+    assert payload["paired_permutation"]["n"] == payload["sample_size"]
+    assert payload["claim_scope"].startswith("toy-classroom")
+
+
+def test_statistics_payload_requires_real_series() -> None:
+    """No synthetic fallback: the artifact cannot exist without classroom data."""
+    import inspect
+
+    with pytest.raises(TypeError):
+        stats.build_payload()  # type: ignore[call-arg]
+    with pytest.raises(ValueError):
+        stats.build_payload([0.2, 0.3], [0.3])
+    with pytest.raises(ValueError):
+        stats.build_payload([0.2], [0.3])
+    with pytest.raises(ValueError):
+        stats.build_payload([0.2, float("nan")], [0.3, 0.4])
+    # The module must not carry hard-coded entropy datasets anywhere.
+    source = inspect.getsource(stats)
+    assert "0.21, 0.25" not in source
 
 
 # --------------------------------------------------------------------------- #
@@ -86,6 +121,7 @@ def test_privilege_config_validation() -> None:
 
 
 @pytest.mark.requires_pymdp
+@pytest.mark.render_slow
 @pytest.mark.timeout(400)
 @pytest.mark.skipif(not pymdp_available(), reason="inferactively-pymdp not installed")
 def test_privilege_sweep_runs(tmp_path: Path) -> None:

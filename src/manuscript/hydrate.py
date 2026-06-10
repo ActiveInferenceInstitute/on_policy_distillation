@@ -7,7 +7,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-_TOKEN_RE = re.compile(r"\{\{([a-z][a-z0-9_]*)(?::\.(\d+)f)?\}\}")
+_TOKEN_RE = re.compile(r"\{\{([a-z][a-z0-9_]*)(?::\.(\d+)([ef]))?\}\}")
 _SINGLE_BRACE_TOKEN_RE = re.compile(r"(?<!\{)\{([a-z][a-z0-9_]*)\}(?!\})")
 _LATEX_FENCE_RE = re.compile(r"```\{=latex\}.*?```", re.DOTALL)
 
@@ -19,7 +19,16 @@ def format_variables(raw: dict[str, Any]) -> dict[str, str]:
     formatted: dict[str, str] = {}
     for key, value in raw.items():
         if isinstance(value, float):
-            formatted[key] = f"{value:.4f}".rstrip("0").rstrip(".")
+            if value == 0.0:
+                value = 0.0  # normalise -0.0 so it never prints a minus sign
+            if value != 0.0 and abs(value) < 1e-4:
+                # Preserve sub-1e-4 magnitudes (machine-epsilon residuals,
+                # float32 tolerances): collapsing them through :.4f rendered
+                # every tiny value as a literal "0" — the strongest possible
+                # claim — before per-token format specs could run.
+                formatted[key] = f"{value:.6e}"
+            else:
+                formatted[key] = f"{value:.4f}".rstrip("0").rstrip(".")
         elif isinstance(value, bool):
             formatted[key] = str(value).lower()
         elif value is None:
@@ -33,7 +42,7 @@ def format_variables(raw: dict[str, Any]) -> dict[str, str]:
 
 
 def collect_manuscript_tokens(text: str) -> list[str]:
-    """Return token names referenced as {{name}} or {{name:.4f}} in markdown."""
+    """Return token names referenced as {{name}}, {{name:.4f}}, or {{name:.1e}} in markdown."""
     return [match.group(1) for match in _TOKEN_RE.finditer(text)]
 
 
@@ -75,13 +84,14 @@ def substitute_snake_case_tokens(
     def _replace(match: re.Match[str]) -> str:
         key = match.group(1)
         precision = match.group(2)
+        fmt = match.group(3) or "f"
         if key not in variables:
             unresolved.append(key)
             return match.group(0)
         value = variables[key]
         if precision is not None:
             try:
-                return f"{float(value):.{int(precision)}f}"
+                return f"{float(value):.{int(precision)}{fmt}}"
             except ValueError:
                 return value
         return value

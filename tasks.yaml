@@ -1,0 +1,152 @@
+# tasks.yaml — task + Gantt source of truth for this project.
+# Managed by the projects/taskboard server (live read-write) and seed_tasks.py.
+# status: todo | in_progress | blocked | done. dates: YYYY-MM-DD. progress: 0-100.
+project:
+  name: active_inference_on_policy_distillation
+  title: On-Policy Distillation is Active Inference
+  status: active
+  color: '#DA8BC3'
+  lead: DAF
+tasks:
+- id: opsd-1
+  title: firstprinciples correspondence map + divergence geometry
+  status: done
+  start: '2026-05-28'
+  end: '2026-06-06'
+  progress: 100
+  milestone: false
+  deps: []
+  tags:
+  - theory
+  notes: ''
+- id: opsd-2
+  title: Notation & formalism supplement
+  status: done
+  start: '2026-06-04'
+  end: '2026-06-07'
+  progress: 100
+  milestone: false
+  deps:
+  - opsd-1
+  tags:
+  - docs
+  notes: ''
+- id: opsd-3
+  title: SDPG privileged-context self-distillation objective
+  status: in_progress
+  start: '2026-06-06'
+  end: '2026-06-16'
+  progress: 45
+  milestone: false
+  deps:
+  - opsd-1
+  tags:
+  - theory
+  notes: 'Inspected after opsd-4/opsd-8 on 2026-06-09. Existing surface includes
+    `src/firstprinciples/sdpg.py`, `artifacts.sdpg_demo()`,
+    `output/data/firstprinciples/sdpg_demo.json`, taxonomy row `SDPG`, notation
+    supplement section 5, manuscript discussion/method bindings, and fast-lane
+    tests `test_sdpg_config_validation`, `test_sdpg_loss_terms_and_modes`,
+    `test_sdpg_signal_density_is_dense`, and `test_sdpg_demo_all_modes_present`.
+    Leave in_progress: next useful work is a typed SDPG-specific claim/gate or
+    negative control that proves the privileged-context objective cannot drift
+    from `sdpg_demo.json`; do not close while full coverage is still blocked by
+    opsd-8.'
+- id: opsd-4
+  title: Two-agent pymdp classroom (teacher vs student)
+  status: done
+  start: '2026-06-07'
+  end: '2026-06-09'
+  progress: 100
+  milestone: false
+  deps:
+  - opsd-1
+  tags:
+  - experiment
+  notes: 'Closed on 2026-06-09 with fail-closed classroom artifact validation:
+    `src/firstprinciples/classroom.py` writes `decision_count` and validates normalized
+    teacher/student policies, mean divergence consistency, cue ordering, distinct
+    config hashes, privileged advantage, and sophisticated-inference runtime policy
+    counts. Evidence: `uv run python scripts/generate_firstprinciples.py` passed
+    and wrote `output/data/firstprinciples/classroom.json` with classroom mean reverse-KL
+    6.2820 nats; focused classroom/gate pytest passed (8 passed in 13.86s);
+    required-artifacts output gate passed (1 passed in 107.27s); documented fast
+    lane `uv run --extra dev python -m pytest tests/ -m "not artifact_slow" -q
+    --no-cov --durations=40` passed (361 passed, 1 skipped, 32 deselected in
+    213.81s). Full coverage was attempted and failed outside the classroom surface
+    in the existing artifact-isolation/semantic-certificate cluster tracked by
+    opsd-8.'
+- id: opsd-5
+  title: Deepen canonical tracks (provenance, sensitivity, ...)
+  status: todo
+  start: '2026-06-18'
+  end: '2026-07-01'
+  progress: 0
+  milestone: false
+  deps:
+  - opsd-3
+  tags:
+  - tracks
+  notes: ''
+- id: opsd-6
+  title: Manuscript hydration + typed claim evidence
+  status: todo
+  start: '2026-06-20'
+  end: '2026-07-04'
+  progress: 0
+  milestone: false
+  deps:
+  - opsd-3
+  - opsd-4
+  tags:
+  - manuscript
+  notes: ''
+- id: opsd-7
+  title: Machine-verified sheaf-laws layer (ISA 0/41)
+  status: todo
+  start: '2026-06-18'
+  end: '2026-07-05'
+  progress: 0
+  milestone: false
+  deps:
+  - opsd-2
+  tags:
+  - formal
+  notes: 'ISA phase=observe, 0/41: wire sheaf-axiom layer into strict compose/validation.'
+- id: opsd-8
+  title: Harden order/load-sensitive artifact-validation test isolation
+  status: in_progress
+  start: '2026-06-06'
+  end: '2026-06-16'
+  progress: 75
+  milestone: false
+  deps:
+  - opsd-4
+  tags:
+  - tests
+  notes: 'Advanced on 2026-06-09 after opsd-4 closed and classroom-focused gates
+    passed, but not closed because the full coverage gate still exposes the documented
+    order/load-sensitive artifact-isolation cluster. Full attempt:
+    `uv run --extra dev python -m pytest tests/ --cov=src --cov-fail-under=90`
+    ran 22:42 and exited 2 after SIGINT to the agent-started pytest; observed summary
+    was 378 passed, 1 skipped, 7 failed, 81 warnings. Failures:
+    `test_promoted_roadmap_artifacts_are_written_and_valid` reported
+    `artifact_diffoscope.json records artifact drift` and `canonical semantic
+    restrictions failed: artifact_diffoscope_equal`; semantic certificate/manuscript
+    checks reported `cert["ok"] is False` / `semantic_sheaf_gluing is False`;
+    `test_validate_manuscript_strict_coverage` reported `claim_ledger_valid`
+    false; `test_validate_outputs_gate_checks` timed out in provenance/semantic
+    fixed-point refresh. Keep in_progress until provenance/diffoscope/semantic
+    artifacts are made order-independent and the full coverage command is green.'
+- id: opsd-m1
+  title: OPSD≡AIF preprint
+  status: todo
+  start: '2026-07-10'
+  end: '2026-07-10'
+  progress: 0
+  milestone: true
+  deps:
+  - opsd-5
+  - opsd-6
+  tags: []
+  notes: ''

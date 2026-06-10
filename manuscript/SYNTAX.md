@@ -1,13 +1,13 @@
-# Manuscript Syntax Reference (template_active_inference)
+# Manuscript Syntax Reference (active_inference_on_policy_distillation)
 
-Project overlay on [`docs/guides/manuscript-semantics.md`](../../../../docs/guides/manuscript-semantics.md). Composed sections come from `manuscript/sections/imrad/` via `scripts/compose_manuscript.py`; edit fragments and [`manuscript/sheaf/manifest.yaml`](sheaf/manifest.yaml), not numbered `02_*.md` … `16_*.md` outputs.
+Project overlay on [`docs/guides/manuscript-semantics.md`](../../../../template/docs/guides/manuscript-semantics.md). Composed sections come from `manuscript/sections/imrad/` via `scripts/compose_manuscript.py`; edit fragments and [`manuscript/sheaf/manifest.yaml`](sheaf/manifest.yaml), not numbered `02_*.md` … `16_*.md` outputs.
 
 ## Equation labels
 
 | Label | Summary | Fragment |
 | --- | --- | --- |
 | `{#eq:entangled_joint}` | $q_\lambda(\pi) \propto E(\pi)\exp(\lambda J(\pi))$ | `sections/imrad/methods_analytical/formalism.md` |
-| `{#eq:coverage_cell}` | $B(s,t) \in \{\mathrm{P}, \mathrm{—}, \mathrm{M}\}$ | `sections/imrad/methods_sheaf/formalism.md` |
+| `{#eq:coverage_cell}` | $B(s,t) \in \{\mathrm{P}, \text{--}, \mathrm{M}\}$ | `sections/imrad/methods_sheaf/formalism.md` |
 | `{#eq:appendix_track_count}` | $|\mathcal{T}_{\mathrm{Full}}|$ | `sections/imrad/appendix_full_sheaf/formalism.md` |
 
 Reference with `[@eq:label]` in prose. Do not duplicate display equations across sections; cite the defining equation instead (see `results_mi_sweep/formalism.md`).
@@ -25,13 +25,13 @@ Composed H1 headings use `{#sec:<manifest_id>}`. IMRAD group dividers (`Introduc
 | `05_methods_analytical.md` | Bernoulli–Ising analytical model | `{#sec:methods_analytical}` |
 | `06_methods_pymdp.md` | pymdp simulation harness | `{#sec:methods_pymdp}` |
 | `07_methods_lean.md` | Lean formalization boundary | `{#sec:methods_lean}` |
-| `08_methods_sheaf.md` | Sheaf composition | `{#sec:methods_sheaf}` |
+| `19_supplement_reproducibility.md` | Supplement: reproducibility methodology | `{#sec:methods_sheaf}` |
 | `10_results_mi_sweep.md` | Mutual-information parameter sweep | `{#sec:results_mi_sweep}` |
 | `11_results_free_energy.md` | Free-energy decomposition | `{#sec:results_free_energy}` |
 | `12_results_si_tmaze.md` | T-maze sophisticated inference | `{#sec:results_si_tmaze}` |
-| `13_results_invariants.md` | Validation invariants | `{#sec:results_invariants}` |
+| `20_supplement_validation_statistics.md` | Supplement: validation invariants | `{#sec:results_invariants}` |
 | `15_discussion_outlook.md` | Limitations and outlook | `{#sec:discussion_outlook}` |
-| `16_appendix_full_sheaf.md` | Appendix: full track coverage | `{#sec:appendix_full_sheaf}` |
+| `18_supplement_full_coverage.md` | Appendix: full track coverage | `{#sec:appendix_full_sheaf}` |
 | `17_conclusion.md` | Conclusion | `{#sec:conclusion}` |
 
 ## Figures
@@ -67,7 +67,7 @@ Section figures are registry-backed via `figures.yaml` and `section_figures` ren
 | `{#fig:scholarship_source_map}` | `scholarship_source_map.png` | `figures.figure_scholarship_source_map` |
 | `front_matter.graphical_abstract` | `graphical_abstract.png` | `figures.figure_graphical_abstract` |
 
-Section bindings live in `figures.yaml` → `section_figures` (e.g. `results_invariants` → Figure 5 `invariant_dashboard`). Set `labeled: false` on repeat embeddings of the same PNG so pandoc-crossref sees a single canonical `{#fig:…}` per figure (e.g. `ising_mi_curve` in Results and Appendix).
+Section bindings live in `figures.yaml` → `section_figures` (e.g. `results_invariants` → Figure 5 `invariant_dashboard`). Set `labeled: false` only when a repeated embedding is necessary; prefer one canonical occurrence for result figures such as `ising_mi_curve`.
 
 ## {{TOKEN}} substitution
 

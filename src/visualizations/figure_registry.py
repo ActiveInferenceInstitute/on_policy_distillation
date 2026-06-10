@@ -124,9 +124,11 @@ def render_figure_markdown(
         # for accessibility without producing a second caption.
         fig_alt = alt.replace('"', "'")
         return f'![{caption}]({rel}){{#fig:{figure_id} width={width_pct}% fig-alt="{fig_alt}"}}'
-    # Reused figure: empty alt → unnumbered graphic (no second "Figure N"); cite the
-    # canonical labeled occurrence so the reader is pointed at the authoritative number.
-    return f"![]({rel}){{width={width_pct}%}}\n\n*Reproduced from [@fig:{figure_id}]. {caption}*"
+    # Reused figure: do not re-render the image or repeat the full caption — a
+    # duplicate page-scale graphic with a re-pasted caption reads as compose
+    # carelessness. Point at the canonical numbered occurrence instead.
+    first_sentence = caption.split(". ")[0].rstrip(".") + "."
+    return f"*See [@fig:{figure_id}] ({first_sentence})*"
 
 
 def render_section_figures(

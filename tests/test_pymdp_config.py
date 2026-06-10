@@ -17,14 +17,14 @@ def test_load_default_pymdp_config(project_root: Path) -> None:
     cfg = load_pymdp_config(project_root)
     assert cfg.profile == "full_tmaze_sophisticated_inference"
     assert cfg.planner == "sophisticated_inference"
-    assert cfg.planning_horizon == 4
-    assert cfg.timesteps == 5
+    assert cfg.planning_horizon == 5
+    assert cfg.timesteps == 6
     assert cfg.policy_len == 1
     assert cfg.environment.reward_condition == 0
     assert cfg.environment.cue_validity == pytest.approx(0.95)
     assert cfg.environment.reward_probability == pytest.approx(1.0)
     assert cfg.environment.dependent_outcomes is True
-    assert cfg.si_search.horizon == 4
+    assert cfg.si_search.horizon == 5
     assert cfg.si_search.max_nodes == 5000
     assert cfg.si_search.max_branching == 45
     assert cfg.si_search.observation_prune_threshold == pytest.approx(1e-4)

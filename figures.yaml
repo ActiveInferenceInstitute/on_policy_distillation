@@ -3,7 +3,7 @@
 
 dpi: 160
 transparent: false
-font_scale: 1.25
+font_scale: 1.5
 grid: true
 
 palette:
@@ -25,40 +25,47 @@ figures:
     filename: ising_mi_curve.png
     alt: >-
       Two-panel plot of mutual information versus coupling strength lambda for the
-      symmetric Bernoulli-Ising toy. Left panel shows the closed-form curve (solid dark
-      line) and an independent exact recomputation via total correlation (dashed blue
-      line) with lambda on the x-axis and mutual information in nats on the y-axis. Right
-      panel shows the recompute-minus-closed-form residual versus lambda with a zero
-      reference line; the two deterministic estimators agree to machine precision.
+      symmetric Bernoulli-Ising toy. Left panel shows the closed-form mutual-information
+      curve with lambda on the x-axis and mutual information in nats on the y-axis. Right
+      panel shows the independent exact recomputation only as recompute-minus-closed-form
+      residuals versus lambda with a zero reference line; the two deterministic estimators
+      agree to machine precision.
     caption: >-
       Mutual information between the two coupled spins as a function of coupling strength.
-      Left: closed-form $I(\lambda)$ (solid) and an independent exact recomputation via total
-      correlation (dashed) for the symmetric Bernoulli-Ising toy across
-      {{param_sweep_grid_points}} grid points up to $\lambda_{\max}$ = {{lambda_max}}, rising
-      monotonically toward a grid maximum of {{ising_mi_saturation}} nats as the spins become
-      maximally correlated. This is the minimal model of the teacher--student coupling that
-      on-policy distillation must transmit: the analytic information content the student
-      policy is asked to absorb from the teacher. Right: because both estimators are
-      deterministic (no sampling), the recompute-minus-closed-form residual (max
-      {{sweep_max_residual}} nats) is a cross-implementation agreement check confirming the
-      analytic information measure is reproducible to machine precision, not a sampling error.
+      Left: closed-form $I(\lambda)$ for the symmetric Bernoulli-Ising toy across
+      {{param_sweep_grid_points}} grid points up to $\lambda_{\max}$ = {{lambda_max}},
+      rising monotonically toward a grid maximum of {{ising_mi_saturation}} nats as the
+      spins become maximally correlated. This is the minimal model of the teacher--student
+      coupling that on-policy distillation must transmit: the analytic information content
+      the student policy is asked to absorb from the teacher. Right: the independent exact
+      recomputation via total correlation is shown as recompute-minus-closed-form residuals
+      rather than as a second overplotted curve; because both estimators are deterministic
+      (no sampling), the maximum residual of {{sweep_max_residual:.1e}} nats (machine
+      precision) is a cross-implementation agreement check confirming the analytic
+      information measure is reproducible to machine precision.
     width: 0.9
   free_energy_curve:
     filename: free_energy_curve.png
     alt: >-
-      Line plot of free energy in nats versus coupling strength lambda for the
-      entangled posterior relative to a mean-field prior. A single dark curve traces
-      free energy across the sweep; the minimum is marked with a teal scatter point
-      and labeled with the argmin lambda value.
+      Two-panel free-energy gap figure. The left panel plots the exact entangled target
+      free energy as a dashed zero line, the independent mean-field student gap as a rising
+      solid curve, and mutual information as a dotted comparison curve. The right panel
+      shows the lambda-max decomposition where the coupling-prior term cancels total
+      correlation for the exact target while the mean-field gap remains positive.
     caption: >-
-      Variational free energy of the entangled (correlated) posterior measured against a
-      factorized mean-field prior across the coupling sweep ({{param_sweep_grid_points}}
-      grid points), with the argmin marked. The curve quantifies the cost a mean-field
-      student pays for ignoring teacher correlations: free energy grows as the true
-      posterior departs from the factorized approximation, so its minimum locates the
-      coupling regime where on-policy distillation onto an independent student is least
-      lossy. This frames distillation as variational inference -- matching the student to
-      the teacher is the same objective as minimizing free energy in active inference.
+      Free-energy gap created by privileged teacher--student coupling across
+      {{param_sweep_grid_points}} sweep points. The exact entangled target
+      $p_\lambda$ gives $F(q_\lambda;p_\lambda)=0$ to numerical tolerance
+      (max absolute value {{free_energy_exact_target_max_abs:.1e}} nats) because
+      the posterior is evaluated against its own normalized target. The independent
+      mean-field baseline $q_0$ instead pays
+      $D_{\mathrm{KL}}(q_\lambda\|q_0)$, rising to
+      {{free_energy_mean_field_gap_max:.3f}} nats; in this symmetric toy that gap
+      equals mutual information $I(\lambda)$ up to
+      {{free_energy_gap_equals_mi_max_abs:.1e}} nats. The right panel makes the
+      cancellation explicit: the exact-target coupling-prior term and total-correlation
+      gain cancel, while the mean-field student keeps the information gap that on-policy
+      distillation is meant to close.
     width: 0.9
   distillation_divergence_geometry:
     filename: distillation_divergence_geometry.png
@@ -70,17 +77,19 @@ figures:
       artifact.
     caption: >-
       Divergence geometry for the teacher/student categorical toy. Left: teacher and
-      student policy mass over four action modes, illustrating the mode-covering versus
-      mode-seeking distinction. Right: the same teacher--student pair scored under five
-      divergences -- reverse KL {{divergence_reverse_kl:.3f}} nats, forward KL
-      {{divergence_forward_kl:.3f}} nats, Jensen-Shannon {{divergence_jensen_shannon:.3f}}
-      nats, alpha-divergence {{divergence_alpha_0_5:.3f}} nats, and clipped reverse KL
+      student policy mass over four action modes for the fixed illustrative pair. Middle:
+      the same teacher--student pair scored under five divergences -- reverse KL
+      {{divergence_reverse_kl:.3f}} nats, forward KL {{divergence_forward_kl:.3f}} nats,
+      Jensen-Shannon {{divergence_jensen_shannon:.3f}} nats, alpha-divergence
+      {{divergence_alpha_0_5:.3f}} nats, and clipped reverse KL
       {{divergence_clipped_reverse_kl:.3f}} nats (all from
-      `output/data/firstprinciples/divergence_demo.json`). The spread across measures
-      shows that the choice of distillation objective is not neutral: forward KL forces the
-      student to cover every teacher mode whereas reverse KL lets it concentrate on one,
-      which is exactly the free-energy/expected-free-energy trade-off active inference makes
-      explicit when selecting which teacher behavior an on-policy student should reproduce.
+      `output/data/firstprinciples/divergence_demo.json`). Right: the entropy panel shows
+      the student entropy exceeds the teacher entropy, so this fixed illustrative pair is
+      mode-covering (the artifact's mode-seeking flag is false), illustrating objective
+      geometry rather than asserting a universal KL outcome. The spread across measures
+      shows that the choice of distillation objective is not neutral: forward KL, reverse
+      KL, alpha divergence, and clipping weight support mismatch differently, and the
+      realized behavior remains support- and optimization-dependent.
     width: 0.92
   exposure_bias_recovery:
     filename: exposure_bias_recovery.png
@@ -112,12 +121,16 @@ figures:
     caption: >-
       Energy-based decompositions for the categorical generative model, showing the two
       quantities active inference uses to score perception and action. Left: variational
-      free energy split into complexity {{energy_complexity:.3f}} minus accuracy
-      {{energy_accuracy:.3f}} nats (bounding log-evidence {{energy_log_evidence:.3f}}) --
-      the perceptual cost of fitting the student's beliefs to the teacher signal. Right:
+      free energy split into complexity {{energy_complexity:.3f}} minus the accuracy
+      term {{energy_accuracy:.3f}} nats (bounding log-evidence
+      {{energy_log_evidence:.3f}}). Complexity is zero here because the evaluated
+      student belief equals the prior, so $D_{\mathrm{KL}}(q\|p(s))=0$; the VFE is
+      therefore the negative of the negative log-likelihood accuracy term, not an
+      unexplained zero. Right:
       expected free energy split into risk {{efe_risk:.3f}} plus ambiguity
-      {{efe_ambiguity:.3f}} nats, equivalently minus epistemic {{efe_epistemic:.3f}} minus
-      pragmatic {{efe_pragmatic:.3f}} (from
+      {{efe_ambiguity:.3f}} nats, equivalently subtracting epistemic {{efe_epistemic:.3f}}
+      and pragmatic {{efe_pragmatic:.3f}} value under the sign convention
+      $G = risk + ambiguity - epistemic - pragmatic$ (from
       `output/data/firstprinciples/energy_demo.json`). Reading distillation through this
       lens, the complexity/accuracy and risk/ambiguity terms make explicit that an
       on-policy student is simultaneously matching the teacher's outputs (accuracy/pragmatic)
@@ -135,7 +148,7 @@ figures:
       automatic differentiation on the reverse-KL distillation loss) drives a student
       policy to the active-inference exact posterior $p(s\mid o)$: the per-step reverse KL
       decays to zero (left) and the distilled student matches the posterior to within
-      {{parallel_max_abs_difference:.4f}} (right), its variational free energy reaching
+      {{parallel_max_abs_difference:.1e}} (right), its variational free energy reaching
       {{parallel_student_free_energy:.3f}} nats -- the evidence bound
       $-\ln p(o) = {{parallel_neg_log_evidence:.3f}}$. The reverse-KL distillation gradient
       is the variational free-energy gradient, so the correspondence is executed rather than
@@ -144,17 +157,17 @@ figures:
   diversity_tradeoff:
     filename: diversity_tradeoff.png
     alt: >-
-      Line plot of sampling Pass@k versus student temperature on a logarithmic x-axis, with a
-      dashed horizontal line for the temperature-invariant greedy Pass@1. Pass@k rises with
+      Line plot of sampling Pass-at-k versus student temperature on a logarithmic x-axis, with a
+      dashed horizontal line for the temperature-invariant greedy Pass-at-1. Pass-at-k rises with
       temperature and collapses toward the greedy ceiling as the student sharpens.
     caption: >-
       The diversity-collapse tradeoff of mode-seeking distillation, evaluated over a problem
-      ensemble. Greedy Pass@1 (dashed, {{diversity_greedy_pass_at_1:.3f}}) is
-      temperature-invariant; sampling Pass@k falls from {{diversity_flattest_pass_at_k:.3f}}
+      ensemble. Greedy Pass-at-1 (dashed, {{diversity_greedy_pass_at_1:.3f}}) is
+      temperature-invariant; sampling Pass-at-k falls from {{diversity_flattest_pass_at_k:.3f}}
       at the flattest temperature to {{diversity_sharpest_pass_at_k:.3f}} at the sharpest,
-      because Pass@k is concave in the correct-answer mass. Aggressive reverse-KL sharpening
-      therefore raises single-answer commitment while collapsing Pass@k -- the
-      Pass@1-versus-Pass@k tension active inference frames as precision (inverse temperature).
+      because $Pass@k = 1-(1-p)^k$ for independent samples. Aggressive sharpening can
+      raise single-answer commitment while lowering multi-sample coverage -- the
+      Pass-at-1-versus-Pass-at-k tension active inference frames as precision (inverse temperature).
       Source: `output/data/firstprinciples/diversity_demo.json`.
     width: 0.9
   si_tmaze_actions:
@@ -162,18 +175,18 @@ figures:
     alt: >-
       Two-panel plot for the canonical pymdp full TMaze sophisticated-inference rollout.
       Left panel shows selected action index by timestep; right panel shows marginal
-      first-action probabilities from q-pi for all five location actions. The cue action
-      is the initial argmax under SI search horizon {{si_tmaze_planning_horizon}}.
+      first-action probabilities from q-pi for all five location actions. The initial
+      selected action is {{si_tmaze_initial_selected_action_name}} under SI search horizon
+      {{si_tmaze_planning_horizon}}.
     caption: >-
       Canonical sophisticated-inference action selection for the full pymdp TMaze rollout
       (agent policy length {{si_tmaze_policy_len}}, SI search horizon
       {{si_tmaze_planning_horizon}}). Left: selected action index per timestep. Right:
       first-action marginals from the policy posterior over all five location actions. The
-      initial argmax is the cue action -- the agent first acts to gather information about
-      the reward location before committing to a goal arm. This is the teacher behavior an
-      on-policy student must learn to reproduce: distilling a policy that values
-      information-seeking, the epistemic drive that expected-free-energy minimization
-      supplies and that pure reward-matching distillation would miss.
+      initial selected action is {{si_tmaze_initial_selected_action_name}}, with cue-directed
+      marginal probability {{si_tmaze_first_action_cue_probability:.3f}}. The policy-entropy
+      drop after the cue is {{si_tmaze_policy_entropy_drop_after_cue_formatted}} nats,
+      quantifying the information-seeking step an on-policy student must learn to reproduce.
     width: 0.9
   si_belief_entropy_curve:
     filename: si_belief_entropy_curve.png
@@ -184,13 +197,11 @@ figures:
       {{pymdp_planner}} planner.
     caption: >-
       Belief entropy in nats over the course of the pymdp T-maze rollout (mean
-      {{si_tmaze_mean_belief_entropy_formatted}} nats), tracing how the agent's uncertainty
-      about the hidden reward location collapses once the cue is observed. The downward
-      trend is the epistemic payoff of the cue action made quantitative: the teacher resolves
-      uncertainty before exploiting it. An on-policy student that only mimicked terminal
-      actions would not inherit this uncertainty-reduction trajectory, underscoring why
-      distilling active-inference policies requires matching the belief-update dynamics, not
-      just the outputs.
+      {{si_tmaze_mean_belief_entropy_formatted}} nats; mean policy entropy
+      {{si_tmaze_policy_entropy_mean_formatted}} nats), tracing how the agent's uncertainty
+      changes once the cue is observed at timestep {{si_tmaze_cue_observed_step}} and before
+      the reward/outcome appears at timestep {{si_tmaze_reward_observed_step}}. The entropy
+      trace is the epistemic payoff of the cue action made quantitative.
     width: 0.9
   si_obs_action_trace:
     filename: si_obs_action_trace.png
@@ -203,11 +214,12 @@ figures:
       ({{si_tmaze_observation_modality_count}} observation modalities; action diversity
       {{si_action_diversity}}). Upper: location, outcome, and cue observation indices over
       time. Lower: the selected action index and names. Together the panels show the closed
-      perception--action loop that produces the teacher's behavior -- cue-driven observations
-      gate which actions are chosen -- and constitute the demonstration record an on-policy
-      student is distilled against. Capturing this joint observation--action structure, rather
-      than a marginal action policy, is what makes the active-inference teacher faithfully
-      reproducible.
+      perception--action loop that produces the teacher's behavior: cue observation at
+      timestep {{si_tmaze_cue_observed_step}}, reward/outcome observation at timestep
+      {{si_tmaze_reward_observed_step}}, and cue-before-reward ordering
+      {{si_tmaze_cue_before_reward}}. Capturing this joint observation--action structure,
+      rather than a marginal action policy, is what makes the active-inference teacher
+      faithfully reproducible.
     width: 0.9
   sheaf_coverage_heatmap:
     filename: sheaf_coverage_heatmap.png
@@ -221,12 +233,13 @@ figures:
       Sheaf track coverage matrix mapping {{imrad_manifest_rows}} IMRAD manuscript rows
       against {{sheaf_track_count}} composable fragment-track columns: black = present (P),
       white = absent (—), gray = bound-but-missing (M), with counts {{coverage_present}}
-      present / {{coverage_bound}} bound / {{coverage_missing}} missing. The matrix is the
-      gluing record showing which evidence fragment is locally attached to each manuscript
-      section. Reading it as a sheaf condition, a consistent (fully present, zero-missing)
-      column set is what licenses gluing the local toy results, Lean witnesses, and pymdp
-      rollouts into one globally coherent active-inference argument about on-policy
-      distillation.
+      present / {{coverage_bound}} bound / {{coverage_missing}} missing. The figure shows
+      the science-bearing track subset; build-machinery columns are omitted and the full
+      matrix appears in the supplement. The matrix is the gluing record showing which
+      evidence fragment is locally attached to each manuscript section. Reading it as a
+      sheaf condition, a consistent (fully present, zero-missing) column set is what
+      licenses gluing the local toy results, Lean witnesses, and pymdp rollouts into one
+      globally coherent active-inference argument about on-policy distillation.
     width: 0.95
   sheaf_layers_overview:
     filename: sheaf_layers_overview.png
@@ -301,14 +314,15 @@ figures:
       teacher and on-policy student policies. The right panel is a heatmap of
       teacher probability minus student probability by action and classroom step.
     caption: >-
-      Two-agent classroom distillation signal over {{classroom_step_count}} steps between a
-      privileged teacher (cue validity {{classroom_teacher_cue_validity}}) and an on-policy
-      student (cue validity {{classroom_student_cue_validity}}). Left: per-step reverse KL,
-      forward KL, and Jensen-Shannon divergence between the teacher and student policies
-      (mean reverse KL {{classroom_mean_reverse_kl_formatted}} nats, mean Jensen-Shannon
+      Two-agent classroom distillation signal over {{classroom_step_count}} decision points
+      (3 transitions) between a privileged teacher (cue validity
+      {{classroom_teacher_cue_validity}}) and an on-policy student (cue validity
+      {{classroom_student_cue_validity}}). Left: per-step reverse KL, forward KL, and
+      Jensen-Shannon divergence between the teacher and student policies (mean reverse KL
+      {{classroom_mean_reverse_kl_formatted}} nats, mean Jensen-Shannon
       {{classroom_mean_jensen_shannon:.3f}} nats, {{classroom_agreement_count}} agreement
-      rows). Right: a heatmap of teacher-minus-student action probability by action and step,
-      localizing where the student diverges. The figure operationalizes on-policy
+      rows). Right: a heatmap of teacher-minus-student action probability by action and
+      step, localizing where the student diverges. The figure operationalizes on-policy
       distillation as a per-step divergence signal evaluated along the student's own
       trajectory, the same active-inference principle of scoring beliefs on visited states
       rather than the teacher's idealized path.
@@ -316,17 +330,20 @@ figures:
   multi_track_architecture:
     filename: multi_track_architecture.png
     alt: >-
-      Process diagram linking three scientific tracks to {{pipeline_track_count}} pipeline gates
-      and {{sheaf_track_count}} sheaf fragment types across {{imrad_manifest_rows}} manifest rows.
+      Evidence architecture diagram with three horizontal lanes for the analytical
+      Bernoulli-Ising model, the on-policy pymdp T-maze, and the formal/sheaf publication
+      spine. Each lane maps source artifacts to auto-injected manuscript variables,
+      validation gates, and reader-facing figures or supplement sections.
     caption: >-
-      Multi-track architecture diagram linking the three scientific tracks -- analytical
-      derivations, pymdp simulation, and sheaf composition -- to {{pipeline_track_count}}
-      pipeline gates and {{sheaf_track_count}} composable fragment types across
-      {{imrad_manifest_rows}} manifest rows. It shows how independent lines of evidence flow
-      through validation gates into a single sheaf-composed manuscript. This is the structural
-      claim of the exemplar: the active-inference reading of on-policy distillation is
-      supported simultaneously by closed-form analysis, executable rollouts, and
-      machine-checked Lean witnesses, glued rather than asserted.
+      Evidence architecture for the manuscript. Each scientific lane exposes the complete
+      chain from source artifacts to injected variables, validation gates, and reader-facing
+      outputs: the analytical lane carries the mutual-information and free-energy gap
+      values; the pymdp lane carries cue timing and policy-entropy diagnostics; the formal
+      lane carries Lean theorem extraction, sheaf-law verification, figure provenance, and
+      supplemental material. The bottom spine shows the deterministic publication sequence
+      from analysis through release, with {{token_provenance_count}} injected manuscript
+      tokens, {{validation_gate_index_count}} validation gates, and
+      {{hardcoded_variable_issue_count}} hard-coded variable issues in the generated audit.
     width: 0.95
   lean_boundary_status:
     filename: lean_boundary_status.png
@@ -381,13 +398,14 @@ figures:
       {{proof_dependency_all_resolved}}.
     caption: >-
       Theorem traceability graph generated from {{theorem_traceability_row_count}} linked
-      theorem rows and {{proof_dependency_edge_count}} proof-dependency edges, with each row
-      connecting a Lean theorem to its proof-dependency edge count and finite-model witness
-      count (all theorem rows have resolved dependency edges:
-      {{proof_dependency_all_resolved}}). The graph exposes the deductive backbone of the
-      formal track -- which lemmas each distillation/active-inference theorem rests on and
-      which finite models witness it. Fully resolved dependencies certify that the
-      machine-checked claims form a closed, gap-free chain rather than isolated assertions.
+      theorem rows and {{proof_dependency_edge_count}} proof-dependency edges; all
+      {{theorem_traceability_row_count}} theorem rows are drawn, each carrying the same
+      finite-witness count (collapsed into a single annotation), and all theorem rows have
+      resolved dependency edges: {{proof_dependency_all_resolved}}. The graph exposes the
+      deductive backbone of the formal track -- which lemmas each
+      distillation/active-inference theorem rests on and which finite models witness it.
+      Fully resolved dependencies certify that the machine-checked claims form a closed,
+      gap-free chain rather than isolated assertions.
     width: 0.95
   causal_ablation_heatmap:
     filename: causal_ablation_heatmap.png
@@ -398,48 +416,53 @@ figures:
     caption: >-
       Causal-ablation heatmap over {{ablation_sensitivity_row_count}} source-backed rows
       joined to the sensitivity and uncertainty artifacts (all effects source-backed:
-      {{ablation_sensitivity_source_backed}}). Rows are toy graph topologies, columns are
-      perturbation types, and each cell reports the maximum absolute deterministic effect of
-      that intervention. The map shows which structural assumptions of the generative model
-      the distillation outcome is sensitive to and which it is robust against, grounding the
-      active-inference claims in measured causal dependence rather than correlation and
-      flagging where on-policy behavior would shift under model misspecification.
+      {{ablation_sensitivity_source_backed}}). This heatmap is an aggregated max-effect
+      view of the {{ablation_sensitivity_row_count}} source rows: rows are toy graph
+      topologies, columns are perturbation types, and each cell reports the maximum
+      absolute deterministic effect of that intervention. The map shows which structural
+      assumptions of the generative model the distillation outcome is sensitive to and
+      which it is robust against, grounding the active-inference claims in measured causal
+      dependence rather than correlation and flagging where on-policy behavior would shift
+      under model misspecification.
     width: 0.92
   scholarship_source_map:
     filename: scholarship_source_map.png
     alt: >-
-      Four-column source map generated from the scholarship source matrix. Each row
-      links a bibliography key to a source family, method role, and generated evidence
-      artifact; green borders mark rows with bibliography entries, manuscript citations,
-      registered tracks, bound manuscript sections, and existing artifacts.
+      Condensed source map generated from the scholarship source matrix. The left panel
+      shows the highest-count source families plus an aggregated long-tail row, the middle
+      panel shows where those families bind into generated artifact buckets, and the right
+      panel summarizes source kinds.
     caption: >-
-      Scholarship source map linking {{scholarship_source_count}} bibliography source rows
-      across {{scholarship_method_role_count}} method roles and
-      {{scholarship_source_family_count}} source families to their generated evidence
-      artifacts (connected status: {{scholarship_sources_connected}}); green borders mark rows
-      with a bibliography entry, manuscript citation, registered track, bound section, and
-      existing artifact. The map ties each external reference -- on-policy distillation and
-      active-inference literature alike -- to a concrete place where the exemplar uses or
-      tests it. A fully connected map evidences that the scholarship is load-bearing rather
-      than decorative, with every cited claim wired to executable or formal support.
+      Condensed scholarship source map for {{scholarship_source_count}} bibliography source
+      rows across {{scholarship_method_role_count}} method roles and
+      {{scholarship_source_family_count}} source families (connected status:
+      {{scholarship_sources_connected}}). The rendered figure is intentionally print-condensed:
+      it shows the largest source
+      families plus an aggregated long-tail row, where those families bind into generated
+      artifact buckets, and the distribution of source kinds; the full row-level contract
+      remains in `output/data/scholarship_source_matrix.json`. The map ties each external
+      reference -- on-policy distillation and active-inference literature alike -- to a
+      concrete place where the exemplar uses or tests it, evidencing load-bearing
+      scholarship rather than decorative citation.
     width: 0.95
   graphical_abstract:
     filename: graphical_abstract.png
     alt: >-
-      Wide cover-page graphical abstract for the Active Inference multi-track exemplar.
-      Four connected panels summarize source-backed theory and scholarship, executable
-      toy evidence, sheaf-indexed manuscript composition, and validation/publication
-      gates. A lower strip shows the deterministic publication spine from analysis
-      through copy-out.
+      Near-square cover-page graphical abstract for the Active Inference multi-track
+      exemplar. A central correspondence loop links the privileged teacher generative
+      model, student posterior, student-generated rollouts, and gate-checked publication
+      object. Four large evidence quadrants report the analytical oracle, on-policy rollout
+      diagnostics, variational/expected-free-energy accounting, and Lean/sheaf validation
+      discipline.
     caption: >-
-      Graphical abstract for the exemplar, with four connected panels summarizing
-      source-backed active-inference scholarship, executable toy evidence, sheaf-composed
-      manuscript structure, and deterministic validation gates, above a lower strip showing
-      the publication spine from analysis through copy-out. Read left to right, it states the
-      thesis end to end: on-policy distillation is cast as variational free-energy
-      minimization under active inference, demonstrated on minimal toys and pymdp rollouts,
-      machine-checked in Lean, and glued into one reproducible manuscript whose every claim
-      passes an automated gate.
+      Near-square graphical abstract for the toy/artifact exemplar. The central evidence
+      wheel reads the active-inference / on-policy-distillation correspondence as a
+      privileged teacher generative model, a student posterior, student-generated
+      observations, and a validated publication object. The four surrounding quadrants pull
+      live quantities from the analytical oracle, pymdp/classroom rollout artifacts, the
+      first-principles energy decomposition, and Lean/sheaf validation gates, so the cover
+      image is generated from repository artifacts rather than drawn as narrative
+      decoration.
     width: 0.96
 
 section_figures:
@@ -449,7 +472,6 @@ section_figures:
     - id: multi_track_architecture
     - id: exposure_bias_recovery
   methods_analytical:
-    - id: ising_mi_curve
     - id: distillation_divergence_geometry
     - id: gnn_ontology_concordance
   methods_pymdp:
@@ -460,7 +482,6 @@ section_figures:
     - id: lean_boundary_status
   results_mi_sweep:
     - id: ising_mi_curve
-      labeled: false
   results_free_energy:
     - id: free_energy_curve
     - id: energy_decomposition
@@ -479,15 +500,5 @@ section_figures:
     - id: semantic_gluing_graph
     - id: scholarship_source_map
   appendix_full_sheaf:
-    - id: ising_mi_curve
-      labeled: false
-    - id: si_tmaze_actions
-      labeled: false
-    - id: si_tmaze_model_matrices
-      labeled: false
     - id: theorem_traceability_graph
     - id: causal_ablation_heatmap
-    - id: scholarship_source_map
-      labeled: false
-    - id: sheaf_coverage_heatmap
-      labeled: false

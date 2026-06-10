@@ -377,7 +377,7 @@ def build_interop_roundtrip_report(project_root: Path) -> dict[str, Any]:
     }
 
 
-_THEOREM_RE = re.compile(r"^theorem\s+([A-Za-z0-9_']+)\s*:(.*?)\s*:=\s*by", flags=re.MULTILINE | re.DOTALL)
+_THEOREM_RE = re.compile(r"^theorem\s+([A-Za-z0-9_']+)\s+(.*?)\s*:=\s*by", flags=re.MULTILINE | re.DOTALL)
 _TACTIC_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_']*")
 
 
@@ -393,8 +393,34 @@ def _leading_tactic(proof_text: str) -> str:
     return ""
 
 
+def _normalize_lean_statement(raw_statement: str) -> str:
+    """Normalize theorem binders and conclusions captured before ``:= by``."""
+    statement = " ".join(raw_statement.split())
+    return statement[1:].strip() if statement.startswith(":") else statement
+
+
+def _theorem_names(payload: dict[str, Any], *, row_key: str) -> set[str]:
+    return {str(row.get(row_key)) for row in payload.get("rows") or [] if row.get(row_key)}
+
+
+def proof_inventory_mismatch(proof: dict[str, Any], lean_theorems: dict[str, Any]) -> list[str]:
+    """Theorem names present in Lean but absent from proof extraction, or vice versa."""
+    inventory_names = _theorem_names(lean_theorems, row_key="name")
+    extracted_names = _theorem_names(proof, row_key="theorem")
+    missing = sorted(inventory_names - extracted_names)
+    extra = sorted(extracted_names - inventory_names)
+    issues: list[str] = []
+    if missing:
+        issues.append(f"missing Lean theorem rows in proof_extraction_index.json: {', '.join(missing)}")
+    if extra:
+        issues.append(f"extra proof_extraction_index.json rows not in Lean inventory: {', '.join(extra)}")
+    return issues
+
+
 def build_proof_extraction_index(project_root: Path) -> dict[str, Any]:
     root = project_root.resolve()
+    lean_theorems = build_lean_theorem_inventory(root)
+    inventory_names = _theorem_names(lean_theorems, row_key="name")
     rows = []
     any_forbidden = False
     for path in _lean_files(root):
@@ -405,7 +431,7 @@ def build_proof_extraction_index(project_root: Path) -> dict[str, Any]:
         matches = list(_THEOREM_RE.finditer(text))
         for idx, match in enumerate(matches):
             name = match.group(1)
-            statement = " ".join(match.group(2).split())
+            statement = _normalize_lean_statement(match.group(2))
             end = matches[idx + 1].start() if idx + 1 < len(matches) else len(text)
             tactic = _leading_tactic(text[match.end() : end])
             rows.append(
@@ -422,10 +448,17 @@ def build_proof_extraction_index(project_root: Path) -> dict[str, Any]:
                 }
             )
     rows.sort(key=lambda row: (row["source"], row["theorem"]))
+    extracted_names = {str(row["theorem"]) for row in rows}
+    missing_inventory = sorted(inventory_names - extracted_names)
+    extra_extracted = sorted(extracted_names - inventory_names)
     return {
         "schema": "template_active_inference.proof_extraction_index.v1",
         "rows": rows,
         "theorem_count": len(rows),
+        "inventory_theorem_count": len(inventory_names),
+        "all_inventory_theorems_extracted": not missing_inventory and not extra_extracted,
+        "missing_inventory_theorems": missing_inventory,
+        "extra_extracted_theorems": extra_extracted,
         "all_extracted": bool(rows) and all(row["extracted"] for row in rows),
         "all_constructive": bool(rows) and not any_forbidden,
     }
@@ -519,4 +552,11 @@ def validate_formal_interop_artifacts(project_root: Path) -> list[str]:
         issues.append("proof_extraction_index.json schema mismatch")
     if proof.get("all_extracted") is not True or proof.get("all_constructive") is not True:
         issues.append("proof_extraction_index.json has missing statements or nonconstructive tokens")
+    if (
+        proof.get("inventory_theorem_count") != lean_theorems.get("theorem_count")
+        or proof.get("theorem_count") != lean_theorems.get("theorem_count")
+        or proof.get("all_inventory_theorems_extracted") is not True
+    ):
+        issues.append("proof_extraction_index.json theorem inventory mismatch")
+    issues.extend(proof_inventory_mismatch(proof, lean_theorems))
     return issues

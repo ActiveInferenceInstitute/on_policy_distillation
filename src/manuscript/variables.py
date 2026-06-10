@@ -22,31 +22,64 @@ def _ising_mi_saturation_from_sweep(sweep_rows: list[dict[str, float]]) -> float
     return max(row["closed_form_mi"] for row in sweep_rows)
 
 
-def _free_energy_argmin_lambda(hp: Any) -> float:
-    """λ minimizing free energy of the entangled posterior vs the mean-field prior.
+def _free_energy_sweep_summary(hp: Any) -> dict[str, float]:
+    """Summary for the exact-target and mean-field free-energy comparison.
 
-    Deterministic and model-derived (no sampling): replicates the curve drawn by
-    ``figure_free_energy_curve`` so the prose argmin and the figure marker share one
-    source of truth. Returns the grid λ at the minimum, rounded to the grid precision.
+    The exact entangled target gives zero variational free energy because the
+    posterior equals its own normalized prior on the sweep. The reader-facing
+    curve therefore plots that zero reference beside the mean-field gap
+    ``D_KL(q_lambda || q_0)``, which equals total correlation / mutual
+    information in the symmetric Bernoulli-Ising toy.
     """
     import numpy as np
 
-    from analytical.bernoulli_toy import ising_coupling, ising_joint_posterior, symmetric_mean_field_prior
+    from analytical.bernoulli_toy import (
+        ising_coupling,
+        ising_joint_posterior,
+        ising_mutual_information,
+        symmetric_mean_field_prior,
+    )
     from analytical.decomposition import free_energy_against_entangled_prior
+    from analytical.free_energy import kl_divergence, total_correlation
     from analytical.hyperparameters import lambda_grid
+    from analytical.joint_dist import mean_field_to_joint
 
     lambdas = lambda_grid(hp)
     if not lambdas:
-        return 0.0
+        return {
+            "argmin_lambda": 0.0,
+            "mean_field_gap_max": 0.0,
+            "exact_target_max_abs": 0.0,
+            "gap_equals_mi_max_abs": 0.0,
+        }
     mf = symmetric_mean_field_prior()
+    mf_joint = mean_field_to_joint(mf)
     g0 = [np.zeros(2), np.zeros(2)]
     j = ising_coupling()
     kc = np.zeros((2, 2))
-    values = [
-        free_energy_against_entangled_prior(ising_joint_posterior(float(lam)), mf, g0, j, kc, gamma=1.0, lam=float(lam))
-        for lam in lambdas
-    ]
-    return round(float(lambdas[int(np.argmin(values))]), 4)
+    exact_values: list[float] = []
+    mean_field_gaps: list[float] = []
+    gap_mi_deltas: list[float] = []
+    for lam in lambdas:
+        q = ising_joint_posterior(float(lam))
+        exact = free_energy_against_entangled_prior(q, mf, g0, j, kc, gamma=1.0, lam=float(lam))
+        gap = kl_divergence(q, mf_joint)
+        mi = ising_mutual_information(float(lam))
+        exact_values.append(float(exact))
+        mean_field_gaps.append(float(gap))
+        gap_mi_deltas.append(abs(float(gap) - float(mi)))
+        gap_mi_deltas.append(abs(float(gap) - float(total_correlation(q))))
+    return {
+        "argmin_lambda": round(float(lambdas[int(np.argmin(mean_field_gaps))]), 4),
+        "mean_field_gap_max": float(max(mean_field_gaps)),
+        "exact_target_max_abs": float(max(abs(value) for value in exact_values)),
+        "gap_equals_mi_max_abs": float(max(gap_mi_deltas)),
+    }
+
+
+def _free_energy_argmin_lambda(hp: Any) -> float:
+    """λ minimizing the mean-field free-energy gap on the configured sweep."""
+    return _free_energy_sweep_summary(hp)["argmin_lambda"]
 
 
 def _policy_goal_counts_by_planner(policy_data: dict[str, Any]) -> dict[str, int]:
@@ -175,10 +208,21 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
     statistics_perm = statistics_data.get("paired_permutation") or {}
     empirical_data = _load_json(root / "output" / "data" / "firstprinciples" / "empirical_benchmark.json")
     empirical_gain = empirical_data.get("accuracy_gain") or {}
+    empirical_replication = empirical_data.get("thinking_machines_replication") or {}
     parallel_data = _load_json(root / "output" / "data" / "firstprinciples" / "parallel_demo.json")
     exposure_gap = exposure_bias_data.get("gap") or {}
     si_stats = stats_data.get("si_tmaze") or {}
     sweep_stats = stats_data.get("sweep") or {}
+    if require_analysis_outputs and not (
+        "max_residual" in sweep_stats and "rmse_mi" in sweep_stats
+    ):
+        # Fail closed: defaulting these to 0.0 would hydrate the *strongest
+        # possible* agreement claim ("residual 0") exactly when the statistics
+        # artifact is missing or corrupt.
+        raise KeyError(
+            "analysis_statistics.json lacks sweep.max_residual / sweep.rmse_mi; "
+            "rerun compute_statistics before hydrating the manuscript"
+        )
     policy_summary = policy_data.get("summary") or {}
     policy_goal_by_planner = _policy_goal_counts_by_planner(policy_data)
     q_pi_rows = si_data.get("q_pi_by_step") or []
@@ -193,6 +237,7 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
     matrix_shape_summary = f"A={matrix_a_shapes}; B={matrix_b_shapes}" if matrix_a_shapes and matrix_b_shapes else ""
 
     mean_entropy = float(si_data.get("mean_belief_entropy", si_stats.get("entropy_mean", 0.0)))
+    free_energy_summary = _free_energy_sweep_summary(hp)
     from manuscript.sheaf.counts import structural_counts
 
     counts = structural_counts(root)
@@ -208,7 +253,10 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
         "random_seed": pymdp_cfg.random_seed,
         "param_sweep_grid_points": len(sweep_rows) or hp.lambda_grid_points,
         "ising_mi_saturation": _ising_mi_saturation_from_sweep(sweep_rows),
-        "free_energy_argmin_lambda": _free_energy_argmin_lambda(hp),
+        "free_energy_argmin_lambda": free_energy_summary["argmin_lambda"],
+        "free_energy_mean_field_gap_max": free_energy_summary["mean_field_gap_max"],
+        "free_energy_exact_target_max_abs": free_energy_summary["exact_target_max_abs"],
+        "free_energy_gap_equals_mi_max_abs": free_energy_summary["gap_equals_mi_max_abs"],
         "bernoulli_ontology_term_count": len(BERNOULLI_EXPECTED_TERMS),
         "invariants_passed": inv_passed,
         "invariants_total": inv_total,
@@ -229,11 +277,24 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
         ),
         "si_tmaze_mean_belief_entropy": mean_entropy,
         "si_tmaze_mean_belief_entropy_formatted": f"{mean_entropy:.4f}",
+        "si_tmaze_policy_entropy_min": si_stats.get("policy_entropy_min", 0.0),
+        "si_tmaze_policy_entropy_max": si_stats.get("policy_entropy_max", 0.0),
+        "si_tmaze_policy_entropy_mean": si_stats.get("policy_entropy_mean", 0.0),
+        "si_tmaze_policy_entropy_drop_after_cue": si_stats.get("policy_entropy_drop_after_cue", 0.0),
+        "si_tmaze_policy_entropy_mean_formatted": f"{float(si_stats.get('policy_entropy_mean', 0.0)):.4f}",
+        "si_tmaze_policy_entropy_drop_after_cue_formatted": (
+            f"{float(si_stats.get('policy_entropy_drop_after_cue', 0.0)):.4f}"
+        ),
         "si_goal_reached": int(bool(si_data.get("goal_reached", si_stats.get("goal_reached", False)))),
         "si_action_diversity": si_data.get("action_diversity", si_stats.get("action_diversity", 0)),
         "si_tree_available": int(bool(si_data.get("tree_available", False))),
         "si_tree_known_max_node_warning_count": (si_data.get("expected_known_warnings") or {}).get("tree_max_nodes", 0),
         "si_tmaze_first_action_cue_probability": cue_probability,
+        "si_tmaze_initial_selected_action_name": si_stats.get("initial_selected_action_name", ""),
+        "si_tmaze_initial_cue_probability_from_stats": si_stats.get("initial_cue_probability", cue_probability),
+        "si_tmaze_cue_observed_step": si_stats.get("cue_observed_step", ""),
+        "si_tmaze_reward_observed_step": si_stats.get("reward_observed_step", ""),
+        "si_tmaze_cue_before_reward": si_stats.get("cue_before_reward", False),
         "si_tmaze_action_space_count": len((matrices_data.get("labels") or {}).get("actions") or {}),
         "si_tmaze_location_state_count": 5,
         "si_tmaze_reward_location_state_count": 2,
@@ -405,12 +466,26 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
         "statistics_advantage_point": float(statistics_ci.get("point", 0.0)),
         "statistics_cohens_d": float(statistics_data.get("cohens_d_student_minus_teacher", 0.0)),
         "statistics_permutation_p": float(statistics_perm.get("p_value", 1.0)),
+        "statistics_sample_size": int(statistics_data.get("sample_size", statistics_perm.get("n", 0)) or 0),
+        "statistics_permutation_count": int(statistics_perm.get("n_perm", 0) or 0),
+        "statistics_paired_test": statistics_data.get("paired_test", ""),
+        "statistics_pair_deltas": ", ".join(
+            f"{float(v):+.3f}" for v in (statistics_data.get("paired_difference") or [])
+        ),
+        "statistics_effect_size": statistics_data.get("effect_size", ""),
+        "statistics_claim_scope": statistics_data.get("claim_scope", ""),
         "empirical_opd_aime24": float(empirical_data.get("opd_aime24", 0.0)),
         "empirical_rl_aime24": float(empirical_data.get("rl_aime24", 0.0)),
         "empirical_opd_gpu_hours": float(empirical_data.get("opd_gpu_hours", 0.0) or 0.0),
         "empirical_rl_gpu_hours": float(empirical_data.get("rl_gpu_hours", 0.0) or 0.0),
         "empirical_compute_reduction": float(empirical_data.get("compute_reduction_factor", 0.0)),
         "empirical_aime24_gain_over_rl": float(empirical_gain.get("aime24_over_rl", 0.0)),
+        "empirical_direct_bibkey": empirical_data.get("direct_bibkey", empirical_data.get("bibkey", "")),
+        "empirical_relay_bibkey": empirical_data.get("relayed_by_bibkey", ""),
+        "empirical_tm_replication_aime24": float(empirical_replication.get("aime24_accuracy", 0.0)),
+        "empirical_tm_replication_steps": int(empirical_replication.get("training_steps", 0) or 0),
+        "empirical_tm_efficiency_min": float(empirical_replication.get("efficiency_range_min", 0.0)),
+        "empirical_tm_efficiency_max": float(empirical_replication.get("efficiency_range_max", 0.0)),
         "parallel_max_abs_difference": float(parallel_data.get("max_abs_difference", 0.0)),
         "parallel_student_free_energy": float(parallel_data.get("student_free_energy", 0.0)),
         "parallel_neg_log_evidence": float(parallel_data.get("neg_log_evidence", 0.0)),
@@ -428,6 +503,8 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
         "classroom_step_count": len(classroom_data.get("per_step") or []),
         "classroom_agreement_count": sum(1 for row in classroom_data.get("per_step") or [] if row.get("agreement")),
         "classroom_privileged_advantage": bool(classroom_data.get("privileged_advantage", False)),
+        "classroom_teacher_goal_reached": str(bool(classroom_data.get("teacher_goal_reached", False))).lower(),
+        "classroom_student_goal_reached": str(bool(classroom_data.get("student_goal_reached", False))).lower(),
         "proof_dependency_edge_count": proof_dependency_data.get("edge_count", 0),
         "proof_dependency_all_resolved": bool(proof_dependency_data.get("all_edges_resolved", False)),
         "state_transition_row_count": state_transition_data.get("row_count", 0),

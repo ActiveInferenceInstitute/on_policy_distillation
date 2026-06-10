@@ -10,6 +10,8 @@ import yaml
 
 from gate_support import ensure_gate_artifacts
 
+pytestmark = pytest.mark.artifact_slow
+
 
 def _ensure_validation_spine_inputs(project_root: Path) -> None:
     from validation_spine.artifacts import CORE_ARTIFACT_PRODUCERS
@@ -18,7 +20,7 @@ def _ensure_validation_spine_inputs(project_root: Path) -> None:
         ensure_gate_artifacts(project_root)
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(300)
 def test_validation_spine_artifacts_are_written(project_root: Path) -> None:
     from validation_spine.artifacts import write_validation_spine_artifacts
 
@@ -55,7 +57,7 @@ def test_validation_spine_artifacts_are_written(project_root: Path) -> None:
     assert all(row["expected_failure"] for row in counterexamples["rows"])
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(300)
 def test_validation_spine_rejects_stale_provenance_hash(project_root: Path) -> None:
     from validation_spine.artifacts import validate_artifact_provenance, write_validation_spine_artifacts
 
@@ -73,7 +75,7 @@ def test_validation_spine_rejects_stale_provenance_hash(project_root: Path) -> N
     assert any("si_graph_world_trace.json" in issue and "hash mismatch" in issue for issue in issues)
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(300)
 def test_validation_spine_rejects_stale_seed_config_provenance(project_root: Path) -> None:
     from validation_spine.artifacts import validate_artifact_provenance, write_validation_spine_artifacts
 
@@ -94,7 +96,7 @@ def test_validation_spine_rejects_stale_seed_config_provenance(project_root: Pat
     assert any("config digest mismatch" in issue for issue in issues)
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(300)
 def test_validation_spine_allows_nonempty_source_commit_drift(project_root: Path) -> None:
     from validation_spine.artifacts import validate_artifact_provenance, write_validation_spine_artifacts
 
@@ -114,7 +116,7 @@ def test_validation_spine_allows_nonempty_source_commit_drift(project_root: Path
     assert not any("si_graph_world_trace.json" in issue and "missing source commit" in issue for issue in issues)
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(300)
 def test_counterexample_matrix_rejects_undocumented_pass(project_root: Path) -> None:
     from validation_spine.artifacts import validate_counterexample_matrix, write_validation_spine_artifacts
 

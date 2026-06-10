@@ -14,8 +14,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.patches import Circle, FancyArrowPatch, FancyBboxPatch
-from matplotlib.ticker import MaxNLocator
+from matplotlib.patches import Circle, FancyArrowPatch, FancyBboxPatch, Polygon, Rectangle
+from matplotlib.ticker import FixedFormatter, FixedLocator, MaxNLocator
 
 from analytical.hyperparameters import lambda_grid, load_hyperparameters
 from analytical.sweep_io import read_parameter_sweep
@@ -46,6 +46,33 @@ def _style_discrete_y(ax, style: FigureStyleConfig) -> None:
     ax.yaxis.set_major_locator(MaxNLocator(integer=True))
 
 
+def _clean_action_label(name: str) -> str:
+    return str(name).replace("move_to_", "").replace("_", " ")
+
+
+def _tmaze_action_vocabulary(root: Path, data: dict[str, Any]) -> tuple[dict[int, str], list[str]]:
+    index_to_name: dict[int, str] = {}
+    for idx, name in zip(data.get("actions") or [], data.get("action_names") or [], strict=False):
+        index_to_name.setdefault(int(idx), str(name))
+    matrices_path = root / "output" / "data" / "si_tmaze_model_matrices.json"
+    if matrices_path.is_file():
+        matrices = json.loads(matrices_path.read_text(encoding="utf-8"))
+        action_labels = ((matrices.get("labels") or {}).get("actions") or {})
+        for idx_text, name in sorted(action_labels.items(), key=lambda item: int(item[0])):
+            index_to_name.setdefault(int(idx_text), str(name))
+    action_probabilities = data.get("action_probabilities") or []
+    if action_probabilities:
+        probability_names = sorted(str(name) for name in action_probabilities[0])
+        unused_names = [name for name in probability_names if name not in set(index_to_name.values())]
+        n_actions = max(len(probability_names), max(index_to_name, default=-1) + 1)
+        for idx in range(n_actions):
+            if idx not in index_to_name and unused_names:
+                index_to_name[idx] = unused_names.pop(0)
+    n_actions = max(index_to_name, default=-1) + 1
+    vocab = [index_to_name.get(i, f"action {i}") for i in range(n_actions)]
+    return index_to_name, vocab
+
+
 def figure_ising_mi_curve(project_root: Path) -> Path:
     root = project_root.resolve()
     style = load_figure_style(root)
@@ -53,28 +80,33 @@ def figure_ising_mi_curve(project_root: Path) -> Path:
     lambdas, closed, empirical = _read_sweep(sweep)
     out = figure_output_path(root, "ising_mi_curve")
     with apply_style(style):
-        fig, axes = plt.subplots(1, 2, figsize=(9, 3.8), gridspec_kw={"width_ratios": [2.2, 1]})
+        fig, axes = plt.subplots(1, 2, figsize=(10.8, 4.5), gridspec_kw={"width_ratios": [2.2, 1]})
         ax_main, ax_resid = axes
-        ax_main.plot(lambdas, closed, label="closed form", color=style.color("primary"), linewidth=2)
-        ax_main.plot(
-            lambdas,
-            empirical,
-            "--",
-            label="exact recompute",
-            color=style.color("secondary"),
-            linewidth=2,
-        )
+        ax_main.plot(lambdas, closed, label="closed-form MI", color=style.color("primary"), linewidth=2)
         ax_main.set_xlabel(r"Coupling strength $\lambda$")
-        ax_main.set_ylabel("Mutual information (nats)")
-        ax_main.set_title("Bernoulli–Ising MI sweep")
+        ax_main.set_ylabel("Teacher-student MI (nats)")
+        ax_main.set_title("Coupling increases transferable information")
+        if lambdas and closed:
+            ax_main.annotate(
+                "stronger coupling\nmeans more teacher\ninformation to distill",
+                xy=(lambdas[-1], closed[-1]),
+                xytext=(-140, -48),
+                textcoords="offset points",
+                fontsize=style.font_size("annotation"),
+                color=style.color("primary"),
+                arrowprops={"arrowstyle": "->", "color": style.color("muted"), "linewidth": 0.9},
+            )
         style_grid(ax_main, style)
-        ax_main.legend(frameon=False, fontsize=8)
+        ax_main.legend(frameon=False, fontsize=style.font_size("legend"))
         residuals = [e - c for e, c in zip(empirical, closed, strict=True)]
         ax_resid.axhline(0.0, color=style.color("reference"), linewidth=1)
-        ax_resid.plot(lambdas, residuals, color=style.color("accent"), linewidth=1.5)
+        markerline, stemlines, baseline = ax_resid.stem(lambdas, residuals)
+        plt.setp(markerline, color=style.color("accent"), markersize=4)
+        plt.setp(stemlines, color=style.color("accent"), linewidth=1.0)
+        plt.setp(baseline, visible=False)
         ax_resid.set_xlabel(r"$\lambda$")
-        ax_resid.set_ylabel("residual")
-        ax_resid.set_title("recompute − closed", fontsize=9)
+        ax_resid.set_ylabel("recompute - closed (nats)")
+        ax_resid.set_title("Exact recompute check", fontsize=style.font_size("small"))
         style_grid(ax_resid, style)
         save_styled_figure(fig, out, style)
     return out
@@ -89,7 +121,7 @@ def figure_si_belief_entropy_curve(project_root: Path) -> Path:
     entropies = [float(step.get("belief_entropy", 0.0)) for step in steps_data]
     out = figure_output_path(root, "si_belief_entropy_curve")
     with apply_style(style):
-        fig, ax = plt.subplots(figsize=(8.2, 4.0))
+        fig, ax = plt.subplots(figsize=(9.2, 4.8))
         xs = list(range(len(entropies)))
         ax.plot(xs, entropies, linewidth=2.4, marker="o", markersize=5.2, color=style.color("primary"))
         ax.fill_between(xs, entropies, step="pre", alpha=0.08, color=style.color("secondary"))
@@ -101,15 +133,15 @@ def figure_si_belief_entropy_curve(project_root: Path) -> Path:
                 xy=(xs[-1], mean_entropy),
                 xytext=(-58, 8),
                 textcoords="offset points",
-                fontsize=8.2,
+                fontsize=style.font_size("annotation"),
                 color=style.color("accent"),
                 arrowprops={"arrowstyle": "->", "color": style.color("accent"), "linewidth": 0.8},
             )
         ax.set_xlabel("Timestep")
         ax.set_ylabel("Belief entropy (nats)")
-        ax.set_title("Full TMaze SI belief entropy from persisted rollout trace")
+        ax.set_title("Cue observation reduces rollout uncertainty")
         style_grid(ax, style)
-        fig.text(0.01, 0.01, "Source: output/data/si_tmaze_trace.json", fontsize=7.8, color=style.color("muted"))
+        fig.text(0.01, 0.01, "Source: output/data/si_tmaze_trace.json", fontsize=style.font_size("source"), color=style.color("muted"))
         save_styled_figure(fig, out, style)
     return out
 
@@ -121,9 +153,10 @@ def figure_si_obs_action_trace(project_root: Path) -> Path:
     data = json.loads(summary_path.read_text(encoding="utf-8"))
     observations_by_modality = data.get("observations_by_modality") or {"location": data.get("observations") or []}
     actions = data.get("actions") or []
+    index_to_name, vocab = _tmaze_action_vocabulary(root, data)
     out = figure_output_path(root, "si_obs_action_trace")
     with apply_style(style):
-        fig, axes = plt.subplots(2, 1, figsize=(9.2, 5.4), sharex=True, gridspec_kw={"height_ratios": [1.6, 1]})
+        fig, axes = plt.subplots(2, 1, figsize=(10.6, 6.2), sharex=True, gridspec_kw={"height_ratios": [1.6, 1]})
         obs_ax, act_ax = axes
         xs = list(range(len(actions)))
         obs_colors = {
@@ -144,32 +177,33 @@ def figure_si_obs_action_trace(project_root: Path) -> Path:
                 label=modality,
             )
         obs_ax.set_ylabel("Observation index")
-        obs_ax.set_title("Full TMaze multimodal observations and selected actions")
+        obs_ax.set_title("Observations and actions form one closed rollout loop")
         _style_discrete_y(obs_ax, style)
         obs_ax.legend(frameon=False, ncol=3, loc="upper left", title="Observation modality")
         act_ax.step(xs, actions, where="post", linewidth=2.4, marker="s", markersize=4.6, color=style.color("primary"))
         act_ax.set_xlabel("Timestep")
         act_ax.set_ylabel("Action")
         action_names = data.get("action_names") or []
-        if action_names:
-            act_ax.set_yticks(range(len(action_names)))
-            act_ax.set_yticklabels(
-                [name.replace("move_to_", "").replace("_", " ") for name in action_names], fontsize=8
-            )
+        if vocab:
+            act_ax.set_yticks(range(len(vocab)))
+            act_ax.set_yticklabels([_clean_action_label(name) for name in vocab], fontsize=style.font_size("dense"))
         for x, action in enumerate(actions):
             action_idx = int(action)
-            name = action_names[action_idx] if 0 <= action_idx < len(action_names) else str(action)
+            if x < len(action_names):
+                name = str(action_names[x])
+            else:
+                name = index_to_name.get(action_idx, str(action))
             act_ax.text(
                 x,
                 float(action) + 0.22,
-                name.replace("move_to_", "").replace("_", " "),
+                _clean_action_label(name),
                 ha="center",
                 va="bottom",
-                fontsize=7.5,
+                fontsize=style.font_size("dense"),
                 color=style.color("primary"),
             )
         _style_discrete_y(act_ax, style)
-        fig.text(0.01, 0.01, "Source: output/data/si_tmaze_summary.json", fontsize=7.8, color=style.color("muted"))
+        fig.text(0.01, 0.01, "Source: output/data/si_tmaze_summary.json", fontsize=style.font_size("source"), color=style.color("muted"))
         save_styled_figure(fig, out, style)
     return out
 
@@ -181,24 +215,24 @@ def figure_si_tmaze_actions(project_root: Path) -> Path:
     data = json.loads(summary_path.read_text(encoding="utf-8"))
     actions = data.get("actions", [])
     action_probabilities = data.get("action_probabilities") or []
+    _, vocab = _tmaze_action_vocabulary(root, data)
     planning_horizon = data.get("planning_horizon", "?")
     tree_warnings = (data.get("expected_known_warnings") or {}).get("tree_max_nodes", 0)
     out = figure_output_path(root, "si_tmaze_actions")
     with apply_style(style):
-        fig, axes = plt.subplots(1, 2, figsize=(10.6, 4.6), gridspec_kw={"width_ratios": [1.05, 1.75]})
+        fig, axes = plt.subplots(1, 2, figsize=(12.4, 5.2), gridspec_kw={"width_ratios": [1.05, 1.9]})
         ax, prob_ax = axes
         steps = list(range(len(actions)))
         ax.step(steps, actions, where="post", linewidth=2, color=style.color("primary"))
         ax.fill_between(steps, actions, step="post", alpha=0.08, color=style.color("secondary"))
         ax.set_xlabel("Timestep")
         ax.set_ylabel("Action index")
-        ax.set_title("Selected first action")
-        action_names_for_ticks = data.get("action_names") or []
-        if action_names_for_ticks:
-            ax.set_yticks(range(len(action_names_for_ticks)))
+        ax.set_title("Chosen action trace")
+        if vocab:
+            ax.set_yticks(range(len(vocab)))
             ax.set_yticklabels(
-                [name.replace("move_to_", "").replace("_", " ") for name in action_names_for_ticks],
-                fontsize=8,
+                [_clean_action_label(name) for name in vocab],
+                fontsize=style.font_size("annotation"),
             )
         _style_discrete_y(ax, style)
         if action_probabilities:
@@ -222,7 +256,7 @@ def figure_si_tmaze_actions(project_root: Path) -> Path:
                 xy=(0, cue_probability),
                 xytext=(36, -20),
                 textcoords="offset points",
-                fontsize=8,
+                fontsize=style.font_size("dense"),
                 color=style.color("primary"),
                 arrowprops={"arrowstyle": "->", "color": style.color("primary"), "linewidth": 0.8},
             )
@@ -230,11 +264,11 @@ def figure_si_tmaze_actions(project_root: Path) -> Path:
         prob_ax.set_xlabel("Timestep")
         prob_ax.set_ylabel("Marginal first-action probability")
         prob_ax.set_title(
-            f"qπ marginals from SI search; horizon={planning_horizon}, known tree warnings={tree_warnings}"
+            f"Policy posterior: cue action is selected first (horizon={planning_horizon})"
         )
         style_grid(prob_ax, style)
-        prob_ax.legend(frameon=False, ncol=2, fontsize=7)
-        fig.text(0.01, 0.01, "Source: output/data/si_tmaze_summary.json", fontsize=7.8, color=style.color("muted"))
+        prob_ax.legend(frameon=False, ncol=2, fontsize=style.font_size("legend"))
+        fig.text(0.01, 0.01, "Source: output/data/si_tmaze_summary.json", fontsize=style.font_size("source"), color=style.color("muted"))
         save_styled_figure(fig, out, style)
     return out
 
@@ -246,7 +280,7 @@ def figure_si_tmaze_model_matrices(project_root: Path) -> Path:
     data = json.loads(matrices_path.read_text(encoding="utf-8"))
     out = figure_output_path(root, "si_tmaze_model_matrices")
     with apply_style(style):
-        fig, axes = plt.subplots(1, 2, figsize=(11.2, 5.6), gridspec_kw={"width_ratios": [1.25, 1]})
+        fig, axes = plt.subplots(1, 2, figsize=(13.4, 6.4), gridspec_kw={"width_ratios": [1.36, 1]})
         shape_ax, norm_ax = axes
         shape_ax.axis("off")
         rows = [
@@ -256,30 +290,30 @@ def figure_si_tmaze_model_matrices(project_root: Path) -> Path:
             ("B[0]", "location transition", data["B_shapes"][0], data["dependencies"]["B"][0]),
             ("B[1]", "reward-location fixed", data["B_shapes"][1], data["dependencies"]["B"][1]),
         ]
-        y = 0.9
+        y = 0.88
         for idx, (name, label, shape, deps) in enumerate(rows):
             color = style.color("secondary") if name.startswith("A") else style.color("accent")
             box = FancyBboxPatch(
-                (0.05, y - 0.075),
+                (0.05, y - 0.088),
                 0.88,
-                0.105,
+                0.13,
                 boxstyle="round,pad=0.015",
                 facecolor="#f8fafc",
                 edgecolor=color,
                 linewidth=1.4,
             )
             shape_ax.add_patch(box)
-            shape_ax.text(0.08, y, name, fontsize=10, weight="bold", color=color, va="center")
-            shape_ax.text(0.22, y, label, fontsize=9, va="center", color=style.color("primary"))
-            shape_ax.text(0.58, y, f"shape {shape}", fontsize=8.5, va="center", color=style.color("muted"))
-            shape_ax.text(0.78, y, f"deps {deps}", fontsize=8.5, va="center", color=style.color("muted"))
-            y -= 0.145
+            shape_ax.text(0.08, y, name, fontsize=style.font_size("small"), weight="bold", color=color, va="center")
+            shape_ax.text(0.22, y, label, fontsize=style.font_size("dense"), va="center", color=style.color("primary"))
+            shape_ax.text(0.58, y, f"shape {shape}", fontsize=style.font_size("dense"), va="center", color=style.color("muted"))
+            shape_ax.text(0.78, y, f"deps {deps}", fontsize=style.font_size("dense"), va="center", color=style.color("muted"))
+            y -= 0.158
         env = data.get("environment") or {}
         shape_ax.text(
             0.05,
             0.11,
             f"TMaze reward_condition={env.get('reward_condition')}, cue_validity={env.get('cue_validity')}, dependent_outcomes={env.get('dependent_outcomes')}",
-            fontsize=8.5,
+            fontsize=style.font_size("dense"),
             color=style.color("primary"),
         )
         preferences = data.get("preferences") or {}
@@ -289,10 +323,10 @@ def figure_si_tmaze_model_matrices(project_root: Path) -> Path:
             0.05,
             0.055,
             f"C preferences={list(preferences)} with shapes {c_shapes}; D prior shapes={d_shapes}",
-            fontsize=8.2,
+            fontsize=style.font_size("dense"),
             color=style.color("muted"),
         )
-        shape_ax.set_title("Full TMaze factorization and dependencies")
+        shape_ax.set_title("Generative-model factors and dependencies")
 
         checks = data.get("normalization_checks") or []
         labels = [row["matrix"] for row in checks]
@@ -306,14 +340,14 @@ def figure_si_tmaze_model_matrices(project_root: Path) -> Path:
         norm_ax.set_xticklabels(labels, rotation=35, ha="right")
         norm_ax.set_ylim(0.94, 1.06)
         norm_ax.set_ylabel("Probability mass")
-        norm_ax.set_title("A/B/D normalization checks")
+        norm_ax.set_title("Every model factor normalizes")
         style_grid(norm_ax, style)
         norm_ax.legend(frameon=False, loc="upper right")
         fig.text(
             0.01,
             0.01,
             "Source: output/data/si_tmaze_model_matrices.json; all columns normalize to probability mass 1.",
-            fontsize=7.8,
+            fontsize=style.font_size("source"),
             color=style.color("muted"),
         )
         save_styled_figure(fig, out, style)
@@ -344,7 +378,7 @@ def figure_distillation_divergence_geometry(project_root: Path) -> Path:
     mode_seeking = bool(concentration.get("mode_seeking", False))
     out = figure_output_path(root, "distillation_divergence_geometry")
     with apply_style(style):
-        fig, axes = plt.subplots(1, 3, figsize=(12.2, 4.8), gridspec_kw={"width_ratios": [1.0, 1.24, 0.84]})
+        fig, axes = plt.subplots(1, 3, figsize=(14.0, 5.3), gridspec_kw={"width_ratios": [1.0, 1.28, 0.9]})
         mass_ax, div_ax, entropy_ax = axes
         x = np.arange(len(teacher))
         width = 0.36
@@ -353,45 +387,45 @@ def figure_distillation_divergence_geometry(project_root: Path) -> Path:
         mass_ax.set_xticks(x, [f"mode {idx + 1}" for idx in x])
         mass_ax.set_ylim(0.0, 1.0)
         mass_ax.set_ylabel("Probability mass")
-        mass_ax.set_title("Teacher and student categorical policies")
+        mass_ax.set_title("Teacher/student mass on finite support")
         style_grid(mass_ax, style)
-        mass_ax.legend(frameon=False, fontsize=8)
+        mass_ax.legend(frameon=False, fontsize=style.font_size("legend"))
 
         names = [name for name, _value in measures]
         values = [value for _name, value in measures]
         colors = [style.color("accent"), style.color("secondary"), "#7c3aed", "#b45309", style.color("fail")]
         bars = div_ax.bar(np.arange(len(values)), values, color=colors, alpha=0.88)
-        div_ax.set_xticks(np.arange(len(values)), [name.replace(" ", "\n") for name in names], fontsize=8)
+        div_ax.set_xticks(np.arange(len(values)), [name.replace(" ", "\n") for name in names], fontsize=style.font_size("dense"))
         div_ax.set_ylabel("Divergence (nats)")
-        div_ax.set_title("Objective geometry used by the correspondence")
+        div_ax.set_title("Objective choice changes the penalty")
         style_grid(div_ax, style)
         for bar, value in zip(bars, values, strict=True):
-            div_ax.text(bar.get_x() + bar.get_width() / 2, value + 0.006, f"{value:.3f}", ha="center", fontsize=7.5)
+            div_ax.text(bar.get_x() + bar.get_width() / 2, value + 0.006, f"{value:.3f}", ha="center", fontsize=style.font_size("annotation"))
         entropy_names = [name for name, _value in entropy_rows]
         entropy_values = [value for _name, value in entropy_rows]
         entropy_colors = [style.color("secondary"), style.color("accent")]
         entropy_ax.barh(np.arange(len(entropy_values)), entropy_values, color=entropy_colors, alpha=0.88)
-        entropy_ax.set_yticks(np.arange(len(entropy_values)), entropy_names, fontsize=8)
+        entropy_ax.set_yticks(np.arange(len(entropy_values)), entropy_names, fontsize=style.font_size("dense"))
         entropy_ax.set_xlabel("Entropy (nats)")
-        entropy_ax.set_title("Mode concentration")
+        entropy_ax.set_title("Entropy check is example-specific")
         entropy_ax.set_xlim(0, max(1.0, max(entropy_values, default=0.0) * 1.28))
         style_grid(entropy_ax, style)
         for y, value in enumerate(entropy_values):
-            entropy_ax.text(value + 0.025, y, f"{value:.3f}", va="center", fontsize=7.5)
+            entropy_ax.text(value + 0.025, y, f"{value:.3f}", va="center", fontsize=style.font_size("dense"))
         entropy_ax.text(
             0.02,
             0.05,
-            f"H gap={entropy_gap:+.3f}\nmode-seeking={mode_seeking}",
+            f"H gap={entropy_gap:+.3f}\nmode-seeking={mode_seeking}\nnot a universal KL law",
             transform=entropy_ax.transAxes,
-            fontsize=8,
+            fontsize=style.font_size("annotation"),
             color=style.color("primary"),
             bbox=dict(boxstyle="round,pad=0.28", facecolor="#f8fafc", edgecolor=style.color("reference")),
         )
         fig.text(
             0.01,
             0.01,
-            "Source: output/data/firstprinciples/divergence_demo.json",
-            fontsize=7.8,
+            "Source: output/data/firstprinciples/divergence_demo.json; realized behavior depends on support and optimization.",
+            fontsize=style.font_size("source"),
             color=style.color("muted"),
         )
         save_styled_figure(fig, out, style)
@@ -412,7 +446,7 @@ def figure_exposure_bias_recovery(project_root: Path) -> Path:
     xs = np.arange(max(len(off_policy), len(on_policy)))
     out = figure_output_path(root, "exposure_bias_recovery")
     with apply_style(style):
-        fig, ax = plt.subplots(figsize=(8.8, 4.8))
+        fig, ax = plt.subplots(figsize=(9.8, 5.2))
         ax.plot(
             xs[: len(off_policy)], off_policy, marker="o", linewidth=2.2, color=style.color("fail"), label="off-policy"
         )
@@ -434,7 +468,7 @@ def figure_exposure_bias_recovery(project_root: Path) -> Path:
                 xy=(terminal_x, on_policy[terminal_x]),
                 xytext=(-76, -34),
                 textcoords="offset points",
-                fontsize=8,
+                fontsize=style.font_size("annotation"),
                 color=style.color("primary"),
                 arrowprops={"arrowstyle": "->", "color": style.color("primary"), "linewidth": 0.8},
             )
@@ -451,7 +485,7 @@ def figure_exposure_bias_recovery(project_root: Path) -> Path:
                 f"{off_policy[terminal_x]:.3f}",
                 ha="center",
                 va="top",
-                fontsize=7.5,
+                fontsize=style.font_size("annotation"),
                 color=style.color("fail"),
             )
             ax.text(
@@ -460,7 +494,7 @@ def figure_exposure_bias_recovery(project_root: Path) -> Path:
                 f"{on_policy[terminal_x]:.3f}",
                 ha="center",
                 va="bottom",
-                fontsize=7.5,
+                fontsize=style.font_size("annotation"),
                 color=style.color("pass"),
             )
         if fixed_point is not None:
@@ -473,24 +507,24 @@ def figure_exposure_bias_recovery(project_root: Path) -> Path:
                 label="on-policy fixed point",
             )
             ax.text(
-                0.02,
-                fixed_value + 0.02,
+                0.35,
+                fixed_value + 0.035,
                 f"fixed point={fixed_value:.3f}",
                 transform=ax.get_yaxis_transform(),
-                fontsize=7.8,
+                fontsize=style.font_size("annotation"),
                 color=style.color("reference"),
             )
         ax.set_xlabel("Generated step")
         ax.set_ylabel("Expected correctness")
         ax.set_ylim(0.0, 1.02)
-        ax.set_title("Toy exposure-bias recovery under student-induced rollouts")
+        ax.set_title("On-policy correction arrests compounding error")
         style_grid(ax, style)
-        ax.legend(frameon=False, fontsize=8)
+        ax.legend(frameon=False, fontsize=style.font_size("legend"))
         fig.text(
             0.01,
             0.01,
             "Source: output/data/firstprinciples/exposure_bias_demo.json",
-            fontsize=7.8,
+            fontsize=style.font_size("source"),
             color=style.color("muted"),
         )
         save_styled_figure(fig, out, style)
@@ -528,7 +562,13 @@ def figure_classroom_distillation_signal(project_root: Path) -> Path:
     )
     out = figure_output_path(root, "classroom_distillation_signal")
     with apply_style(style):
-        fig, axes = plt.subplots(1, 2, figsize=(11.0, 4.8), gridspec_kw={"width_ratios": [1.05, 1.35]})
+        fig, axes = plt.subplots(
+            1,
+            2,
+            figsize=(12.8, 5.4),
+            gridspec_kw={"width_ratios": [1.05, 1.42]},
+            constrained_layout=True,
+        )
         div_ax, heat_ax = axes
         xs = np.arange(len(rows))
         div_ax.plot(xs, reverse, marker="o", linewidth=2.0, color=style.color("accent"), label="reverse KL")
@@ -536,16 +576,16 @@ def figure_classroom_distillation_signal(project_root: Path) -> Path:
         div_ax.plot(xs, jsd, marker="^", linewidth=1.8, color="#7c3aed", label="Jensen-Shannon")
         div_ax.set_xlabel("Classroom step")
         div_ax.set_ylabel("Divergence (nats)")
-        div_ax.set_title("Per-step teacher/student distillation signal")
+        div_ax.set_title("Per-step divergence")
         style_grid(div_ax, style)
-        div_ax.legend(frameon=False, fontsize=8)
+        div_ax.legend(frameon=False, fontsize=style.font_size("legend"))
         div_ax.text(
             0.02,
             0.95,
             f"argmax agreement {agreement_count}/{len(rows)}",
             transform=div_ax.transAxes,
             va="top",
-            fontsize=8,
+            fontsize=style.font_size("annotation"),
             color=style.color("primary"),
             bbox=dict(boxstyle="round,pad=0.28", facecolor="#f8fafc", edgecolor=style.color("reference")),
         )
@@ -556,7 +596,7 @@ def figure_classroom_distillation_signal(project_root: Path) -> Path:
             heat_ax.set_xticks(
                 range(len(actions)),
                 [str(action).replace("move_to_", "").replace("_", "\n") for action in actions],
-                fontsize=8,
+                fontsize=style.font_size("dense"),
             )
             heat_ax.set_yticks(
                 range(len(rows)),
@@ -570,24 +610,32 @@ def figure_classroom_distillation_signal(project_root: Path) -> Path:
                     )
                     for idx, row in enumerate(rows)
                 ],
-                fontsize=7.4,
+                fontsize=style.font_size("dense"),
             )
             heat_ax.set_xlabel("Action")
             heat_ax.set_ylabel("Classroom step")
             for i in range(deltas.shape[0]):
                 for j in range(deltas.shape[1]):
-                    heat_ax.text(j, i, f"{deltas[i, j]:+.2f}", ha="center", va="center", fontsize=7)
+                    heat_ax.text(
+                        j,
+                        i,
+                        f"{deltas[i, j]:+.2f}",
+                        ha="center",
+                        va="center",
+                        fontsize=style.font_size("annotation"),
+                    )
             cbar = fig.colorbar(image, ax=heat_ax, shrink=0.84)
             cbar.set_label("teacher p - student q")
-        heat_ax.set_title("Privileged teacher signal minus student posterior")
+        heat_ax.set_title("Teacher-student mass gap")
+        fig.suptitle("Two-agent classroom distillation signal", fontsize=style.font_size("title"))
         fig.text(
             0.01,
             0.01,
             "Source: output/data/firstprinciples/classroom.json",
-            fontsize=7.8,
+            fontsize=style.font_size("source"),
             color=style.color("muted"),
         )
-        save_styled_figure(fig, out, style)
+        save_figure_png(fig, out, dpi=style.dpi, facecolor="white", transparent=style.transparent)
     return out
 
 
@@ -607,37 +655,76 @@ def figure_energy_decomposition(project_root: Path) -> Path:
     pragmatic = float(efe.get("pragmatic_value", 0.0))
     out = figure_output_path(root, "energy_decomposition")
     with apply_style(style):
-        fig, axes = plt.subplots(1, 2, figsize=(11.0, 4.6))
+        fig, axes = plt.subplots(1, 2, figsize=(13.4, 5.3), gridspec_kw={"wspace": 0.34})
         vfe_ax, efe_ax = axes
-        vfe_labels = ["complexity\n$D_{KL}(q\\|p(s))$", "accuracy\n$E_q[\\ln p(o|s)]$", "VFE\n$F$"]
+        vfe_labels = [
+            "complexity\n$D_{KL}(q\\|p(s))$",
+            "accuracy term\n$E_q[\\ln p(o|s)]$",
+            "VFE\n$F=C-A$",
+        ]
         vfe_values = [complexity, accuracy, free_energy]
         vfe_colors = [style.color("secondary"), style.color("accent"), style.color("primary")]
         vfe_ax.bar(vfe_labels, vfe_values, color=vfe_colors)
         vfe_ax.axhline(0.0, color=style.color("reference"), linewidth=0.8)
         vfe_ax.set_ylabel("nats")
-        vfe_ax.set_title("Variational free energy = complexity - accuracy")
+        vfe_ax.set_title("VFE at prior: complexity is zero", fontsize=style.font_size("small"))
         for i, v in enumerate(vfe_values):
-            vfe_ax.text(i, v, f"{v:.3f}", ha="center", va="bottom" if v >= 0 else "top", fontsize=8)
+            vfe_ax.text(i, v, f"{v:.3f}", ha="center", va="bottom" if v >= 0 else "top", fontsize=style.font_size("annotation"))
+        vfe_ax.annotate(
+            "q = prior, so\ncomplexity = 0",
+            xy=(0, complexity),
+            xytext=(0.07, 0.32),
+            textcoords="axes fraction",
+            arrowprops={"arrowstyle": "->", "lw": 0.9, "color": style.color("muted")},
+            fontsize=style.font_size("annotation"),
+            color=style.color("muted"),
+        )
+        vfe_ax.annotate(
+            "F = 0 - A\npositive surprisal",
+            xy=(2, free_energy),
+            xytext=(0.42, 0.77),
+            textcoords="axes fraction",
+            arrowprops={"arrowstyle": "->", "lw": 0.9, "color": style.color("muted")},
+            fontsize=style.font_size("annotation"),
+            color=style.color("primary"),
+        )
         style_grid(vfe_ax, style)
 
-        efe_labels = ["risk\n$D_{KL}(q(o)\\|p(o))$", "ambiguity\n$E[H[p(o|s)]]$", "epistemic\n$I(o;s)$", "pragmatic\n$E[\\ln p(o)]$"]
+        efe_labels = [
+            "risk\n$D_{KL}(q(o)\\|p(o))$",
+            "ambiguity\n$E[H[p(o|s)]]$",
+            "epistemic\n$I(o;s)$",
+            "pragmatic\n$E[\\ln p(o)]$",
+        ]
         efe_values = [risk, ambiguity, epistemic, pragmatic]
         efe_colors = [style.color("fail"), style.color("muted"), style.color("accent"), style.color("secondary")]
         efe_ax.bar(efe_labels, efe_values, color=efe_colors)
         efe_ax.axhline(0.0, color=style.color("reference"), linewidth=0.8)
         efe_ax.set_ylabel("nats")
-        efe_ax.set_title("Expected free energy: risk + ambiguity = -(epistemic + pragmatic)")
+        efe_ax.set_title("EFE sign convention: G = risk + ambiguity - value", fontsize=style.font_size("small"))
         for i, v in enumerate(efe_values):
-            efe_ax.text(i, v, f"{v:.3f}", ha="center", va="bottom" if v >= 0 else "top", fontsize=8)
-        style_grid(efe_ax, style)
-        fig.text(
-            0.01,
-            0.01,
-            "Source: output/data/firstprinciples/energy_demo.json",
-            fontsize=7.8,
-            color=style.color("muted"),
+            efe_ax.text(i, v, f"{v:.3f}", ha="center", va="bottom" if v >= 0 else "top", fontsize=style.font_size("annotation"))
+        efe_ax.text(
+            0.02,
+            0.93,
+            "risk + ambiguity\nminus epistemic/pragmatic value",
+            transform=efe_ax.transAxes,
+            fontsize=style.font_size("annotation"),
+            color=style.color("primary"),
+            bbox=dict(boxstyle="round,pad=0.28", facecolor="#f8fafc", edgecolor=style.color("reference")),
         )
-        save_styled_figure(fig, out, style)
+        style_grid(efe_ax, style)
+        fig.suptitle("Energy terms explain what the student is matching", fontsize=style.font_size("title"), y=0.98)
+        fig.text(
+            0.99,
+            0.925,
+            "Source: output/data/firstprinciples/energy_demo.json",
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
+            ha="right",
+        )
+        fig.subplots_adjust(left=0.07, right=0.98, bottom=0.18, top=0.82, wspace=0.32)
+        save_figure_png(fig, out, dpi=style.dpi, facecolor="white", transparent=style.transparent)
     return out
 
 
@@ -650,14 +737,22 @@ def figure_parallel_convergence(project_root: Path) -> Path:
     losses = [max(float(v), 1e-12) for v in data.get("loss_trajectory") or []]
     teacher = [float(v) for v in data.get("active_inference_teacher_posterior") or []]
     student = [float(v) for v in data.get("ml_distilled_student") or []]
+    vfe = float(data.get("student_free_energy", 0.0))
+    neg_log_ev = float(data.get("neg_log_evidence", 0.0))
     out = figure_output_path(root, "parallel_convergence")
     with apply_style(style):
-        fig, axes = plt.subplots(1, 2, figsize=(11.0, 4.6), gridspec_kw={"width_ratios": [1.25, 1.0]})
+        fig, axes = plt.subplots(
+            1,
+            2,
+            figsize=(12.4, 5.0),
+            gridspec_kw={"width_ratios": [1.28, 1.0]},
+            constrained_layout=True,
+        )
         loss_ax, bar_ax = axes
         loss_ax.semilogy(steps, losses, marker="o", linewidth=2.2, color=style.color("accent"))
         loss_ax.set_xlabel("Gradient step")
         loss_ax.set_ylabel(r"reverse KL $D_{KL}(\pi_S\|\pi_T)$ (nats)")
-        loss_ax.set_title("ML reverse-KL distillation (jax autodiff) converges")
+        loss_ax.set_title("Reverse-KL training")
         style_grid(loss_ax, style)
 
         idx = np.arange(len(teacher))
@@ -667,13 +762,31 @@ def figure_parallel_convergence(project_root: Path) -> Path:
         bar_ax.set_xticks(list(idx))
         bar_ax.set_xticklabels([f"state {i}" for i in idx])
         bar_ax.set_ylabel("probability")
-        bar_ax.set_title("Same solution in both frameworks")
-        bar_ax.legend(frameon=False, fontsize=9, loc="upper right")
+        bar_ax.set_title("Recovered posterior")
+        bar_ax.legend(
+            frameon=False,
+            fontsize=style.font_size("legend"),
+            loc="center right",
+        )
         for i, (t, s) in enumerate(zip(teacher, student, strict=False)):
-            bar_ax.text(i - width / 2, t, f"{t:.2f}", ha="center", va="bottom", fontsize=8)
-            bar_ax.text(i + width / 2, s, f"{s:.2f}", ha="center", va="bottom", fontsize=8)
+            bar_ax.text(i - width / 2, t, f"{t:.2f}", ha="center", va="bottom", fontsize=style.font_size("annotation"))
+            bar_ax.text(i + width / 2, s, f"{s:.2f}", ha="center", va="bottom", fontsize=style.font_size("annotation"))
+        bar_ax.set_ylim(0.0, max(max(teacher), max(student)) * 1.22)
+        bar_ax.text(
+            0.02,
+            0.92,
+            f"VFE = {vfe:.3f} nats = -ln p(o) = {neg_log_ev:.3f}",
+            transform=bar_ax.transAxes,
+            fontsize=style.font_size("annotation"),
+            color=style.color("primary"),
+            bbox=dict(boxstyle="round,pad=0.28", facecolor="#f8fafc", edgecolor=style.color("reference")),
+        )
         style_grid(bar_ax, style)
-        fig.text(0.01, 0.01, "Source: output/data/firstprinciples/parallel_demo.json", fontsize=8.0, color=style.color("muted"))
+        fig.suptitle(
+            "Two frameworks, one posterior: ML distillation reaches the active-inference posterior",
+            fontsize=style.font_size("title"),
+        )
+        fig.text(0.01, 0.01, "Source: output/data/firstprinciples/parallel_demo.json", fontsize=style.font_size("source"), color=style.color("muted"))
         save_styled_figure(fig, out, style)
     return out
 
@@ -689,16 +802,40 @@ def figure_diversity_tradeoff(project_root: Path) -> Path:
     k = int(data.get("k", 0))
     out = figure_output_path(root, "diversity_tradeoff")
     with apply_style(style):
-        fig, ax = plt.subplots(figsize=(8.4, 4.6))
+        fig, ax = plt.subplots(figsize=(9.8, 5.0))
         ax.plot(temps, pass_k, marker="o", linewidth=2.4, color=style.color("accent"), label=f"sampling Pass@{k}")
         ax.axhline(greedy, color=style.color("secondary"), linewidth=2.0, linestyle="--", label="greedy Pass@1 (temperature-invariant)")
         ax.set_xscale("log")
-        ax.set_xlabel(r"student temperature $\tau$ (low = mode-seeking / reverse-KL)")
+        ax.xaxis.set_major_locator(FixedLocator(temps))
+        ax.xaxis.set_minor_locator(FixedLocator([]))
+        ax.xaxis.set_major_formatter(FixedFormatter([f"{temp:g}" for temp in temps]))
+        if temps and pass_k:
+            endpoints = [(temps[0], pass_k[0], (20, -14)), (temps[-1], pass_k[-1], (-52, -18))]
+            for temp, pass_value, offset in endpoints:
+                ax.annotate(
+                    f"{pass_value:.3f}",
+                    xy=(temp, pass_value),
+                    xytext=offset,
+                    textcoords="offset points",
+                    fontsize=style.font_size("annotation"),
+                    color=style.color("primary"),
+                    arrowprops={"arrowstyle": "->", "color": style.color("muted"), "linewidth": 0.8},
+                )
+        ax.text(
+            0.04,
+            0.12,
+            rf"Pass@k = 1 - (1 - p)^k; k={k}",
+            transform=ax.transAxes,
+            fontsize=style.font_size("annotation"),
+            color=style.color("primary"),
+            bbox=dict(boxstyle="round,pad=0.28", facecolor="#f8fafc", edgecolor=style.color("reference")),
+        )
+        ax.set_xlabel(r"student temperature $\tau$ (low = sharper / reverse-KL)")
         ax.set_ylabel("success probability")
-        ax.set_title(f"Diversity collapse: sharpening lowers Pass@{k} toward the greedy ceiling")
-        ax.legend(frameon=False, fontsize=9, loc="best")
+        ax.set_title(f"Sharpening costs Pass@{k} coverage; greedy Pass@1 is temperature-invariant")
+        ax.legend(frameon=False, fontsize=style.font_size("legend"), loc="best")
         style_grid(ax, style)
-        fig.text(0.01, 0.01, "Source: output/data/firstprinciples/diversity_demo.json", fontsize=8.0, color=style.color("muted"))
+        fig.text(0.01, 0.01, "Source: output/data/firstprinciples/diversity_demo.json", fontsize=style.font_size("source"), color=style.color("muted"))
         save_styled_figure(fig, out, style)
     return out
 
@@ -712,35 +849,125 @@ def figure_free_energy_curve(project_root: Path) -> Path:
     root = project_root.resolve()
     style = load_figure_style(root)
     from analytical.decomposition import free_energy_against_entangled_prior
-    from analytical.bernoulli_toy import ising_coupling, ising_joint_posterior, symmetric_mean_field_prior
+    from analytical.bernoulli_toy import (
+        ising_coupling,
+        ising_joint_posterior,
+        ising_mutual_information,
+        symmetric_mean_field_prior,
+    )
+    from analytical.free_energy import kl_divergence, total_correlation
+    from analytical.joint_dist import mean_field_to_joint
 
     hp_lambdas = lambda_grid(load_hyperparameters())
     mf = symmetric_mean_field_prior()
+    mf_joint = mean_field_to_joint(mf)
     g0 = [np.zeros(2), np.zeros(2)]
     j = ising_coupling()
     kc = np.zeros((2, 2))
-    values = []
+    exact_values = []
+    mean_field_gaps = []
+    mi_values = []
     for lam in hp_lambdas:
         q = ising_joint_posterior(float(lam))
-        values.append(free_energy_against_entangled_prior(q, mf, g0, j, kc, gamma=1.0, lam=float(lam)))
+        exact_values.append(free_energy_against_entangled_prior(q, mf, g0, j, kc, gamma=1.0, lam=float(lam)))
+        mean_field_gaps.append(kl_divergence(q, mf_joint))
+        mi_values.append(ising_mutual_information(float(lam)))
     out = figure_output_path(root, "free_energy_curve")
     with apply_style(style):
-        fig, ax = plt.subplots(figsize=(6.5, 4))
-        ax.plot(hp_lambdas, values, linewidth=2, color=style.color("primary"))
-        min_idx = int(np.argmin(values))
-        ax.scatter(
-            [hp_lambdas[min_idx]],
-            [values[min_idx]],
-            color=style.color("accent"),
-            s=40,
-            zorder=3,
-            label=f"min at λ={hp_lambdas[min_idx]:.2f}",
+        fig, (curve_ax, decomp_ax) = plt.subplots(
+            1,
+            2,
+            figsize=(12.6, 5.2),
+            gridspec_kw={"width_ratios": [1.55, 1.0]},
         )
-        ax.set_xlabel(r"Coupling strength $\lambda$")
-        ax.set_ylabel("Free energy (nats)")
-        ax.set_title("Free energy against entangled prior")
-        style_grid(ax, style)
-        ax.legend(frameon=False, fontsize=8)
+        curve_ax.plot(
+            hp_lambdas,
+            mean_field_gaps,
+            linewidth=2.8,
+            color=style.color("primary"),
+            label=r"independent student gap $D_{KL}(q_\lambda\|q_0)$",
+        )
+        curve_ax.plot(
+            hp_lambdas,
+            mi_values,
+            linewidth=1.7,
+            linestyle=":",
+            color=style.color("secondary"),
+            label=r"mutual information $I(\lambda)$",
+        )
+        curve_ax.plot(
+            hp_lambdas,
+            exact_values,
+            linewidth=2.0,
+            linestyle="--",
+            color=style.color("muted"),
+            label=r"exact entangled target $F(q_\lambda;p_\lambda)=0$",
+        )
+        max_idx = int(np.argmax(mean_field_gaps))
+        max_lam = float(hp_lambdas[max_idx])
+        max_gap = float(mean_field_gaps[max_idx])
+        exact_max = float(max(abs(value) for value in exact_values))
+        curve_ax.scatter([max_lam], [max_gap], s=54, color=style.color("accent"), zorder=4)
+        curve_ax.annotate(
+            f"max gap {max_gap:.3f} nats\nat λ={max_lam:.1f}",
+            xy=(max_lam, max_gap),
+            xytext=(max_lam - 1.55, max_gap * 0.72),
+            arrowprops={"arrowstyle": "->", "color": style.color("muted"), "lw": 1.0},
+            fontsize=style.font_size("annotation"),
+            color=style.color("primary"),
+        )
+        curve_ax.set_xlabel(r"Coupling strength $\lambda$")
+        curve_ax.set_ylabel("nats")
+        curve_ax.set_title("Mean-field students pay the missing-coupling gap")
+        curve_ax.set_ylim(-0.04, max(0.08, max_gap * 1.17))
+        style_grid(curve_ax, style)
+        curve_ax.legend(frameon=False, fontsize=style.font_size("legend"), loc="upper left")
+
+        q_max = ising_joint_posterior(max_lam)
+        tc_max = float(total_correlation(q_max))
+        decomp_labels = ["exact target\nF=0", "coupling\nprior term", "total corr.\nI(λ)", "mean-field\ngap"]
+        decomp_values = [0.0, -tc_max, tc_max, max_gap]
+        decomp_colors = [
+            style.color("muted"),
+            "#b91c1c",
+            style.color("secondary"),
+            style.color("accent"),
+        ]
+        bars = decomp_ax.bar(range(len(decomp_values)), decomp_values, color=decomp_colors)
+        decomp_ax.axhline(0, color=style.color("reference"), linewidth=1.0)
+        decomp_ax.set_xticks(range(len(decomp_labels)), decomp_labels, fontsize=style.font_size("dense"))
+        decomp_ax.set_ylabel("nats at λmax")
+        decomp_ax.set_title("Why the exact-target VFE is 0")
+        decomp_ax.set_ylim(-max_gap * 1.35, max_gap * 1.35)
+        for bar, value in zip(bars, decomp_values, strict=True):
+            y = value + (0.03 if value >= 0 else -0.03)
+            decomp_ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                y,
+                f"{value:+.3f}",
+                ha="center",
+                va="bottom" if value >= 0 else "top",
+                fontsize=style.font_size("annotation"),
+                color=style.color("primary"),
+            )
+        decomp_ax.text(
+            0.03,
+            0.94,
+            f"max |exact F| = {exact_max:.1e}\nsource: analytical sweep",
+            transform=decomp_ax.transAxes,
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
+            va="top",
+        )
+        style_grid(decomp_ax, style)
+        fig.suptitle("Privileged coupling creates the free-energy gap", fontsize=style.font_size("title"), y=0.98)
+        fig.text(
+            0.01,
+            0.015,
+            "Source: src/analytical/decomposition.py; output/data/parameter_sweep.csv",
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
+        )
         save_styled_figure(fig, out, style)
     return out
 
@@ -770,7 +997,7 @@ def figure_semantic_gluing_graph(project_root: Path) -> Path:
     artifacts = graph.get("artifacts") or {}
     out = figure_output_path(root, "semantic_gluing_graph")
     with apply_style(style):
-        fig, ax = plt.subplots(figsize=(9.6, 5.6))
+        fig, ax = plt.subplots(figsize=(13.2, 9.2))
         ax.axis("off")
         producer_x, artifact_x, consumer_x = 0.05, 0.42, 0.78
         y_positions = np.linspace(0.86, 0.14, len(selected))
@@ -787,7 +1014,7 @@ def figure_semantic_gluing_graph(project_root: Path) -> Path:
                 producer_x,
                 y,
                 producer,
-                fontsize=8,
+                fontsize=style.font_size("dense"),
                 va="center",
                 bbox=dict(boxstyle="round,pad=0.25", facecolor="#f8fafc", edgecolor=box_color),
             )
@@ -795,7 +1022,7 @@ def figure_semantic_gluing_graph(project_root: Path) -> Path:
                 artifact_x,
                 y,
                 rel.replace("output/", ""),
-                fontsize=8,
+                fontsize=style.font_size("dense"),
                 va="center",
                 bbox=dict(boxstyle="round,pad=0.25", facecolor="#ffffff", edgecolor=style.color("secondary")),
             )
@@ -803,13 +1030,13 @@ def figure_semantic_gluing_graph(project_root: Path) -> Path:
                 consumer_x,
                 y,
                 consumers,
-                fontsize=8,
+                fontsize=style.font_size("dense"),
                 va="center",
                 bbox=dict(boxstyle="round,pad=0.25", facecolor="#f8fafc", edgecolor=style.color("accent")),
             )
             ax.annotate("", xy=(artifact_x - 0.02, y), xytext=(producer_x + 0.24, y), arrowprops={"arrowstyle": "->"})
             ax.annotate("", xy=(consumer_x - 0.02, y), xytext=(artifact_x + 0.29, y), arrowprops={"arrowstyle": "->"})
-        ax.set_title("Semantic sheaf gluing dependency graph", loc="left", pad=16)
+        ax.set_title("Every generated claim flows through a producer, artifact, and gate", loc="left", pad=16)
         save_styled_figure(fig, out, style)
     return out
 
@@ -826,21 +1053,30 @@ def figure_theorem_traceability_graph(project_root: Path) -> Path:
         write_sheaf_track_artifacts(root)
     theorem = json.loads(theorem_path.read_text(encoding="utf-8"))
     dependency = json.loads(dependency_path.read_text(encoding="utf-8"))
-    rows = (theorem.get("rows") or [])[:6]
+    all_rows = theorem.get("rows") or []
+    total_rows = len(all_rows)
+    max_rows = 11
+    shown_rows = all_rows[:max_rows]
     edges = dependency.get("edges") or []
     edge_count_by_theorem = {
-        row.get("theorem", ""): sum(1 for edge in edges if edge.get("source") == row.get("theorem")) for row in rows
+        row.get("theorem", ""): sum(1 for edge in edges if edge.get("source") == row.get("theorem")) for row in shown_rows
     }
+    shown_edge_total = sum(edge_count_by_theorem.values())
+    witness_counts = {len(row.get("model_witnesses") or []) for row in shown_rows}
+    collapse_witnesses = len(witness_counts) == 1
+    row_fontsize = style.font_size("dense") if len(shown_rows) <= 10 else style.font_size("source")
     out = figure_output_path(root, "theorem_traceability_graph")
     with apply_style(style):
-        fig, ax = plt.subplots(figsize=(9.2, 4.8))
+        fig, ax = plt.subplots(figsize=(10.8, max(5.6, 0.55 * len(shown_rows) + 1.2)))
         ax.axis("off")
-        columns = [0.05, 0.42, 0.78]
-        headers = ["Lean theorem", "Proof dependency rows", "Finite witnesses"]
+        columns = [0.05, 0.56] if collapse_witnesses else [0.05, 0.42, 0.78]
+        headers = ["Lean theorem", "Proof dependency rows"]
+        if not collapse_witnesses:
+            headers.append("Finite witnesses")
         for x, header in zip(columns, headers, strict=True):
-            ax.text(x, 0.94, header, weight="bold", color=style.color("primary"), fontsize=10)
-        y_positions = np.linspace(0.82, 0.14, max(1, len(rows)))
-        for y, row in zip(y_positions, rows, strict=False):
+            ax.text(x, 0.94, header, weight="bold", color=style.color("primary"), fontsize=style.font_size("annotation"))
+        y_positions = np.linspace(0.82, 0.14, max(1, len(shown_rows)))
+        for y, row in zip(y_positions, shown_rows, strict=False):
             theorem_id = str(row.get("theorem", ""))
             theorem_words = theorem_id.split("_")
             theorem_label = "\n".join(
@@ -855,7 +1091,7 @@ def figure_theorem_traceability_graph(project_root: Path) -> Path:
                 columns[0],
                 y,
                 theorem_label,
-                fontsize=7.5,
+                fontsize=row_fontsize,
                 va="center",
                 bbox=dict(boxstyle="round,pad=0.25", facecolor="#f8fafc", edgecolor=edge_color),
             )
@@ -863,21 +1099,38 @@ def figure_theorem_traceability_graph(project_root: Path) -> Path:
                 columns[1],
                 y,
                 proof_label,
-                fontsize=8,
+                fontsize=row_fontsize,
                 va="center",
                 bbox=dict(boxstyle="round,pad=0.25", facecolor="#ffffff", edgecolor=style.color("secondary")),
             )
-            ax.text(
-                columns[2],
-                y,
-                witness_label,
-                fontsize=8,
-                va="center",
-                bbox=dict(boxstyle="round,pad=0.25", facecolor="#f8fafc", edgecolor=style.color("accent")),
-            )
             ax.annotate("", xy=(columns[1] - 0.03, y), xytext=(columns[0] + 0.24, y), arrowprops={"arrowstyle": "->"})
-            ax.annotate("", xy=(columns[2] - 0.03, y), xytext=(columns[1] + 0.24, y), arrowprops={"arrowstyle": "->"})
-        ax.set_title("Theorem traceability graph", loc="left", pad=16)
+            if not collapse_witnesses:
+                ax.text(
+                    columns[2],
+                    y,
+                    witness_label,
+                    fontsize=row_fontsize,
+                    va="center",
+                    bbox=dict(boxstyle="round,pad=0.25", facecolor="#f8fafc", edgecolor=style.color("accent")),
+                )
+                ax.annotate("", xy=(columns[2] - 0.03, y), xytext=(columns[1] + 0.24, y), arrowprops={"arrowstyle": "->"})
+        if total_rows > len(shown_rows):
+            subtitle = (
+                f"showing {len(shown_rows)} of {total_rows} theorem rows; "
+                f"{shown_edge_total} dependency edges in the shown subset"
+            )
+        else:
+            subtitle = f"all {total_rows} theorem rows shown; {shown_edge_total} dependency edges across the shown set"
+        fig.text(0.05, 0.91, subtitle, fontsize=style.font_size("annotation"), color=style.color("muted"))
+        if collapse_witnesses and witness_counts:
+            fig.text(
+                0.05,
+                0.03,
+                f"each theorem carries {next(iter(witness_counts))} finite witnesses",
+                fontsize=style.font_size("annotation"),
+                color=style.color("accent"),
+            )
+        ax.set_title("Lean theorem rows connect to dependencies and finite witnesses", loc="left", pad=16)
         save_styled_figure(fig, out, style)
     return out
 
@@ -906,16 +1159,16 @@ def figure_causal_ablation_heatmap(project_root: Path) -> Path:
             matrix[i, j] = max(effects) if effects else 0.0
     out = figure_output_path(root, "causal_ablation_heatmap")
     with apply_style(style):
-        fig, ax = plt.subplots(figsize=(8.2, 4.8))
+        fig, ax = plt.subplots(figsize=(9.4, 5.4))
         image = ax.imshow(matrix, cmap="viridis", aspect="auto")
-        ax.set_xticks(range(len(perturbations)), [label.replace("_", "\n") for label in perturbations], fontsize=8)
-        ax.set_yticks(range(len(topologies)), topologies, fontsize=9)
+        ax.set_xticks(range(len(perturbations)), [label.replace("_", "\n") for label in perturbations], fontsize=style.font_size("dense"))
+        ax.set_yticks(range(len(topologies)), topologies, fontsize=style.font_size("dense"))
         ax.set_xlabel("Perturbation")
         ax.set_ylabel("Toy topology")
-        ax.set_title("Causal-ablation sensitivity")
+        ax.set_title("Finite topology stress tests expose sensitive assumptions")
         for i in range(matrix.shape[0]):
             for j in range(matrix.shape[1]):
-                ax.text(j, i, f"{matrix[i, j]:.2f}", ha="center", va="center", color="white", fontsize=8)
+                ax.text(j, i, f"{matrix[i, j]:.2f}", ha="center", va="center", color="white", fontsize=style.font_size("dense"))
         cbar = fig.colorbar(image, ax=ax, shrink=0.86)
         cbar.set_label("|effect|")
         save_styled_figure(fig, out, style)
@@ -950,6 +1203,11 @@ def figure_scholarship_source_map(project_root: Path) -> Path:
     family_counts = Counter(str(row.get("source_family", "unknown")) for row in rows)
     kind_counts = Counter(str(row.get("source_kind", "unknown")) for row in rows)
     family_order = [family for family, _count in family_counts.most_common()]
+    max_display_families = 12
+    display_family_order = family_order[:max_display_families]
+    other_family_label = "other source families"
+    if len(family_order) > max_display_families:
+        display_family_order.append(other_family_label)
     bucket_preference = [
         "first-principles",
         "pymdp/runtime",
@@ -962,56 +1220,61 @@ def figure_scholarship_source_map(project_root: Path) -> Path:
         {artifact_bucket(str(row.get("artifact", ""))) for row in rows},
         key=lambda value: bucket_preference.index(value) if value in bucket_preference else len(bucket_preference),
     )
-    family_bucket_counts = np.zeros((len(family_order), len(buckets)))
-    family_indices = {family: index for index, family in enumerate(family_order)}
+    display_family_counts: Counter[str] = Counter()
+    for family, count in family_counts.items():
+        display_family = family if family in display_family_order else other_family_label
+        display_family_counts[display_family] += count
+    family_bucket_counts = np.zeros((len(display_family_order), len(buckets)))
+    family_indices = {family: index for index, family in enumerate(display_family_order)}
     bucket_indices = {bucket: index for index, bucket in enumerate(buckets)}
     for row in rows:
         family = str(row.get("source_family", "unknown"))
+        display_family = family if family in family_indices else other_family_label
         bucket = artifact_bucket(str(row.get("artifact", "")))
-        family_bucket_counts[family_indices[family], bucket_indices[bucket]] += 1
+        family_bucket_counts[family_indices[display_family], bucket_indices[bucket]] += 1
 
     out = figure_output_path(root, "scholarship_source_map")
     with apply_style(style):
-        family_count = max(1, len(family_order))
-        fig_height = max(7.2, 2.2 + 0.34 * family_count)
+        family_count = max(1, len(display_family_order))
+        fig_height = max(7.2, 2.8 + 0.52 * family_count)
         fig, axes = plt.subplots(
             1,
             3,
-            figsize=(12.6, fig_height),
-            gridspec_kw={"width_ratios": [1.45, 1.25, 1.08], "wspace": 0.48},
+            figsize=(14.8, fig_height),
+            gridspec_kw={"width_ratios": [1.6, 1.32, 1.16], "wspace": 0.52},
         )
         family_ax, bucket_ax, kind_ax = axes
 
         y_positions = np.arange(family_count)
-        family_values = [family_counts[family] for family in family_order]
+        family_values = [display_family_counts[family] for family in display_family_order]
         family_labels = [
             "\n".join(textwrap.wrap(family.replace("_", " "), width=24, break_long_words=False))
-            for family in family_order
+            for family in display_family_order
         ]
         family_ax.barh(y_positions, family_values, color=style.color("secondary"), alpha=0.86)
-        family_ax.set_yticks(y_positions, family_labels, fontsize=7.3)
+        family_ax.set_yticks(y_positions, family_labels, fontsize=style.font_size("dense"))
         family_ax.invert_yaxis()
         family_ax.set_xlabel("Source rows")
-        family_ax.set_title("Source families")
+        family_ax.set_title("Literature families\nwith load-bearing rows", fontsize=style.font_size("small"))
         style_grid(family_ax, style)
         for y, value in zip(y_positions, family_values, strict=True):
-            family_ax.text(value + 0.08, y, str(value), va="center", fontsize=7.5, color=style.color("primary"))
+            family_ax.text(value + 0.08, y, str(value), va="center", fontsize=style.font_size("dense"), color=style.color("primary"))
 
         bucket_ax.imshow(family_bucket_counts, cmap="YlGnBu", aspect="auto")
         bucket_ax.set_xticks(
             np.arange(len(buckets)),
             ["\n".join(textwrap.wrap(bucket, width=13, break_long_words=False)) for bucket in buckets],
-            fontsize=7.2,
+            fontsize=style.font_size("dense"),
             rotation=28,
             ha="right",
         )
         bucket_ax.tick_params(axis="y", labelleft=False, left=False)
-        bucket_ax.set_title("Artifact buckets")
+        bucket_ax.set_title("Artifact buckets\nwhere citations bind", fontsize=style.font_size("small"))
         for i in range(family_bucket_counts.shape[0]):
             for j in range(family_bucket_counts.shape[1]):
                 value = int(family_bucket_counts[i, j])
                 if value:
-                    bucket_ax.text(j, i, str(value), ha="center", va="center", fontsize=7.3, color="#111827")
+                    bucket_ax.text(j, i, str(value), ha="center", va="center", fontsize=style.font_size("dense"), color="#111827")
         kind_order = [kind for kind, _count in kind_counts.most_common()]
         kind_values = [kind_counts[kind] for kind in kind_order]
         kind_positions = np.arange(len(kind_order))
@@ -1019,14 +1282,14 @@ def figure_scholarship_source_map(project_root: Path) -> Path:
         kind_ax.set_yticks(
             kind_positions,
             ["\n".join(textwrap.wrap(kind.replace("_", " "), width=18, break_long_words=False)) for kind in kind_order],
-            fontsize=7.2,
+            fontsize=style.font_size("dense"),
         )
         kind_ax.invert_yaxis()
         kind_ax.set_xlabel("Rows")
-        kind_ax.set_title("Source kinds")
+        kind_ax.set_title("Primary and contextual\nsource types", fontsize=style.font_size("small"))
         style_grid(kind_ax, style)
         for y, value in zip(kind_positions, kind_values, strict=True):
-            kind_ax.text(value + 0.08, y, str(value), va="center", fontsize=7.3, color=style.color("primary"))
+            kind_ax.text(value + 0.08, y, str(value), va="center", fontsize=style.font_size("dense"), color=style.color("primary"))
 
         summary = (
             f"{matrix.get('source_count', 0)} sources, "
@@ -1034,12 +1297,12 @@ def figure_scholarship_source_map(project_root: Path) -> Path:
             f"{matrix.get('method_role_count', 0)} method roles, "
             f"connected={matrix.get('all_sources_connected')}"
         )
-        fig.suptitle("Scholarship source map", x=0.01, ha="left", fontsize=13, color=style.color("primary"))
+        fig.suptitle("Scholarship source map: print summary of bound citation families", x=0.01, ha="left", fontsize=style.font_size("title"), color=style.color("primary"))
         fig.text(
             0.01,
             0.015,
             f"{summary}. Row-level bindings: output/data/scholarship_source_matrix.json",
-            fontsize=8.2,
+            fontsize=style.font_size("source"),
             color=style.color("muted"),
         )
         fig.subplots_adjust(left=0.17, right=0.985, top=0.89, bottom=0.13, wspace=0.48)
@@ -1067,14 +1330,10 @@ def figure_graphical_abstract(project_root: Path) -> Path:
     from manuscript.sheaf.counts import structural_counts
 
     counts = structural_counts(root)
-    scholarship = _json_or_empty(root / "output" / "data" / "scholarship_source_matrix.json")
-    dependency = _json_or_empty(root / "output" / "data" / "validation_dependency_graph.json")
     variables = _json_or_empty(root / "output" / "data" / "manuscript_variables.json")
-    validation = _json_or_empty(root / "output" / "reports" / "validation_report.json")
     fp = root / "output" / "data" / "firstprinciples"
     energy_d = _json_or_empty(fp / "energy_demo.json")
     classroom_d = _json_or_empty(fp / "classroom.json")
-    empirical_d = _json_or_empty(fp / "empirical_benchmark.json")
     vfe_d = energy_d.get("vfe_at_prior") or {}
     efe_d = energy_d.get("efe") or {}
 
@@ -1084,93 +1343,71 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         except (TypeError, ValueError):
             return "--"
 
-    _ = (scholarship, dependency, validation)  # retained inputs; numbers now sourced from firstprinciples artifacts
+    def _i(value: object) -> str:
+        try:
+            return str(int(value))  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            return "--"
+
     out = figure_output_path(root, "graphical_abstract")
 
-    background = "#eef2ff"
+    def _v(name: str) -> object:
+        return variables.get(name, counts.get(name))
+
+    background = "#eaf2ff"
     with apply_style(style):
-        fig = plt.figure(figsize=(15.0, 7.6), facecolor=background)
+        fig = plt.figure(figsize=(10.5, 10.5), facecolor=background)
         ax = fig.add_axes((0.0, 0.0, 1.0, 1.0))
-        ax.set_xlim(0, 14.0)
-        ax.set_ylim(0, 7.0)
+        ax.set_xlim(0, 10.0)
+        ax.set_ylim(0, 10.0)
         ax.axis("off")
         ax.set_facecolor(background)
 
-        ax.fill([0, 14, 14, 0], [0, 0, 1.55, 0.85], color="#dbeafe", alpha=0.82)
-        ax.fill([0, 14, 14, 0], [5.65, 6.2, 7, 7], color="#111827", alpha=0.96)
-        ax.fill([5.5, 14, 14, 8.9], [0, 0, 3.0, 1.9], color="#ccfbf1", alpha=0.58)
-        ax.fill([0, 4.8, 7.3, 0], [1.1, 2.0, 7, 7], color="#fef3c7", alpha=0.36)
-
-        for x, y, radius, color in [
-            (1.25, 5.15, 0.18, "#2563eb"),
-            (2.5, 2.02, 0.13, "#0f766e"),
-            (5.35, 5.06, 0.14, "#7c3aed"),
-            (9.18, 5.08, 0.16, "#b45309"),
-            (12.18, 2.18, 0.14, "#0f766e"),
-        ]:
-            ax.add_patch(Circle((x, y), radius, facecolor=color, edgecolor="white", linewidth=1.0, alpha=0.9))
+        ax.add_patch(Rectangle((0, 0), 10.0, 10.0, facecolor=background, edgecolor="none"))
+        ax.add_patch(Polygon([(0, 0), (10, 0), (10, 2.3), (0, 1.55)], closed=True, color="#ccfbf1", alpha=0.76))
+        ax.add_patch(Polygon([(0, 8.15), (10, 8.52), (10, 10), (0, 10)], closed=True, color="#0f172a", alpha=0.985))
+        ax.add_patch(Polygon([(0, 1.55), (3.35, 2.2), (4.35, 10), (0, 10)], closed=True, color="#fff7ed", alpha=0.58))
+        ax.add_patch(Polygon([(6.25, 0), (10, 0), (10, 6.15), (7.8, 5.72)], closed=True, color="#eef2ff", alpha=0.80))
+        ax.add_patch(Polygon([(2.8, 3.8), (10, 3.25), (10, 8.52), (4.3, 8.12)], closed=True, color="#dbeafe", alpha=0.47))
 
         ax.text(
-            0.55,
-            6.48,
-            "On-Policy Distillation is Active Inference",
-            fontsize=26,
+            0.48,
+            9.42,
+            "OPD = Active Inference",
+            fontsize=31,
             fontweight="bold",
             color="white",
             va="center",
         )
         ax.text(
-            0.58,
-            6.08,
-            "The variational posterior generates its own observations; the generative model is conditioned on privileged beliefs.",
-            fontsize=12.5,
+            0.50,
+            8.96,
+            "student rollouts make reverse KL a free-energy objective",
+            fontsize=15.5,
             color="#dbeafe",
             va="center",
         )
-        ax.text(
-            13.45,
-            6.42,
-            f"{counts['sheaf_track_count']} tracks",
-            fontsize=13,
-            fontweight="bold",
-            color="#bfdbfe",
-            ha="right",
-            va="center",
-        )
 
-        hub_x, hub_y = 7.0, 3.65
-        ax.add_patch(Circle((hub_x, hub_y), 1.05, facecolor="#111827", edgecolor="#93c5fd", linewidth=2.4))
-        ax.add_patch(Circle((hub_x, hub_y), 0.74, facecolor="#1e3a8a", edgecolor="#c7d2fe", linewidth=1.4))
-        ax.text(hub_x, hub_y + 0.2, "reverse KL", fontsize=13, fontweight="bold", color="white", ha="center")
-        ax.text(hub_x, hub_y - 0.1, "= free energy", fontsize=11, color="#dbeafe", ha="center")
-        ax.text(
-            hub_x,
-            hub_y - 0.5,
-            r"$D_{KL}(\pi_S\|\pi_T)=F$",
-            fontsize=8.6,
-            color="#bfdbfe",
-            ha="center",
-        )
-
-        def card(
+        def evidence_card(
             x: float,
             y: float,
             width: float,
             height: float,
             title: str,
+            eyebrow: str,
             lines: list[str],
             color: str,
-            anchor: tuple[float, float],
+            metric: tuple[str, str] | None = None,
         ) -> None:
             ax.add_patch(
                 FancyBboxPatch(
-                    (x + 0.06, y - 0.07),
+                    (x + 0.05, y - 0.06),
                     width,
                     height,
-                    boxstyle="round,pad=0.08",
+                    boxstyle="round,pad=0.06,rounding_size=0.10",
                     linewidth=0,
                     facecolor="#0f172a",
-                    alpha=0.12,
+                    alpha=0.16,
                 )
             )
             ax.add_patch(
@@ -1178,134 +1415,153 @@ def figure_graphical_abstract(project_root: Path) -> Path:
                     (x, y),
                     width,
                     height,
-                    boxstyle="round,pad=0.08",
-                    linewidth=1.8,
+                    boxstyle="round,pad=0.06,rounding_size=0.10",
+                    linewidth=1.55,
                     edgecolor=color,
-                    facecolor="#ffffff",
+                    facecolor="#fffefe",
                 )
             )
-            ax.add_patch(
-                FancyBboxPatch(
-                    (x + 0.16, y + height - 0.48),
-                    0.62,
-                    0.2,
-                    boxstyle="round,pad=0.04",
-                    linewidth=0,
-                    facecolor=color,
-                    alpha=0.92,
-                )
-            )
-            ax.text(x + 0.18, y + height - 0.82, title, fontsize=12.8, fontweight="bold", color=color)
+            ax.add_patch(Rectangle((x, y + height - 0.16), width, 0.16, facecolor=color, edgecolor="none"))
+            ax.text(x + 0.20, y + height - 0.46, eyebrow.upper(), fontsize=style.font_size("dense"), color="#64748b", fontweight="bold")
+            ax.text(x + 0.20, y + height - 0.82, title, fontsize=16.2, fontweight="bold", color=color)
+            text_top = y + height - 1.12
             for line_idx, line in enumerate(lines):
                 ax.text(
-                    x + 0.2,
-                    y + height - 1.2 - line_idx * 0.36,
-                    textwrap.fill(line, width=30),
-                    fontsize=9.6,
+                    x + 0.20,
+                    text_top - line_idx * 0.35,
+                    textwrap.fill(line, width=28),
+                    fontsize=10.9,
                     color=style.color("primary"),
                     va="top",
                 )
-            ax.add_patch(
-                FancyArrowPatch(
-                    anchor,
-                    (hub_x, hub_y),
-                    arrowstyle="-|>",
-                    mutation_scale=16,
-                    linewidth=1.9,
-                    color=color,
-                    alpha=0.78,
-                    connectionstyle="arc3,rad=0.12",
+            if metric is not None:
+                ax.add_patch(
+                    FancyBboxPatch(
+                        (x + width - 1.35, y + 0.12),
+                        1.13,
+                        0.62,
+                        boxstyle="round,pad=0.04,rounding_size=0.09",
+                        linewidth=0,
+                        facecolor=color,
+                        alpha=0.94,
+                    )
                 )
-            )
+                ax.text(x + width - 0.785, y + 0.52, metric[0], fontsize=14.6, fontweight="bold", color="white", ha="center")
+                ax.text(x + width - 0.785, y + 0.25, metric[1], fontsize=style.font_size("dense"), color="#f8fafc", ha="center")
 
-        card(
-            0.72,
-            3.08,
-            3.25,
-            2.18,
-            "Correspondence",
+        evidence_card(
+            0.45,
+            5.85,
+            3.65,
+            2.25,
+            "Analytical oracle",
+            "closed form",
             [
-                "teacher pi_T = generative model p(o,s)",
-                "student pi_S = posterior q(s)",
-                "privileged context = Markov blanket",
+                "F_target: 0 nats",
+                f"I(lambda) max: {_f(_v('ising_mi_saturation'), '.3f')} nats",
+                f"sweep RMSE: {_f(_v('sweep_rmse_mi'), '.1e')}",
             ],
             style.color("secondary"),
-            (3.97, 4.15),
+            ("0", "target F"),
         )
-        card(
-            0.94,
-            0.74,
-            3.25,
-            2.12,
-            "Two-agent classroom",
+        evidence_card(
+            0.45,
+            1.05,
+            3.65,
+            2.35,
+            "Student rollouts",
+            "pymdp + classroom",
             [
-                f"teacher entropy {_f(classroom_d.get('teacher_mean_belief_entropy'), '.3f')} nats",
-                f"student entropy {_f(classroom_d.get('student_mean_belief_entropy'), '.3f')} nats",
-                f"distillation signal {_f(classroom_d.get('mean_reverse_kl'), '.2f')} nats",
+                f"cue observed: step {_i(_v('si_tmaze_cue_observed_step'))}",
+                f"entropy drop: {_f(_v('si_tmaze_policy_entropy_drop_after_cue'), '.3f')} nats",
+                f"teacher/student H: {_f(_v('classroom_teacher_belief_entropy'), '.3f')} / {_f(_v('classroom_student_belief_entropy'), '.3f')}",
             ],
             style.color("accent"),
-            (4.19, 1.92),
+            (_f(classroom_d.get("mean_reverse_kl"), ".2f"), "mean RKL"),
         )
-        card(
-            9.8,
-            3.08,
-            3.28,
-            2.18,
-            "Energy decomposition",
+        evidence_card(
+            5.90,
+            5.85,
+            3.65,
+            2.25,
+            "Energy bridge",
+            "VFE / EFE",
             [
-                f"VFE = complexity {_f(vfe_d.get('complexity'), '.2f')} - accuracy {_f(vfe_d.get('accuracy'), '.2f')}",
-                f"EFE risk {_f(efe_d.get('risk'), '.2f')} + ambiguity {_f(efe_d.get('ambiguity'), '.2f')}",
-                f"epistemic {_f(efe_d.get('epistemic_value'), '.2f')} + pragmatic {_f(efe_d.get('pragmatic_value'), '.2f')}",
+                "reverse KL is VFE",
+                f"prior VFE: {_f(vfe_d.get('vfe_complexity_accuracy'), '.2f')} nats",
+                f"risk + ambiguity: {_f(efe_d.get('efe_risk_ambiguity'), '.2f')}",
             ],
             "#7c3aed",
-            (9.8, 4.15),
+            (_f(efe_d.get("efe_risk_ambiguity"), ".2f"), "EFE nats"),
         )
-        card(
-            9.63,
-            0.74,
-            3.36,
-            2.12,
-            "Empirical (reported)",
+        evidence_card(
+            5.90,
+            1.05,
+            3.65,
+            2.35,
+            "Lean + gates",
+            "fail closed",
             [
-                f"AIME'24 OPD {_f(empirical_d.get('opd_aime24'), '.1f')} vs RL {_f(empirical_d.get('rl_aime24'), '.1f')}",
-                f"{_f(empirical_d.get('compute_reduction_factor'), '.1f')}x less compute",
-                "dense per-token vs sparse scalar reward",
+                f"{_i(_v('sheaf_track_count'))} tracks; {_i(_v('coverage_bound'))} bound cells",
+                f"{_i(_v('sheaf_laws_verified'))}/{_i(_v('sheaf_law_count'))} laws; {_i(_v('counterexample_count'))} controls",
+                f"{_i(_v('token_provenance_count'))} tokens; {_i(_v('hardcoded_variable_issue_count'))} issues",
             ],
             style.color("pass"),
-            (9.63, 1.92),
+            (_i(_v("proof_extraction_theorem_count")), "Lean proofs"),
         )
 
-        gate_labels = ["analysis", "figures", "gluing", "claims", "PDF/HTML", "copy-out"]
-        ax.text(4.74, 1.07, "deterministic publication spine", fontsize=9.4, fontweight="bold", color="#1f2937")
-        for idx, label in enumerate(gate_labels):
-            x = 4.74 + idx * 0.78
-            y = 0.56
-            face = "#ecfdf5" if idx < len(gate_labels) - 1 else "#dbeafe"
+        center = (5.0, 4.72)
+        ax.add_patch(Circle(center, 1.38, facecolor="#ffffff", edgecolor="#0f172a", linewidth=2.0, alpha=0.96, zorder=3))
+        ax.add_patch(Circle(center, 1.10, facecolor="#0f172a", edgecolor="#93c5fd", linewidth=1.25, alpha=0.985, zorder=4))
+        ax.text(5.0, 5.05, "correspondence", fontsize=11.8, fontweight="bold", color="#bfdbfe", ha="center", zorder=5)
+        ax.text(5.0, 4.73, "reverse KL", fontsize=18.5, fontweight="bold", color="white", ha="center", zorder=5)
+        ax.text(5.0, 4.39, "= free energy", fontsize=14.8, fontweight="bold", color="white", ha="center", zorder=5)
+        ax.text(5.0, 4.05, "active sampling loop", fontsize=style.font_size("small"), color="#dbeafe", ha="center", zorder=5)
+
+        loop_nodes = [
+            (5.0, 6.30, "teacher", "p(o,s)", "#f59e0b"),
+            (6.55, 4.72, "student", "q(s)", style.color("secondary")),
+            (5.0, 3.12, "rollouts", "o ~ q", style.color("accent")),
+            (3.45, 4.72, "gates", "PDF", style.color("pass")),
+        ]
+        for idx, (x, y, title, body, color) in enumerate(loop_nodes):
+            ax.add_patch(Circle((x, y), 0.47, facecolor="#ffffff", edgecolor=color, linewidth=2.0, zorder=6))
+            ax.add_patch(Circle((x, y), 0.28, facecolor=color, edgecolor="white", linewidth=0.8, zorder=7))
+            ax.text(x, y + 0.02, str(idx + 1), fontsize=12.8, fontweight="bold", color="white", ha="center", va="center", zorder=8)
+            if title == "teacher":
+                title_y = y + 0.64
+                body_y = y + 0.39
+            else:
+                title_y = y - 0.67
+                body_y = y - 0.92
+            ax.text(x, title_y, title, fontsize=10.2, fontweight="bold", color=color, ha="center", zorder=8)
+            ax.text(x, body_y, body, fontsize=style.font_size("dense"), color="#334155", ha="center", zorder=8)
+
+        for start, end, rad in [
+            ((5.45, 6.18), (6.38, 5.15), -0.18),
+            ((6.38, 4.30), (5.45, 3.25), -0.18),
+            ((4.55, 3.25), (3.62, 4.30), -0.18),
+            ((3.62, 5.15), (4.55, 6.18), -0.18),
+        ]:
             ax.add_patch(
-                FancyBboxPatch(
-                    (x, y),
-                    0.66,
-                    0.32,
-                    boxstyle="round,pad=0.035",
-                    linewidth=0.9,
-                    edgecolor=style.color("pass"),
-                    facecolor=face,
+                FancyArrowPatch(
+                    start,
+                    end,
+                    arrowstyle="-|>",
+                    mutation_scale=15,
+                    linewidth=1.7,
+                    color="#475569",
+                    alpha=0.72,
+                    connectionstyle=f"arc3,rad={rad}",
+                    zorder=5,
                 )
             )
-            ax.text(x + 0.33, y + 0.16, label, fontsize=6.5, ha="center", va="center", color="#111827")
-            if idx < len(gate_labels) - 1:
-                ax.annotate(
-                    "",
-                    xy=(x + 0.78, y + 0.16),
-                    xytext=(x + 0.67, y + 0.16),
-                    arrowprops={"arrowstyle": "->", "color": "#64748b", "lw": 0.9},
-                )
 
         ax.text(
-            13.36,
-            0.32,
-            "generated from repository artifacts",
-            fontsize=7.5,
+            9.52,
+            0.36,
+            "generated from repository artifacts; toy scope only",
+            fontsize=style.font_size("source"),
             color="#334155",
             ha="right",
         )

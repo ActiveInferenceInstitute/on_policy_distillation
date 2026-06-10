@@ -62,6 +62,17 @@ claims:
   evidence:
     field: claim_count
     min: 1
+- id: evidence_field_index
+  statement: Evidence-field index maps every typed claim evidence predicate into the canonical validation spine.
+  path: output/data/evidence_field_index.json
+  section: methods_sheaf
+  tracks:
+  - evidence_fields
+  - manuscript
+  - sheaf
+  evidence:
+    field: all_fields_mapped
+    equals: true
 - id: validation_dependency_graph
   statement: Validation dependency graph has no producer-configuration issues.
   path: output/data/validation_dependency_graph.json
@@ -335,7 +346,7 @@ claims:
 - id: composed_methods_sheaf
   statement: Methods sheaf section binds figure, generated layer tables, and semantic
     gluing signposts.
-  path: manuscript/08_methods_sheaf.md
+  path: manuscript/19_supplement_reproducibility.md
   section: methods_sheaf
   tracks:
   - manuscript
@@ -388,7 +399,8 @@ claims:
     - si_tmaze
     - graph_world
 - id: si_policy_grid_complete
-  statement: Policy grid artifact covers the deterministic planners, horizons, and seeds.
+  statement: Policy grid artifact covers the deterministic planners, horizons, and
+    seeds.
   path: output/data/si_policy_grid.json
   section: results_invariants
   tracks:
@@ -718,16 +730,6 @@ claims:
     - causal_ablation
     - artifact_license
     - release_notes
-- id: evidence_fields_mapped
-  statement: Evidence-field index maps typed claim fields to generated artifacts
-    used by validation gates.
-  path: output/data/evidence_field_index.json
-  section: methods_sheaf
-  tracks:
-  - evidence_fields
-  evidence:
-    field: all_fields_mapped
-    equals: true
 - id: model_checking_exhaustive
   statement: Canonical model-checking witnesses record finite exhaustive checks without
     counterexamples.
@@ -956,3 +958,116 @@ claims:
   evidence:
     field: all_attested
     equals: true
+- id: fp_classroom_privileged_entropy_advantage
+  statement: Two-agent classroom artifact certifies the privileged entropy advantage
+    (teacher mean belief entropy at or below student) bound to its per-decision series.
+  path: output/data/firstprinciples/classroom.json
+  section: results_si_tmaze
+  tracks:
+  - pymdp
+  - simulation
+  evidence:
+    field: privileged_advantage
+    predicate: is_true
+- id: fp_classroom_decision_rows
+  statement: Classroom artifact records at least two per-decision distillation rows.
+  path: output/data/firstprinciples/classroom.json
+  section: results_si_tmaze
+  tracks:
+  - pymdp
+  - simulation
+  evidence:
+    field: decision_count
+    min: 2
+- id: fp_classroom_entropy_series
+  statement: Classroom artifact persists the per-decision teacher belief-entropy series
+    that the inferential statistics derive from.
+  path: output/data/firstprinciples/classroom.json
+  section: results_si_tmaze
+  tracks:
+  - pymdp
+  - simulation
+  evidence:
+    field: teacher_belief_entropies
+    predicate: non_empty
+- id: fp_parallel_frameworks_agree
+  statement: The two-framework parallel demonstration certifies that the jax-distilled
+    student matches the active-inference posterior within tolerance.
+  path: output/data/firstprinciples/parallel_demo.json
+  section: methods_pymdp
+  tracks:
+  - pymdp
+  - simulation
+  evidence:
+    field: frameworks_agree
+    predicate: is_true
+- id: fp_exposure_bias_gap
+  statement: Exposure-bias demonstration records a strictly positive terminal recovery gap
+    between on-policy and off-policy students.
+  path: output/data/firstprinciples/exposure_bias_demo.json
+  section: intro_contributions
+  tracks:
+  - simulation
+  evidence:
+    field: gap.terminal_gap
+    predicate: positive
+- id: fp_divergence_values
+  statement: Divergence-geometry demonstration records a strictly positive reverse KL
+    for the canonical teacher/student pair.
+  path: output/data/firstprinciples/divergence_demo.json
+  section: methods_analytical
+  tracks:
+  - analytical
+  evidence:
+    field: reverse_kl
+    predicate: positive
+- id: fp_statistics_from_classroom
+  statement: Inferential statistics artifact is internally consistent, with
+    sample size, interval, effect-size, and permutation-test metadata derived
+    from the measured classroom entropy series.
+  path: output/data/firstprinciples/statistics_demo.json
+  section: results_invariants
+  tracks:
+  - simulation
+  evidence:
+    field: ok
+    predicate: is_true
+- id: fp_gkd_exposure_gap
+  statement: GKD sweep records that on-policy evaluation reveals more loss than
+    off-policy evaluation under the same teacher signal.
+  path: output/data/firstprinciples/gkd_demo.json
+  section: results_si_tmaze
+  tracks:
+  - simulation
+  evidence:
+    field: ok
+    predicate: is_true
+- id: fp_variational_em_monotone
+  statement: Variational-EM simulator certifies monotone free-energy descent.
+  path: output/data/firstprinciples/variational_em_demo.json
+  section: results_si_tmaze
+  tracks:
+  - simulation
+  evidence:
+    field: monotone_descent
+    predicate: is_true
+- id: fp_diversity_tradeoff
+  statement: Diversity sweep artifact is internally consistent (collapse observed under
+    sharpening with valid pass-at-k rows).
+  path: output/data/firstprinciples/diversity_demo.json
+  section: results_si_tmaze
+  tracks:
+  - simulation
+  evidence:
+    field: ok
+    predicate: is_true
+- id: fp_adaptive_between_extremes
+  statement: Adaptive-divergence controller settles strictly between all-reverse and
+    all-forward extremes.
+  path: output/data/firstprinciples/adaptive_demo.json
+  section: results_si_tmaze
+  tracks:
+  - simulation
+  evidence:
+    field: between_extremes
+    predicate: is_true

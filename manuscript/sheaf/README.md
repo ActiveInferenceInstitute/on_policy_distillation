@@ -5,7 +5,6 @@ Fragment tracks and IMRAD section bindings live in this directory. The sheaf is 
 ## Commands
 
 ```bash
-cd projects/templates/template_active_inference
 uv run python scripts/compose_manuscript.py
 uv run python scripts/compose_manuscript.py --validate-only --strict
 uv run python scripts/compose_manuscript.py --list-tracks
@@ -30,7 +29,7 @@ Registry track count and appendix proof size are **not hard-coded in prose**. Co
 
 Compose emits:
 
-- Flat sections under `manuscript/` (e.g. `08_methods_sheaf.md`)
+- Flat sections under `manuscript/` (e.g. `19_supplement_reproducibility.md`)
 - `output/data/sheaf_coverage_matrix.json`
 - `output/figures/sheaf_coverage_heatmap.png`
 - Regenerated `manuscript/00_00_sheaf_coverage.md`

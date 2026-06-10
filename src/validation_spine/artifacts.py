@@ -13,6 +13,7 @@ import shutil
 import stat as stat_module
 import subprocess
 import tempfile
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -149,17 +150,23 @@ def _deterministic_seed(root: Path) -> int:
     return int(seed)
 
 
-def _source_commit(root: Path) -> str:
+@lru_cache(maxsize=8)
+def _source_commit_for_root(root: str) -> str:
     try:
         result = subprocess.run(
-            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            ["git", "-C", root, "rev-parse", "HEAD"],
             check=True,
             capture_output=True,
             text=True,
+            timeout=2,
         )
-    except (OSError, subprocess.CalledProcessError):
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return "unknown"
     return result.stdout.strip() or "unknown"
+
+
+def _source_commit(root: Path) -> str:
+    return _source_commit_for_root(str(root.resolve()))
 
 
 def _artifact_record(root: Path, rel: str, producer: str) -> dict[str, Any]:

@@ -20,6 +20,7 @@ def _run_script(project_root: Path, script: str, *args: str) -> subprocess.Compl
     )
 
 
+@pytest.mark.render_slow
 def test_write_belief_trajectory_gif_uses_trace_artifact(tmp_path: Path) -> None:
     from visualizations.animation import write_belief_trajectory_gif
 
@@ -62,6 +63,9 @@ def test_render_animation_skip_exits_clean(project_root: Path) -> None:
     assert "skipped" in result.stdout.lower()
 
 
+@pytest.mark.render_slow
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_render_animation_writes_gif_when_si_figure_present(project_root: Path) -> None:
     from analysis import run_analysis
     from simulation.si_runner import pymdp_available, run_and_persist

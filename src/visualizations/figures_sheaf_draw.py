@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import textwrap
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -39,7 +40,7 @@ def _draw_imrad_group_labels(
     for imrad, start_row, end_row in groups:
         mid_y = (start_row + end_row) / 2.0 + 0.5
         ax.text(
-            -0.55,
+            -1.15,
             mid_y,
             _imrad_group_label(imrad),
             transform=ax.transData,
@@ -62,6 +63,7 @@ def draw_coverage_heatmap(
     show_row_pct: bool = False,
     boundary_width: float = 1.0,
     label_fontsize: int = 8,
+    show_group_labels: bool = True,
 ) -> None:
     from matplotlib.colors import ListedColormap
 
@@ -90,9 +92,13 @@ def draw_coverage_heatmap(
     ax.set_xticks(np.arange(len(payload.track_ids)) + 0.5)
     ax.set_xticklabels(payload.track_ids, rotation=45, ha="right", fontsize=label_fontsize)
     ax.set_yticks(np.arange(len(payload.y_labels)) + 0.5)
-    ax.set_yticklabels(payload.y_labels, fontsize=label_fontsize)
+    wrapped_y_labels = [
+        "\n".join(textwrap.wrap(label, width=28, break_long_words=False)) for label in payload.y_labels
+    ]
+    ax.set_yticklabels(wrapped_y_labels, fontsize=label_fontsize)
     ax.set_xlabel("Fragment tracks", fontsize=label_fontsize)
-    _draw_imrad_group_labels(ax, payload, style=style, label_fontsize=label_fontsize)
+    if show_group_labels:
+        _draw_imrad_group_labels(ax, payload, style=style, label_fontsize=label_fontsize)
     ax.set_title(title or cfg.report.title, fontsize=label_fontsize + 1, pad=8)
     if show_row_pct and cfg.heatmap.show_row_coverage_pct:
         n_cols = len(payload.track_ids)
@@ -108,7 +114,7 @@ def draw_coverage_heatmap(
                     f"{pct:.0f}%",
                     va="center",
                     ha="right",
-                    fontsize=7,
+                    fontsize=style.font_size("dense"),
                     color=style.color("muted"),
                 )
     if show_legend:
@@ -120,10 +126,10 @@ def draw_coverage_heatmap(
         ax.legend(
             legend_handles,
             ["P — present (bound + file exists)", "— absent (not bound)", "M — missing (bound, absent)"],
-            loc="upper center",
-            bbox_to_anchor=(0.5, -0.18),
+            loc="upper left",
+            bbox_to_anchor=(1.02, 1.0),
             ncol=1,
-            fontsize=7,
+            fontsize=style.font_size("annotation"),
             frameon=False,
         )
 
@@ -151,14 +157,14 @@ def draw_track_layers_panel(ax, project_root: Path) -> bool:
         alpha=0.85,
     )
     for idx, spec in enumerate(specs):
-        optional = " (optional)" if spec.optional else ""
+        optional = " optional" if spec.optional else ""
         ax.text(
             0.02,
             idx,
-            f"{spec.order:02d}  {spec.id}  —  {spec.label}{optional}",
+            f"{spec.order:02d}  {spec.id}{optional}",
             va="center",
             ha="left",
-            fontsize=8,
+            fontsize=style.font_size("small"),
             color=style.color("primary"),
             fontweight="bold",
         )
@@ -168,23 +174,23 @@ def draw_track_layers_panel(ax, project_root: Path) -> bool:
             spec.renderer,
             va="center",
             ha="right",
-            fontsize=7,
+            fontsize=style.font_size("dense"),
             color=style.color("muted"),
             family="monospace",
         )
-    ax.set_yticks(y_pos)
-    ax.set_yticklabels([spec.id for spec in specs], fontsize=8)
+    ax.set_yticks([])
     ax.set_xlim(0.0, 1.0)
     ax.set_xticks([])
     ax.invert_yaxis()
-    ax.set_title("Fragment track registry (compose order)", fontsize=9, pad=8)
+    ax.set_title("Fragment track registry (compose order)", fontsize=style.font_size("small"), pad=8)
     ax.text(
         0.02,
-        -0.55,
+        0.985,
         "Blue = required track · Gray = optional",
         transform=ax.transAxes,
-        fontsize=7,
+        fontsize=style.font_size("source"),
         color=style.color("muted"),
+        va="top",
     )
     return True
 

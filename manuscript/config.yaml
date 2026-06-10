@@ -25,9 +25,9 @@ front_matter:
   graphical_abstract:
     enabled: true
     image: output/figures/graphical_abstract.png
-    caption: "Graphical abstract: the active-inference / on-policy-distillation correspondence, executable two-agent classroom evidence, sheaf composition, and validation gates."
+    caption: "Graphical abstract: the active-inference / on-policy-distillation correspondence, executable two-agent classroom evidence, energy decomposition, and Lean-backed validation gates."
     width: "0.96\\textwidth"
-    max_height: "0.42\\textheight"
+    max_height: "0.58\\textheight"
 
 keywords:
   - "on-policy distillation"
@@ -42,10 +42,10 @@ keywords:
 metadata:
   license: "MIT"
   language: "en"
-  # Dense, config-driven page margins (single source of truth — do not also set
+  # Dense, config-driven page margins with extra bottom clearance (single source of truth — do not also set
   # \geometry in preamble.md). Forwarded to pandoc as `-V geometry:` by
   # infrastructure/rendering/_pdf_combined_pandoc.py::build_pandoc_tex_command.
-  geometry: "margin=0.4in"
+  geometry: "margin=0.5in,bottom=0.9in"
 
 render:
   formats:

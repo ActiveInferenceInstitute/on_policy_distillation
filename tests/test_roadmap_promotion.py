@@ -30,23 +30,43 @@ def _relative_posix(path: Path, root: Path) -> str:
     return path.relative_to(root).as_posix()
 
 
-def test_promoted_roadmap_artifacts_are_written_and_valid(project_root: Path) -> None:
+@pytest.mark.artifact_slow
+def test_promoted_roadmap_artifacts_are_present_and_valid(project_root: Path) -> None:
     from roadmap_tracks import (
         validate_formal_interop_artifacts,
         validate_integration_audit_artifacts,
         validate_sheaf_track_artifacts,
         validate_toy_sweep_artifacts,
-        write_formal_interop_artifacts,
-        write_integration_audit_artifacts,
-        write_sheaf_track_artifacts,
-        write_toy_sweep_artifacts,
     )
 
     ensure_gate_artifacts(project_root)
-    toy = write_toy_sweep_artifacts(project_root)
-    formal = write_formal_interop_artifacts(project_root)
-    audit = write_integration_audit_artifacts(project_root)
-    sheaf = write_sheaf_track_artifacts(project_root)
+    toy = {
+        "sensitivity": project_root / "output" / "data" / "sensitivity_sweep.json",
+        "analytical_assumptions": project_root / "output" / "data" / "analytical_assumption_index.json",
+        "state_space_catalog": project_root / "output" / "data" / "state_space_catalog.json",
+        "causal_ablation": project_root / "output" / "data" / "causal_ablation_matrix.json",
+    }
+    formal = {
+        "model_checking": project_root / "output" / "reports" / "model_checking_witnesses.json",
+        "proof_extraction": project_root / "output" / "data" / "proof_extraction_index.json",
+    }
+    audit = {
+        "gate_index": project_root / "output" / "data" / "validation_gate_index.json",
+        "artifact_diffoscope": project_root / "output" / "reports" / "artifact_diffoscope.json",
+        "artifact_license": project_root / "output" / "reports" / "artifact_license_audit.json",
+        "release_notes": project_root / "output" / "reports" / "release_notes_evidence.json",
+    }
+    sheaf = {
+        "semantic": project_root / "output" / "data" / "sheaf_gluing_certificate.json",
+        "dependency": project_root / "output" / "data" / "validation_dependency_graph.json",
+        "evidence_fields": project_root / "output" / "data" / "evidence_field_index.json",
+        "release_bundle": project_root / "output" / "reports" / "release_bundle_manifest.json",
+        "theorem_traceability": project_root / "output" / "data" / "theorem_traceability_matrix.json",
+        "proof_dependency_graph": project_root / "output" / "data" / "proof_dependency_graph.json",
+        "state_transition_table": project_root / "output" / "data" / "state_transition_table.json",
+        "ablation_sensitivity_report": project_root / "output" / "reports" / "ablation_sensitivity_report.json",
+        "release_attestation": project_root / "output" / "reports" / "release_attestation.json",
+    }
 
     assert _relative_posix(toy["sensitivity"], project_root) == "output/data/sensitivity_sweep.json"
     assert _relative_posix(toy["analytical_assumptions"], project_root) == (
@@ -75,19 +95,27 @@ def test_promoted_roadmap_artifacts_are_written_and_valid(project_root: Path) ->
     assert _relative_posix(sheaf["release_attestation"], project_root) == "output/reports/release_attestation.json"
     topology = _load(project_root / "output" / "data" / "si_graph_world_topology_sweep.json")
     lean_graph = _load(project_root / "output" / "reports" / "lean_graph_world_inventory.json")
+    proof = _load(project_root / "output" / "data" / "proof_extraction_index.json")
     topology_ids = {row["topology"] for row in topology["rows"]}
     witnessed_ids = {row["topology"] for row in lean_graph["rows"] if row.get("kind") == "topology"}
     assert "loop5" in topology_ids
     assert topology_ids == witnessed_ids
     assert lean_graph["all_topologies_witnessed"] is True
+    proof_by_name = {row["theorem"]: row for row in proof["rows"]}
+    assert "tmaze_goal_absorbing" in proof_by_name
+    assert proof_by_name["tmaze_goal_absorbing"]["statement"].startswith("(action : Nat) :")
+    assert proof["theorem_count"] == proof["inventory_theorem_count"]
+    assert proof["all_inventory_theorems_extracted"] is True
+    assert proof["missing_inventory_theorems"] == []
+    assert proof["extra_extracted_theorems"] == []
     assert validate_toy_sweep_artifacts(project_root) == []
     assert validate_formal_interop_artifacts(project_root) == []
-    write_integration_audit_artifacts(project_root)
     assert validate_integration_audit_artifacts(project_root) == []
-    write_sheaf_track_artifacts(project_root)
     assert validate_sheaf_track_artifacts(project_root) == []
 
 
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_toy_sweep_negative_controls(project_root: Path) -> None:
     from roadmap_tracks import validate_toy_sweep_artifacts, write_toy_sweep_artifacts
 
@@ -181,6 +209,8 @@ def test_toy_sweep_negative_controls(project_root: Path) -> None:
             path.write_text(text, encoding="utf-8")
 
 
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_toy_sweep_uses_measured_policy_and_topology_trace_artifacts(project_root: Path) -> None:
     from roadmap_tracks import write_toy_sweep_artifacts
     from simulation.si_artifacts import write_policy_comparison, write_policy_posterior_grid
@@ -210,6 +240,8 @@ def test_toy_sweep_uses_measured_policy_and_topology_trace_artifacts(project_roo
     assert efe_terms["schema"] == "template_active_inference.si_efe_values.v1"
 
 
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_formal_interop_negative_controls(project_root: Path) -> None:
     from roadmap_tracks import validate_formal_interop_artifacts, write_formal_interop_artifacts
 
@@ -272,30 +304,30 @@ def test_formal_interop_negative_controls(project_root: Path) -> None:
         topology_sweep.write_text(originals[topology_sweep], encoding="utf-8")
 
         data = _load(proof)
-        data["rows"][0]["extracted"] = False
-        data["all_extracted"] = False
+        data["rows"] = [row for row in data["rows"] if row["theorem"] != "tmaze_goal_absorbing"]
+        data["theorem_count"] = len(data["rows"])
+        data["all_extracted"] = True
+        data["all_constructive"] = True
+        data["all_inventory_theorems_extracted"] = True
+        data["missing_inventory_theorems"] = []
         _write(proof, data)
-        assert any("proof_extraction_index.json" in issue for issue in validate_formal_interop_artifacts(project_root))
+        assert any("theorem inventory mismatch" in issue for issue in validate_formal_interop_artifacts(project_root))
     finally:
         for path, text in originals.items():
             path.write_text(text, encoding="utf-8")
         write_formal_interop_artifacts(project_root)
 
 
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_integration_audit_negative_controls(project_root: Path) -> None:
     from roadmap_tracks import (
         validate_integration_audit_artifacts,
         write_integration_audit_artifacts,
-        write_sheaf_track_artifacts,
     )
 
     ensure_gate_artifacts(project_root)
     write_integration_audit_artifacts(project_root)
-    # Establish this test's own preconditions: artifact_diffoscope / artifact_provenance are
-    # written by the sheaf-track pass and their rows derive from a fresh provenance build.
-    # ensure_gate_artifacts() is run-once per session, so a prior test could leave these stale;
-    # regenerate them here so the diffoscope-drift control below has a populated row to mutate.
-    write_sheaf_track_artifacts(project_root)
     paths = [
         project_root / "output" / "reports" / "stale_artifact_report.json",
         project_root / "output" / "data" / "manuscript_token_provenance.json",
@@ -416,6 +448,8 @@ def test_integration_audit_negative_controls(project_root: Path) -> None:
             path.write_text(text, encoding="utf-8")
 
 
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_cross_track_symbol_table_binds_type_shape_and_section_ontology(project_root: Path) -> None:
     from roadmap_tracks.integration_audit import build_cross_track_symbol_table
 
@@ -476,25 +510,70 @@ def test_proof_extraction_source_is_per_file(project_root: Path) -> None:
     assert by_name["ising_coupling_sum_zero"]["leading_tactic"] == "decide"
 
 
+@pytest.mark.artifact_slow
 def test_scholarship_matrix_has_row_level_negative_control(project_root: Path) -> None:
-    from roadmap_tracks import validate_scholarship_source_matrix, write_sheaf_track_artifacts
+    from roadmap_tracks.scholarship import (
+        build_scholarship_source_matrix,
+        validate_scholarship_source_matrix_payload,
+    )
 
-    ensure_gate_artifacts(project_root)
-    write_sheaf_track_artifacts(project_root)
-    path = project_root / "output" / "data" / "scholarship_source_matrix.json"
-    original = path.read_text(encoding="utf-8")
-    try:
-        data = json.loads(original)
-        assert validate_scholarship_source_matrix(project_root) == []
-        data["rows"][0]["cited_in_manuscript"] = False
-        data["rows"][0]["connected"] = True
-        data["all_sources_connected"] = True
-        path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        assert any("disconnected source rows" in issue for issue in validate_scholarship_source_matrix(project_root))
-    finally:
-        path.write_text(original, encoding="utf-8")
+    data = build_scholarship_source_matrix(project_root)
+    assert validate_scholarship_source_matrix_payload(data) == []
+    keys = {row["citation_key"] for row in data["rows"]}
+    assert {
+        "kullback1951information",
+        "qwen2025technical_report",
+        "thinkingmachines2025opd",
+        "cohen1988power",
+        "oh2026vopd",
+        "xing2026tropd",
+        "snell2022context_distillation",
+        "ye2026context_distillation",
+        "lazaridis2026edge_opd",
+        "li2026rethinking_opd",
+        "luo2026demystifying_opd",
+        "han2026adaptive_teacher_exposure",
+        "ke2019f_divergence_imitation",
+        "hernandezlobato2016blackbox_alpha",
+        "shrivastava2021mi_kd",
+        "fellows2018virel",
+        "vanoostrum2024discrete_active_inference",
+        "zhong2026sod",
+        "zhang2026opsdl",
+        "tian2026vicur",
+        "liu2026visual_advantage_opd",
+        "champion2024efe_unification",
+        "robinson2017sensor_sheaf",
+        "wu2024rethinking_kl_kd",
+    } <= keys
+    qwen = next(row for row in data["rows"] if row["citation_key"] == "qwen2025technical_report")
+    assert qwen["source_family"] == "empirical_reasoning_distillation_context"
+    assert qwen["connected"] is True
+
+    missing_new_source = json.loads(json.dumps(data))
+    missing_new_source["rows"] = [
+        row for row in missing_new_source["rows"] if row["citation_key"] != "oh2026vopd"
+    ]
+    missing_new_source["observed_sources"] = sorted(row["citation_key"] for row in missing_new_source["rows"])
+    missing_new_source["source_count"] = len(missing_new_source["rows"])
+    missing_new_source["all_expected_sources_present"] = True
+    assert any(
+        "source set is incomplete" in issue
+        for issue in validate_scholarship_source_matrix_payload(missing_new_source)
+    )
+
+    disconnected = json.loads(json.dumps(data))
+    disconnected["rows"][0]["cited_in_manuscript"] = False
+    disconnected["rows"][0]["connected"] = True
+    disconnected["all_sources_connected"] = True
+    assert any(
+        "disconnected source rows" in issue
+        for issue in validate_scholarship_source_matrix_payload(disconnected)
+    )
 
 
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_promoted_claims_have_falsifiable_negative_controls(project_root: Path) -> None:
     """Mutate a ROW (leaving the summary boolean true) and assert the gate still fails.
 

@@ -4,11 +4,16 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from manuscript.sheaf import compose_all_sections
 from orchestration.coverage_pipeline import ensure_coverage_artifacts
 from visualizations.figures import generate_all_figures
 
 
+@pytest.mark.render_slow
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_compose_then_figures_does_not_reemit_fresh_json(project_root: Path) -> None:
     compose_all_sections(project_root)
     json_path = project_root / "output" / "data" / "sheaf_coverage_matrix.json"

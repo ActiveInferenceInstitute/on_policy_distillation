@@ -89,6 +89,7 @@ def _all_one_direction(teachers: ArrayF, students: ArrayF, *, reverse: bool) -> 
 
 
 def build_payload() -> dict[str, object]:
+    """Build the canonical `firstprinciples.adaptive_demo` artifact payload."""
     teachers = np.array(
         [[0.80, 0.15, 0.05], [0.34, 0.33, 0.33], [0.10, 0.10, 0.80], [0.40, 0.35, 0.25]],
         dtype=np.float64,

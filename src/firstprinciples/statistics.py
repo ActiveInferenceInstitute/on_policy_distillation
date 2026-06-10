@@ -138,22 +138,56 @@ def paired_sign_test(a: Sequence[float], b: Sequence[float]) -> dict[str, float]
     return {"positive": float(pos), "negative": float(neg), "n": float(n), "p_value": float(p)}
 
 
-def build_payload() -> dict[str, object]:
-    """Statistics demo on a fixed paired dataset (teacher vs student belief entropy)."""
-    # Synthetic but illustrative: per-condition teacher and student belief entropies
-    # where the privileged teacher is consistently more certain (lower entropy).
-    teacher = [0.21, 0.25, 0.19, 0.27, 0.23, 0.20]
-    student = [0.34, 0.36, 0.31, 0.38, 0.33, 0.30]
+def build_payload(
+    teacher_entropy: Sequence[float],
+    student_entropy: Sequence[float],
+) -> dict[str, object]:
+    """Build the canonical ``statistics_demo`` artifact from measured classroom data.
+
+    ``teacher_entropy`` / ``student_entropy`` are the per-decision belief
+    entropies recorded by the two-agent classroom rollout (one pair per
+    decision). They must come from a generated classroom artifact — this module
+    deliberately has no synthetic fallback, so the inferential summary can never
+    describe numbers the classroom did not produce.
+    """
+    teacher = [float(v) for v in teacher_entropy]
+    student = [float(v) for v in student_entropy]
+    if len(teacher) != len(student):
+        raise ValueError("teacher and student entropy series must be the same length")
+    if len(teacher) < 2:
+        raise ValueError("at least two matched entropy pairs are required")
+    if not all(np.isfinite(v) for v in teacher + student):
+        raise ValueError("entropy series must be finite")
     diff = [s - t for s, t in zip(student, teacher, strict=True)]
+    ci = bootstrap_ci(diff)
+    permutation = paired_permutation_test(student, teacher)
+    sign = paired_sign_test(student, teacher)
+    effect = cohens_d(student, teacher)
+    ok = bool(
+        ci["n"] == len(diff)
+        and ci["n_boot"] > 0
+        and permutation["n"] == len(diff)
+        and permutation["n_perm"] > 0
+        and 0.0 <= permutation["p_value"] <= 1.0
+        and 0.0 <= sign["p_value"] <= 1.0
+        and np.isfinite(effect)
+    )
     return {
         "schema": SCHEMA,
         "teacher_entropy": teacher,
         "student_entropy": student,
+        "paired_difference": diff,
+        "sample_size": len(diff),
+        "sample_unit": "matched per-decision teacher/student belief-entropy pairs from the classroom rollout",
+        "paired_test": "two-sided paired permutation test on mean student-minus-teacher entropy",
+        "effect_size": "Cohen's d pooled standardized mean difference, student minus teacher",
+        "effect_size_reference": "cohen1988power",
+        "claim_scope": "toy-classroom inferential summary, not a production-scale population claim",
         "teacher_summary": summarize(teacher).__dict__,
         "student_summary": summarize(student).__dict__,
-        "advantage_bootstrap_ci": bootstrap_ci(diff),
-        "cohens_d_student_minus_teacher": cohens_d(student, teacher),
-        "paired_permutation": paired_permutation_test(student, teacher),
-        "paired_sign_test": paired_sign_test(student, teacher),
-        "ok": bool(bootstrap_ci(diff)["ci_low"] > 0.0),
+        "advantage_bootstrap_ci": ci,
+        "cohens_d_student_minus_teacher": effect,
+        "paired_permutation": permutation,
+        "paired_sign_test": sign,
+        "ok": ok,
     }

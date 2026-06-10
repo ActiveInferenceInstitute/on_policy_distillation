@@ -1,6 +1,8 @@
-# methods_sheaf IMRAD fragments
+# Methods Sheaf Fragment Notes
 
-Sheaf composition Methods section (`08_methods_sheaf.md`). Composed track order is fixed in [`../../../sheaf/manifest.yaml`](../../../sheaf/manifest.yaml).
+Editable source for manifest section `methods_sheaf`, composed to
+`manuscript/19_supplement_reproducibility.md`. Track order is fixed in
+[`../../../sheaf/manifest.yaml`](../../../sheaf/manifest.yaml).
 
 | Fragment | Role |
 | --- | --- |
@@ -11,4 +13,5 @@ Sheaf composition Methods section (`08_methods_sheaf.md`). Composed track order 
 | [`counterexample.md`](counterexample.md) | Live expected-failure matrix signpost |
 | [`layers.md`](layers.md) | Stub; body from `layers_report` renderer → registry + matrix tables |
 
-Generated table markers: `<!-- sheaf-layers:registry -->`, `<!-- sheaf-layers:binding-matrix -->`, `<!-- sheaf-layers:legend -->`.
+Generated table markers: `<!-- sheaf-layers:registry -->`,
+`<!-- sheaf-layers:binding-matrix -->`, `<!-- sheaf-layers:legend -->`.

@@ -1,11 +1,9 @@
-# AGENTS — Methods Lean
+# Methods Lean Fragment Notes
 
-Local automation guidance for the `methods_lean` IMRaD **Methods** section.
+Editable source for manifest section `methods_lean`, composed to
+`manuscript/07_methods_lean.md`.
 
-- **Scope:** manuscript prose fragments for this section only.
-- **Invariants:** every quantitative claim must trace to a generated artifact
-  (validated by `infrastructure.validation.evidence_registry`); do not introduce
-  unbound numbers or fabricated citations.
-- **Rendering:** fragments here are assembled by the rendering pipeline; edit the
-  source fragments, never the assembled `output/` copies.
-- **Tracks:** keep cross-track (analytical / pymdp / sheaf) claims consistent.
+- Lean source lives under `lean/OnPolicyDistillation/`.
+- Keep proof-boundary prose aligned with `output/reports/lean_theorem_inventory.json`
+  and `output/data/proof_extraction_index.json`.
+- Section bindings live in `../../../sheaf/manifest.yaml`.

@@ -1,11 +1,9 @@
-# AGENTS — Results Mi Sweep
+# Results MI Sweep Fragment Notes
 
-Local automation guidance for the `results_mi_sweep` IMRaD **Results** section.
+Editable source for manifest section `results_mi_sweep`, composed to
+`manuscript/10_results_mi_sweep.md`.
 
-- **Scope:** manuscript prose fragments for this section only.
-- **Invariants:** every quantitative claim must trace to a generated artifact
-  (validated by `infrastructure.validation.evidence_registry`); do not introduce
-  unbound numbers or fabricated citations.
-- **Rendering:** fragments here are assembled by the rendering pipeline; edit the
-  source fragments, never the assembled `output/` copies.
-- **Tracks:** keep cross-track (analytical / pymdp / sheaf) claims consistent.
+- Keep mutual-information and sweep claims aligned with
+  `output/data/parameter_sweep.csv` and analytical statistics.
+- Use hydrated `{{token}}` values for all measured quantities.
+- Section bindings live in `../../../sheaf/manifest.yaml`.

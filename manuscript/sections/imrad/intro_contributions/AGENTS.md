@@ -1,11 +1,9 @@
-# AGENTS — Intro Contributions
+# Intro Contributions Fragment Notes
 
-Local automation guidance for the `intro_contributions` IMRaD **Introduction** section.
+Editable source for manifest section `intro_contributions`, composed to
+`manuscript/03_intro_contributions.md`.
 
-- **Scope:** manuscript prose fragments for this section only.
-- **Invariants:** every quantitative claim must trace to a generated artifact
-  (validated by `infrastructure.validation.evidence_registry`); do not introduce
-  unbound numbers or fabricated citations.
-- **Rendering:** fragments here are assembled by the rendering pipeline; edit the
-  source fragments, never the assembled `output/` copies.
-- **Tracks:** keep cross-track (analytical / pymdp / sheaf) claims consistent.
+- Keep contribution claims aligned with the generated evidence and current track
+  registry.
+- Use hydrated `{{token}}` values for counts.
+- Section bindings live in `../../../sheaf/manifest.yaml`.

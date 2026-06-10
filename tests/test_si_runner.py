@@ -32,6 +32,7 @@ def test_tmaze_model_uses_config_likelihood(project_root) -> None:
 
 
 @pytest.mark.requires_pymdp
+@pytest.mark.render_slow
 def test_si_tmaze_rollout(project_root, tmp_path) -> None:
     if not pymdp_available():
         pytest.skip("pymdp not installed")
@@ -41,12 +42,12 @@ def test_si_tmaze_rollout(project_root, tmp_path) -> None:
     result = run_si_tmaze(project_root, config=cfg, logger=logger)
     assert result.profile == "full_tmaze_sophisticated_inference"
     assert result.planner == "sophisticated_inference"
-    assert result.steps == 5
-    assert len(result.actions) == 6
+    assert result.steps == cfg.timesteps
+    assert len(result.actions) == cfg.timesteps + 1
     assert len(result.observations_by_modality) == 3
-    assert all(len(values) == 6 for values in result.observations_by_modality.values())
+    assert all(len(values) == cfg.timesteps + 1 for values in result.observations_by_modality.values())
     assert result.policy_len == 1
-    assert result.planning_horizon == 4
+    assert result.planning_horizon == cfg.planning_horizon
     assert result.num_policies == 5
     assert result.config_hash
     assert result.goal_reached
@@ -65,6 +66,9 @@ def test_si_tmaze_rollout(project_root, tmp_path) -> None:
 
 
 @pytest.mark.requires_pymdp
+@pytest.mark.render_slow
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_write_si_artifacts_schema(project_root, tmp_path) -> None:
     if not pymdp_available():
         pytest.skip("pymdp not installed")
@@ -115,6 +119,9 @@ def test_simulate_cli_help(project_root) -> None:
 
 
 @pytest.mark.requires_pymdp
+@pytest.mark.render_slow
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_run_and_persist(project_root) -> None:
     if not pymdp_available():
         pytest.skip("pymdp not installed")

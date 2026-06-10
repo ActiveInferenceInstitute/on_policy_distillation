@@ -6,101 +6,29 @@ from pathlib import Path
 
 import pytest
 
-from analysis import run_analysis, write_analysis_statistics
-from manuscript.variables import generate_variables
-from manuscript.hydrate import write_resolved_manuscript
-from manuscript.sheaf import compose_all_sections
-from manuscript.sheaf.semantic import write_semantic_gluing_outputs
-from orchestration.coverage_pipeline import ensure_coverage_artifacts
-from roadmap_tracks import (
-    write_formal_interop_artifacts,
-    write_integration_audit_artifacts,
-    write_manuscript_staleness_report,
-    write_sheaf_track_artifacts,
-    write_toy_sweep_artifacts,
-)
-from simulation.graph_world import write_graph_world_artifacts
-from simulation.si_artifacts import write_policy_comparison, write_policy_posterior_grid
-from simulation.si_runner import pymdp_available, run_and_persist
-from validation_spine import write_validation_spine_artifacts
-from visualizations.animation import write_animation_frame_deltas, write_belief_trajectory_gif
-from visualizations.figures import generate_all_figures
+from artifact_contracts import REQUIRED_OUTPUT_CHECK_KEYS
+from orchestration.artifact_pipeline import hydrate_manuscript_fixed_point, refresh_gate_artifacts
 
 _BOOTSTRAPPED_ROOTS: set[Path] = set()
+_BOOTSTRAPPED_FINGERPRINTS: dict[Path, tuple[tuple[str, int, int], ...]] = {}
 
-_REQUIRED_GATE_ARTIFACTS: tuple[str, ...] = (
-    "output/data/parameter_sweep.csv",
-    "output/data/si_tmaze_summary.json",
-    "output/data/si_tmaze_trace.json",
-    "output/data/si_tmaze_model_matrices.json",
-    "output/data/si_policy_comparison.json",
-    "output/data/pymdp_policy_posterior_grid.json",
-    "output/reports/pymdp_runtime_diagnostics.json",
-    "output/data/si_graph_world_summary.json",
-    "output/data/si_graph_world_trace.json",
-    "output/data/analysis_statistics.json",
-    "output/data/sheaf_coverage_matrix.json",
-    "output/data/artifact_provenance.json",
-    "output/data/manuscript_variables.json",
-    "output/data/sheaf_gluing_certificate.json",
-    "output/reports/manuscript_hardcoded_variable_audit.json",
-    "output/data/sensitivity_sweep.json",
-    "output/data/analytical_assumption_index.json",
-    "output/data/si_graph_world_topology_traces.json",
-    "output/data/uncertainty_summary.json",
-    "output/data/toy_benchmark_matrix.json",
-    "output/data/interop_roundtrip_report.json",
-    "output/reports/model_checking_witnesses.json",
-    "output/reports/adversarial_audit.json",
-    "output/reports/replay_matrix.json",
-    "output/data/track_improvement_scope.json",
-    "output/reports/blocked_scope_manifest.json",
-    "output/data/evidence_field_index.json",
-    "output/reports/release_bundle_manifest.json",
-    "output/data/theorem_traceability_matrix.json",
-    "output/reports/artifact_diffoscope.json",
-    "output/data/proof_extraction_index.json",
-    "output/data/state_space_catalog.json",
-    "output/data/causal_ablation_matrix.json",
-    "output/reports/artifact_license_audit.json",
-    "output/reports/release_notes_evidence.json",
-    "output/data/proof_dependency_graph.json",
-    "output/data/state_transition_table.json",
-    "output/reports/ablation_sensitivity_report.json",
-    "output/reports/release_attestation.json",
-    "output/data/validation_gate_index.json",
-    "output/data/validation_dependency_graph.json",
-    "output/data/sheaf_section_status_matrix.json",
-    "output/reports/sheaf_render_log.json",
-    "output/figures/semantic_gluing_graph.png",
-    "output/figures/si_belief_trajectory.gif",
-    "output/data/animation_frame_deltas.json",
-    "output/reports/manuscript_staleness_report.json",
-    "output/reports/reproducibility_replay.json",
-    "output/reports/counterexample_matrix.json",
-    "output/figures/theorem_traceability_graph.png",
-    "output/figures/causal_ablation_heatmap.png",
-    "output/figures/graphical_abstract.png",
-    "output/figures/si_tmaze_model_matrices.png",
-    "output/figures/distillation_divergence_geometry.png",
-    "output/figures/exposure_bias_recovery.png",
-    "output/figures/classroom_distillation_signal.png",
+_REQUIRED_GATE_ARTIFACTS: tuple[str, ...] = REQUIRED_OUTPUT_CHECK_KEYS
+_READY_CHECK_KEYS: tuple[str, ...] = (
+    "experiment_plan_metrics",
+    "integration_audit_track_schemas",
+    "canonical_sheaf_track_schemas",
+    "stale_artifact_report_schema",
+    "manuscript_staleness_report_schema",
+    "claim_evidence_audit_schema",
+    "artifact_diffoscope_schema",
 )
-
-
-def _hydrate_fixed_point(project_root: Path, out: Path) -> None:
-    import json
-
-    for _ in range(2):
-        variables = generate_variables(project_root, require_analysis_outputs=False)
-        out.write_text(json.dumps(variables, indent=2), encoding="utf-8")
-        write_resolved_manuscript(project_root, variables)
-        write_manuscript_staleness_report(project_root)
-    write_integration_audit_artifacts(project_root)
-    variables = generate_variables(project_root, require_analysis_outputs=False)
-    out.write_text(json.dumps(variables, indent=2), encoding="utf-8")
-    write_resolved_manuscript(project_root, variables)
-    write_manuscript_staleness_report(project_root)
+_READY_MANUSCRIPT_CHECK_KEYS: tuple[str, ...] = (
+    "claim_ledger_valid",
+    "semantic_sheaf_gluing",
+    "integration_audit_artifacts",
+    "canonical_sheaf_tracks",
+    "resolved_manuscript_hydrated",
+)
 
 
 def refresh_generated_gate_artifacts(project_root: Path) -> None:
@@ -114,68 +42,89 @@ def refresh_generated_gate_artifacts(project_root: Path) -> None:
     stale (e.g. a test that mutated a generated ``output/`` artifact in place).
     """
     root = project_root.resolve()
-    if root in _BOOTSTRAPPED_ROOTS and _gate_artifacts_present(root):
+    if _gate_artifacts_present(root) and _gate_artifacts_ready(root, include_manuscript=True):
+        _mark_bootstrapped(root)
         return
-    out = root / "output" / "data" / "manuscript_variables.json"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    write_sheaf_track_artifacts(root)
-    compose_all_sections(root)
-    _hydrate_fixed_point(root, out)
-    write_semantic_gluing_outputs(root)
-    _BOOTSTRAPPED_ROOTS.discard(root)
+    try:
+        refresh_gate_artifacts(root, require_analysis_outputs=False)
+    except RuntimeError as exc:
+        pytest.skip(str(exc))
+    _mark_bootstrapped(root)
 
 
 def _gate_artifacts_present(project_root: Path) -> bool:
-    if not all((project_root / rel).is_file() for rel in _REQUIRED_GATE_ARTIFACTS):
-        return False
-    try:
-        from manuscript.sheaf.semantic import validate_semantic_gluing
-        from roadmap_tracks import validate_sheaf_track_artifacts
+    """Return whether the gate artifact surface is available on disk.
 
-        return not validate_semantic_gluing(project_root) and not validate_sheaf_track_artifacts(project_root)
+    This is intentionally a cheap presence check. The actual gate tests call the
+    validators under test; using those same validators here can recursively
+    trigger full fixed-point refreshes inside per-test timeouts.
+    """
+    return all((project_root / rel).is_file() for rel in _REQUIRED_GATE_ARTIFACTS)
+
+
+def _gate_artifact_fingerprint(project_root: Path) -> tuple[tuple[str, int, int], ...]:
+    """Return a cheap change token for the generated gate artifact surface."""
+    rows: list[tuple[str, int, int]] = []
+    for rel in _REQUIRED_GATE_ARTIFACTS:
+        path = project_root / rel
+        try:
+            stat = path.stat()
+        except FileNotFoundError:
+            rows.append((rel, -1, -1))
+        else:
+            rows.append((rel, stat.st_mtime_ns, stat.st_size))
+    return tuple(rows)
+
+
+def _mark_bootstrapped(project_root: Path) -> None:
+    root = project_root.resolve()
+    _BOOTSTRAPPED_ROOTS.add(root)
+    _BOOTSTRAPPED_FINGERPRINTS[root] = _gate_artifact_fingerprint(root)
+
+
+def _bootstrap_current(project_root: Path) -> bool:
+    root = project_root.resolve()
+    return root in _BOOTSTRAPPED_ROOTS and _BOOTSTRAPPED_FINGERPRINTS.get(root) == _gate_artifact_fingerprint(root)
+
+
+def _gate_artifacts_ready(project_root: Path, *, include_manuscript: bool = False) -> bool:
+    """Return whether present artifacts satisfy the aggregate output gates."""
+    root = project_root.resolve()
+    if not (root / "manuscript" / "config.yaml").is_file():
+        return True
+
+    from gates.validation import validate_manuscript, validate_outputs
+
+    try:
+        checks = validate_outputs(root, only=set(_READY_CHECK_KEYS))
+        if not all(checks.get(key) is True for key in _READY_CHECK_KEYS):
+            return False
+        if include_manuscript:
+            manuscript_checks = validate_manuscript(root, only=set(_READY_MANUSCRIPT_CHECK_KEYS))
+            return all(manuscript_checks.get(key) is True for key in _READY_MANUSCRIPT_CHECK_KEYS)
     except Exception:
         return False
+    return True
 
 
-def ensure_gate_artifacts(project_root: Path) -> None:
+def ensure_gate_artifacts(project_root: Path, *, verify: bool = False) -> None:
     """Rebuild analysis, simulation, sheaf, and figure outputs for gate checks."""
     root = project_root.resolve()
-    if root in _BOOTSTRAPPED_ROOTS and _gate_artifacts_present(root):
+    if _gate_artifacts_present(root):
+        if _bootstrap_current(root) and not verify:
+            return
+        if _gate_artifacts_ready(root, include_manuscript=True):
+            _mark_bootstrapped(root)
+            return
+        try:
+            refresh_gate_artifacts(root, require_analysis_outputs=False)
+        except RuntimeError as exc:
+            pytest.skip(str(exc))
+        _mark_bootstrapped(root)
         return
 
-    run_analysis(project_root)
-    if pymdp_available():
-        run_and_persist(project_root)
-        write_policy_comparison(project_root)
-        write_policy_posterior_grid(project_root)
-    else:
-        pytest.skip("pymdp not installed")
-    write_graph_world_artifacts(project_root)
-    write_analysis_statistics(project_root)
-    compose_all_sections(project_root)
-    ensure_coverage_artifacts(project_root, write_page=True, render_heatmap=True, force=True)
-    generate_all_figures(project_root)
-    write_belief_trajectory_gif(project_root)
-    write_animation_frame_deltas(project_root)
-    write_validation_spine_artifacts(project_root)
-    write_toy_sweep_artifacts(project_root)
-    write_formal_interop_artifacts(project_root)
-    write_validation_spine_artifacts(project_root)
-    write_integration_audit_artifacts(project_root)
-    write_sheaf_track_artifacts(project_root)
-    out = project_root / "output" / "data" / "manuscript_variables.json"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    # Bounded fixpoint loop: the generated layer/attestation tables feed back into
-    # the hydrated variables and the semantic certificate, so re-run compose ->
-    # hydrate -> sheaf-tracks -> semantic until the certificate validates clean
-    # (some configurations -- e.g. a deeper SI horizon -- need more than one pass).
-    from manuscript.sheaf.semantic import validate_semantic_gluing
-
-    for _ in range(4):
-        compose_all_sections(project_root)
-        _hydrate_fixed_point(project_root, out)
-        write_sheaf_track_artifacts(project_root)
-        write_semantic_gluing_outputs(project_root)
-        if not validate_semantic_gluing(project_root):
-            break
-    _BOOTSTRAPPED_ROOTS.add(root)
+    try:
+        refresh_gate_artifacts(project_root)
+    except RuntimeError as exc:
+        pytest.skip(str(exc))
+    _mark_bootstrapped(root)

@@ -11,13 +11,11 @@ exemplar.
 Regenerate the method inventory with:
 
 ```bash
-uv run --directory projects/templates/template_active_inference \
-  python scripts/generate_method_inventory.py
+uv run python scripts/generate_method_inventory.py
 ```
 
 Validate generated outputs with:
 
 ```bash
-uv run --directory projects/templates/template_active_inference \
-  python scripts/validate_outputs.py
+uv run python scripts/validate_outputs.py
 ```

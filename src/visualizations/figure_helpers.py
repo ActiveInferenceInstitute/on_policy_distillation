@@ -12,7 +12,13 @@ from .figure_style import FigureStyleConfig, apply_style, load_figure_style
 
 
 def save_styled_figure(fig, path: Path, style: FigureStyleConfig) -> Path:
-    fig.tight_layout()
+    engine = getattr(fig, "get_layout_engine", lambda: None)()
+    if engine is None:
+        fig.tight_layout(rect=(0.0, 0.085, 1.0, 0.965))
+    else:
+        # constrained_layout figures manage their own spacing; reserve the source-footer margin.
+        with contextlib.suppress(Exception):
+            fig.get_layout_engine().set(rect=(0.0, 0.045, 1.0, 0.96))
     return save_figure_png(
         fig,
         path,

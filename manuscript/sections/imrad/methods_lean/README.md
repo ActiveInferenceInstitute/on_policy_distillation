@@ -1,12 +1,8 @@
 # Methods Lean
 
-IMRaD **Methods** section of the Active Inference multi-track manuscript
-(`projects/templates/template_active_inference`). This directory holds the Markdown
-fragment(s) for the `methods_lean` section, which the renderer assembles into the
-combined manuscript across the analytical, pymdp, and sheaf tracks.
+Method fragments for manifest section `methods_lean`.
 
-- **Role in IMRaD:** Methods.
-- **Edit:** the `.md` fragment(s) in this directory; numbers must trace to
-  generated artifacts (the evidence registry binds manuscript numbers to data).
-- **Assembled by:** the manuscript injection / rendering pipeline — do not hand-
-  edit assembled output under `output/`.
+- Source fragments here compose to `manuscript/07_methods_lean.md`.
+- Bound tracks: prose, lean, model checking, theorem traceability, proof
+  extraction, and visualization.
+- Build and audit the Lean boundary through the repo gates, not by prose claims.

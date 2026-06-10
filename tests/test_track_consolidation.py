@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -21,10 +22,6 @@ pytestmark = pytest.mark.timeout(600)
 
 def _load(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
-
-
-def _write(path: Path, payload: dict) -> None:
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def _relative_posix(path: Path, root: Path) -> str:
@@ -63,11 +60,31 @@ def test_live_track_surface_uses_canonical_ids(project_root: Path) -> None:
     assert not (set(LEGACY_ARTIFACTS) & set(REQUIRED_OUTPUTS))
 
 
-def test_canonical_sheaf_artifacts_are_written_and_valid(project_root: Path) -> None:
-    from roadmap_tracks import validate_sheaf_track_artifacts, write_sheaf_track_artifacts
+@pytest.mark.artifact_slow
+def test_canonical_sheaf_artifacts_are_present_and_valid(project_root: Path) -> None:
+    from roadmap_tracks import validate_sheaf_track_artifacts
 
     ensure_gate_artifacts(project_root)
-    paths = write_sheaf_track_artifacts(project_root)
+    paths = {
+        "semantic": project_root / "output" / "data" / "sheaf_gluing_certificate.json",
+        "dependency": project_root / "output" / "data" / "validation_dependency_graph.json",
+        "evidence_fields": project_root / "output" / "data" / "evidence_field_index.json",
+        "release_bundle": project_root / "output" / "reports" / "release_bundle_manifest.json",
+        "theorem_traceability": project_root / "output" / "data" / "theorem_traceability_matrix.json",
+        "artifact_diffoscope": project_root / "output" / "reports" / "artifact_diffoscope.json",
+        "scholarship": project_root / "output" / "data" / "scholarship_source_matrix.json",
+        "proof_extraction": project_root / "output" / "data" / "proof_extraction_index.json",
+        "state_space_catalog": project_root / "output" / "data" / "state_space_catalog.json",
+        "causal_ablation": project_root / "output" / "data" / "causal_ablation_matrix.json",
+        "artifact_license": project_root / "output" / "reports" / "artifact_license_audit.json",
+        "release_notes": project_root / "output" / "reports" / "release_notes_evidence.json",
+        "proof_dependency_graph": project_root / "output" / "data" / "proof_dependency_graph.json",
+        "state_transition_table": project_root / "output" / "data" / "state_transition_table.json",
+        "ablation_sensitivity_report": project_root / "output" / "reports" / "ablation_sensitivity_report.json",
+        "release_attestation": project_root / "output" / "reports" / "release_attestation.json",
+        "section_status": project_root / "output" / "data" / "sheaf_section_status_matrix.json",
+        "render_log": project_root / "output" / "reports" / "sheaf_render_log.json",
+    }
 
     assert _relative_posix(paths["semantic"], project_root) == "output/data/sheaf_gluing_certificate.json"
     assert _relative_posix(paths["dependency"], project_root) == "output/data/validation_dependency_graph.json"
@@ -120,6 +137,10 @@ def test_canonical_sheaf_artifacts_are_written_and_valid(project_root: Path) -> 
     assert gate_index["all_indexed"] is True
     assert diffoscope["all_equal"] is True
     assert proof["all_extracted"] is True
+    assert proof["theorem_count"] == proof["inventory_theorem_count"]
+    assert proof["all_inventory_theorems_extracted"] is True
+    assert proof["missing_inventory_theorems"] == []
+    assert proof["extra_extracted_theorems"] == []
     assert catalog["all_finite"] is True
     assert ablation["complete_grid"] is True
     assert license_audit["all_license_safe"] is True
@@ -137,251 +158,204 @@ def test_canonical_sheaf_artifacts_are_written_and_valid(project_root: Path) -> 
 
 
 def test_canonical_sheaf_negative_controls(project_root: Path) -> None:
-    from roadmap_tracks import validate_sheaf_track_artifacts, write_sheaf_track_artifacts
+    from roadmap_tracks import load_sheaf_track_payloads, validate_sheaf_track_payloads
 
-    ensure_gate_artifacts(project_root)
-    write_sheaf_track_artifacts(project_root)
-    paths = {
-        "replay": project_root / "output" / "reports" / "replay_matrix.json",
-        "sensitivity": project_root / "output" / "data" / "sensitivity_sweep.json",
-        "uncertainty": project_root / "output" / "data" / "uncertainty_summary.json",
-        "counterexample": project_root / "output" / "reports" / "counterexample_matrix.json",
-        "model": project_root / "output" / "reports" / "model_checking_witnesses.json",
-        "interop": project_root / "output" / "data" / "interop_roundtrip_report.json",
-        "adversarial": project_root / "output" / "reports" / "adversarial_audit.json",
-        "dependency": project_root / "output" / "data" / "validation_dependency_graph.json",
-        "scope": project_root / "output" / "data" / "track_improvement_scope.json",
-        "blocked": project_root / "output" / "reports" / "blocked_scope_manifest.json",
-        "evidence": project_root / "output" / "data" / "evidence_field_index.json",
-        "release": project_root / "output" / "reports" / "release_bundle_manifest.json",
-        "theorem": project_root / "output" / "data" / "theorem_traceability_matrix.json",
-        "gate": project_root / "output" / "data" / "validation_gate_index.json",
-        "diffoscope": project_root / "output" / "reports" / "artifact_diffoscope.json",
-        "scholarship": project_root / "output" / "data" / "scholarship_source_matrix.json",
-        "proof": project_root / "output" / "data" / "proof_extraction_index.json",
-        "catalog": project_root / "output" / "data" / "state_space_catalog.json",
-        "ablation": project_root / "output" / "data" / "causal_ablation_matrix.json",
-        "license": project_root / "output" / "reports" / "artifact_license_audit.json",
-        "release_notes": project_root / "output" / "reports" / "release_notes_evidence.json",
-        "proof_dependency": project_root / "output" / "data" / "proof_dependency_graph.json",
-        "transition_table": project_root / "output" / "data" / "state_transition_table.json",
-        "ablation_sensitivity": project_root / "output" / "reports" / "ablation_sensitivity_report.json",
-        "release_attestation": project_root / "output" / "reports" / "release_attestation.json",
-        "section_status": project_root / "output" / "data" / "sheaf_section_status_matrix.json",
-        "render_log": project_root / "output" / "reports" / "sheaf_render_log.json",
-        "semantic": project_root / "output" / "data" / "sheaf_gluing_certificate.json",
-    }
-    originals = {path: path.read_text(encoding="utf-8") for path in paths.values()}
-    try:
-        data = _load(paths["replay"])
+    baseline = load_sheaf_track_payloads(project_root)
+
+    def _issues_after(key: str, mutate) -> list[str]:
+        payloads = deepcopy(baseline)
+        mutate(payloads[key])
+        return validate_sheaf_track_payloads(project_root, payloads)
+
+    def _assert_issue(key: str, mutate, needle: str) -> None:
+        assert any(needle in issue for issue in _issues_after(key, mutate))
+
+    def _break_replay(data: dict) -> None:
         data["rows"][0]["matched"] = False
         data["all_replay_rows_matched"] = False
-        _write(paths["replay"], data)
-        assert any("replay mismatch" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["replay"].write_text(originals[paths["replay"]], encoding="utf-8")
 
-        data = _load(paths["sensitivity"])
+    _assert_issue("replay_matrix", _break_replay, "replay mismatch")
+
+    def _break_sensitivity(data: dict) -> None:
         data["rows"] = data["rows"][:-1]
         data["row_count"] = len(data["rows"])
         data["complete_grid"] = False
-        _write(paths["sensitivity"], data)
-        assert any("grid is incomplete" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["sensitivity"].write_text(originals[paths["sensitivity"]], encoding="utf-8")
 
-        data = _load(paths["uncertainty"])
+    _assert_issue("sensitivity", _break_sensitivity, "grid is incomplete")
+
+    def _break_uncertainty(data: dict) -> None:
         data["rows"][0]["distribution_sum"] = 1.5
         data["rows"][0]["normalized"] = False
         data["all_normalized"] = False
-        _write(paths["uncertainty"], data)
-        assert any("unnormalized" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["uncertainty"].write_text(originals[paths["uncertainty"]], encoding="utf-8")
 
-        data = _load(paths["counterexample"])
+    _assert_issue("uncertainty", _break_uncertainty, "unnormalized")
+
+    def _break_counterexample(data: dict) -> None:
         data["rows"][0]["fixture_replay_status"] = "passed"
         data["all_expected_failures_observed"] = False
-        _write(paths["counterexample"], data)
-        assert any("fixtures passing" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["counterexample"].write_text(originals[paths["counterexample"]], encoding="utf-8")
 
-        data = _load(paths["model"])
+    _assert_issue("counterexample", _break_counterexample, "fixtures passing")
+
+    def _break_model(data: dict) -> None:
         data["rows"][0]["counterexamples"] = ["finite miss"]
         data["rows"][0]["passed"] = False
         data["all_passed"] = False
-        _write(paths["model"], data)
-        assert any("finite counterexample" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["model"].write_text(originals[paths["model"]], encoding="utf-8")
 
-        data = _load(paths["interop"])
+    _assert_issue("model_checking", _break_model, "finite counterexample")
+
+    def _break_interop(data: dict) -> None:
         data["rows"][0]["shape_diff"] = ["policy_shape"]
         data["all_shape_diffs_empty"] = False
         data["all_lossless"] = False
-        _write(paths["interop"], data)
-        assert any("not lossless" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["interop"].write_text(originals[paths["interop"]], encoding="utf-8")
 
-        data = _load(paths["adversarial"])
+    _assert_issue("interop", _break_interop, "not lossless")
+
+    def _break_adversarial(data: dict) -> None:
         data["rows"][0]["known_bad_passed"] = True
         data["known_bad_rows_passed"] = 1
-        _write(paths["adversarial"], data)
-        assert any("known-bad rows passing" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["adversarial"].write_text(originals[paths["adversarial"]], encoding="utf-8")
 
-        data = _load(paths["dependency"])
+    _assert_issue("adversarial_audit", _break_adversarial, "known-bad rows passing")
+
+    def _break_dependency(data: dict) -> None:
         data["edge_types"] = ["producer_to_track"]
         data["all_required_edge_types_present"] = False
-        _write(paths["dependency"], data)
-        assert any("lacks required edge types" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["dependency"].write_text(originals[paths["dependency"]], encoding="utf-8")
 
-        data = _load(paths["scope"])
+    _assert_issue("dependency", _break_dependency, "lacks required edge types")
+
+    def _break_scope(data: dict) -> None:
         data["promotion_matrix"][0]["promotion_complete"] = False
         data["all_live_tracks_valid"] = False
-        _write(paths["scope"], data)
-        assert any("promotion rows" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["scope"].write_text(originals[paths["scope"]], encoding="utf-8")
 
-        data = _load(paths["blocked"])
+    _assert_issue("track_improvement_scope", _break_scope, "promotion rows")
+
+    def _break_blocked(data: dict) -> None:
         data["all_blocked"] = False
-        _write(paths["blocked"], data)
-        assert any("empirical scope blocked" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["blocked"].write_text(originals[paths["blocked"]], encoding="utf-8")
 
-        data = _load(paths["evidence"])
+    _assert_issue("blocked_scope_manifest", _break_blocked, "empirical scope blocked")
+
+    def _break_evidence(data: dict) -> None:
         data["rows"][0]["mapped"] = False
         data["all_fields_mapped"] = False
-        _write(paths["evidence"], data)
-        assert any("unmapped evidence fields" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["evidence"].write_text(originals[paths["evidence"]], encoding="utf-8")
 
-        data = _load(paths["release"])
+    _assert_issue("evidence_fields", _break_evidence, "unmapped evidence fields")
+
+    def _break_release(data: dict) -> None:
         data["rows"][0]["source_present"] = False
         data["all_required_sources_present"] = False
-        _write(paths["release"], data)
-        assert any("missing required deliverables" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["release"].write_text(originals[paths["release"]], encoding="utf-8")
 
-        data = _load(paths["theorem"])
+    _assert_issue("release_bundle", _break_release, "missing required deliverables")
+
+    def _break_theorem(data: dict) -> None:
         data["rows"][0]["linked"] = False
         data["all_theorems_linked"] = False
-        _write(paths["theorem"], data)
-        assert any("unlinked theorem rows" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["theorem"].write_text(originals[paths["theorem"]], encoding="utf-8")
 
-        data = _load(paths["gate"])
+    _assert_issue("theorem_traceability", _break_theorem, "unlinked theorem rows")
+
+    def _break_gate(data: dict) -> None:
         data["rows"][0]["indexed"] = False
         data["all_indexed"] = False
-        _write(paths["gate"], data)
-        assert any("unindexed gates" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["gate"].write_text(originals[paths["gate"]], encoding="utf-8")
 
-        data = _load(paths["diffoscope"])
+    _assert_issue("gate_ergonomics", _break_gate, "unindexed gates")
+
+    def _break_diffoscope(data: dict) -> None:
         data["rows"][0]["equal"] = False
         data["all_equal"] = False
-        _write(paths["diffoscope"], data)
-        assert any("artifact drift" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["diffoscope"].write_text(originals[paths["diffoscope"]], encoding="utf-8")
 
-        data = _load(paths["scholarship"])
+    _assert_issue("artifact_diffoscope", _break_diffoscope, "artifact drift")
+
+    def _break_scholarship(data: dict) -> None:
         data["rows"][0]["bib_has_locator"] = False
         data["rows"][0]["connected"] = True
         data["all_sources_connected"] = True
-        _write(paths["scholarship"], data)
-        assert any("disconnected source rows" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["scholarship"].write_text(originals[paths["scholarship"]], encoding="utf-8")
 
-        data = _load(paths["proof"])
-        data["rows"][0]["extracted"] = False
-        data["all_extracted"] = False
-        _write(paths["proof"], data)
-        assert any("missing statements" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["proof"].write_text(originals[paths["proof"]], encoding="utf-8")
+    _assert_issue("scholarship", _break_scholarship, "disconnected source rows")
 
-        data = _load(paths["catalog"])
+    def _break_proof(data: dict) -> None:
+        data["rows"] = [row for row in data["rows"] if row["theorem"] != "tmaze_goal_absorbing"]
+        data["theorem_count"] = len(data["rows"])
+        data["all_extracted"] = True
+        data["all_constructive"] = True
+        data["all_inventory_theorems_extracted"] = True
+        data["missing_inventory_theorems"] = []
+
+    _assert_issue("proof_extraction", _break_proof, "theorem inventory mismatch")
+
+    def _break_catalog(data: dict) -> None:
         data["rows"][0]["finite"] = False
         data["all_finite"] = False
-        _write(paths["catalog"], data)
-        assert any("missing finite spaces" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["catalog"].write_text(originals[paths["catalog"]], encoding="utf-8")
 
-        data = _load(paths["ablation"])
+    _assert_issue("state_space_catalog", _break_catalog, "missing finite spaces")
+
+    def _break_ablation(data: dict) -> None:
         data["rows"] = data["rows"][:-1]
         data["row_count"] = len(data["rows"])
         data["complete_grid"] = False
-        _write(paths["ablation"], data)
-        assert any("incomplete deterministic rows" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["ablation"].write_text(originals[paths["ablation"]], encoding="utf-8")
 
-        data = _load(paths["license"])
+    _assert_issue("causal_ablation", _break_ablation, "incomplete deterministic rows")
+
+    def _break_license(data: dict) -> None:
         data["rows"][0]["license_safe"] = False
         data["all_license_safe"] = False
-        _write(paths["license"], data)
-        assert any("unsafe artifacts" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["license"].write_text(originals[paths["license"]], encoding="utf-8")
 
-        data = _load(paths["release_notes"])
+    _assert_issue("artifact_license", _break_license, "unsafe artifacts")
+
+    def _break_release_notes(data: dict) -> None:
         data["rows"][0]["passed"] = False
         data["all_notes_source_backed"] = False
-        _write(paths["release_notes"], data)
-        assert any("unsupported notes" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["release_notes"].write_text(originals[paths["release_notes"]], encoding="utf-8")
 
-        data = _load(paths["proof_dependency"])
+    _assert_issue("release_notes", _break_release_notes, "unsupported notes")
+
+    def _break_proof_dependency(data: dict) -> None:
         data["rows"][0]["linked"] = False
         data["all_theorems_have_dependencies"] = True
-        _write(paths["proof_dependency"], data)
-        assert any("unlinked theorem dependencies" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["proof_dependency"].write_text(originals[paths["proof_dependency"]], encoding="utf-8")
 
-        data = _load(paths["transition_table"])
+    _assert_issue("proof_dependency_graph", _break_proof_dependency, "unlinked theorem dependencies")
+
+    def _break_transition_table(data: dict) -> None:
         data["covered_models"] = data["covered_models"][:-1]
         data["all_reachable_states_covered"] = True
-        _write(paths["transition_table"], data)
-        assert any("omits a reachable finite model" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["transition_table"].write_text(originals[paths["transition_table"]], encoding="utf-8")
 
-        data = _load(paths["ablation_sensitivity"])
+    _assert_issue("state_transition_table", _break_transition_table, "omits a reachable finite model")
+
+    def _break_ablation_sensitivity(data: dict) -> None:
         data["rows"][0]["source_backed"] = False
         data["all_effects_source_backed"] = True
-        _write(paths["ablation_sensitivity"], data)
-        assert any("unsupported ablation effects" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["ablation_sensitivity"].write_text(originals[paths["ablation_sensitivity"]], encoding="utf-8")
 
-        data = _load(paths["release_attestation"])
+    _assert_issue("ablation_sensitivity_report", _break_ablation_sensitivity, "unsupported ablation effects")
+
+    def _break_release_attestation(data: dict) -> None:
         data["rows"][1]["passed"] = False
         data["all_attested"] = True
-        _write(paths["release_attestation"], data)
-        assert any("failed gate passed" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["release_attestation"].write_text(originals[paths["release_attestation"]], encoding="utf-8")
 
-        data = _load(paths["section_status"])
+    _assert_issue("release_attestation", _break_release_attestation, "failed gate passed")
+
+    def _break_section_status(data: dict) -> None:
         data["missing_required_count"] = 1
         data["all_bound_fragments_present"] = False
-        _write(paths["section_status"], data)
-        assert any("missing bound fragments" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["section_status"].write_text(originals[paths["section_status"]], encoding="utf-8")
 
-        data = _load(paths["render_log"])
+    _assert_issue("section_status", _break_section_status, "missing bound fragments")
+
+    def _break_render_log(data: dict) -> None:
         data["events"][0]["status"] = "failed"
         data["all_events_ok"] = False
-        _write(paths["render_log"], data)
-        assert any("failed render events" in issue for issue in validate_sheaf_track_artifacts(project_root))
-        paths["render_log"].write_text(originals[paths["render_log"]], encoding="utf-8")
 
-        data = _load(paths["semantic"])
+    _assert_issue("render_log", _break_render_log, "failed render events")
+
+    def _break_semantic(data: dict) -> None:
         data["restrictions"]["replay_matrix_all_matched"] = False
-        _write(paths["semantic"], data)
-        assert any(
-            "stale relative to canonical restrictions" in issue
-            for issue in validate_sheaf_track_artifacts(project_root)
-        )
-    finally:
-        for path, text in originals.items():
-            path.write_text(text, encoding="utf-8")
-        write_sheaf_track_artifacts(project_root)
+
+    _assert_issue("semantic", _break_semantic, "stale relative to canonical restrictions")
 
 
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_canonical_track_contract_negative_controls(project_root: Path) -> None:
-    from roadmap_tracks import validate_sheaf_track_artifacts, write_sheaf_track_artifacts
+    from roadmap_tracks.sheaf_tracks import (
+        _canonical_restrictions,
+        build_artifact_provenance,
+        build_blocked_scope_manifest,
+        build_track_improvement_scope,
+    )
 
     ensure_gate_artifacts(project_root)
     config_path = project_root / "manuscript" / "config.yaml"
@@ -399,23 +373,26 @@ def test_canonical_track_contract_negative_controls(project_root: Path) -> None:
             originals[config_path].replace("    - generate_sheaf_tracks.py\n", ""),
             encoding="utf-8",
         )
-        write_sheaf_track_artifacts(project_root)
-        assert any("producer_coverage_complete" in issue for issue in validate_sheaf_track_artifacts(project_root))
+        provenance = build_artifact_provenance(project_root)
+        assert provenance["all_producers_configured"] is False
         config_path.write_text(originals[config_path], encoding="utf-8")
 
         manifest_payload = yaml.safe_load(originals[manifest_path])
         for section in manifest_payload["sections"]:
             (section.get("tracks") or {}).pop("evidence_fields", None)
         manifest_path.write_text(yaml.safe_dump(manifest_payload, sort_keys=False), encoding="utf-8")
-        write_sheaf_track_artifacts(project_root)
-        assert any("missing manuscript bindings" in issue for issue in validate_sheaf_track_artifacts(project_root))
+        scope = build_track_improvement_scope(project_root)
+        missing_evidence = [row for row in scope["promotion_matrix"] if row["track_id"] == "evidence_fields"]
+        assert missing_evidence and missing_evidence[0]["has_manuscript_consumer"] is False
+        assert scope["all_live_tracks_valid"] is False
         manifest_path.write_text(originals[manifest_path], encoding="utf-8")
 
         registry_payload = yaml.safe_load(originals[registry_path])
         registry_payload["tracks"]["empirical_adapter"] = {"order": 999, "renderer": "markdown", "label": "Empirical"}
         registry_path.write_text(yaml.safe_dump(registry_payload, sort_keys=False), encoding="utf-8")
-        write_sheaf_track_artifacts(project_root)
-        assert any("empirical_adapter blocked" in issue for issue in validate_sheaf_track_artifacts(project_root))
+        blocked = build_blocked_scope_manifest(project_root)
+        assert blocked["all_blocked"] is False
+        assert blocked["rows"][0]["no_live_registry_entry"] is False
         registry_path.write_text(originals[registry_path], encoding="utf-8")
 
         ledger_payload = yaml.safe_load(originals[ledger_path])
@@ -423,11 +400,8 @@ def test_canonical_track_contract_negative_controls(project_root: Path) -> None:
             claim for claim in ledger_payload["claims"] if claim.get("path") != "output/data/evidence_field_index.json"
         ]
         ledger_path.write_text(yaml.safe_dump(ledger_payload, sort_keys=False), encoding="utf-8")
-        write_sheaf_track_artifacts(project_root)
-        assert any(
-            "all_canonical_artifacts_have_claims" in issue for issue in validate_sheaf_track_artifacts(project_root)
-        )
+        restrictions = _canonical_restrictions(project_root)
+        assert restrictions["all_canonical_artifacts_have_claims"] is False
     finally:
         for path, text in originals.items():
             path.write_text(text, encoding="utf-8")
-        write_sheaf_track_artifacts(project_root)

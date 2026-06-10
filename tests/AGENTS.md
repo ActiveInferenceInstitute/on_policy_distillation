@@ -11,4 +11,13 @@ Sheaf tests are split by concern: `test_sheaf_manifest.py`, `test_sheaf_registry
 `test_sheaf_compose.py`, `test_sheaf_coverage.py`, `test_sheaf_cli.py`,
 `test_coverage_pipeline.py`, `test_sweep_io.py` (no monolithic `test_sheaf.py`).
 
-Run: `uv run pytest projects/templates/template_active_inference/tests -q`.
+Daily edit loop: `uv run --extra dev python -m pytest tests/ -m "not artifact_slow and not render_slow" --no-cov`.
+
+Fast pre-release lane: `uv run --extra dev python -m pytest tests/ -m "not artifact_slow" --no-cov`.
+Tests marked `mutates_artifacts` must also be marked `artifact_slow`, so the
+fast lane never edits shared generated artifacts.
+Use `render_slow` for expensive figure rendering, animation/GIF generation,
+pymdp rollout, and large manuscript-compose coverage that should remain in the
+pre-release and release gates but stay out of the daily edit loop.
+
+Release gate: `uv run --extra dev python -m pytest tests/ --cov=src --cov-fail-under=90`.

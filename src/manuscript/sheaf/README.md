@@ -21,7 +21,7 @@ uv run python -c "from pathlib import Path; from manuscript.sheaf import verify_
 uv run python scripts/compose_manuscript.py --validate-only --strict
 
 # Negative controls (each law is proven to be falsifiable):
-uv run pytest tests/test_sheaf_laws.py -q
+uv run python -m pytest tests/test_sheaf_laws.py -q
 ```
 
 The laws turn "sheaf" from notation into a machine-checked claim; they verify the

@@ -43,8 +43,8 @@ def figure_sheaf_layers_overview(project_root: Path) -> Path | None:
         fig, axes = plt.subplots(
             1,
             2,
-            figsize=(13.5, heatmap_height),
-            gridspec_kw={"width_ratios": [1.05, 1.65], "wspace": 0.28},
+            figsize=(18.2, heatmap_height + 1.1),
+            gridspec_kw={"width_ratios": [0.86, 1.9], "wspace": 0.55},
         )
         layer_ax, heatmap_ax = axes
         if not draw_track_layers_panel(layer_ax, root):
@@ -56,10 +56,11 @@ def figure_sheaf_layers_overview(project_root: Path) -> Path | None:
             root,
             title="IMRAD binding matrix",
             boundary_width=1.0,
-            label_fontsize=7,
+            label_fontsize=style.font_size("dense"),
+            show_group_labels=False,
         )
-        fig.suptitle("Sheaf fragment layers and IMRAD bindings", fontsize=11, y=0.98)
-        fig.subplots_adjust(left=0.06, right=0.98, top=0.92, wspace=0.28)
+        fig.suptitle("Sheaf fragment layers and IMRAD bindings", fontsize=style.font_size("title"), y=0.985)
+        fig.subplots_adjust(left=0.055, right=0.985, top=0.91, bottom=0.08, wspace=0.55)
         save_figure_png(fig, out, dpi=dpi)
     return out
 
@@ -96,8 +97,8 @@ def figure_sheaf_coverage_heatmap(
     n_rows = len(payload.y_labels)
     n_cols = len(payload.track_ids)
     row_height = cfg.heatmap.row_height
-    fig_height = max(5.0, n_rows * row_height + 2.2)
-    fig_width = max(8.5, n_cols * 1.15 + 3.0)
+    fig_height = max(6.2, n_rows * row_height + 2.8)
+    fig_width = max(10.0, n_cols * 1.25 + 3.8)
     out = output_path or root / "output" / "figures" / "sheaf_coverage_heatmap.png"
     dpi = max(style.dpi, cfg.heatmap.dpi)
     with apply_style(style):
@@ -110,7 +111,7 @@ def figure_sheaf_coverage_heatmap(
             show_legend=True,
             show_row_pct=True,
             boundary_width=1.2,
-            label_fontsize=11,
+            label_fontsize=style.font_size("annotation"),
         )
         fig.tight_layout()
         save_figure_png(fig, out, dpi=dpi)

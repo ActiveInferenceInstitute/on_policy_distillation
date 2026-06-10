@@ -60,13 +60,24 @@ def test_section_custom_track_order() -> None:
     assert track_order_for_section(section, registry) == ["lean", "prose"]
 
 
-def test_full_section_binds_all_registry_tracks() -> None:
+def test_appendix_supplements_bind_all_registry_tracks() -> None:
     root = Path(__file__).resolve().parents[1]
     manifest = load_manifest(root / "manuscript" / "sheaf" / "manifest.yaml")
     registry = load_track_registry(root / "manuscript" / "sheaf" / "tracks.yaml")
+    appendix_ids = {"appendix_full_sheaf", "methods_sheaf", "results_invariants"}
+    appendix_tracks = {
+        track_id
+        for section in manifest.sections
+        if section.id in appendix_ids
+        for track_id in section.tracks
+    }
     full = next(s for s in manifest.sections if s.id == "appendix_full_sheaf")
-    assert "layers" in full.tracks
-    assert set(full.tracks) == set(registry.tracks)
+    reproducibility = next(s for s in manifest.sections if s.id == "methods_sheaf")
+    validation = next(s for s in manifest.sections if s.id == "results_invariants")
+    assert "layers" not in full.tracks
+    assert "layers" in reproducibility.tracks
+    assert "model_checking" in validation.tracks
+    assert appendix_tracks == set(registry.tracks)
 
 
 def test_methods_sheaf_binds_layers_tracks() -> None:

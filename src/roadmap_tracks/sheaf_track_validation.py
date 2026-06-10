@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from . import sheaf_tracks as _tracks
+import roadmap_tracks.sheaf_tracks as _tracks
+from .formal_interop import proof_inventory_mismatch
 from .supplemental import validate_supplemental_artifacts
 
 
@@ -18,8 +19,58 @@ def _all_rows_absent(payload: dict, field: str) -> bool:
     return bool(rows) and all(not row.get(field) for row in rows)
 
 
+def load_sheaf_track_payloads(project_root: Path) -> dict[str, dict]:
+    """Load the canonical artifact payload set once for cheap in-memory checks."""
+    root = project_root.resolve()
+    payloads = {
+        key: _tracks._load_json(root / relative_path)
+        for key, relative_path in _tracks.CANONICAL_ARTIFACTS.items()
+    }
+    payloads["lean_theorems"] = _tracks._load_json(root / "output" / "reports" / "lean_theorem_inventory.json")
+    return payloads
+
+
+def _payload(root: Path, payloads: dict[str, dict] | None, key: str) -> dict:
+    if payloads is not None and key in payloads:
+        return payloads[key]
+    if key == "lean_theorems":
+        return _tracks._load_json(root / "output" / "reports" / "lean_theorem_inventory.json")
+    return _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS[key])
+
+
+def validate_sheaf_track_payloads(
+    project_root: Path,
+    payloads: dict[str, dict],
+    *,
+    validate_saved_certificate: bool = True,
+) -> list[str]:
+    """Validate already-loaded canonical sheaf-track payloads.
+
+    This keeps row-level negative controls fail-closed without rewriting the
+    generated artifact tree for every mutation.
+    """
+    return _validate_sheaf_track_artifacts(
+        project_root,
+        payloads=payloads,
+        validate_saved_certificate=validate_saved_certificate,
+    )
+
+
 def validate_sheaf_track_artifacts(project_root: Path, *, validate_saved_certificate: bool = True) -> list[str]:
     """Validate canonical sheaf-track artifacts and their semantic certificate."""
+    return _validate_sheaf_track_artifacts(
+        project_root,
+        payloads=None,
+        validate_saved_certificate=validate_saved_certificate,
+    )
+
+
+def _validate_sheaf_track_artifacts(
+    project_root: Path,
+    *,
+    payloads: dict[str, dict] | None,
+    validate_saved_certificate: bool,
+) -> list[str]:
     root = project_root.resolve()
     issues: list[str] = []
     registry = _tracks._registry_tracks(root)
@@ -35,13 +86,13 @@ def validate_sheaf_track_artifacts(project_root: Path, *, validate_saved_certifi
     if unbound:
         issues.append(f"canonical live tracks missing manuscript bindings: {', '.join(unbound)}")
 
-    provenance = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["provenance"])
+    provenance = _payload(root, payloads, "provenance")
     if provenance.get("schema") != "template_active_inference.artifact_provenance.v1":
         issues.append("artifact_provenance.json schema mismatch")
     if provenance.get("all_records_complete") is not True or provenance.get("all_bundles_complete") is not True:
         issues.append("artifact_provenance.json has incomplete provenance rows or bundles")
 
-    replay = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["replay_matrix"])
+    replay = _payload(root, payloads, "replay_matrix")
     if replay.get("schema") != "template_active_inference.replay_matrix.v1":
         issues.append("replay_matrix.json schema mismatch")
     replay_rows_matched = _all_rows(replay, "matched")
@@ -51,7 +102,7 @@ def validate_sheaf_track_artifacts(project_root: Path, *, validate_saved_certifi
     ):
         issues.append("replay_matrix.json records a replay mismatch")
 
-    sensitivity = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["sensitivity"])
+    sensitivity = _payload(root, payloads, "sensitivity")
     if sensitivity.get("schema") != "template_active_inference.sensitivity_sweep.v1":
         issues.append("sensitivity_sweep.json schema mismatch")
     if sensitivity.get("complete_grid") is not True or sensitivity.get("row_count") != sensitivity.get(
@@ -59,7 +110,7 @@ def validate_sheaf_track_artifacts(project_root: Path, *, validate_saved_certifi
     ):
         issues.append("sensitivity_sweep.json grid is incomplete")
 
-    uncertainty = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["uncertainty"])
+    uncertainty = _payload(root, payloads, "uncertainty")
     if uncertainty.get("schema") != "template_active_inference.uncertainty_summary.v1":
         issues.append("uncertainty_summary.json schema mismatch")
     uncertainty_normalized = _all_rows(uncertainty, "normalized")
@@ -75,7 +126,7 @@ def validate_sheaf_track_artifacts(project_root: Path, *, validate_saved_certifi
     ):
         issues.append("uncertainty_summary.json has invalid bins or unnormalized rows")
 
-    counter = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["counterexample"])
+    counter = _payload(root, payloads, "counterexample")
     if counter.get("schema") != "template_active_inference.counterexample_matrix.v1":
         issues.append("counterexample_matrix.json schema mismatch")
     counter_observed = bool(counter.get("rows")) and all(
@@ -87,7 +138,7 @@ def validate_sheaf_track_artifacts(project_root: Path, *, validate_saved_certifi
     ):
         issues.append("counterexample_matrix.json has expected-failure fixtures passing")
 
-    model = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["model_checking"])
+    model = _payload(root, payloads, "model_checking")
     if model.get("schema") != "template_active_inference.model_checking_witnesses.v1":
         issues.append("model_checking_witnesses.json schema mismatch")
     model_exhaustive = _all_rows(model, "exhaustive")
@@ -102,7 +153,7 @@ def validate_sheaf_track_artifacts(project_root: Path, *, validate_saved_certifi
     ):
         issues.append("model_checking_witnesses.json missed a finite counterexample")
 
-    interop = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["interop"])
+    interop = _payload(root, payloads, "interop")
     if interop.get("schema") != "template_active_inference.interop_roundtrip_report.v1":
         issues.append("interop_roundtrip_report.json schema mismatch")
     interop_lossless = _all_rows(interop, "lossless")
@@ -115,7 +166,7 @@ def validate_sheaf_track_artifacts(project_root: Path, *, validate_saved_certifi
     ):
         issues.append("interop_roundtrip_report.json is not lossless")
 
-    adversarial = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["adversarial_audit"])
+    adversarial = _payload(root, payloads, "adversarial_audit")
     if adversarial.get("schema") != "template_active_inference.adversarial_audit.v1":
         issues.append("adversarial_audit.json schema mismatch")
     adversarial_observed = bool(adversarial.get("rows")) and all(
@@ -131,13 +182,13 @@ def validate_sheaf_track_artifacts(project_root: Path, *, validate_saved_certifi
     ):
         issues.append("adversarial_audit.json has known-bad rows passing")
 
-    dependency = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["dependency"])
+    dependency = _payload(root, payloads, "dependency")
     if dependency.get("schema") != _tracks.DEPENDENCY_SCHEMA:
         issues.append("validation_dependency_graph.json schema mismatch")
     if dependency.get("all_required_edge_types_present") is not True:
         issues.append("validation_dependency_graph.json lacks required edge types")
 
-    section_status = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["section_status"])
+    section_status = _payload(root, payloads, "section_status")
     if section_status.get("schema") != "template_active_inference.sheaf_section_status_matrix.v1":
         issues.append("sheaf_section_status_matrix.json schema mismatch")
     if section_status.get("all_bound_fragments_present") is not True:
@@ -148,19 +199,19 @@ def validate_sheaf_track_artifacts(project_root: Path, *, validate_saved_certifi
     ):
         issues.append("sheaf_section_status_matrix.json has incomplete status rows")
 
-    render_log = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["render_log"])
+    render_log = _payload(root, payloads, "render_log")
     if render_log.get("schema") != "template_active_inference.sheaf_render_log.v1":
         issues.append("sheaf_render_log.json schema mismatch")
     if render_log.get("all_events_ok") is not True:
         issues.append("sheaf_render_log.json has failed render events")
 
-    scope = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["track_improvement_scope"])
+    scope = _payload(root, payloads, "track_improvement_scope")
     if scope.get("schema") != "template_active_inference.track_improvement_scope.v1":
         issues.append("track_improvement_scope.json schema mismatch")
     if scope.get("all_live_tracks_valid") is not True:
         issues.append("track_improvement_scope.json has incomplete live-track promotion rows")
 
-    blocked = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["blocked_scope_manifest"])
+    blocked = _payload(root, payloads, "blocked_scope_manifest")
     if blocked.get("schema") != "template_active_inference.blocked_scope_manifest.v1":
         issues.append("blocked_scope_manifest.json schema mismatch")
     blocked_rows_ok = bool(blocked.get("rows")) and all(
@@ -173,7 +224,7 @@ def validate_sheaf_track_artifacts(project_root: Path, *, validate_saved_certifi
     if blocked.get("all_blocked") is not True or blocked.get("all_blocked") != blocked_rows_ok:
         issues.append("blocked_scope_manifest.json does not keep empirical scope blocked")
 
-    evidence = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["evidence_fields"])
+    evidence = _payload(root, payloads, "evidence_fields")
     if evidence.get("schema") != "template_active_inference.evidence_field_index.v1":
         issues.append("evidence_field_index.json schema mismatch")
     evidence_fields_mapped = bool(evidence.get("rows")) and all(
@@ -182,38 +233,39 @@ def validate_sheaf_track_artifacts(project_root: Path, *, validate_saved_certifi
     if evidence.get("all_fields_mapped") is not True or evidence.get("all_fields_mapped") != evidence_fields_mapped:
         issues.append("evidence_field_index.json has unmapped evidence fields")
 
-    release = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["release_bundle"])
+    release = _payload(root, payloads, "release_bundle")
     if release.get("schema") != "template_active_inference.release_bundle_manifest.v1":
         issues.append("release_bundle_manifest.json schema mismatch")
     if release.get("all_required_sources_present") is not True:
         issues.append("release_bundle_manifest.json is missing required deliverables")
 
-    theorem = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["theorem_traceability"])
+    theorem = _payload(root, payloads, "theorem_traceability")
     if theorem.get("schema") != "template_active_inference.theorem_traceability_matrix.v1":
         issues.append("theorem_traceability_matrix.json schema mismatch")
     theorem_linked = _all_rows(theorem, "linked")
     if theorem.get("all_theorems_linked") is not True or theorem.get("all_theorems_linked") != theorem_linked:
         issues.append("theorem_traceability_matrix.json has unlinked theorem rows")
 
-    gate_index = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["gate_ergonomics"])
+    gate_index = _payload(root, payloads, "gate_ergonomics")
     gate_indexed = _all_rows(gate_index, "indexed")
     if gate_index.get("all_indexed") is not True or gate_index.get("all_indexed") != gate_indexed:
         issues.append("validation_gate_index.json has unindexed gates")
 
-    diffoscope = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["artifact_diffoscope"])
+    diffoscope = _payload(root, payloads, "artifact_diffoscope")
     if diffoscope.get("schema") != "template_active_inference.artifact_diffoscope.v1":
         issues.append("artifact_diffoscope.json schema mismatch")
     diffoscope_equal = _all_rows(diffoscope, "equal")
     if diffoscope.get("all_equal") is not True or diffoscope.get("all_equal") != diffoscope_equal:
         issues.append("artifact_diffoscope.json records artifact drift")
 
-    proof = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["proof_extraction"])
+    proof = _payload(root, payloads, "proof_extraction")
     if proof.get("schema") != "template_active_inference.proof_extraction_index.v1":
         issues.append("proof_extraction_index.json schema mismatch")
     proof_extracted = _all_rows(proof, "extracted")
     proof_constructive = bool(proof.get("rows")) and all(
         not row.get("forbidden_tokens") for row in proof.get("rows") or []
     )
+    lean_theorems = _payload(root, payloads, "lean_theorems")
     if (
         proof.get("all_extracted") is not True
         or proof.get("all_extracted") != proof_extracted
@@ -221,8 +273,15 @@ def validate_sheaf_track_artifacts(project_root: Path, *, validate_saved_certifi
         or proof.get("all_constructive") != proof_constructive
     ):
         issues.append("proof_extraction_index.json has missing statements or nonconstructive tokens")
+    if (
+        proof.get("inventory_theorem_count") != lean_theorems.get("theorem_count")
+        or proof.get("theorem_count") != lean_theorems.get("theorem_count")
+        or proof.get("all_inventory_theorems_extracted") is not True
+    ):
+        issues.append("proof_extraction_index.json theorem inventory mismatch")
+    issues.extend(proof_inventory_mismatch(proof, lean_theorems))
 
-    catalog = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["state_space_catalog"])
+    catalog = _payload(root, payloads, "state_space_catalog")
     if catalog.get("schema") != "template_active_inference.state_space_catalog.v1":
         issues.append("state_space_catalog.json schema mismatch")
     catalog_finite = _all_rows(catalog, "finite")
@@ -238,7 +297,7 @@ def validate_sheaf_track_artifacts(project_root: Path, *, validate_saved_certifi
     ):
         issues.append("state_space_catalog.json has missing finite spaces")
 
-    ablation = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["causal_ablation"])
+    ablation = _payload(root, payloads, "causal_ablation")
     if ablation.get("schema") != "template_active_inference.causal_ablation_matrix.v1":
         issues.append("causal_ablation_matrix.json schema mismatch")
     ablation_deterministic = _all_rows(ablation, "deterministic")
@@ -251,7 +310,7 @@ def validate_sheaf_track_artifacts(project_root: Path, *, validate_saved_certifi
     ):
         issues.append("causal_ablation_matrix.json has incomplete deterministic rows")
 
-    license_audit = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["artifact_license"])
+    license_audit = _payload(root, payloads, "artifact_license")
     if license_audit.get("schema") != "template_active_inference.artifact_license_audit.v1":
         issues.append("artifact_license_audit.json schema mismatch")
     license_safe = bool(license_audit.get("rows")) and all(
@@ -260,7 +319,7 @@ def validate_sheaf_track_artifacts(project_root: Path, *, validate_saved_certifi
     if license_audit.get("all_license_safe") is not True or license_audit.get("all_license_safe") != license_safe:
         issues.append("artifact_license_audit.json records unsafe artifacts")
 
-    release_notes = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["release_notes"])
+    release_notes = _payload(root, payloads, "release_notes")
     if release_notes.get("schema") != "template_active_inference.release_notes_evidence.v1":
         issues.append("release_notes_evidence.json schema mismatch")
     notes_backed = bool(release_notes.get("rows")) and all(
@@ -272,11 +331,100 @@ def validate_sheaf_track_artifacts(project_root: Path, *, validate_saved_certifi
     ):
         issues.append("release_notes_evidence.json has unsupported notes")
 
-    from .scholarship import validate_scholarship_source_matrix
+    scholarship = _payload(root, payloads, "scholarship")
+    scholarship_rows = scholarship.get("rows") or []
+    scholarship_connected = bool(scholarship_rows) and all(
+        row.get("bib_has_entry")
+        and row.get("bib_has_locator")
+        and row.get("cited_in_manuscript")
+        and row.get("artifact_exists")
+        and row.get("tracks_registered")
+        and row.get("sections_bound")
+        and row.get("claim_boundary")
+        and row.get("connected")
+        for row in scholarship_rows
+    )
+    if scholarship.get("schema") != "template_active_inference.scholarship_source_matrix.v1":
+        issues.append("scholarship_source_matrix.json schema mismatch")
+    if scholarship.get("all_expected_sources_present") is not True:
+        issues.append("scholarship_source_matrix.json source set is incomplete")
+    if (
+        scholarship.get("all_sources_connected") is not True
+        or scholarship.get("all_sources_connected") != scholarship_connected
+    ):
+        issues.append("scholarship_source_matrix.json has disconnected source rows")
+    if int(scholarship.get("method_role_count", 0) or 0) < 6:
+        issues.append("scholarship_source_matrix.json has too few method roles")
 
-    issues.extend(validate_scholarship_source_matrix(root))
+    proof_dependency = _payload(root, payloads, "proof_dependency_graph")
+    proof_dependency_rows = proof_dependency.get("rows") or []
+    proof_dependency_edges = proof_dependency.get("edges") or []
+    proof_dependency_rows_ok = bool(proof_dependency_rows) and all(row.get("linked") for row in proof_dependency_rows)
+    proof_dependency_edges_ok = bool(proof_dependency_edges) and all(
+        edge.get("source") and edge.get("target") and edge.get("kind") for edge in proof_dependency_edges
+    )
+    if proof_dependency.get("schema") != "template_active_inference.proof_dependency_graph.v1":
+        issues.append("proof_dependency_graph.json schema mismatch")
+    if (
+        proof_dependency.get("all_theorems_have_dependencies") is not True
+        or proof_dependency.get("all_theorems_have_dependencies") != proof_dependency_rows_ok
+    ):
+        issues.append("proof_dependency_graph.json has unlinked theorem dependencies")
+    if (
+        proof_dependency.get("all_edges_resolved") is not True
+        or proof_dependency.get("all_edges_resolved") != proof_dependency_edges_ok
+    ):
+        issues.append("proof_dependency_graph.json has unresolved edges")
 
-    issues.extend(validate_supplemental_artifacts(root))
+    transition_table = _payload(root, payloads, "state_transition_table")
+    transition_rows = transition_table.get("rows") or []
+    transitions_deterministic = bool(transition_rows) and all(
+        row.get("deterministic") and row.get("next_state") for row in transition_rows
+    )
+    transitions_covered = set(transition_table.get("required_models") or []).issubset(
+        set(transition_table.get("covered_models") or [])
+    )
+    if transition_table.get("schema") != "template_active_inference.state_transition_table.v1":
+        issues.append("state_transition_table.json schema mismatch")
+    if (
+        transition_table.get("all_transitions_deterministic") is not True
+        or transition_table.get("all_transitions_deterministic") != transitions_deterministic
+    ):
+        issues.append("state_transition_table.json has nondeterministic or incomplete transitions")
+    if (
+        transition_table.get("all_reachable_states_covered") is not True
+        or transition_table.get("all_reachable_states_covered") != transitions_covered
+    ):
+        issues.append("state_transition_table.json omits a reachable finite model")
+
+    ablation_sensitivity = _payload(root, payloads, "ablation_sensitivity_report")
+    ablation_sensitivity_rows = ablation_sensitivity.get("rows") or []
+    ablation_sensitivity_backed = bool(ablation_sensitivity_rows) and all(
+        row.get("source_backed") for row in ablation_sensitivity_rows
+    )
+    if ablation_sensitivity.get("schema") != "template_active_inference.ablation_sensitivity_report.v1":
+        issues.append("ablation_sensitivity_report.json schema mismatch")
+    if (
+        ablation_sensitivity.get("all_effects_source_backed") is not True
+        or ablation_sensitivity.get("all_effects_source_backed") != ablation_sensitivity_backed
+    ):
+        issues.append("ablation_sensitivity_report.json has unsupported ablation effects")
+
+    release_attestation = _payload(root, payloads, "release_attestation")
+    release_attestation_rows = release_attestation.get("rows") or []
+    release_attested = bool(release_attestation_rows) and all(
+        row.get("passed") or row.get("deferred_until_validation") for row in release_attestation_rows
+    )
+    if release_attestation.get("schema") != "template_active_inference.release_attestation.v1":
+        issues.append("release_attestation.json schema mismatch")
+    if release_attestation.get("all_attested") is not True or release_attestation.get("all_attested") != release_attested:
+        issues.append("release_attestation.json claims a failed gate passed")
+
+    if payloads is None:
+        from .scholarship import validate_scholarship_source_matrix
+
+        issues.extend(validate_scholarship_source_matrix(root))
+        issues.extend(validate_supplemental_artifacts(root))
 
     restrictions = _tracks._canonical_restrictions(root)
     false_restrictions = sorted(key for key, ok in restrictions.items() if not ok)
@@ -284,7 +432,7 @@ def validate_sheaf_track_artifacts(project_root: Path, *, validate_saved_certifi
         issues.append(f"canonical semantic restrictions failed: {', '.join(false_restrictions)}")
 
     if validate_saved_certificate:
-        semantic = _tracks._load_json(root / _tracks.CANONICAL_ARTIFACTS["semantic"])
+        semantic = _payload(root, payloads, "semantic")
         if semantic.get("schema") != _tracks.SEMANTIC_SCHEMA:
             issues.append("sheaf_gluing_certificate.json schema mismatch")
         if semantic.get("ok") is not True:

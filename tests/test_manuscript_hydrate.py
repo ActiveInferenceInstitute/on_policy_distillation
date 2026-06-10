@@ -13,7 +13,8 @@ def test_generate_variables_includes_structural_counts() -> None:
     vars_ = generate_variables(root, require_analysis_outputs=False)
     assert vars_["pipeline_track_count"] == 30
     assert vars_["sheaf_track_count"] == 33
-    assert vars_["appendix_sheaf_track_count"] == 33
+    assert vars_["appendix_sheaf_track_count"] == 22
+    assert vars_["appendix_sheaf_track_count"] < vars_["sheaf_track_count"]
     assert vars_["imrad_manifest_rows"] == 17
     assert vars_["composed_section_count"] == 12
     assert vars_["imrad_group_count"] == 5
@@ -118,3 +119,43 @@ def test_manuscript_no_longer_describes_state_inference_as_default(project_root:
     )
     for phrase in banned:
         assert phrase not in manuscript_text
+
+def test_format_variables_preserves_tiny_magnitudes() -> None:
+    """Machine-epsilon residuals must not be laundered into a literal "0"."""
+    from manuscript.hydrate import format_variables, substitute_snake_case_tokens
+
+    out = format_variables({"sweep_rmse_mi": 2.122461271936776e-16, "gap": 0.6031, "zero": 0.0})
+    assert out["sweep_rmse_mi"].startswith("2.122461e-16")
+    assert out["gap"] == "0.6031"
+    assert out["zero"] == "0"
+    text, unresolved = substitute_snake_case_tokens("RMSE {{sweep_rmse_mi:.1e}} nats", out)
+    assert text == "RMSE 2.1e-16 nats"
+    assert unresolved == []
+
+
+def test_format_variables_adversarial_inputs() -> None:
+    """Pin the stringifier on the inputs most likely to regress (advisor ask).
+
+    Exact zero stays "0"; negative zero does not print a minus sign; positive
+    and negative epsilons keep magnitude AND sign; clean values keep their
+    legacy short rendering; full-precision floats round at 4dp as before.
+    """
+    from manuscript.hydrate import format_variables
+
+    out = format_variables(
+        {
+            "exact_zero": 0.0,
+            "neg_zero": -0.0,
+            "pos_eps": 4.440892098500626e-16,
+            "neg_eps": -4.440892098500626e-16,
+            "clean": 0.0998,
+            "full_precision": 0.24681612473551864,
+        }
+    )
+    assert out["exact_zero"] == "0"
+    assert out["neg_zero"] == "0"  # -0.0 == 0.0, takes the zero branch
+    assert out["pos_eps"] == "4.440892e-16"
+    assert out["neg_eps"] == "-4.440892e-16"
+    assert out["clean"] == "0.0998"
+    assert out["full_precision"] == "0.2468"
+

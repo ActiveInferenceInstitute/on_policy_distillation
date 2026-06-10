@@ -30,8 +30,8 @@ claim pass; regenerate the producer that owns the artifact.
 - `output/figures/*` comes from `scripts/generate_figures.py` and
   `scripts/render_animation.py`.
 - `output/pdf/*` and `output/web/*` are render outputs, not sources of truth.
-- Root-level `output/templates/template_active_inference/**` is copied from the
-  project-local `output/**` by the root pipeline.
+- Template-root `output/working/active_inference_on_policy_distillation/**` is
+  copied from the project-local `output/**` by the root pipeline.
 
 ## Single hydration boundary
 
@@ -98,10 +98,14 @@ Project-local outputs are authoritative during generation. After a root pipeline
 run, verify copied root output parity as well:
 
 ```bash
-./run.sh --project template_active_inference --pipeline --core-only
+cd ../../../template
+uv run python -m infrastructure.orchestration link-projects
+uv run python scripts/03_render_pdf.py --project working/active_inference_on_policy_distillation
+cd ../projects/working/active_inference_on_policy_distillation
 uv run python scripts/validate_outputs.py
 ```
 
 The semantic and release-bundle reports allow render-deferred PDF/web rows before
 copy, but final acceptance must inspect both `output/**` inside the project and
-`../../output/templates/template_active_inference/**` from the repository root.
+`../../../template/output/working/active_inference_on_policy_distillation/**` from
+the sibling template checkout.
