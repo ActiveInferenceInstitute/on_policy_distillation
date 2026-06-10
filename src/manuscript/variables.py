@@ -201,6 +201,12 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
     gkd_data = _load_json(root / "output" / "data" / "firstprinciples" / "gkd_demo.json")
     gkd_gap = gkd_data.get("reverse_kl") or {}
     diversity_data = _load_json(root / "output" / "data" / "firstprinciples" / "diversity_demo.json")
+    privilege_data = _load_json(root / "output" / "data" / "firstprinciples" / "privilege_sweep.json")
+    privilege_levels = privilege_data.get("levels") or []
+    _flat = [row for row in privilege_levels if abs(float(row.get("entropy_gap", 0.0))) <= 1e-9]
+    # "Appreciable" floor: rollout float noise produces ~1e-7-nat reverse-KL
+    # values at low privilege; only signals above 1e-3 nats count as detection.
+    _nonzero_kl = [row for row in privilege_levels if float(row.get("mean_reverse_kl", 0.0)) > 1e-3]
     em_data = _load_json(root / "output" / "data" / "firstprinciples" / "variational_em_demo.json")
     adaptive_data = _load_json(root / "output" / "data" / "firstprinciples" / "adaptive_demo.json")
     statistics_data = _load_json(root / "output" / "data" / "firstprinciples" / "statistics_demo.json")
@@ -453,6 +459,22 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
         "gkd_on_policy_loss": float(gkd_gap.get("on_policy_loss", 0.0)),
         "gkd_off_policy_loss": float(gkd_gap.get("off_policy_loss", 0.0)),
         "gkd_exposure_gap": float(gkd_gap.get("exposure_gap", 0.0)),
+        "privilege_sweep_level_count": len(privilege_levels),
+        "privilege_sweep_student_cue_validity": privilege_data.get("student_cue_validity", 0.0),
+        "privilege_sweep_baseline_gap": float(privilege_data.get("baseline_gap") or 0.0),
+        "privilege_sweep_gap_rank_correlation": float(privilege_data.get("gap_rank_correlation", 0.0)),
+        "privilege_sweep_last_flat_validity": (
+            max(float(row["teacher_cue_validity"]) for row in _flat) if _flat else 0.0
+        ),
+        "privilege_sweep_top_validity": (
+            float(privilege_levels[-1]["teacher_cue_validity"]) if privilege_levels else 0.0
+        ),
+        "privilege_sweep_top_gap": float(privilege_levels[-1]["entropy_gap"]) if privilege_levels else 0.0,
+        "privilege_sweep_top_kl": float(privilege_levels[-1]["mean_reverse_kl"]) if privilege_levels else 0.0,
+        "privilege_sweep_first_nonzero_validity": (
+            float(_nonzero_kl[0]["teacher_cue_validity"]) if _nonzero_kl else 0.0
+        ),
+        "privilege_sweep_first_nonzero_kl": float(_nonzero_kl[0]["mean_reverse_kl"]) if _nonzero_kl else 0.0,
         "diversity_sharpest_pass_at_k": float(diversity_data.get("sharpest_pass_at_k", 0.0)),
         "diversity_flattest_pass_at_k": float(diversity_data.get("flattest_pass_at_k", 0.0)),
         "diversity_greedy_pass_at_1": float(diversity_data.get("greedy_pass_at_1", 0.0)),

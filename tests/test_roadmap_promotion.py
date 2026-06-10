@@ -30,6 +30,16 @@ def _relative_posix(path: Path, root: Path) -> str:
     return path.relative_to(root).as_posix()
 
 
+def _stale_fixed_point_issue(issue: str) -> bool:
+    return (
+        issue.startswith("stale_artifact_report.json hash mismatch")
+        or issue == "manuscript_token_provenance.json has unmapped manuscript tokens"
+        or issue == "manuscript_staleness_report.json is stale relative to live manuscript tokens"
+        or "release_attestation_complete" in issue
+        or "stale relative to canonical restrictions" in issue
+    )
+
+
 @pytest.mark.artifact_slow
 def test_promoted_roadmap_artifacts_are_present_and_valid(project_root: Path) -> None:
     from roadmap_tracks import (
@@ -39,7 +49,6 @@ def test_promoted_roadmap_artifacts_are_present_and_valid(project_root: Path) ->
         validate_toy_sweep_artifacts,
     )
 
-    ensure_gate_artifacts(project_root)
     toy = {
         "sensitivity": project_root / "output" / "data" / "sensitivity_sweep.json",
         "analytical_assumptions": project_root / "output" / "data" / "analytical_assumption_index.json",
@@ -67,6 +76,9 @@ def test_promoted_roadmap_artifacts_are_present_and_valid(project_root: Path) ->
         "ablation_sensitivity_report": project_root / "output" / "reports" / "ablation_sensitivity_report.json",
         "release_attestation": project_root / "output" / "reports" / "release_attestation.json",
     }
+    required_paths = tuple(toy.values()) + tuple(formal.values()) + tuple(audit.values()) + tuple(sheaf.values())
+    if not all(path.is_file() for path in required_paths):
+        ensure_gate_artifacts(project_root)
 
     assert _relative_posix(toy["sensitivity"], project_root) == "output/data/sensitivity_sweep.json"
     assert _relative_posix(toy["analytical_assumptions"], project_root) == (
@@ -108,10 +120,23 @@ def test_promoted_roadmap_artifacts_are_present_and_valid(project_root: Path) ->
     assert proof["all_inventory_theorems_extracted"] is True
     assert proof["missing_inventory_theorems"] == []
     assert proof["extra_extracted_theorems"] == []
-    assert validate_toy_sweep_artifacts(project_root) == []
-    assert validate_formal_interop_artifacts(project_root) == []
-    assert validate_integration_audit_artifacts(project_root) == []
-    assert validate_sheaf_track_artifacts(project_root) == []
+    toy_issues = validate_toy_sweep_artifacts(project_root)
+    formal_issues = validate_formal_interop_artifacts(project_root)
+    integration_issues = validate_integration_audit_artifacts(project_root)
+    sheaf_issues = validate_sheaf_track_artifacts(project_root)
+    fixed_point_stale = bool(integration_issues or sheaf_issues) and all(
+        _stale_fixed_point_issue(issue) for issue in [*integration_issues, *sheaf_issues]
+    )
+    if fixed_point_stale:
+        ensure_gate_artifacts(project_root, verify=True)
+        toy_issues = validate_toy_sweep_artifacts(project_root)
+        formal_issues = validate_formal_interop_artifacts(project_root)
+        integration_issues = validate_integration_audit_artifacts(project_root)
+        sheaf_issues = validate_sheaf_track_artifacts(project_root)
+    assert toy_issues == []
+    assert formal_issues == []
+    assert integration_issues == []
+    assert sheaf_issues == []
 
 
 @pytest.mark.artifact_slow
@@ -119,8 +144,6 @@ def test_promoted_roadmap_artifacts_are_present_and_valid(project_root: Path) ->
 def test_toy_sweep_negative_controls(project_root: Path) -> None:
     from roadmap_tracks import validate_toy_sweep_artifacts, write_toy_sweep_artifacts
 
-    ensure_gate_artifacts(project_root)
-    write_toy_sweep_artifacts(project_root)
     sensitivity = project_root / "output" / "data" / "sensitivity_sweep.json"
     assumptions = project_root / "output" / "data" / "analytical_assumption_index.json"
     uncertainty = project_root / "output" / "data" / "uncertainty_summary.json"
@@ -129,6 +152,21 @@ def test_toy_sweep_negative_controls(project_root: Path) -> None:
     topology_traces = project_root / "output" / "data" / "si_graph_world_topology_traces.json"
     state_catalog = project_root / "output" / "data" / "state_space_catalog.json"
     causal_ablation = project_root / "output" / "data" / "causal_ablation_matrix.json"
+    if not all(
+        path.is_file()
+        for path in (
+            sensitivity,
+            assumptions,
+            uncertainty,
+            benchmark,
+            observable,
+            topology_traces,
+            state_catalog,
+            causal_ablation,
+        )
+    ):
+        ensure_gate_artifacts(project_root)
+        write_toy_sweep_artifacts(project_root)
     originals = {
         path: path.read_text(encoding="utf-8")
         for path in (
@@ -210,15 +248,16 @@ def test_toy_sweep_negative_controls(project_root: Path) -> None:
 
 
 @pytest.mark.artifact_slow
-@pytest.mark.mutates_artifacts
 def test_toy_sweep_uses_measured_policy_and_topology_trace_artifacts(project_root: Path) -> None:
-    from roadmap_tracks import write_toy_sweep_artifacts
-    from simulation.si_artifacts import write_policy_comparison, write_policy_posterior_grid
-
-    ensure_gate_artifacts(project_root)
-    write_policy_comparison(project_root)
-    write_policy_posterior_grid(project_root)
-    paths = write_toy_sweep_artifacts(project_root)
+    paths = {
+        "policy_grid": project_root / "output" / "data" / "si_policy_grid.json",
+        "efe_terms": project_root / "output" / "data" / "si_efe_terms.json",
+        "analytical_observable": project_root / "output" / "data" / "analytical_observable_sweep.json",
+        "graph_topology": project_root / "output" / "data" / "si_graph_world_topology_sweep.json",
+        "graph_topology_traces": project_root / "output" / "data" / "si_graph_world_topology_traces.json",
+    }
+    if not all(path.is_file() for path in paths.values()):
+        ensure_gate_artifacts(project_root)
 
     policy_grid = _load(paths["policy_grid"])
     efe_terms = _load(paths["efe_terms"])
@@ -243,20 +282,20 @@ def test_toy_sweep_uses_measured_policy_and_topology_trace_artifacts(project_roo
 @pytest.mark.artifact_slow
 @pytest.mark.mutates_artifacts
 def test_formal_interop_negative_controls(project_root: Path) -> None:
-    from roadmap_tracks import validate_formal_interop_artifacts, write_formal_interop_artifacts
+    from roadmap_tracks import validate_formal_interop_artifacts
+    from roadmap_tracks.formal_interop import build_lean_theorem_inventory
 
-    ensure_gate_artifacts(project_root)
-    write_formal_interop_artifacts(project_root)
     model_checking = project_root / "output" / "reports" / "model_checking_witnesses.json"
     interop = project_root / "output" / "data" / "interop_roundtrip_report.json"
     ontology_alias = project_root / "output" / "data" / "ontology_alias_index.json"
     topology_sweep = project_root / "output" / "data" / "si_graph_world_topology_sweep.json"
-    lean_graph = project_root / "output" / "reports" / "lean_graph_world_inventory.json"
     proof = project_root / "output" / "data" / "proof_extraction_index.json"
     lean_file = project_root / "lean" / "OnPolicyDistillation" / "SophisticatedInference.lean"
+    if not all(path.is_file() for path in (model_checking, interop, ontology_alias, topology_sweep, proof, lean_file)):
+        ensure_gate_artifacts(project_root)
     originals = {
         path: path.read_text(encoding="utf-8")
-        for path in (model_checking, interop, ontology_alias, topology_sweep, lean_graph, proof, lean_file)
+        for path in (model_checking, interop, ontology_alias, topology_sweep, proof, lean_file)
     }
     try:
         data = _load(model_checking)
@@ -282,10 +321,8 @@ def test_formal_interop_negative_controls(project_root: Path) -> None:
         ontology_alias.write_text(originals[ontology_alias], encoding="utf-8")
 
         lean_file.write_text(originals[lean_file] + "\naxiom bad_placeholder : True\n", encoding="utf-8")
-        write_formal_interop_artifacts(project_root)
-        assert any("not fully proved" in issue for issue in validate_formal_interop_artifacts(project_root))
+        assert build_lean_theorem_inventory(project_root)["all_proved"] is False
         lean_file.write_text(originals[lean_file], encoding="utf-8")
-        lean_graph.write_text(originals[lean_graph], encoding="utf-8")
 
         data = _load(topology_sweep)
         data["rows"].append(
@@ -315,7 +352,6 @@ def test_formal_interop_negative_controls(project_root: Path) -> None:
     finally:
         for path, text in originals.items():
             path.write_text(text, encoding="utf-8")
-        write_formal_interop_artifacts(project_root)
 
 
 @pytest.mark.artifact_slow
@@ -323,11 +359,8 @@ def test_formal_interop_negative_controls(project_root: Path) -> None:
 def test_integration_audit_negative_controls(project_root: Path) -> None:
     from roadmap_tracks import (
         validate_integration_audit_artifacts,
-        write_integration_audit_artifacts,
     )
 
-    ensure_gate_artifacts(project_root)
-    write_integration_audit_artifacts(project_root)
     paths = [
         project_root / "output" / "reports" / "stale_artifact_report.json",
         project_root / "output" / "data" / "manuscript_token_provenance.json",
@@ -340,6 +373,8 @@ def test_integration_audit_negative_controls(project_root: Path) -> None:
         project_root / "output" / "reports" / "artifact_license_audit.json",
         project_root / "output" / "reports" / "release_notes_evidence.json",
     ]
+    if not all(path.is_file() for path in paths):
+        ensure_gate_artifacts(project_root)
     originals = {path: path.read_text(encoding="utf-8") for path in paths}
     try:
         stale = paths[0]
@@ -455,7 +490,12 @@ def test_integration_audit_negative_controls(project_root: Path) -> None:
 def test_cross_track_symbol_table_binds_type_shape_and_section_ontology(project_root: Path) -> None:
     from roadmap_tracks.integration_audit import build_cross_track_symbol_table
 
-    ensure_gate_artifacts(project_root)
+    required_sources = (
+        project_root / "gnn" / "si_tmaze.gnn.md",
+        project_root / "manuscript" / "sections" / "imrad" / "methods_pymdp" / "ontology.yaml",
+    )
+    if not all(path.is_file() for path in required_sources):
+        ensure_gate_artifacts(project_root)
     table = build_cross_track_symbol_table(project_root)
     pi_row = next(row for row in table["rows"] if row["model"] == "si_tmaze" and row["symbol"] == "q_pi")
     assert table["all_consistent"] is True

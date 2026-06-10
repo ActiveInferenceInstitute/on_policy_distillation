@@ -159,3 +159,25 @@ def test_format_variables_adversarial_inputs() -> None:
     assert out["clean"] == "0.0998"
     assert out["full_precision"] == "0.2468"
 
+
+
+def test_g_format_spec_supported_and_visible() -> None:
+    """{{token:.3g}} must hydrate — an unsupported spec previously made the
+    token INVISIBLE to both substitution and the fail-closed collector."""
+    from manuscript.hydrate import collect_manuscript_tokens, format_variables, substitute_snake_case_tokens
+
+    variables = format_variables({"kl": 6.281983145, "tiny": 0.002.__float__()})
+    text, unresolved = substitute_snake_case_tokens("{{kl:.3g}} and {{tiny:.3g}}", variables)
+    assert text == "6.28 and 0.002"
+    assert unresolved == []
+    assert collect_manuscript_tokens("{{kl:.3g}}") == ["kl"]  # visible to the gate
+
+
+def test_sign_flag_format_spec_supported_and_visible() -> None:
+    """{{token:+.3f}} must hydrate with its sign — this spec was also invisible."""
+    from manuscript.hydrate import collect_manuscript_tokens, substitute_snake_case_tokens
+
+    text, unresolved = substitute_snake_case_tokens("{{gap:+.3f}}", {"gap": "0.0998"})
+    assert text == "+0.100"
+    assert unresolved == []
+    assert collect_manuscript_tokens("{{gap:+.3f}}") == ["gap"]

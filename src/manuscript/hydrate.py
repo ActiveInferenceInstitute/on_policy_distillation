@@ -7,7 +7,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-_TOKEN_RE = re.compile(r"\{\{([a-z][a-z0-9_]*)(?::\.(\d+)([ef]))?\}\}")
+_TOKEN_RE = re.compile(r"\{\{([a-z][a-z0-9_]*)(?::([+]?)\.(\d+)([efg]))?\}\}")
 _SINGLE_BRACE_TOKEN_RE = re.compile(r"(?<!\{)\{([a-z][a-z0-9_]*)\}(?!\})")
 _LATEX_FENCE_RE = re.compile(r"```\{=latex\}.*?```", re.DOTALL)
 
@@ -83,15 +83,16 @@ def substitute_snake_case_tokens(
 
     def _replace(match: re.Match[str]) -> str:
         key = match.group(1)
-        precision = match.group(2)
-        fmt = match.group(3) or "f"
+        sign = match.group(2) or ""
+        precision = match.group(3)
+        fmt = match.group(4) or "f"
         if key not in variables:
             unresolved.append(key)
             return match.group(0)
         value = variables[key]
         if precision is not None:
             try:
-                return f"{float(value):.{int(precision)}{fmt}}"
+                return f"{float(value):{sign}.{int(precision)}{fmt}}"
             except ValueError:
                 return value
         return value

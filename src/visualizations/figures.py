@@ -30,6 +30,7 @@ from .figures_firstprinciples import (
     figure_classroom_distillation_signal,
     figure_distillation_divergence_geometry,
     figure_diversity_tradeoff,
+    figure_privilege_dose_response,
     figure_exposure_bias_recovery,
     figure_parallel_convergence,
 )
@@ -55,6 +56,7 @@ __all__ = [
     "figure_classroom_distillation_signal",
     "figure_distillation_divergence_geometry",
     "figure_diversity_tradeoff",
+    "figure_privilege_dose_response",
     "figure_energy_decomposition",
     "figure_exposure_bias_recovery",
     "figure_free_energy_curve",
@@ -94,6 +96,7 @@ FIGURE_GENERATORS: dict[str, Callable[[Path], Path | None]] = {
     "energy_decomposition": figure_energy_decomposition,
     "parallel_convergence": figure_parallel_convergence,
     "diversity_tradeoff": figure_diversity_tradeoff,
+    "privilege_dose_response": figure_privilege_dose_response,
     "sheaf_layers_overview": figure_sheaf_layers_overview,
     "sheaf_coverage_heatmap": figure_sheaf_coverage_heatmap,
     "invariant_dashboard": figure_invariant_dashboard,

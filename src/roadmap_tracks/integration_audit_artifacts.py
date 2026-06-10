@@ -25,22 +25,11 @@ from .integration_audit_builders import (
     build_stale_artifact_report,
 )
 
-VALIDATION_FIXED_POINT_CHECKS: set[str] = {
-    "canonical_sheaf_track_schemas",
-    "canonical_sheaf_tracks",
-    "claim_ledger_valid",
-    "experiment_plan_metrics",
-    "integration_audit_artifacts",
-    "integration_audit_track_schemas",
-    "release_attestation_schema",
-    "release_notes_evidence_schema",
-    "semantic_sheaf_gluing",
-}
-
-
-def _validation_failures_within_fixed_point(validation: dict[str, Any]) -> bool:
-    failed = set(validation.get("failed_checks") or ([] if validation.get("all_passed") else ["<unknown>"]))
-    return failed <= VALIDATION_FIXED_POINT_CHECKS
+# The fixed-point check set and its membership test live in supplemental.py —
+# a duplicated copy here drifted from the canonical set once already.
+from roadmap_tracks.supplemental import (  # noqa: E402
+    _validation_failures_within_fixed_point,
+)
 
 
 def build_artifact_diffoscope(project_root: Path) -> dict[str, Any]:
@@ -183,6 +172,7 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         "energy_decomposition": ["output/data/firstprinciples/energy_demo.json"],
         "parallel_convergence": ["output/data/firstprinciples/parallel_demo.json"],
         "diversity_tradeoff": ["output/data/firstprinciples/diversity_demo.json"],
+        "privilege_dose_response": ["output/data/firstprinciples/privilege_sweep.json"],
         "sheaf_layers_overview": ["output/data/sheaf_coverage_matrix.json"],
         "sheaf_coverage_heatmap": ["output/data/sheaf_coverage_matrix.json"],
         "invariant_dashboard": ["output/reports/invariants.json"],
@@ -275,6 +265,11 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
             "$.pass_at_k",
             "$.greedy_pass_at_1",
         ],
+        "privilege_dose_response": [
+            "$.levels",
+            "$.baseline_gap",
+            "$.gap_rank_correlation",
+        ],
         "sheaf_layers_overview": ["$.tracks", "$.layers", "$.bound_cell_count", "$.validated_cell_count"],
         "sheaf_coverage_heatmap": ["$.rows", "$.track_ids", "$.section_ids", "$.status_matrix"],
         "invariant_dashboard": ["$.invariants", "$.simulation", "$.all_pass"],
@@ -341,6 +336,10 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         ],
         "diversity_tradeoff": [
             "test_firstprinciples_dynamics.test_diversity_tradeoff_payload",
+            "test_figures.nonblank_png",
+        ],
+        "privilege_dose_response": [
+            "test_firstprinciples_stats.test_privilege_sweep_payload_contract",
             "test_figures.nonblank_png",
         ],
         "sheaf_layers_overview": ["validate_outputs.canonical_sheaf_track_schemas", "test_figures.nonblank_png"],

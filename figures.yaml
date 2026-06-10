@@ -170,6 +170,29 @@ figures:
       Pass-at-1-versus-Pass-at-k tension active inference frames as precision (inverse temperature).
       Source: `output/data/firstprinciples/diversity_demo.json`.
     width: 0.9
+  privilege_dose_response:
+    filename: privilege_dose_response.png
+    alt: >-
+      Two-panel dose-response figure from the deterministic classroom sweep over teacher cue
+      validity. Left panel: belief-entropy gap (student minus teacher) is exactly zero through
+      cue validity {{privilege_sweep_last_flat_validity}} and jumps at the highest level. Right
+      panel: mean reverse-KL distillation signal on a logarithmic axis turns on earlier and
+      grows by orders of magnitude.
+    caption: >-
+      Teacher-privilege dose-response over {{privilege_sweep_level_count}} cue-validity levels
+      (student fixed at {{privilege_sweep_student_cue_validity}}; the identical-agent baseline gap
+      {{privilege_sweep_baseline_gap:.1f}} is a wiring check, not an effect control). The
+      belief-entropy advantage is strongly nonlinear: zero through cue validity
+      {{privilege_sweep_last_flat_validity}}, {{privilege_sweep_top_gap:+.3f}} nats at
+      {{privilege_sweep_top_validity}} (step-versus-slope is resolution-limited by the grid). The mean
+      reverse-KL distillation signal is the more sensitive detector, rising from its first
+      appreciable value ({{privilege_sweep_first_nonzero_kl:.3g}} nats above a 10^-3-nat noise
+      floor) at cue validity {{privilege_sweep_first_nonzero_validity}} to
+      {{privilege_sweep_top_kl:.3g}} nats —
+      the loss the student would descend registers privilege that posterior-entropy summaries
+      miss. Gap/validity rank correlation {{privilege_sweep_gap_rank_correlation:.2f}}.
+      Source: `output/data/firstprinciples/privilege_sweep.json`.
+    width: 0.95
   si_tmaze_actions:
     filename: si_tmaze_actions.png
     alt: >-
@@ -495,6 +518,7 @@ section_figures:
     - id: classroom_distillation_signal
     - id: si_tmaze_model_matrices
       labeled: false
+    - id: privilege_dose_response
   methods_sheaf:
     - id: sheaf_layers_overview
     - id: semantic_gluing_graph

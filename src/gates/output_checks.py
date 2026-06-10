@@ -20,6 +20,7 @@ SUPPORTED_SELECTED_OUTPUT_CHECKS = {
     "figure_hash_manifest_schema",
     "firstprinciples_empirical_benchmark_schema",
     "firstprinciples_statistics_schema",
+    "firstprinciples_privilege_sweep_schema",
     "firstprinciples_classroom_schema",
     "firstprinciples_benchmark_table_present",
     "toy_sweep_track_schemas",
@@ -734,6 +735,14 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
         and bool(fp_statistics.get("effect_size"))
         and bool(fp_statistics.get("claim_scope"))
     )
+    fp_privilege = _read_json(root / "output" / "data" / "firstprinciples" / "privilege_sweep.json")
+    checks["firstprinciples_privilege_sweep_schema"] = (
+        fp_privilege.get("schema") == "firstprinciples.privilege_sweep.v1"
+        and len(fp_privilege.get("levels") or []) >= 2
+        and fp_privilege.get("h1_entropy_falls_with_privilege") is True
+        and fp_privilege.get("h3_gap_grows_with_privilege") is True
+        and fp_privilege.get("h4_baseline_gap_zero") is True
+    )
     fp_benchmark_table = (
         fp_benchmark_table_path.read_text(encoding="utf-8") if fp_benchmark_table_path.is_file() else ""
     )
@@ -863,6 +872,7 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
             "scholarship_source_matrix_schema",
             "firstprinciples_empirical_benchmark_schema",
             "firstprinciples_statistics_schema",
+            "firstprinciples_privilege_sweep_schema",
             "firstprinciples_benchmark_table_present",
             "proof_dependency_graph_schema",
             "state_transition_table_schema",

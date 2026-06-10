@@ -94,19 +94,32 @@ def run_privilege_sweep(project_root: Path, config: PrivilegeSweepConfig | None 
                 "privileged_advantage": result.privileged_advantage,
             }
         )
+    for row in levels:
+        row["entropy_gap"] = float(row["student_belief_entropy"]) - float(row["teacher_belief_entropy"])
     validities = [row["teacher_cue_validity"] for row in levels]
     signals = [row["mean_reverse_kl"] for row in levels]
     entropies = [row["teacher_belief_entropy"] for row in levels]
+    gaps = [row["entropy_gap"] for row in levels]
     signal_corr = rank_correlation(validities, signals) if len(levels) >= 2 else 0.0
     entropy_corr = rank_correlation(validities, entropies) if len(levels) >= 2 else 0.0
+    gap_corr = rank_correlation(validities, gaps) if len(levels) >= 2 else 0.0
+    # Built-in negative control: at teacher cue validity == student cue
+    # validity the two agents run identical configs, so the gap is exactly 0
+    # by construction — a nonzero baseline gap falsifies the harness itself.
+    baseline_rows = [row for row in levels if row["teacher_cue_validity"] == cfg.student_cue_validity]
+    baseline_gap = float(baseline_rows[0]["entropy_gap"]) if baseline_rows else None
     return {
         "schema": SCHEMA,
         "student_cue_validity": cfg.student_cue_validity,
         "levels": levels,
         "signal_rank_correlation": signal_corr,
         "entropy_rank_correlation": entropy_corr,
+        "gap_rank_correlation": gap_corr,
+        "baseline_gap": baseline_gap,
         "h1_entropy_falls_with_privilege": bool(entropy_corr <= 0.0),
         "h2_signal_grows_with_privilege": bool(signal_corr >= 0.0),
+        "h3_gap_grows_with_privilege": bool(gap_corr >= 0.0),
+        "h4_baseline_gap_zero": (abs(baseline_gap) <= 1e-9) if baseline_gap is not None else False,
         "ok": bool(levels),
     }
 

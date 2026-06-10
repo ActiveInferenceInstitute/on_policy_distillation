@@ -11,7 +11,7 @@ observations (the on-policy rollout) and infer against the teacher.
 The per-decision *distillation signal* is the reverse KL between the student's
 and the teacher's first-action distributions — exactly the variational free
 energy the student would descend to absorb the teacher's privileged belief into
-its own policy. The cue is the Markov-blanket asymmetry; the rollout is the
+its own policy. The cue is a scoped Markov-blanket-style boundary; the rollout is the
 posterior generating its own observations; the reverse KL is the loss. The
 whole construction is the title, instantiated and measured.
 

@@ -413,3 +413,85 @@ def figure_diversity_tradeoff(project_root: Path) -> Path:
         fig.text(0.01, 0.01, "Source: output/data/firstprinciples/diversity_demo.json", fontsize=style.font_size("source"), color=style.color("muted"))
         save_styled_figure(fig, out, style)
     return out
+
+
+def figure_privilege_dose_response(project_root: Path) -> Path:
+    """Teacher-privilege dose-response: entropy gap is a threshold, reverse KL is the sensitive detector."""
+    root = project_root.resolve()
+    style = load_figure_style(root)
+    data = json.loads(
+        (root / "output" / "data" / "firstprinciples" / "privilege_sweep.json").read_text(encoding="utf-8")
+    )
+    levels = data["levels"]
+    validities = [float(row["teacher_cue_validity"]) for row in levels]
+    gaps = [float(row["entropy_gap"]) for row in levels]
+    signals = [float(row["mean_reverse_kl"]) for row in levels]
+    out = figure_output_path(root, "privilege_dose_response")
+    with apply_style(style):
+        fig, (gap_ax, kl_ax) = plt.subplots(1, 2, figsize=(11.6, 4.6))
+        gap_ax.plot(validities, gaps, marker="o", color=style.color("secondary"), linewidth=2.0)
+        gap_ax.axhline(0.0, color=style.color("muted"), linewidth=0.9, linestyle=":")
+        gap_ax.set_xlabel("teacher cue validity")
+        gap_ax.set_ylabel("belief-entropy gap (student − teacher, nats)")
+        gap_ax.set_title("Entropy advantage is a threshold")
+        gap_ax.annotate(
+            f"baseline gap = {data['baseline_gap']:.1f}\n(identical agents)",
+            xy=(validities[0], gaps[0]),
+            xytext=(8, 18),
+            textcoords="offset points",
+            fontsize=style.font_size("annotation"),
+            color=style.color("primary"),
+            arrowprops={"arrowstyle": "->", "color": style.color("muted"), "linewidth": 0.8},
+        )
+        gap_ax.annotate(
+            f"{gaps[-1]:+.3f}",
+            xy=(validities[-1], gaps[-1]),
+            xytext=(-38, -2),
+            textcoords="offset points",
+            fontsize=style.font_size("annotation"),
+            color=style.color("primary"),
+        )
+        gap_ax.set_ylim(min(gaps) - 0.01, max(gaps) * 1.25 + 0.01)
+        style_grid(gap_ax, style)
+
+        kl_ax.semilogy(
+            validities,
+            [max(value, 1e-4) for value in signals],
+            marker="s",
+            color=style.color("accent"),
+            linewidth=2.0,
+        )
+        kl_ax.set_xlabel("teacher cue validity")
+        kl_ax.set_ylabel("mean reverse KL (nats, log scale)")
+        kl_ax.set_title("The distillation signal detects privilege earlier")
+        for validity, signal in zip(validities, signals, strict=True):
+            if signal > 0.0:
+                kl_ax.annotate(
+                    f"{signal:.3g}",
+                    xy=(validity, max(signal, 1e-4)),
+                    xytext=(0, 8),
+                    textcoords="offset points",
+                    ha="center",
+                    fontsize=style.font_size("annotation"),
+                    color=style.color("primary"),
+                )
+        kl_ax.set_ylim(5e-5, max(max(signals), 1e-3) * 8.0)
+        kl_ax.text(
+            0.03,
+            0.92,
+            "values below 1e-4 plotted at the axis floor",
+            transform=kl_ax.transAxes,
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
+        )
+        style_grid(kl_ax, style)
+        fig.suptitle("Teacher-privilege dose-response (deterministic classroom sweep)")
+        fig.text(
+            0.01,
+            0.01,
+            "Source: output/data/firstprinciples/privilege_sweep.json",
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
+        )
+        save_styled_figure(fig, out, style)
+    return out

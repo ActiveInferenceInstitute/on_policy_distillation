@@ -47,6 +47,19 @@ def main(argv: list[str] | None = None) -> int:
             result.student_belief_entropies,
         )
         print(f"statistics_demo.json: {stats_path} (from measured classroom entropies)")
+        from firstprinciples import privilege
+
+        sweep_payload = privilege.build_payload(
+            PROJECT_ROOT,
+            privilege.PrivilegeSweepConfig(
+                teacher_cue_validities=(0.5, 0.6, 0.7, 0.8, 0.9, 0.98),
+                student_cue_validity=0.5,
+                steps=3,
+                seed=0,
+            ),
+        )
+        sweep_path = artifacts.write_json(PROJECT_ROOT, "privilege_sweep.json", sweep_payload)
+        print(f"privilege_sweep.json: {sweep_path} (teacher cue-validity dose-response)")
     return 0
 
 

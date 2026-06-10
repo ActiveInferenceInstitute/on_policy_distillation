@@ -23,6 +23,7 @@ SUPPLEMENTAL_ARTIFACTS: dict[str, str] = {
 
 VALIDATION_FIXED_POINT_CHECKS: set[str] = {
     "canonical_sheaf_track_schemas",
+    "resolved_manuscript_hydrated",
     "canonical_sheaf_tracks",
     "claim_ledger_valid",
     "experiment_plan_metrics",

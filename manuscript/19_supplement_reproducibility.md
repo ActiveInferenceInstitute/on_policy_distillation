@@ -302,10 +302,10 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | --- | --- | ---: | ---: | ---: | ---: | --- |
 | `prose` | `markdown` | 12 | 12 | 0 | 0 | `complete` |
 | `formalism` | `markdown` | 5 | 5 | 0 | 0 | `complete` |
-| `simulation` | `markdown` | 5 | 5 | 0 | 22 | `complete` |
+| `simulation` | `markdown` | 5 | 5 | 0 | 24 | `complete` |
 | `assumption_index` | `markdown` | 2 | 2 | 0 | 1 | `complete` |
 | `layers` | `layers_report` | 1 | 1 | 0 | 1 | `complete` |
-| `pymdp` | `markdown` | 3 | 3 | 0 | 20 | `complete` |
+| `pymdp` | `markdown` | 3 | 3 | 0 | 22 | `complete` |
 | `interop` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
 | `provenance` | `markdown` | 2 | 2 | 0 | 12 | `complete` |
 | `replay_matrix` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
@@ -346,7 +346,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `coverage_matrix_built` | `sheaf.coverage` | `output/data/sheaf_coverage_matrix.json` | `ok` | 93 present cells |
 | `section_status_matrix_built` | `sheaf.status` | `output/data/sheaf_section_status_matrix.json` | `ok` | 561 section-track cells |
 | `layers_renderer_bound` | `sheaf.layers_report` | `manuscript/19_supplement_reproducibility.md` | `ok` | methods sheaf layer tables |
-| `semantic_artifacts_indexed` | `sheaf.semantic` | `output/data/validation_dependency_graph.json` | `ok` | 110 artifact producer rows |
+| `semantic_artifacts_indexed` | `sheaf.semantic` | `output/data/validation_dependency_graph.json` | `ok` | 111 artifact producer rows |
 | `validation_gates_indexed` | `gates` | `output/data/validation_gate_index.json` | `ok` | 3 gate groups |
 | `manuscript_sections_composed` | `sheaf.compose` | `manuscript/*.md` | `ok` | 16 composed markdown files |
 
@@ -366,7 +366,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `evidence_field_index` | `output/data/evidence_field_index.json` | `generate_sheaf_tracks.py` | validate_outputs, validate_manuscript |
 | `validation_dependency_graph` | `output/data/validation_dependency_graph.json` | `generate_sheaf_tracks.py` | validate_manuscript, validate_outputs |
 
-**Claim rows:** 101 typed evidence claims.
+**Claim rows:** 103 typed evidence claims.
 
 <!-- sheaf-layers:artifact-producers -->
 ## Artifact producer graph
@@ -390,6 +390,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `output/data/firstprinciples/empirical_benchmark.json` | `generate_firstprinciples.py` | Yes | discussion_outlook, appendix_full_sheaf |
 | `output/data/firstprinciples/exposure_bias_demo.json` | `generate_firstprinciples.py` | Yes | intro_motivation, methods_pymdp, discussion_outlook |
 | `output/data/firstprinciples/opd_taxonomy.json` | `generate_firstprinciples.py` | Yes | intro_motivation, methods_sheaf, discussion_outlook |
+| `output/data/firstprinciples/privilege_sweep.json` | `generate_firstprinciples.py` | Yes | results_si_tmaze, appendix_full_sheaf |
 | `output/data/firstprinciples/reward_tilting_demo.json` | `generate_firstprinciples.py` | Yes | methods_analytical, discussion_outlook |
 | `output/data/firstprinciples/sdpg_demo.json` | `generate_firstprinciples.py` | Yes | methods_analytical, discussion_outlook |
 | `output/data/firstprinciples/statistics_demo.json` | `generate_firstprinciples.py` | Yes | results_invariants, appendix_full_sheaf |

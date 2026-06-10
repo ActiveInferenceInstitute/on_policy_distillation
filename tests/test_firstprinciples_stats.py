@@ -132,3 +132,38 @@ def test_privilege_sweep_runs(tmp_path: Path) -> None:
     # the high-privilege teacher should be at least as certain as the low-privilege one
     entropies = [lvl["teacher_belief_entropy"] for lvl in out["levels"]]
     assert entropies[-1] <= entropies[0] + 1e-6
+
+
+def test_privilege_sweep_payload_contract() -> None:
+    """Contract + negative controls for the dose-response payload (no pymdp needed)."""
+    import json
+    from pathlib import Path
+
+    artifact = Path(__file__).resolve().parents[1] / "output" / "data" / "firstprinciples" / "privilege_sweep.json"
+    if not artifact.is_file():
+        pytest.skip("privilege_sweep.json not generated yet (run generate_firstprinciples.py)")
+    payload = json.loads(artifact.read_text(encoding="utf-8"))
+    assert payload["schema"] == "firstprinciples.privilege_sweep.v1"
+    levels = payload["levels"]
+    assert len(levels) >= 2
+    validities = [row["teacher_cue_validity"] for row in levels]
+    assert validities == sorted(validities)
+    # Re-derive the headline claims from the rows — never trust the flags alone.
+    gaps = [row["entropy_gap"] for row in levels]
+    for row in levels:
+        assert abs(row["entropy_gap"] - (row["student_belief_entropy"] - row["teacher_belief_entropy"])) <= 1e-12
+    baseline_rows = [g for v, g in zip(validities, gaps, strict=True) if v == payload["student_cue_validity"]]
+    assert baseline_rows and abs(baseline_rows[0]) <= 1e-9  # identical agents ⇒ exactly zero
+    assert payload["h4_baseline_gap_zero"] is True
+    # Monotone non-decreasing claim must match the data the flag summarizes.
+    non_decreasing = all(b >= a - 1e-12 for a, b in zip(gaps, gaps[1:], strict=False))
+    assert payload["h3_gap_grows_with_privilege"] == (payload["gap_rank_correlation"] >= 0.0)
+    assert non_decreasing  # current deterministic sweep is a clean step
+
+    # Negative control: a doctored non-monotone gap series must flip the flags
+    # when re-derived through the builder's own correlation.
+    from firstprinciples.privilege import rank_correlation
+
+    doctored = list(gaps)
+    doctored[0], doctored[-1] = doctored[-1], doctored[0]
+    assert rank_correlation(validities, doctored) < 0.0  # the oracle bites

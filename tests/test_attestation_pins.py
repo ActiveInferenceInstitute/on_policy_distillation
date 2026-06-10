@@ -102,10 +102,21 @@ def test_carveout_is_exactly_one_row_wide(tmp_path: Path) -> None:
     assert by_id["validation_report"]["passed"] is False
     assert attestation["all_attested"] is False
     # And the admitted set stays an explicit, reviewable constant — a silent
-    # wildcard (or empty set) would gut this pin.
-    assert "release_attestation_schema" in VALIDATION_FIXED_POINT_CHECKS
+    # wildcard, empty set, or accidental broadening would gut this pin.
+    expected_fixed_point_checks = {
+        "canonical_sheaf_track_schemas",
+        "resolved_manuscript_hydrated",
+        "canonical_sheaf_tracks",
+        "claim_ledger_valid",
+        "experiment_plan_metrics",
+        "integration_audit_artifacts",
+        "integration_audit_track_schemas",
+        "release_attestation_schema",
+        "release_notes_evidence_schema",
+        "semantic_sheaf_gluing",
+    }
+    assert VALIDATION_FIXED_POINT_CHECKS == expected_fixed_point_checks
     assert "a_genuinely_red_science_check" not in VALIDATION_FIXED_POINT_CHECKS
-    assert len(VALIDATION_FIXED_POINT_CHECKS) <= 8
 
     # A failing NON-self row (license) is never masked.
     _report(tmp_path, failed=[])

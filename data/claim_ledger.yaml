@@ -1111,3 +1111,26 @@ claims:
     matches_artifact_field:
       path: output/data/firstprinciples/classroom.json
       field: student_belief_entropies
+- id: fp_privilege_dose_response_monotone
+  statement: Teacher-privilege sweep certifies a non-decreasing entropy-gap dose-response
+    re-derived as a rank correlation, with the entropy advantage appearing only at high privilege.
+  path: output/data/firstprinciples/privilege_sweep.json
+  section: results_si_tmaze
+  tracks:
+  - pymdp
+  - simulation
+  evidence:
+    field: h3_gap_grows_with_privilege
+    predicate: is_true
+- id: fp_privilege_baseline_control
+  statement: Identical-agent baseline (teacher cue validity equal to student) yields an
+    exactly-zero entropy gap — the sweep's built-in negative control.
+  path: output/data/firstprinciples/privilege_sweep.json
+  section: results_si_tmaze
+  tracks:
+  - pymdp
+  - simulation
+  evidence:
+    field: baseline_gap
+    equals: 0.0
+    tolerance: 1.0e-09
