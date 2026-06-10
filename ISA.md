@@ -2,8 +2,8 @@
 project: active_inference_on_policy_distillation
 task: "Run-4 comprehensive hardening: re-derived aggregates, graphical thesis figures, closed-form observable, manuscript/metadata/docs polish"
 effort: E5
-phase: verify
-progress: 59/64
+phase: complete
+progress: 61/64
 mode: algorithm
 started: 2026-06-10
 updated: 2026-06-10
@@ -166,11 +166,11 @@ PDF render all green afterward.
 - [x] ISC-57: Advisor consulted before phase complete.
 - [DEFERRED-VERIFY → OPD-XVENDOR-1] ISC-58: Forge cross-vendor audit run, or honestly deferred to OPD-XVENDOR-1 with quota evidence.
 - [DEFERRED-VERIFY → OPD-XVENDOR-1] ISC-59: Cato audit attempted (E5 mandatory; read-only).
-- [ ] ISC-60: All work committed pathspec-only; co-actor deltas behaviour-diffed, not clobbered.
+- [x] ISC-60: All work committed pathspec-only; co-actor deltas behaviour-diffed, not clobbered.
 - [x] ISC-61: Anti: no `[x]` without quoted artifact evidence in ## Verification.
 - [x] ISC-62: Anti: no masked failures (`2>/dev/null || true` on generators/validators).
 - [x] ISC-63: Anti: baseline not regressed — zero previously-passing tests now failing.
-- [ ] ISC-64: Memory updated (project-opd-active-inference-state) with Run-4 outcome.
+- [x] ISC-64: Memory updated (project-opd-active-inference-state) with Run-4 outcome.
 
 ## Test Strategy
 
@@ -239,7 +239,26 @@ PDF render all green afterward.
 
 ## Changelog
 
-(appended at LEARN)
+- 2026-06-10 (Run-4, commit 92b1a78) — **conjecture:** write-time flag↔rows honesty suffices.
+  **refuted by:** disk-mediated pipeline + co-actor + hand-edit surface mean only read-time
+  re-derivation makes validate the actual gate. **learned:** one declarative rules table at the
+  final gate covers 58 aggregates that 50+ bespoke validators were each trusting; the lying-case
+  control (rows mutated, flag green) is the only control that proves it. **criterion now:**
+  `aggregate_rederivation` check in validate_outputs + 13-test suite.
+- 2026-06-10 — **conjecture:** a registered cross-check artifact implies a real cross-check.
+  **refuted by:** `analytical_observable_sweep` set `empirical = closed_form`, `residual = 0.0`
+  by construction for three runs' worth of green. **learned:** an "independent recomputation"
+  claim requires two code paths that share no algebra; grep builders for `residual.*0.0` and
+  `empirical = closed` shapes. **criterion now:** two-route builder, 4.6e-16 live residual
+  under a hardcoded 1e-12 gate, dropped-observable + lying-row controls.
+- 2026-06-10 — **conjecture:** every rich unplotted artifact deserves a figure. **refuted by:**
+  the sensitivity sweep (uniformly zero entropy, all goals reached) — plotting it would
+  manufacture visual structure. **learned:** check the live VALUES before designing a figure;
+  the third figure pivoted to the taxonomy landscape, which also closed the related-work gap.
+- 2026-06-10 — **conjecture:** metadata staleness is cosmetic. **refuted by:** the PDF cover was
+  carrying the template exemplar's Zenodo DOI (wrong attribution on a citable surface), found
+  only by Advisor-prompted tree-wide grep after CITATION.cff was already "fixed". **learned:**
+  a wrong identifier is removed by sweeping every copy (R14), not by fixing the file you know.
 
 ## Verification
 
