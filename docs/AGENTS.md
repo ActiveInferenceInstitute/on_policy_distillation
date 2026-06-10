@@ -4,6 +4,15 @@
 logic in `../src/`, orchestration in `../scripts/`, and generated artifacts
 under `../output/`.
 
+The tree is modular: `architecture/`, `models/`, `manuscript/`, `reviews/`,
+`development/`, `reproducibility/`, `reference/`, plus top-level `glossary.md`
+and `faq.md`. Each subdirectory carries its own `README.md` (index) and
+`AGENTS.md` (editing rules). `README.md` here is the map — keep it in sync
+when adding or removing pages. Docs pages must never hard-code generated
+numbers: cite the producing artifact path or the `{{token}}` name instead
+(`reference/method-inventory.md` is the one generated page; refresh it with
+`uv run python scripts/generate_method_inventory.py`).
+
 When adding a track (analytical, pymdp, Lean, GNN, ontology, provenance,
 replay matrix, counterexample, sensitivity, uncertainty, benchmark,
 model-checking, interop, adversarial audit, evidence fields, release bundle,

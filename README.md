@@ -87,6 +87,12 @@ authored fragments/configs generate deterministic data, figures, composed
 Markdown, hydrated Markdown, PDF/web outputs, and copied root outputs through one
 hydration boundary.
 
+Full modular documentation lives under [`docs/`](docs/README.md): architecture
+(pipeline, sheaf compose contract, gates, formal layers), the executable model
+zoo, the manuscript scope contract and citation map, external-review
+disposition ledgers, development and reproducibility guides, a glossary, and an
+FAQ — the map is in [`docs/README.md`](docs/README.md).
+
 ```bash
 uv run python scripts/compose_manuscript.py --list-tracks
 uv run python scripts/compose_manuscript.py --section methods_analytical --tracks prose,formalism
