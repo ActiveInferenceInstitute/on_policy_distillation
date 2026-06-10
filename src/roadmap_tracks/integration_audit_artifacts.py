@@ -173,6 +173,9 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         "parallel_convergence": ["output/data/firstprinciples/parallel_demo.json"],
         "diversity_tradeoff": ["output/data/firstprinciples/diversity_demo.json"],
         "privilege_dose_response": ["output/data/firstprinciples/privilege_sweep.json"],
+        "correspondence_map": ["output/data/firstprinciples/correspondence_map.json"],
+        "policy_posterior_grid": ["output/data/pymdp_policy_posterior_grid.json"],
+        "opd_taxonomy_landscape": ["output/data/firstprinciples/opd_taxonomy.json"],
         "sheaf_layers_overview": ["output/data/sheaf_coverage_matrix.json"],
         "sheaf_coverage_heatmap": ["output/data/sheaf_coverage_matrix.json"],
         "invariant_dashboard": ["output/reports/invariants.json"],
@@ -270,6 +273,22 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
             "$.baseline_gap",
             "$.gap_rank_correlation",
         ],
+        "correspondence_map": [
+            "$.rows",
+            "$.row_count",
+            "$.ok",
+        ],
+        "policy_posterior_grid": [
+            "$.rows",
+            "$.available_row_count",
+            "$.all_available_posteriors_normalized",
+        ],
+        "opd_taxonomy_landscape": [
+            "$.methods",
+            "$.method_count",
+            "$.on_policy_count",
+            "$.privileged_info_count",
+        ],
         "sheaf_layers_overview": ["$.tracks", "$.layers", "$.bound_cell_count", "$.validated_cell_count"],
         "sheaf_coverage_heatmap": ["$.rows", "$.track_ids", "$.section_ids", "$.status_matrix"],
         "invariant_dashboard": ["$.invariants", "$.simulation", "$.all_pass"],
@@ -340,6 +359,19 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         ],
         "privilege_dose_response": [
             "test_firstprinciples_stats.test_privilege_sweep_payload_contract",
+            "test_figures.nonblank_png",
+        ],
+        "correspondence_map": [
+            "test_firstprinciples_artifacts.test_correspondence_and_taxonomy_payloads",
+            "test_figures.nonblank_png",
+        ],
+        "policy_posterior_grid": [
+            "validate_outputs.pymdp_policy_posterior_grid_schema",
+            "validate_outputs.aggregate_rederivation",
+            "test_figures.nonblank_png",
+        ],
+        "opd_taxonomy_landscape": [
+            "validate_outputs.firstprinciples_taxonomy_schema",
             "test_figures.nonblank_png",
         ],
         "sheaf_layers_overview": ["validate_outputs.canonical_sheaf_track_schemas", "test_figures.nonblank_png"],

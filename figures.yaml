@@ -1,4 +1,4 @@
-# Visualization style for template_active_inference figures.
+# Visualization style for active_inference_on_policy_distillation figures.
 # Loaded by src/visualizations/figure_style.py via apply_style().
 
 dpi: 160
@@ -193,6 +193,64 @@ figures:
       miss. Gap/validity rank correlation {{privilege_sweep_gap_rank_correlation:.2f}}.
       Source: `output/data/firstprinciples/privilege_sweep.json`.
     width: 0.95
+  correspondence_map:
+    filename: correspondence_map.png
+    alt: >-
+      Three-column dictionary figure mapping active inference constructs (left column) to
+      on-policy distillation constructs (right column) through their shared formal object
+      (center column), with bidirectional arrows on every row. All rows of the audited
+      correspondence map are shown.
+    caption: >-
+      The audited correspondence dictionary, rendered in full: all
+      {{correspondence_row_count}} machine-validated rows pairing an active inference
+      construct (left) with its on-policy distillation counterpart (right) through the
+      shared formal object both instantiate (center). This is the paper's thesis as a
+      single picture: each row is a checked entry in
+      `firstprinciples.mapping.CORRESPONDENCES` (no empty cells, unique keys), not a
+      rhetorical analogy. The full table with per-row notes appears in the appendix.
+      Source: `output/data/firstprinciples/correspondence_map.json`.
+    width: 0.84
+  policy_posterior_grid:
+    filename: policy_posterior_grid.png
+    alt: >-
+      Three-panel figure of measured policy posteriors from the pymdp T-maze harness. The
+      first two panels are step-by-action heatmaps of the marginal action posterior for the
+      sophisticated-inference and vanilla planners; the third panel plots policy-posterior
+      entropy in nats against rollout step for both planners.
+    caption: >-
+      The student's measured posterior over policies, step by step — the quantity the
+      correspondence identifies with the distillation target. Left and center: marginal
+      action posteriors per rollout step for both planners (cell values are probabilities;
+      labels shown for mass at or above 0.30). Right: policy-posterior entropy by step for
+      all {{posterior_grid_available_count}} of {{posterior_grid_row_count}} measured grid
+      rows. Entropy collapses after the cue observation: the on-policy rollout is what
+      exposes the agent to the observation that sharpens its own posterior, the T-maze
+      version of the induced-distribution argument for on-policy distillation.
+      Source: `output/data/pymdp_policy_posterior_grid.json`.
+    width: 0.99
+  opd_taxonomy_landscape:
+    filename: opd_taxonomy_landscape.png
+    alt: >-
+      Timeline landscape of the audited distillation-method taxonomy. Methods appear as
+      labeled points by publication year on the x-axis, arranged in four horizontal lanes by
+      design quadrant: off-policy without privilege, off-policy with privileged signal,
+      on-policy without privilege, and on-policy with privileged signal. Lane labels include
+      the per-lane method counts derived from the taxonomy artifact.
+    caption: >-
+      The distillation literature as a design landscape: all {{opd_taxonomy_method_count}}
+      audited taxonomy methods placed by publication year and by the two design axes the
+      correspondence singles out — does the student generate its own training distribution
+      (on-policy), and does the teacher condition on information the student cannot see
+      (privilege)? Of the {{opd_taxonomy_method_count}} methods,
+      {{opd_taxonomy_on_policy_count}} are on-policy and
+      {{opd_taxonomy_privileged_info_count}} use privileged signal; the upper lane — both
+      at once — is exactly the regime the active inference reading describes as a
+      variational posterior generating its own observations under a generative model
+      conditioned on privileged beliefs. Lane membership is read from the artifact, not
+      hand-assigned; points within a crowded publication year are dodged vertically and
+      horizontally for legibility, so horizontal position is approximate within one year.
+      Source: `output/data/firstprinciples/opd_taxonomy.json`.
+    width: 0.99
   si_tmaze_actions:
     filename: si_tmaze_actions.png
     alt: >-
@@ -492,6 +550,7 @@ section_figures:
   coverage_page:
     - id: sheaf_coverage_heatmap
   intro_contributions:
+    - id: correspondence_map
     - id: multi_track_architecture
     - id: exposure_bias_recovery
   methods_analytical:
@@ -519,6 +578,9 @@ section_figures:
     - id: si_tmaze_model_matrices
       labeled: false
     - id: privilege_dose_response
+    - id: policy_posterior_grid
+  discussion_outlook:
+    - id: opd_taxonomy_landscape
   methods_sheaf:
     - id: sheaf_layers_overview
     - id: semantic_gluing_graph

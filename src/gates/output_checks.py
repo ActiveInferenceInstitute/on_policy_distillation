@@ -27,6 +27,7 @@ SUPPORTED_SELECTED_OUTPUT_CHECKS = {
     "formal_interop_track_schemas",
     "integration_audit_track_schemas",
     "canonical_sheaf_track_schemas",
+    "aggregate_rederivation",
 }
 
 
@@ -796,6 +797,12 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     checks["formal_interop_track_schemas"] = not validate_formal_interop_artifacts(root)
     checks["integration_audit_track_schemas"] = not validate_integration_audit_artifacts(root)
     checks["canonical_sheaf_track_schemas"] = not validate_sheaf_track_artifacts(root)
+
+    # Read-time honesty: every covered stored all_* aggregate must equal its
+    # row-level re-derivation (gates.aggregate_rederivation — AI-STALE-SUMMARY-1).
+    from gates.aggregate_rederivation import aggregates_consistent
+
+    checks["aggregate_rederivation"] = aggregates_consistent(root)
 
     log_path = root / "output" / "logs" / "pymdp_runs.jsonl"
     if _pymdp_logging_expected(root):

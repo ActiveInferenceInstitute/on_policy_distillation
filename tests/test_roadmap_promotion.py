@@ -218,6 +218,22 @@ def test_toy_sweep_negative_controls(project_root: Path) -> None:
         assert any("residual exceeds tolerance" in issue for issue in validate_toy_sweep_artifacts(project_root))
         observable.write_text(originals[observable], encoding="utf-8")
 
+        # LYING case: a row residual blows the tolerance while the stored summary
+        # scalar stays green — the validator must re-derive from rows (Run-4).
+        data = _load(observable)
+        data["rows"][0]["residual"] = 0.01
+        _write(observable, data)
+        assert any("residual exceeds tolerance" in issue for issue in validate_toy_sweep_artifacts(project_root))
+        observable.write_text(originals[observable], encoding="utf-8")
+
+        # LYING case: an observable family silently dropped from the sweep while
+        # summaries stay green — the re-derived observable set must be complete.
+        data = _load(observable)
+        data["rows"] = [row for row in data["rows"] if row["observable"] != "conditional_policy_entropy"]
+        _write(observable, data)
+        assert any("observable set is incomplete" in issue for issue in validate_toy_sweep_artifacts(project_root))
+        observable.write_text(originals[observable], encoding="utf-8")
+
         data = _load(topology_traces)
         data["rows"][0]["trace_steps"] = 999
         data["rows"][0]["trace_summary_agree"] = False

@@ -1,3 +1,9 @@
+```{=latex}
+\phantomsection
+\addcontentsline{toc}{section}{Appendix}
+\section*{Appendix}
+```
+
 # Supplementary material: reproducibility methodology {#sec:methods_sheaf}
 
 <!-- sheaf-track:prose -->
@@ -26,6 +32,8 @@ Each run emits `output/data/sheaf_coverage_matrix.json` and regenerates coverage
 ## Law verification
 
 `--validate-only --strict` runs the structural gate before any fragment is glued. Beyond per-cell coverage, it invokes the sheaf-law oracle (`verify_sheaf_laws`, `src/manuscript/sheaf/laws.py`), which checks {{sheaf_law_count}} axioms — poset, presheaf functoriality, separation, gluing, typing, and compositionality — and reports {{sheaf_laws_verified}}/{{sheaf_law_count}} satisfied for the current manifest. A violation is raised as an error-level issue and aborts the build, so a malformed manifest (a section colliding on an output file, an off-chain block, a mistyped fragment, a fragment shared between sections) can never compose. The formal statements are in the formalism block below; the negative-control suite (`tests/test_sheaf_laws.py`) proves each check is falsifiable.
+
+Stored summary flags are themselves never trusted at the final gate. Each generated artifact carries `all_*` aggregate booleans written by its producer; `validate_outputs` re-derives {{rederived_aggregate_rule_count}} of these aggregates from their own row data at read time (`src/gates/aggregate_rederivation.py`) and fails when a stored flag disagrees with its rows — including the vacuous case of a `true` flag over an empty row set. A mutated row under an untouched green summary therefore fails validation no matter what wrote it; the negative-control suite exercises exactly that lying case.
 
 The semantic layer is separate from those structural laws. `output/data/sheaf_gluing_certificate.json` records cross-track symbols, typed claim evidence, artifact sources, and manuscript-variable restrictions; validation fails when the analytical, pymdp, GNN, ontology, Lean, visualization, or manuscript tracks disagree about a shared symbol or measured claim. This is where the correspondence is held honest at the symbol level: the coupling parameter and mutual information of the analytical toy, the cue-validity privileged-information channel of the T-maze, and the two-agent classroom figures (privileged teacher belief entropy {{classroom_teacher_belief_entropy_formatted}} nats versus the on-policy student's {{classroom_student_belief_entropy_formatted}} nats, mean reverse-KL distillation signal {{classroom_mean_reverse_kl_formatted}} nats) must all restrict consistently onto the shared variational-free-energy and reverse-KL symbols. The certificate keeps these numbers bound as a minimal-model demonstration of the teacher-student correspondence, not as claims about production LLMs. [@fig:semantic_gluing_graph] renders this gluing graph: the configured producers, the generated evidence artifacts, and the validation consumers that read each shared symbol.
 
@@ -258,7 +266,7 @@ Section rows versus fragment track columns. **P** = present (bound and file exis
 |   Free-energy decomposition | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | — | — | — | — | — |
 |   On-policy student rollout (T-maze) | P | — | — | — | — | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | — | — | — | — | — |
 | Discussion (group) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-|   Limitations and outlook | P | — | P | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | P |
+|   Limitations and outlook | P | — | P | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | P | — | — | — | — | — | — | — | P | — | — | P |
 | Appendix (group) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 |   Supplementary material: full coverage and concordance | P | P | P | P | — | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | — | P | — | — | — | — | P | P | — | — | — | — | — |
 |   Supplementary material: reproducibility methodology | P | P | — | — | P | — | — | P | — | P | P | P | P | P | P | P | P | — | — | — | P | P | — | — | — | — | — | — | — | — | — | — | — |
@@ -288,7 +296,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | Teacher and student mutual information | results | 4 | 4 | 0 | `fully_sheafed` |
 | Free-energy decomposition | results | 2 | 2 | 0 | `fully_sheafed` |
 | On-policy student rollout (T-maze) | results | 3 | 3 | 0 | `fully_sheafed` |
-| Limitations and outlook | discussion | 5 | 5 | 0 | `fully_sheafed` |
+| Limitations and outlook | discussion | 6 | 6 | 0 | `fully_sheafed` |
 | Supplementary material: full coverage and concordance | appendix | 22 | 22 | 0 | `fully_sheafed` |
 | Supplementary material: reproducibility methodology | appendix | 14 | 14 | 0 | `fully_sheafed` |
 | Supplementary material: validation invariants and statistics | appendix | 19 | 19 | 0 | `fully_sheafed` |
@@ -321,7 +329,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `uncertainty` | `markdown` | 2 | 2 | 0 | 4 | `complete` |
 | `benchmark` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
 | `manuscript_staleness` | `markdown` | 2 | 2 | 0 | 1 | `complete` |
-| `visualization` | `section_figures` | 10 | 10 | 0 | 11 | `complete` |
+| `visualization` | `section_figures` | 11 | 11 | 0 | 11 | `complete` |
 | `lean` | `markdown` | 2 | 2 | 0 | 8 | `complete` |
 | `model_checking` | `markdown` | 2 | 2 | 0 | 7 | `complete` |
 | `theorem_traceability` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
@@ -343,7 +351,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | --- | --- | --- | --- | --- |
 | `registry_loaded` | `sheaf.registry` | `registered_tracks` | `ok` | 33 tracks |
 | `manifest_loaded` | `sheaf.manifest` | `manifest_sections` | `ok` | 17 sections |
-| `coverage_matrix_built` | `sheaf.coverage` | `output/data/sheaf_coverage_matrix.json` | `ok` | 93 present cells |
+| `coverage_matrix_built` | `sheaf.coverage` | `output/data/sheaf_coverage_matrix.json` | `ok` | 94 present cells |
 | `section_status_matrix_built` | `sheaf.status` | `output/data/sheaf_section_status_matrix.json` | `ok` | 561 section-track cells |
 | `layers_renderer_bound` | `sheaf.layers_report` | `manuscript/19_supplement_reproducibility.md` | `ok` | methods sheaf layer tables |
 | `semantic_artifacts_indexed` | `sheaf.semantic` | `output/data/validation_dependency_graph.json` | `ok` | 111 artifact producer rows |

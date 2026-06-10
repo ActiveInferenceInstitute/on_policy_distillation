@@ -15,6 +15,7 @@ TOY_SWEEP_SCHEMA = "template_active_inference.toy_sweep_tracks.v1"
 ASSUMPTION_INDEX_SCHEMA = "template_active_inference.analytical_assumption_index.v1"
 EXPECTED_ASSUMPTION_EQUATIONS = {
     "eq:entangled_joint",
+    "conditional_entropy_closed_form",
     "joint_entropy",
     "marginal_entropy",
     "mi_closed_form",
@@ -36,45 +37,110 @@ def _write_json(path: Path, payload: dict[str, Any]) -> Path:
     return path
 
 
-def _same_state_probability(lam: float) -> float:
+# Closed-form route: literal analytic expressions in lambda. With the symmetric
+# mean-field prior and agreement coupling J = 1[pi_1 = pi_2], the entangled joint
+# puts mass e^lam/Z on each of the 2 agreeing cells and 1/Z on each of the 2
+# disagreeing cells (Z = 2 e^lam + 2), giving sigmoid/tanh/binary-entropy forms.
+
+
+def _sigma(lam: float) -> float:
+    return 1.0 / (1.0 + math.exp(-lam))
+
+
+def _binary_entropy(p: float) -> float:
+    if p <= 0.0 or p >= 1.0:
+        return 0.0
+    return float(-p * math.log(p) - (1.0 - p) * math.log(1.0 - p))
+
+
+def _closed_same_state_probability(lam: float) -> float:
+    return _sigma(lam)
+
+
+def _closed_posterior_correlation(lam: float) -> float:
+    return math.tanh(lam / 2.0)
+
+
+def _closed_joint_entropy(lam: float) -> float:
+    # H(agreement class) + uniform within-class split over 2 cells
+    return _binary_entropy(_sigma(lam)) + math.log(2.0)
+
+
+def _closed_marginal_entropy(lam: float) -> float:
+    _ = lam
+    return math.log(2.0)
+
+
+def _closed_conditional_policy_entropy(lam: float) -> float:
+    # H(pi_2 | pi_1) = H_joint - H_marginal = H_b(sigma(lam)) — the complement of
+    # the closed-form mutual information I(lam) = ln 2 - H_b(sigma(lam)).
+    return _binary_entropy(_sigma(lam))
+
+
+# Empirical route: independent deterministic recomputation enumerating the exact
+# entangled joint from analytical.bernoulli_toy (partition-function normalization
+# over the 2x2 table; no analytic shortcuts shared with the closed route).
+
+
+def _empirical_same_state_probability(lam: float) -> float:
     q = ising_joint_posterior(lam)
     return float(q[0, 0] + q[1, 1])
 
 
-def _posterior_correlation(lam: float) -> float:
+def _empirical_posterior_correlation(lam: float) -> float:
     q = ising_joint_posterior(lam)
     return float(q[0, 0] + q[1, 1] - q[0, 1] - q[1, 0])
 
 
-def _joint_entropy(lam: float) -> float:
+def _empirical_joint_entropy(lam: float) -> float:
     q = ising_joint_posterior(lam)
     return float(-sum(value * math.log(value) for value in q.reshape(-1) if value > 0))
 
 
-def _marginal_entropy(lam: float) -> float:
+def _empirical_marginal_entropy(lam: float) -> float:
     q = ising_joint_posterior(lam)
     marginal = q.sum(axis=1)
     return float(-sum(value * math.log(value) for value in marginal if value > 0))
 
 
+def _empirical_conditional_policy_entropy(lam: float) -> float:
+    return _empirical_joint_entropy(lam) - _empirical_marginal_entropy(lam)
+
+
+_OBSERVABLE_ROUTES: dict[str, tuple[Any, Any]] = {
+    "same_state_probability": (_closed_same_state_probability, _empirical_same_state_probability),
+    "posterior_correlation": (_closed_posterior_correlation, _empirical_posterior_correlation),
+    "joint_entropy": (_closed_joint_entropy, _empirical_joint_entropy),
+    "marginal_entropy": (_closed_marginal_entropy, _empirical_marginal_entropy),
+    "conditional_policy_entropy": (
+        _closed_conditional_policy_entropy,
+        _empirical_conditional_policy_entropy,
+    ),
+}
+
+
 def build_analytical_observable_sweep(project_root: Path) -> dict[str, Any]:
+    """Two genuinely independent routes per observable; the residual is their gap.
+
+    Run-4 note: this builder previously set ``empirical = closed_form`` and
+    ``residual = 0.0`` by construction — a tautological cross-check. The closed
+    route is now the literal analytic formula and the empirical route enumerates
+    the exact joint via ``analytical.bernoulli_toy``, so the 1e-12 validator
+    tolerance is a real claim about two independent derivations agreeing.
+    """
     _ = project_root
     rows: list[dict[str, Any]] = []
     for lam in lambda_grid(load_hyperparameters()):
-        observables = {
-            "same_state_probability": _same_state_probability(float(lam)),
-            "posterior_correlation": _posterior_correlation(float(lam)),
-            "joint_entropy": _joint_entropy(float(lam)),
-            "marginal_entropy": _marginal_entropy(float(lam)),
-        }
-        for name, closed in observables.items():
+        for name, (closed_fn, empirical_fn) in _OBSERVABLE_ROUTES.items():
+            closed = float(closed_fn(float(lam)))
+            empirical = float(empirical_fn(float(lam)))
             rows.append(
                 {
                     "lambda": float(lam),
                     "observable": name,
                     "closed_form": closed,
-                    "empirical": closed,
-                    "residual": 0.0,
+                    "empirical": empirical,
+                    "residual": closed - empirical,
                 }
             )
     return {
@@ -166,6 +232,21 @@ def build_analytical_assumption_index(project_root: Path) -> dict[str, Any]:
                 "binary_policy_space",
                 "finite_normalizer",
                 "positive_marginal_support",
+            ],
+            "evidence_artifact": "output/data/analytical_observable_sweep.json",
+            "status": "indexed",
+        },
+        {
+            "equation_id": "conditional_entropy_closed_form",
+            "symbol": "H(pi_2 | pi_1)",
+            "source": "src/roadmap_tracks/toy_sweep.py",
+            "model": "bernoulli_ising",
+            "assumptions": [
+                "binary_policy_space",
+                "closed_form_binary_entropy",
+                "finite_normalizer",
+                "symmetric_ising_coupling",
+                "lambda_grid_from_hyperparameters",
             ],
             "evidence_artifact": "output/data/analytical_observable_sweep.json",
             "status": "indexed",
@@ -651,8 +732,17 @@ def validate_toy_sweep_artifacts(project_root: Path) -> list[str]:
     if ablation.get("complete_grid") is not True or ablation.get("all_deterministic") is not True:
         issues.append("causal_ablation_matrix.json has incomplete or non-deterministic cells")
     observable = _load_json(root / "output" / "data" / "analytical_observable_sweep.json")
-    if float(observable.get("max_abs_residual", 1.0)) > 1e-12:
+    observable_rows = observable.get("rows") or []
+    # Re-derive the residual bound from rows; never trust the stored scalar
+    # (a mutated row with an untouched summary must fail — AI-STALE-SUMMARY-1).
+    rederived_residual = (
+        max(abs(float(row.get("residual", 1.0))) for row in observable_rows) if observable_rows else 1.0
+    )
+    if rederived_residual > 1e-12 or float(observable.get("max_abs_residual", 1.0)) > 1e-12:
         issues.append("analytical_observable_sweep.json residual exceeds tolerance")
+    expected_observables = set(_OBSERVABLE_ROUTES)
+    if {str(row.get("observable")) for row in observable_rows} != expected_observables:
+        issues.append("analytical_observable_sweep.json observable set is incomplete")
     assumptions = _load_json(root / "output" / "data" / "analytical_assumption_index.json")
     if assumptions.get("schema") != ASSUMPTION_INDEX_SCHEMA:
         issues.append("analytical_assumption_index.json schema mismatch")

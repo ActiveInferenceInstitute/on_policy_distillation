@@ -158,6 +158,7 @@ sections:
   tracks:
     prose: manuscript/sections/imrad/discussion_outlook/prose.md
     simulation: manuscript/sections/imrad/discussion_outlook/simulation.md
+    visualization: manuscript/sections/imrad/discussion_outlook/visualization.md
     ontology: manuscript/sections/imrad/discussion_outlook/ontology.yaml
     scholarship: manuscript/sections/imrad/discussion_outlook/scholarship.md
     release_notes: manuscript/sections/imrad/discussion_outlook/release_notes.md

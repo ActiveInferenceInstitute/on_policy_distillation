@@ -18,7 +18,7 @@ publication:
   doi: ""  # Concept DOI — stable citation; PDF cover and CITATION.cff
   version_doi: ""  # Latest Zenodo version DOI
   version_record: ""  # https://zenodo.org/records/{id}
-  github_repository: ""  # e.g. docxology/template_active_inference
+  github_repository: ""  # e.g. docxology/on_policy
   transmission_bookends:
     enabled: false
     max_prior_releases: 5

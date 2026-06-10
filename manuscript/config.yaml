@@ -12,10 +12,13 @@ authors:
     corresponding: true
 
 publication:
-  doi: "10.5281/zenodo.20417021" # Concept DOI — stable citation
-  version_doi: "10.5281/zenodo.20420352" # Latest Zenodo deposit
-  version_record: "https://zenodo.org/records/20420352"
-  github_repository: "local/active_inference_on_policy_distillation"
+  # No DOI minted for this project yet (the previous values were the
+  # template_active_inference exemplar's Zenodo records — wrong attribution).
+  # Reserve a draft deposition DOI before release, then fill all three fields.
+  doi: ""
+  version_doi: ""
+  version_record: ""
+  github_repository: "docxology/on_policy"
   transmission_bookends:
     enabled: true
     max_prior_releases: 5

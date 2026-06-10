@@ -13,16 +13,20 @@
       "givenName": "Daniel Ari"
     }
   ],
-  "codeRepository": "https://github.com/docxology/template_active_inference",
-  "dateModified": "2026-05-27",
+  "codeRepository": "https://github.com/docxology/on_policy",
+  "dateModified": "2026-06-10",
   "keywords": [
     "active inference",
+    "on-policy distillation",
+    "knowledge distillation",
+    "free energy principle",
     "pymdp",
     "sophisticated inference",
     "generalized notation notation",
-    "lean"
+    "lean",
+    "reproducible research"
   ],
   "license": "https://spdx.org/licenses/MIT",
-  "name": "Active Inference Multi-Track Exemplar",
-  "version": "0.1.0"
+  "name": "On-Policy Distillation is Active Inference",
+  "version": "0.4.0"
 }

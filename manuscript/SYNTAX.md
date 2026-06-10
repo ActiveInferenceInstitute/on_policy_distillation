@@ -55,6 +55,9 @@ Section figures are registry-backed via `figures.yaml` and `section_figures` ren
 | `{#fig:parallel_convergence}` | `parallel_convergence.png` | `figures.figure_parallel_convergence` |
 | `{#fig:diversity_tradeoff}` | `diversity_tradeoff.png` | `figures.figure_diversity_tradeoff` |
 | `{#fig:privilege_dose_response}` | `privilege_dose_response.png` | `figures.figure_privilege_dose_response` |
+| `{#fig:correspondence_map}` | `correspondence_map.png` | `figures_interpretability.figure_correspondence_map` |
+| `{#fig:policy_posterior_grid}` | `policy_posterior_grid.png` | `figures_interpretability.figure_policy_posterior_grid` |
+| `{#fig:opd_taxonomy_landscape}` | `opd_taxonomy_landscape.png` | `figures_interpretability.figure_opd_taxonomy_landscape` |
 | `{#fig:invariant_dashboard}` | `invariant_dashboard.png` | `figures_diagrams.figure_invariant_dashboard` |
 | `{#fig:tmaze_schematic}` | `tmaze_schematic.png` | `figures_diagrams.figure_tmaze_schematic` |
 | `{#fig:multi_track_architecture}` | `multi_track_architecture.png` | `figures_diagrams.figure_multi_track_architecture` |

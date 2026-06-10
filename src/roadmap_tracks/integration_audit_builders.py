@@ -407,6 +407,11 @@ def build_validation_gate_index(project_root: Path) -> dict[str, Any]:
     _ = project_root
     rows = [
         {"id": "validate_outputs", "inputs": ["output/data", "output/reports"], "indexed": True},
+        {
+            "id": "aggregate_rederivation",
+            "inputs": ["output/data", "output/reports"],
+            "indexed": True,
+        },
         {"id": "validate_manuscript", "inputs": ["manuscript/sheaf", "output/manuscript"], "indexed": True},
         {"id": "semantic_sheaf_gluing", "inputs": ["output/data/sheaf_gluing_certificate.json"], "indexed": True},
         {"id": "typed_claim_evidence", "inputs": ["data/claim_ledger.yaml"], "indexed": True},

@@ -4,17 +4,19 @@ authors:
   given-names: Daniel Ari
   orcid: 0000-0001-6232-9096
 cff-version: 1.2.0
-date-released: '2026-05-27'
-doi: 10.5281/zenodo.20417021
+date-released: '2026-06-10'
 keywords:
 - active inference
+- on-policy distillation
+- knowledge distillation
+- free energy principle
 - pymdp
 - sophisticated inference
 - lean
 - reproducible research
 license: MIT
 message: If you use this software, please cite it using the metadata from this file.
-repository-code: https://github.com/docxology/template_active_inference
-title: Active Inference Multi-Track Exemplar
+repository-code: https://github.com/docxology/on_policy
+title: 'On-Policy Distillation is Active Inference'
 type: software
-version: '0.3.0'
+version: '0.4.0'

@@ -35,6 +35,11 @@ from .figures_firstprinciples import (
     figure_parallel_convergence,
 )
 from .figures_abstract import figure_graphical_abstract
+from .figures_interpretability import (
+    figure_correspondence_map,
+    figure_opd_taxonomy_landscape,
+    figure_policy_posterior_grid,
+)
 from .figures_sheaf import figure_sheaf_coverage_heatmap, figure_sheaf_layers_overview
 from .figures_si import (
     figure_si_belief_entropy_curve,
@@ -54,6 +59,7 @@ __all__ = [
     "FIGURE_GENERATORS",
     "figure_causal_ablation_heatmap",
     "figure_classroom_distillation_signal",
+    "figure_correspondence_map",
     "figure_distillation_divergence_geometry",
     "figure_diversity_tradeoff",
     "figure_privilege_dose_response",
@@ -66,7 +72,9 @@ __all__ = [
     "figure_ising_mi_curve",
     "figure_lean_boundary_status",
     "figure_multi_track_architecture",
+    "figure_opd_taxonomy_landscape",
     "figure_parallel_convergence",
+    "figure_policy_posterior_grid",
     "figure_scholarship_source_map",
     "figure_semantic_gluing_graph",
     "figure_sheaf_coverage_heatmap",
@@ -97,6 +105,9 @@ FIGURE_GENERATORS: dict[str, Callable[[Path], Path | None]] = {
     "parallel_convergence": figure_parallel_convergence,
     "diversity_tradeoff": figure_diversity_tradeoff,
     "privilege_dose_response": figure_privilege_dose_response,
+    "correspondence_map": figure_correspondence_map,
+    "policy_posterior_grid": figure_policy_posterior_grid,
+    "opd_taxonomy_landscape": figure_opd_taxonomy_landscape,
     "sheaf_layers_overview": figure_sheaf_layers_overview,
     "sheaf_coverage_heatmap": figure_sheaf_coverage_heatmap,
     "invariant_dashboard": figure_invariant_dashboard,

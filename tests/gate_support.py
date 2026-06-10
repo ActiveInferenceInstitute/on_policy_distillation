@@ -7,12 +7,22 @@ from pathlib import Path
 import pytest
 
 from artifact_contracts import REQUIRED_OUTPUT_CHECK_KEYS
-from orchestration.artifact_pipeline import hydrate_manuscript_fixed_point, refresh_gate_artifacts
+from orchestration.artifact_pipeline import refresh_gate_artifacts
 
 _BOOTSTRAPPED_ROOTS: set[Path] = set()
 _BOOTSTRAPPED_FINGERPRINTS: dict[Path, tuple[tuple[str, int, int], ...]] = {}
 
-_REQUIRED_GATE_ARTIFACTS: tuple[str, ...] = REQUIRED_OUTPUT_CHECK_KEYS
+# The fingerprint surface must cover every artifact the readiness checks consume,
+# not only REQUIRED_OUTPUT_CHECK_KEYS: a mutation to a ready-key artifact outside
+# the fingerprinted set is invisible to _bootstrap_current, which lets a stale
+# tree be re-blessed from cache (the AI-TEST-ISOLATION-1 order-sensitivity race).
+_READY_ONLY_ARTIFACTS: tuple[str, ...] = (
+    "output/reports/stale_artifact_report.json",
+    "output/reports/claim_evidence_audit.json",
+)
+_REQUIRED_GATE_ARTIFACTS: tuple[str, ...] = REQUIRED_OUTPUT_CHECK_KEYS + tuple(
+    rel for rel in _READY_ONLY_ARTIFACTS if rel not in set(REQUIRED_OUTPUT_CHECK_KEYS)
+)
 _READY_CHECK_KEYS: tuple[str, ...] = (
     "experiment_plan_metrics",
     "integration_audit_track_schemas",
@@ -80,6 +90,18 @@ def _mark_bootstrapped(project_root: Path) -> None:
     root = project_root.resolve()
     _BOOTSTRAPPED_ROOTS.add(root)
     _BOOTSTRAPPED_FINGERPRINTS[root] = _gate_artifact_fingerprint(root)
+
+
+def evict_bootstrap(project_root: Path) -> None:
+    """Symmetrically drop BOTH cache structures for a root.
+
+    The isolate fixture must never clear only ``_BOOTSTRAPPED_ROOTS``: a dangling
+    fingerprint entry lets the next ``_mark_bootstrapped`` re-couple the pair
+    against a tree captured mid-mutation, silently re-blessing stale artifacts.
+    """
+    root = project_root.resolve()
+    _BOOTSTRAPPED_ROOTS.discard(root)
+    _BOOTSTRAPPED_FINGERPRINTS.pop(root, None)
 
 
 def _bootstrap_current(project_root: Path) -> bool:

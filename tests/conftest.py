@@ -38,11 +38,11 @@ def isolate_mutating_artifact_tests(request: pytest.FixtureRequest):
     if request.node.get_closest_marker("mutates_artifacts") is None:
         yield
         return
-    from gate_support import _BOOTSTRAPPED_ROOTS
+    from gate_support import evict_bootstrap
 
     root = PROJECT_ROOT.resolve()
-    _BOOTSTRAPPED_ROOTS.discard(root)
+    evict_bootstrap(root)
     try:
         yield
     finally:
-        _BOOTSTRAPPED_ROOTS.discard(root)
+        evict_bootstrap(root)

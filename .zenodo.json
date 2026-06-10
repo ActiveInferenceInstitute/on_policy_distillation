@@ -6,16 +6,19 @@
       "orcid": "0000-0001-6232-9096"
     }
   ],
-  "description": "Source code for Active Inference Multi-Track Exemplar (2026).",
+  "description": "Source code and manuscript for 'On-Policy Distillation is Active Inference' (2026): an audited correspondence between on-policy distillation and active inference, demonstrated on deterministic finite toy models with machine-checked manuscript bindings.",
   "keywords": [
     "active inference",
+    "on-policy distillation",
+    "knowledge distillation",
+    "free energy principle",
     "pymdp",
     "sophisticated inference",
     "lean",
     "reproducible research"
   ],
   "license": "MIT",
-  "title": "Active Inference Multi-Track Exemplar",
+  "title": "On-Policy Distillation is Active Inference",
   "upload_type": "software",
-  "version": "0.3.0"
+  "version": "0.4.0"
 }

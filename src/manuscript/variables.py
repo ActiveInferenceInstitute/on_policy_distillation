@@ -15,6 +15,13 @@ from manuscript.invariant_counts import load_invariant_counts
 from simulation.pymdp_config import load_pymdp_config
 
 
+def _rederived_aggregate_rule_count() -> int:
+    """Count of (artifact, aggregate) pairs re-derived from rows at validation time."""
+    from gates.aggregate_rederivation import rule_count
+
+    return rule_count()
+
+
 def _ising_mi_saturation_from_sweep(sweep_rows: list[dict[str, float]]) -> float:
     """Maximum closed-form MI on the measured λ grid (nats)."""
     if not sweep_rows:
@@ -190,6 +197,9 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
     divergence_data = _load_json(root / "output" / "data" / "firstprinciples" / "divergence_demo.json")
     exposure_bias_data = _load_json(root / "output" / "data" / "firstprinciples" / "exposure_bias_demo.json")
     taxonomy_data = _load_json(root / "output" / "data" / "firstprinciples" / "opd_taxonomy.json")
+    correspondence_data = _load_json(root / "output" / "data" / "firstprinciples" / "correspondence_map.json")
+    posterior_grid_data = _load_json(root / "output" / "data" / "pymdp_policy_posterior_grid.json")
+    observable_sweep_data = _load_json(root / "output" / "data" / "analytical_observable_sweep.json")
     proof_dependency_data = _load_json(root / "output" / "data" / "proof_dependency_graph.json")
     state_transition_data = _load_json(root / "output" / "data" / "state_transition_table.json")
     ablation_sensitivity_data = _load_json(root / "output" / "reports" / "ablation_sensitivity_report.json")
@@ -441,6 +451,12 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
         "opd_taxonomy_method_count": taxonomy_data.get("method_count", 0),
         "opd_taxonomy_on_policy_count": taxonomy_data.get("on_policy_count", 0),
         "opd_taxonomy_privileged_info_count": taxonomy_data.get("privileged_info_count", 0),
+        "correspondence_row_count": correspondence_data.get("row_count", 0),
+        "posterior_grid_row_count": posterior_grid_data.get("row_count", 0),
+        "posterior_grid_available_count": posterior_grid_data.get("available_row_count", 0),
+        "observable_sweep_row_count": observable_sweep_data.get("row_count", 0),
+        "observable_sweep_max_residual": float(observable_sweep_data.get("max_abs_residual", 0.0)),
+        "rederived_aggregate_rule_count": _rederived_aggregate_rule_count(),
         "divergence_reverse_kl": divergence_data.get("reverse_kl", 0.0),
         "divergence_forward_kl": divergence_data.get("forward_kl", 0.0),
         "divergence_jensen_shannon": divergence_data.get("jensen_shannon", 0.0),

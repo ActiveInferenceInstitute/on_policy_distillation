@@ -101,13 +101,22 @@ The pymdp anchor is the full TMaze `full_tmaze_sophisticated_inference` profile:
 
 ## Figure registry
 
-`figures.yaml` is the source of truth for captions, alt text, source bindings, and pandoc-crossref placement. Current registered figures are `ising_mi_curve`, `free_energy_curve`, `distillation_divergence_geometry`, `exposure_bias_recovery`, `si_belief_entropy_curve`, `si_obs_action_trace`, `si_tmaze_actions`, `si_tmaze_model_matrices`, `classroom_distillation_signal`, `energy_decomposition`, `parallel_convergence`, `diversity_tradeoff`, `privilege_dose_response`, `sheaf_coverage_heatmap`, `sheaf_layers_overview`, `invariant_dashboard`, `tmaze_schematic`, `multi_track_architecture`, `lean_boundary_status`, `gnn_ontology_concordance`, `semantic_gluing_graph`, `theorem_traceability_graph`, `causal_ablation_heatmap`, `scholarship_source_map`, and `graphical_abstract`. `output/data/figure_source_map.json` proves each row has source artifacts, source fields, generator metadata, and validation gates; `output/reports/figure_hash_manifest.json` proves the rendered PNG/GIF bytes match live files.
+`figures.yaml` is the source of truth for captions, alt text, source bindings, and pandoc-crossref placement. Current registered figures are `ising_mi_curve`, `free_energy_curve`, `distillation_divergence_geometry`, `exposure_bias_recovery`, `si_belief_entropy_curve`, `si_obs_action_trace`, `si_tmaze_actions`, `si_tmaze_model_matrices`, `classroom_distillation_signal`, `energy_decomposition`, `parallel_convergence`, `diversity_tradeoff`, `privilege_dose_response`, `correspondence_map`, `policy_posterior_grid`, `opd_taxonomy_landscape`, `sheaf_coverage_heatmap`, `sheaf_layers_overview`, `invariant_dashboard`, `tmaze_schematic`, `multi_track_architecture`, `lean_boundary_status`, `gnn_ontology_concordance`, `semantic_gluing_graph`, `theorem_traceability_graph`, `causal_ablation_heatmap`, `scholarship_source_map`, and `graphical_abstract`. `output/data/figure_source_map.json` proves each row has source artifacts, source fields, generator metadata, and validation gates; `output/reports/figure_hash_manifest.json` proves the rendered PNG/GIF bytes match live files.
 
 ## Pipeline tracks
 
 See [`tracks.yaml`](tracks.yaml). **Pipeline:** required tracks are declared there, including the core analytical/pymdp/formal/notation/visual tracks, validation spine, and canonical promoted roadmap tracks. **Sheaf registry:** fragment types live in [`manuscript/sheaf/tracks.yaml`](manuscript/sheaf/tracks.yaml); the appendix binds the full proof row except `layers`, which is methods-only. **Deterministic extension artifacts** (thin scripts -> `src/`): `simulate_si_tmaze.py` writes policy comparison, posterior-grid, and runtime-diagnostic artifacts; `simulate_si_graph_world.py` writes graph-world summary/trace artifacts; `render_animation.py` writes a trace-derived multi-frame GIF plus frame-delta manifest; `generate_validation_spine.py`, `generate_toy_sweep_tracks.py`, `generate_formal_interop_tracks.py`, `generate_integration_audit.py`, and `generate_sheaf_tracks.py` write the canonical validation spine, semantic certificate, dependency graph, evidence-field index, release-bundle manifest, theorem traceability matrix, gate index, artifact diffoscope, proof extraction index, state-space catalog, causal-ablation matrix, artifact license audit, release-note evidence, and promoted audit artifacts.
 
 Non-blocking future work is tracked in [`TODO.md`](TODO.md); current publication claims remain confined to deterministic toy Active Inference artifacts.
+
+## Configuration and extension
+
+Every config knob's consumer, the six-surface add-a-figure recipe, the
+add-a-track recipe, post-edit command map, and troubleshooting live in
+[`docs/reference/configuration-and-extension.md`](docs/reference/configuration-and-extension.md).
+Stored `all_*` aggregate flags are re-derived from their rows at validation time
+by `src/gates/aggregate_rederivation.py` (the `aggregate_rederivation` check in
+`validate_outputs`), so a stale or hand-edited artifact summary fails closed.
 
 ## Method inventory
 

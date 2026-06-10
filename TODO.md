@@ -1,4 +1,4 @@
-# template_active_inference TODO
+# active_inference_on_policy_distillation TODO
 
 This roadmap is future-only. It is not the current artifact contract and it does
 not create publication claims. Current publication claims remain deterministic,
@@ -40,7 +40,7 @@ implementation begins.
 
 | ID | Canonical track area | Future improvement | Proving artifact | Gate or predicate | Negative control |
 | --- | --- | --- | --- | --- | --- |
-| `AI-ANALYTICAL-OBS-4` | Analytical | Add another closed-form finite toy observable with equation and assumption cross-links | `output/data/analytical_observable_sweep.json` | `approx` residual plus `set_equals` equation ids | Perturbed observable value passes tolerance |
+| ~~`AI-ANALYTICAL-OBS-4`~~ | Analytical | **DONE 2026-06-10 (Run-4):** `conditional_policy_entropy` added with closed form $H_b(\sigma(\lambda))$, equation `eq:conditional_entropy`, assumption-index row, and a genuinely independent two-route cross-check (the previous `empirical = closed_form` tautology was removed); validator re-derives the residual bound from rows and pins the observable set | `output/data/analytical_observable_sweep.json` | re-derived residual ≤ 1e-12 + observable `set_equals` | lying-row and dropped-observable controls in `test_roadmap_promotion.py` |
 | `AI-PYMDP-RUNTIME-3` | PyMDP/JAX | Split runtime diagnostics into construction, inference, backend, warning, and fallback rows | `output/reports/pymdp_runtime_diagnostics.json` | `equals` unexpected warning count `0` and `all` fallback rows explained | Unexpected warning is accepted |
 | `AI-PYMDP-POLICY-3` | PyMDP/T-maze | Add measured policy posterior summaries for every configured mode/horizon/seed cell | `output/data/pymdp_policy_posterior_grid.json` | `set_equals` configured grid and `all` normalized posteriors | Missing or unnormalized posterior cell passes |
 | `AI-PYMDP-EFE-3` | PyMDP/T-maze | Record decomposed EFE terms where available and explicit fallback reasons otherwise | `output/data/si_efe_terms.json` | `all` rows have terms or fallback reason | Row lacks both terms and fallback |
@@ -121,11 +121,11 @@ promotion rule above.
 
 | ID | Area | Improvement | Proving artifact | Gate or predicate | Negative control |
 | --- | --- | --- | --- | --- | --- |
-| `AI-STALE-SUMMARY-1` | Validation gates | Re-derive every `all_*` aggregate from its rows inside each validator instead of trusting the precomputed summary boolean | existing track JSON summaries | re-derived aggregate equals stored aggregate | mutate one row, leave summary `true`, assert gate fails |
-| `AI-EFE-NONVACUOUS-1` | PyMDP/EFE | Make `all_rows_explained` bind a real condition (a `terms_available` row must carry non-empty `terms`; a fallback row must draw `fallback_reason` from measured reasons); rename schema to `si_efe_values` to stop over-promising a term decomposition | `output/data/si_efe_terms.json` | `terms_available` ⇒ non-empty terms | `terms_available=true` + empty terms passes |
-| `AI-STUB-DEPTH-1` | Fragments | Expand 6 thin-stub teaching fragments (causal_ablation, state_space_catalog, proof_extraction, artifact_diffoscope, artifact_license, release_notes) to sibling 2-paragraph pedagogy depth | composed manuscript | token gate (all `{{tokens}}` resolve) | n/a (prose) |
-| `AI-APPENDIX-HYDRATE-1` | Integration | Hydrate the zero-token appendix cells (counterexample, manuscript_staleness, assumption_index) with existing counts; retire the near-orphan `manuscript/refs/labels.yaml` second figure registry | composed appendix | token gate | edited hydrated output hides stale value |
-| `AI-APPENDIX-FIGURES-1` | Visualization | Add two appendix figures (theorem-traceability 3-column graph; causal-ablation heatmap) deriving rows from JSON keys, numbered by pandoc-crossref after the main 1-N | `figures.yaml` + generators | `test_figure_generators_match_registry` | figure lacks source artifact |
+| ~~`AI-STALE-SUMMARY-1`~~ | Validation gates | **DONE 2026-06-10 (Run-4):** read-time re-derivation layer `src/gates/aggregate_rederivation.py` re-derives 58 stored `all_*` aggregates from their rows inside `validate_outputs` (`aggregate_rederivation` check; vacuous truth over empty rows fails closed); was also the Run-2 cross-vendor accepted residual | `validate_outputs` check + `tests/test_aggregate_rederivation.py` | stored flag == row-level re-derivation for every covered aggregate | lying-case tests: mutate one row, leave flag `true`, gate fails |
+| ~~`AI-EFE-NONVACUOUS-1`~~ | PyMDP/EFE | **DONE (pre-Run-4):** `_efe_values_explained` re-derives `all_rows_explained` (terms_available ⇒ non-empty `terms.values`; fallback rows need `fallback_reason`); schema renamed to `si_efe_values.v1`; negative control in `test_roadmap_promotion.py` | `output/data/si_efe_terms.json` | `terms_available` ⇒ non-empty terms | `terms_available=true` + empty terms fails |
+| ~~`AI-STUB-DEPTH-1`~~ | Fragments | **DONE (pre-Run-4):** the 6 fragments are 101–128-word hydrated teaching cells with narrative rationale (verified 2026-06-10) | composed manuscript | token gate (all `{{tokens}}` resolve) | n/a (prose) |
+| ~~`AI-APPENDIX-HYDRATE-1`~~ | Integration | **DONE (pre-Run-4):** counterexample, manuscript_staleness, and assumption_index cells all carry `{{tokens}}` (verified 2026-06-10) | composed appendix | token gate | edited hydrated output hides stale value |
+| ~~`AI-APPENDIX-FIGURES-1`~~ | Visualization | **DONE (pre-Run-4):** `theorem_traceability_graph` and `causal_ablation_heatmap` registered, generated, and bound in `appendix_full_sheaf` (verified 2026-06-10) | `figures.yaml` + generators | `test_figure_generators_match_registry` | figure lacks source artifact |
 | `AI-HYGIENE-1` | Cleanup | Tolerance SSOT, duplicate skipif decorator, GNN `_parse_param_blocks` tests, poset-law prose sharpening, Bernoulli 8-symbol enumeration via `{{bernoulli_ontology_term_count}}` | n/a | full suite + ruff/mypy | n/a |
 
 ## Known residual (2026-06-02): full-suite artifact-isolation flakiness
@@ -143,4 +143,4 @@ negative_controls` was hardened (regenerates its own diffoscope precondition).
 
 | ID | Area | Improvement | Proving artifact | Gate or predicate | Negative control |
 | --- | --- | --- | --- | --- | --- |
-| `AI-TEST-ISOLATION-1` | Test infra | Make artifact-validation tests order-independent: either regenerate meta-artifacts (provenance/diffoscope/semantic certificate) at the start of each, or make those comparisons stateless within a single write→validate call | n/a (test infra) | `pytest tests/` green across 5 consecutive runs on an idle host | shuffle test order (`-p randomly`) stays green |
+| `AI-TEST-ISOLATION-1` | Test infra | **PARTIAL 2026-06-10 (Run-4):** chain-A stale-trust race closed — `gate_support.evict_bootstrap` drops ROOTS **and** FINGERPRINTS symmetrically (the isolate fixture previously cleared only ROOTS, letting a dangling fingerprint re-bless a mid-mutation tree) and the fingerprint surface now covers the ready-only artifacts (`stale_artifact_report.json`, `claim_evidence_audit.json`). Chain B (eviction-driven cold-path cost under load/timeouts) remains: managed via `run_tests_chunked.py`; full idle-host order-shuffle soak still owed | n/a (test infra) | `pytest tests/` green across 5 consecutive runs on an idle host | shuffle test order (`-p randomly`) stays green |
