@@ -1,6 +1,7 @@
 """Sheaf coverage and layer-stack figure entrypoints."""
 
 from __future__ import annotations
+from visualizations.figure_helpers import subset_note
 
 from pathlib import Path
 
@@ -86,6 +87,7 @@ def figure_sheaf_coverage_heatmap(
         "scholarship", "visualization",
     ]
     keep = [i for i, t in enumerate(payload.track_ids) if t in science_tracks]
+    total_tracks = len(payload.track_ids)
     if keep and len(keep) < len(payload.track_ids):
         payload = _replace(
             payload,
@@ -112,7 +114,11 @@ def figure_sheaf_coverage_heatmap(
             show_row_pct=True,
             boundary_width=1.2,
             label_fontsize=style.font_size("annotation"),
+            # Rotated group labels collided with wrapped row titles; the
+            # em-dash separator rows already carry the IMRAD grouping.
+            show_group_labels=False,
         )
         fig.tight_layout()
+        subset_note(fig, len(payload.track_ids), total_tracks, "registered fragment tracks (science-bearing subset; build-machinery columns in the supplement)")
         save_figure_png(fig, out, dpi=dpi)
     return out

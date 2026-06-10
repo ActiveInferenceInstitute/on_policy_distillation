@@ -1003,7 +1003,7 @@ claims:
     predicate: is_true
 - id: fp_exposure_bias_gap
   statement: Exposure-bias demonstration records a strictly positive terminal recovery gap
-    between on-policy and off-policy students.
+    that re-derives exactly from its on-policy and off-policy operands.
   path: output/data/firstprinciples/exposure_bias_demo.json
   section: intro_contributions
   tracks:
@@ -1011,6 +1011,10 @@ claims:
   evidence:
     field: gap.terminal_gap
     predicate: positive
+    equals_difference:
+    - gap.on_policy_final
+    - gap.off_policy_final
+    tolerance: 1.0e-09
 - id: fp_divergence_values
   statement: Divergence-geometry demonstration records a strictly positive reverse KL
     for the canonical teacher/student pair.
@@ -1071,3 +1075,39 @@ claims:
   evidence:
     field: between_extremes
     predicate: is_true
+- id: fp_classroom_entropy_means_ordered
+  statement: The privileged entropy advantage is re-derived from the artifact's mean
+    fields (teacher mean at or below student mean), not trusted from the flag.
+  path: output/data/firstprinciples/classroom.json
+  section: results_si_tmaze
+  tracks:
+  - pymdp
+  - simulation
+  evidence:
+    field: teacher_mean_belief_entropy
+    leq_field: student_mean_belief_entropy
+    tolerance: 1.0e-09
+- id: fp_statistics_inputs_match_classroom
+  statement: The inferential statistics consume exactly the per-decision teacher
+    entropy series persisted by the classroom artifact (cross-artifact identity).
+  path: output/data/firstprinciples/statistics_demo.json
+  section: results_invariants
+  tracks:
+  - simulation
+  evidence:
+    field: teacher_entropy
+    matches_artifact_field:
+      path: output/data/firstprinciples/classroom.json
+      field: teacher_belief_entropies
+- id: fp_statistics_student_inputs_match_classroom
+  statement: The student entropy series in the statistics artifact is identical to the
+    classroom artifact's persisted student series (cross-artifact identity).
+  path: output/data/firstprinciples/statistics_demo.json
+  section: results_invariants
+  tracks:
+  - simulation
+  evidence:
+    field: student_entropy
+    matches_artifact_field:
+      path: output/data/firstprinciples/classroom.json
+      field: student_belief_entropies

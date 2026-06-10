@@ -47,9 +47,15 @@ def _predicate_holds(value: Any, predicate: str) -> bool:
     if predicate == "non_empty":
         return bool(value)
     if predicate == "zero":
-        return float(value) == 0.0
+        try:
+            return float(value) == 0.0
+        except (TypeError, ValueError):
+            return False
     if predicate == "positive":
-        return float(value) > 0.0
+        try:
+            return float(value) > 0.0
+        except (TypeError, ValueError):
+            return False
     if predicate == "all_true":
         if isinstance(value, dict):
             return all(bool(v) for v in value.values())
@@ -66,13 +72,54 @@ def _set_equals(left: Any, right: Any) -> bool:
     return {str(item) for item in left} == {str(item) for item in right}
 
 
-def _evidence_spec_holds(value: Any, evidence: dict[str, Any]) -> bool:
+def _evidence_spec_holds(value: Any, evidence: dict[str, Any], *, root: Path | None = None) -> bool:
+    document = value
     if "field" in evidence:
         try:
             value = _lookup_field(value, str(evidence["field"]))
         except (KeyError, TypeError, ValueError, IndexError):
             return False
     tolerance = float(evidence.get("tolerance", 0.0))
+    # --- re-derivation forms: check relations, not just stored scalars/flags ---
+    if "equals_difference" in evidence:
+        # value must equal lookup(document, A) - lookup(document, B): a stored
+        # gap cannot silently disagree with the operands it claims to summarise.
+        try:
+            field_a, field_b = evidence["equals_difference"]
+            derived = float(_lookup_field(document, str(field_a))) - float(_lookup_field(document, str(field_b)))
+        except (KeyError, TypeError, ValueError, IndexError):
+            return False
+        if not _numbers_equal(value, derived, tolerance or 1e-9):
+            return False
+    if "leq_field" in evidence:
+        # value must be <= the sibling field: orderings are re-derived, never
+        # trusted from a producer-set flag.
+        try:
+            bound = float(_lookup_field(document, str(evidence["leq_field"])))
+        except (KeyError, TypeError, ValueError, IndexError):
+            return False
+        try:
+            if float(value) > bound + (tolerance or 1e-9):
+                return False
+        except (TypeError, ValueError):
+            return False
+    if "matches_artifact_field" in evidence:
+        # Cross-artifact equality: this claim's value must be identical to a
+        # field in ANOTHER generated artifact (e.g. statistics inputs == the
+        # classroom series they claim to derive from).
+        spec = evidence["matches_artifact_field"]
+        if root is None or not isinstance(spec, dict):
+            return False
+        other_path = root / str(spec.get("path", ""))
+        try:
+            other_value = _lookup_field(_load_structured(other_path), str(spec.get("field", "")))
+        except (OSError, ValueError, KeyError, TypeError, IndexError):
+            return False
+        if isinstance(value, list) or isinstance(other_value, list):
+            if value != other_value:
+                return False
+        elif not _numbers_equal(value, other_value, tolerance):
+            return False
     if "equals" in evidence and not _numbers_equal(value, evidence["equals"], tolerance):
         return False
     if "approx" in evidence and not _numbers_equal(value, evidence["approx"], tolerance):
@@ -93,13 +140,13 @@ def _evidence_spec_holds(value: Any, evidence: dict[str, Any]) -> bool:
         nested = evidence["all"]
         if not isinstance(value, list) or not isinstance(nested, dict):
             return False
-        if not all(_evidence_spec_holds(item, nested) for item in value):
+        if not all(_evidence_spec_holds(item, nested, root=root) for item in value):
             return False
     if "any" in evidence:
         nested = evidence["any"]
         if not isinstance(value, list) or not isinstance(nested, dict):
             return False
-        if not any(_evidence_spec_holds(item, nested) for item in value):
+        if not any(_evidence_spec_holds(item, nested, root=root) for item in value):
             return False
     predicate = evidence.get("predicate")
     if predicate and not _predicate_holds(value, str(predicate)):
@@ -112,6 +159,7 @@ def typed_claim_evidence_issues(
     *,
     ledger_path: Path | None = None,
     allow_missing_certificate: bool = False,
+    skip_paths: set[str] | None = None,
 ) -> list[str]:
     """Return explicit typed-evidence failures for ``claim_ledger.yaml``."""
     root = project_root.resolve()
@@ -122,6 +170,7 @@ def typed_claim_evidence_issues(
 
     ledger = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     issues: list[str] = []
+    skipped = skip_paths or set()
     for claim in ledger.get("claims") or []:
         claim_id = str(claim.get("id") or "<unknown>")
         rel = claim.get("path")
@@ -129,6 +178,8 @@ def typed_claim_evidence_issues(
             issues.append(f"{claim_id}: missing path")
             continue
         if allow_missing_certificate and str(rel) == "output/data/sheaf_gluing_certificate.json":
+            continue
+        if str(rel) in skipped:
             continue
         artifact = root / str(rel)
         if not artifact.exists():
@@ -146,7 +197,7 @@ def typed_claim_evidence_issues(
                 except (OSError, ValueError, KeyError, TypeError, IndexError) as exc:
                     issues.append(f"{claim_id}: cannot load evidence from {rel}: {exc}")
                     continue
-            if not _evidence_spec_holds(value, spec):
+            if not _evidence_spec_holds(value, spec, root=root):
                 issues.append(f"{claim_id}: evidence predicate failed for {rel}")
         if "tracks" in claim and not claim.get("tracks"):
             issues.append(f"{claim_id}: tracks must not be empty")
@@ -158,12 +209,14 @@ def validate_typed_claim_evidence(
     *,
     ledger_path: Path | None = None,
     allow_missing_certificate: bool = False,
+    skip_paths: set[str] | None = None,
 ) -> bool:
     """Validate optional typed evidence declarations in ``claim_ledger.yaml``."""
     return not typed_claim_evidence_issues(
         project_root,
         ledger_path=ledger_path,
         allow_missing_certificate=allow_missing_certificate,
+        skip_paths=skip_paths,
     )
 
 

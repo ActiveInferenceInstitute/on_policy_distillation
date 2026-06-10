@@ -182,3 +182,12 @@ uv run python scripts/validate_outputs.py
 - Root [`AGENTS.md`](../../AGENTS.md)
 - [Publishing guide](../../../template/docs/guides/publishing-guide.md) · [Zenodo DOI strategy](../../../template/docs/guides/zenodo-doi-strategy.md)
 - [`tracks.yaml`](tracks.yaml)
+
+## Orchestration
+
+Use `scripts/run_full_chain.py` (optionally `--tail-only`, `--render`) instead of
+invoking generators individually: the attestation/certificate layer is a fixed
+point (the attestation records the previous validation report), and the runner
+converges it automatically. On loaded machines run tests via
+`scripts/run_tests_chunked.py` — single long pytest processes get killed by
+resource pressure.

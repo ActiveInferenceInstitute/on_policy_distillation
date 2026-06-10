@@ -280,6 +280,11 @@ def validate_integration_audit_artifacts(project_root: Path) -> list[str]:
     release_notes = _load_json(root / "output" / "reports" / "release_notes_evidence.json")
     if release_notes.get("schema") != "template_active_inference.release_notes_evidence.v1":
         issues.append("release_notes_evidence.json schema mismatch")
-    if release_notes.get("all_notes_source_backed") is not True:
+    notes_rows = release_notes.get("rows") or []
+    notes_backed = bool(notes_rows) and all(row.get("source") and row.get("passed") for row in notes_rows)
+    if (
+        release_notes.get("all_notes_source_backed") is not True
+        or release_notes.get("all_notes_source_backed") != notes_backed
+    ):
         issues.append("release_notes_evidence.json has unsupported notes")
     return issues

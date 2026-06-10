@@ -16,17 +16,19 @@ uv run python scripts/run_analytical_sweep.py
 uv run python scripts/simulate_si_tmaze.py
 uv run python scripts/simulate_si_graph_world.py
 uv run python scripts/compute_statistics.py
-uv run python scripts/generate_figures.py
-uv run python scripts/render_animation.py
+uv run python scripts/generate_firstprinciples.py        # OPD<->AI artifacts; classroom rollout runs by default (--no-classroom to skip)
 uv run python scripts/generate_validation_spine.py
 uv run python scripts/generate_toy_sweep_tracks.py
 uv run python scripts/generate_formal_interop_tracks.py
 uv run python scripts/generate_integration_audit.py
 uv run python scripts/generate_sheaf_tracks.py
-uv run python scripts/generate_firstprinciples.py        # OPD<->AI artifacts; add --classroom for the two-agent pymdp rollout
+uv run python scripts/generate_figures.py
+uv run python scripts/render_animation.py
 uv run python scripts/z_generate_manuscript_variables.py
 uv run python scripts/generate_method_inventory.py
 uv run python -m pytest tests/ --cov=src --cov-fail-under=90
+# On a loaded machine use scripts/run_tests_chunked.py — a single pytest process
+# can be killed under resource pressure (exit 144); chunks survive.
 ```
 
 For local iteration that does not need the full fixed-point artifact writers,

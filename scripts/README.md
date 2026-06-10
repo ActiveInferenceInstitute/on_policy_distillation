@@ -3,6 +3,12 @@
 Thin orchestrators that import from `../src/` and handle I/O only.
 
 - `run_analytical_sweep.py` — closed-form sweep over hyperparameters.
+- `compute_statistics.py` — write the combined analytical + simulation statistics JSON.
+- `generate_firstprinciples.py` — emit the OPD<->active-inference first-principles
+  artifacts (correspondence map, divergence/exposure/energy demos, the two-agent
+  pymdp classroom by default, and the classroom-derived inferential statistics).
+- `render_pdf.py` — render the standalone manuscript PDF (cover, hyperlinked
+  citations, abstract-first ordering).
 - `simulate_si_tmaze.py` — run the pymdp sophisticated-inference T-maze, policy comparison, posterior grid, and runtime diagnostics.
 - `simulate_si_graph_world.py` — write deterministic graph-world summary/trace artifacts.
 - `generate_figures.py` — render figures from generated data.
@@ -28,3 +34,21 @@ Thin orchestrators that import from `../src/` and handle I/O only.
   manuscript variables from run outputs.
 - `compose_manuscript.py` — sheaf-compose the multi-track sections.
 - `validate_outputs.py` — run the validation gates over generated outputs.
+- `run_full_chain.py` — **one-command convergent runner**: executes the canonical
+  `analysis.scripts` order from `manuscript/config.yaml`, validates, and — because
+  `release_attestation.json` attests the *previous* `validation_report.json` —
+  re-runs the attestation tail and re-validates to a bounded fixed point
+  (`--max-passes`, default 3). Use `--tail-only` after editing manuscript
+  fragments, ledger claims, or tokens; `--render` to also produce the PDF;
+  `--dry-run` to print the plan. Exit 0 only when the final validate is green.
+- `run_tests_chunked.py` — run the test suite as small per-process chunks.
+  On a loaded machine a single long pytest process is reliably killed by
+  resource pressure (observed exit 144); per-chunk subprocesses survive and
+  cover the same files. Exit 0 only when every chunk is clean.
+
+## Order matters
+
+Running generators out of order silently restales downstream certificates
+(`generate_sheaf_tracks.py` must precede `z_generate_manuscript_variables.py`;
+the validation spine must precede the audits). `run_full_chain.py` encodes the
+canonical order — prefer it over invoking generators by hand.

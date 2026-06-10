@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from pathlib import Path
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
 import textwrap
 
 import matplotlib.pyplot as plt
@@ -54,7 +59,7 @@ def _draw_imrad_group_labels(
 
 
 def draw_coverage_heatmap(
-    ax,
+    ax: "Axes",
     payload: HeatmapPayload,
     project_root: Path,
     *,
@@ -175,7 +180,9 @@ def draw_track_layers_panel(ax, project_root: Path) -> bool:
             va="center",
             ha="right",
             fontsize=style.font_size("dense"),
-            color=style.color("muted"),
+            # Muted gray on the secondary-blue required bars was illegible;
+            # white reads on blue, primary reads on the lighter optional fill.
+            color="#ffffff" if not spec.optional else style.color("primary"),
             family="monospace",
         )
     ax.set_yticks([])

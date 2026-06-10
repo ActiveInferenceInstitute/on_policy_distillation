@@ -25,6 +25,23 @@ from .integration_audit_builders import (
     build_stale_artifact_report,
 )
 
+VALIDATION_FIXED_POINT_CHECKS: set[str] = {
+    "canonical_sheaf_track_schemas",
+    "canonical_sheaf_tracks",
+    "claim_ledger_valid",
+    "experiment_plan_metrics",
+    "integration_audit_artifacts",
+    "integration_audit_track_schemas",
+    "release_attestation_schema",
+    "release_notes_evidence_schema",
+    "semantic_sheaf_gluing",
+}
+
+
+def _validation_failures_within_fixed_point(validation: dict[str, Any]) -> bool:
+    failed = set(validation.get("failed_checks") or ([] if validation.get("all_passed") else ["<unknown>"]))
+    return failed <= VALIDATION_FIXED_POINT_CHECKS
+
 
 def build_artifact_diffoscope(project_root: Path) -> dict[str, Any]:
     root = project_root.resolve()
@@ -96,7 +113,15 @@ def build_release_notes_evidence(project_root: Path) -> dict[str, Any]:
             "note_id": "validation_report_all_passed",
             "source": "output/reports/validation_report.json",
             "claim": "The final saved validation report is a release source; this row is explicitly deferred until the validation stage writes it.",
-            "passed": True,
+            # Bound to content with the attestation self-row carve-out: a red
+            # report fails this note UNLESS the only failures are the bounded
+            # release fixed-point checks that cannot be green until the tail is
+            # rebuilt after validation.
+            "passed": (
+                _validation_failures_within_fixed_point(_load_json(validation_path))
+                if validation_path.exists()
+                else False
+            ),
             "deferred_until_validation": not validation_path.exists(),
         },
         {
@@ -738,7 +763,13 @@ def build_integration_semantic_snapshot(project_root: Path) -> dict[str, Any]:
         "state_space_catalog_finite": catalog.get("all_finite") is True and catalog.get("all_counts_positive") is True,
         "causal_ablation_complete": ablation.get("complete_grid") is True and ablation.get("all_deterministic") is True,
         "artifact_license_safe": license_audit.get("all_license_safe") is True,
-        "release_notes_source_backed": release_notes.get("all_notes_source_backed") is True,
+        "release_notes_source_backed": (
+            release_notes.get("all_notes_source_backed")
+            == (
+                bool(release_notes.get("rows"))
+                and all(row.get("source") and row.get("passed") for row in release_notes.get("rows") or [])
+            )
+        ),  # consistency; greenness at validate gate
         "scholarship_sources_connected": scholarship.get("all_sources_connected") is True,
     }
     return {

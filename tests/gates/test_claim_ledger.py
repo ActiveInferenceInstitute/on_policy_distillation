@@ -268,3 +268,234 @@ def test_typed_claim_evidence_reports_structured_failures(tmp_path: Path) -> Non
     assert any("missing path" in issue for issue in issues)
     assert any("cannot load evidence" in issue for issue in issues)
     assert any("tracks must not be empty" in issue for issue in issues)
+
+
+def test_rederivation_evidence_forms_bite(tmp_path: Path) -> None:
+    """equals_difference / leq_field / matches_artifact_field catch doctored artifacts."""
+    from gates.claim_ledger import typed_claim_evidence_issues
+
+    data_dir = tmp_path / "output" / "data"
+    data_dir.mkdir(parents=True)
+    honest = {
+        "gap": {"terminal_gap": 0.75, "on_policy_final": 0.85, "off_policy_final": 0.10},
+        "teacher_mean": 0.2,
+        "student_mean": 0.3,
+        "series": [0.1, 0.2, 0.3],
+    }
+    other = {"series": [0.1, 0.2, 0.3]}
+    (data_dir / "demo.json").write_text(json.dumps(honest), encoding="utf-8")
+    (data_dir / "other.json").write_text(json.dumps(other), encoding="utf-8")
+    ledger = tmp_path / "ledger.yaml"
+    ledger.write_text(
+        "\n".join(
+            [
+                "claims:",
+                "  - id: gap_rederives",
+                "    statement: gap re-derives",
+                "    path: output/data/demo.json",
+                "    tracks: [simulation]",
+                "    evidence:",
+                "      field: gap.terminal_gap",
+                "      equals_difference: [gap.on_policy_final, gap.off_policy_final]",
+                "      tolerance: 1.0e-09",
+                "  - id: means_ordered",
+                "    statement: ordering re-derived",
+                "    path: output/data/demo.json",
+                "    tracks: [simulation]",
+                "    evidence:",
+                "      field: teacher_mean",
+                "      leq_field: student_mean",
+                "  - id: cross_artifact",
+                "    statement: series identical across artifacts",
+                "    path: output/data/demo.json",
+                "    tracks: [simulation]",
+                "    evidence:",
+                "      field: series",
+                "      matches_artifact_field:",
+                "        path: output/data/other.json",
+                "        field: series",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert typed_claim_evidence_issues(tmp_path, ledger_path=ledger) == []
+
+    # Negative control 1: stored gap disagrees with its operands (curve swap).
+    doctored = json.loads(json.dumps(honest))
+    doctored["gap"]["on_policy_final"], doctored["gap"]["off_policy_final"] = 0.10, 0.85
+    (data_dir / "demo.json").write_text(json.dumps(doctored), encoding="utf-8")
+    issues = typed_claim_evidence_issues(tmp_path, ledger_path=ledger)
+    assert any("gap_rederives" in issue for issue in issues)
+
+    # Negative control 2: ordering flipped.
+    doctored = json.loads(json.dumps(honest))
+    doctored["teacher_mean"] = 0.9
+    (data_dir / "demo.json").write_text(json.dumps(doctored), encoding="utf-8")
+    issues = typed_claim_evidence_issues(tmp_path, ledger_path=ledger)
+    assert any("means_ordered" in issue for issue in issues)
+
+    # Negative control 3: cross-artifact series diverges by one element.
+    (data_dir / "demo.json").write_text(json.dumps(honest), encoding="utf-8")
+    (data_dir / "other.json").write_text(json.dumps({"series": [0.1, 0.2, 0.30000001]}), encoding="utf-8")
+    issues = typed_claim_evidence_issues(tmp_path, ledger_path=ledger)
+    assert any("cross_artifact" in issue for issue in issues)
+
+    # Negative control 4: referenced cross-artifact missing entirely.
+    (data_dir / "other.json").unlink()
+    issues = typed_claim_evidence_issues(tmp_path, ledger_path=ledger)
+    assert any("cross_artifact" in issue for issue in issues)
+
+
+def test_claim_ledger_private_predicates_and_lookup_edges() -> None:
+    from gates.claim_ledger import _lookup_field, _numbers_equal, _predicate_holds, _set_equals
+
+    assert _lookup_field({"rows": [{"ok": True}]}, "rows.0.ok") is True
+    with pytest.raises(KeyError):
+        _lookup_field("not-structured", "rows")
+
+    assert _numbers_equal(True, 1, 0.0) is True
+    assert _numbers_equal(1.0, 1.0000001, 1e-5) is True
+    assert _numbers_equal("alpha", "alpha", 0.0) is True
+
+    assert _predicate_holds("x", "exists") is True
+    assert _predicate_holds(True, "file_exists") is True
+    assert _predicate_holds([1], "non_empty") is True
+    assert _predicate_holds(0, "zero") is True
+    assert _predicate_holds(2, "positive") is True
+    assert _predicate_holds({"a": True}, "all_true") is True
+    assert _predicate_holds([True], "all_true") is True
+    assert _predicate_holds(True, "is_true") is True
+    assert _predicate_holds("x", "unknown_predicate") is False
+    assert _predicate_holds("x", "all_true") is False
+
+    assert _set_equals(["b", "a"], ["a", "b"]) is True
+    assert _set_equals("not-list", ["a"]) is False
+
+
+def test_evidence_spec_holds_direct_guard_branches(tmp_path: Path) -> None:
+    from gates.claim_ledger import _evidence_spec_holds
+
+    root = tmp_path
+    data_dir = root / "output" / "data"
+    data_dir.mkdir(parents=True)
+    (data_dir / "other.json").write_text(json.dumps({"scalar": 1.0, "items": [1, 2]}), encoding="utf-8")
+    document = {
+        "a": 3.0,
+        "b": 1.0,
+        "gap": 2.0,
+        "limit": 4.0,
+        "text": "alpha beta",
+        "items": [1, 2],
+        "rows": [{"ok": False}, {"ok": True}],
+        "nested": [{"value": 1}, {"value": 1}],
+    }
+
+    assert _evidence_spec_holds(document, {"field": "gap", "equals_difference": ["a", "b"]})
+    assert not _evidence_spec_holds(document, {"field": "missing", "equals": 1})
+    assert not _evidence_spec_holds(document, {"field": "gap", "equals_difference": ["a", "missing"]})
+    assert not _evidence_spec_holds(document, {"field": "gap", "equals_difference": ["b", "a"]})
+    assert _evidence_spec_holds(document, {"field": "gap", "leq_field": "limit"})
+    assert not _evidence_spec_holds(document, {"field": "a", "leq_field": "missing"})
+    assert not _evidence_spec_holds(document, {"field": "text", "leq_field": "limit"})
+    assert not _evidence_spec_holds(document, {"field": "limit", "leq_field": "gap"})
+    assert _evidence_spec_holds(
+        document,
+        {"field": "items", "matches_artifact_field": {"path": "output/data/other.json", "field": "items"}},
+        root=root,
+    )
+    assert _evidence_spec_holds(
+        document,
+        {"field": "b", "matches_artifact_field": {"path": "output/data/other.json", "field": "scalar"}},
+        root=root,
+    )
+    assert not _evidence_spec_holds(
+        document,
+        {"field": "items", "matches_artifact_field": {"path": "output/data/other.json", "field": "missing"}},
+        root=root,
+    )
+    assert not _evidence_spec_holds(
+        document,
+        {"field": "items", "matches_artifact_field": {"path": "output/data/other.json", "field": "items"}},
+    )
+    assert not _evidence_spec_holds(document, {"field": "items", "matches_artifact_field": "bad"}, root=root)
+    assert not _evidence_spec_holds(
+        document,
+        {"field": "b", "matches_artifact_field": {"path": "output/data/other.json", "field": "items"}},
+        root=root,
+    )
+    assert not _evidence_spec_holds(document, {"field": "gap", "equals": 3})
+    assert not _evidence_spec_holds(document, {"field": "gap", "approx": 3, "tolerance": 0.1})
+    assert not _evidence_spec_holds(document, {"field": "gap", "min": 3})
+    assert not _evidence_spec_holds(document, {"field": "gap", "max": 1})
+    assert not _evidence_spec_holds(document, {"field": "text", "contains": "gamma"})
+    assert not _evidence_spec_holds(document, {"field": "items", "set_equals": [1, 3]})
+    assert not _evidence_spec_holds(document, {"field": "items", "len_equals": 3})
+    assert not _evidence_spec_holds(document, {"field": "items", "len_min": 3})
+    assert _evidence_spec_holds(document, {"field": "nested", "all": {"field": "value", "equals": 1}})
+    assert not _evidence_spec_holds(document, {"field": "text", "all": {"equals": 1}})
+    assert not _evidence_spec_holds(document, {"field": "nested", "all": "bad"})
+    assert not _evidence_spec_holds(document, {"field": "nested", "all": {"field": "value", "equals": 2}})
+    assert _evidence_spec_holds(document, {"field": "rows", "any": {"field": "ok", "equals": True}})
+    assert not _evidence_spec_holds(document, {"field": "text", "any": {"equals": 1}})
+    assert not _evidence_spec_holds(document, {"field": "rows", "any": "bad"})
+    assert not _evidence_spec_holds(document, {"field": "rows", "any": {"field": "missing", "equals": True}})
+    assert not _evidence_spec_holds(document, {"field": "text", "predicate": "zero"})
+
+
+def test_validate_claim_ledger_branch_edges(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    import gates.claim_ledger as claim_ledger
+    import manuscript.sheaf as sheaf
+
+    assert claim_ledger.validate_claim_ledger(tmp_path) is False
+
+    data_dir = tmp_path / "output" / "data"
+    data_dir.mkdir(parents=True)
+    artifact = data_dir / "present.json"
+    artifact.write_text(json.dumps({"ok": True}), encoding="utf-8")
+    (data_dir / "sheaf_coverage_matrix.json").write_text(json.dumps({"cells": []}), encoding="utf-8")
+    ledger = tmp_path / "data" / "claim_ledger.yaml"
+    ledger.parent.mkdir(parents=True)
+    ledger.write_text(
+        "claims:\n"
+        "  - id: missing_artifact\n"
+        "    path: output/data/missing.json\n"
+        "    tracks: [sheaf]\n",
+        encoding="utf-8",
+    )
+    assert claim_ledger.validate_claim_ledger(tmp_path) is False
+
+    manifest_dir = tmp_path / "manuscript" / "sheaf"
+    manifest_dir.mkdir(parents=True)
+    (manifest_dir / "manifest.yaml").write_text("registry_path: manuscript/sheaf/tracks.yaml\n", encoding="utf-8")
+    (manifest_dir / "tracks.yaml").write_text("tracks: []\n", encoding="utf-8")
+    ledger.write_text(
+        "claims:\n"
+        "  - id: coverage_no_gray\n"
+        "    path: output/data/present.json\n"
+        "    tracks: [coverage]\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        sheaf,
+        "load_manifest",
+        lambda *args, **kwargs: type("Manifest", (), {"registry_path": "manuscript/sheaf/tracks.yaml"})(),
+    )
+    monkeypatch.setattr(sheaf, "load_track_registry", lambda *args, **kwargs: object())
+    monkeypatch.setattr(sheaf, "load_coverage_json", lambda *args, **kwargs: {"cells": []})
+    monkeypatch.setattr(sheaf, "gray_cell_count_from_json", lambda *_args: 1)
+    monkeypatch.setattr(sheaf, "validate_coverage_json_data", lambda *_args: [])
+    monkeypatch.setattr(claim_ledger, "validate_typed_claim_evidence", lambda *args, **kwargs: True)
+    assert claim_ledger.validate_claim_ledger(tmp_path) is False
+
+    monkeypatch.setattr(sheaf, "gray_cell_count_from_json", lambda *_args: 0)
+    monkeypatch.setattr(
+        sheaf,
+        "validate_coverage_json_data",
+        lambda *_args: [type("Issue", (), {"level": "error"})()],
+    )
+    assert claim_ledger.validate_claim_ledger(tmp_path) is False
+
+    monkeypatch.setattr(sheaf, "validate_coverage_json_data", lambda *_args: [])
+    assert claim_ledger.validate_claim_ledger(tmp_path) is True

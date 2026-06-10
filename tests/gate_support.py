@@ -48,7 +48,7 @@ def refresh_generated_gate_artifacts(project_root: Path) -> None:
     try:
         refresh_gate_artifacts(root, require_analysis_outputs=False)
     except RuntimeError as exc:
-        pytest.skip(str(exc))
+        _skip_or_fail(exc)
     _mark_bootstrapped(root)
 
 
@@ -107,6 +107,18 @@ def _gate_artifacts_ready(project_root: Path, *, include_manuscript: bool = Fals
     return True
 
 
+def _skip_or_fail(exc: RuntimeError) -> None:
+    """Skip only for the genuine optional-dependency case; integrity failures FAIL.
+
+    Converting every RuntimeError (including fixed-point non-convergence — an
+    integrity failure) into pytest.skip green-washed the entire gate surface.
+    """
+    message = str(exc)
+    if "pymdp" in message.lower():
+        pytest.skip(message)
+    pytest.fail(f"gate artifact refresh failed (not a missing-dependency skip): {message}")
+
+
 def ensure_gate_artifacts(project_root: Path, *, verify: bool = False) -> None:
     """Rebuild analysis, simulation, sheaf, and figure outputs for gate checks."""
     root = project_root.resolve()
@@ -119,12 +131,12 @@ def ensure_gate_artifacts(project_root: Path, *, verify: bool = False) -> None:
         try:
             refresh_gate_artifacts(root, require_analysis_outputs=False)
         except RuntimeError as exc:
-            pytest.skip(str(exc))
+            _skip_or_fail(exc)
         _mark_bootstrapped(root)
         return
 
     try:
         refresh_gate_artifacts(project_root)
     except RuntimeError as exc:
-        pytest.skip(str(exc))
+        _skip_or_fail(exc)
     _mark_bootstrapped(root)

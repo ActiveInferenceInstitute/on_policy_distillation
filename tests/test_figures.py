@@ -272,7 +272,7 @@ def test_graphical_abstract_uses_full_bleed_cover_background(project_root: Path)
 
 
 def test_graphical_abstract_represents_artifact_validation_spine(project_root: Path) -> None:
-    source = inspect.getsource(figure_graphical_abstract)
+    source = (project_root / "src" / "visualizations" / "figures_abstract.py").read_text(encoding="utf-8")
     registry = load_figure_registry(project_root)
     metadata = registry["graphical_abstract"].alt + "\n" + registry["graphical_abstract"].caption
     assert "Lean + gates" in source
@@ -285,9 +285,8 @@ def test_graphical_abstract_represents_artifact_validation_spine(project_root: P
 def test_tmaze_schematic_uses_configured_horizon(project_root: Path) -> None:
     from simulation.pymdp_config import load_pymdp_config
     from simulation.tmaze_model import spec_from_config
-    from visualizations.figures_diagrams import figure_tmaze_schematic
 
-    source = inspect.getsource(figure_tmaze_schematic)
+    source = (project_root / "src" / "visualizations" / "figures_diagrams.py").read_text(encoding="utf-8")
     assert "TMazeSpec()" not in source
     assert "load_pymdp_config(root)" in source
     assert "spec_from_config(config)" in source

@@ -225,3 +225,24 @@ def test_model_surface_map_clarifies_no_gridworld_claim() -> None:
         "No gridworld result is reported or claimed",
     ):
         assert phrase in text
+
+
+def test_subset_note_stamps_only_filtered_views() -> None:
+    """Filtered figures must say so in pixels; full views get no stamp."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    from visualizations.figure_helpers import subset_note
+
+    fig = plt.figure()
+    subset_note(fig, 13, 33, "tracks")
+    stamped = [t.get_text() for t in fig.texts]
+    assert any("showing 13 of 33 tracks" in t for t in stamped)
+    plt.close(fig)
+
+    fig = plt.figure()
+    subset_note(fig, 33, 33, "tracks")
+    assert not fig.texts  # no-op when nothing was dropped
+    plt.close(fig)

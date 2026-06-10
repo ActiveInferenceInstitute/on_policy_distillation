@@ -757,9 +757,24 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
         ablation_sensitivity.get("schema") == "template_active_inference.ablation_sensitivity_report.v1"
         and ablation_sensitivity.get("all_effects_source_backed") is True
     )
+    _attest_rows = {str(row.get("id")): row for row in release_attestation.get("rows") or []}
+    _validation_row = _attest_rows.get("validation_report") or {}
+    _report_path = root / "output" / "reports" / "validation_report.json"
+    if _report_path.is_file() and _validation_row and not _validation_row.get("deferred_until_validation"):
+        import hashlib as _hashlib
+
+        # Hash currency: the attestation must refer to the validation report
+        # actually on disk — a stale attested report cannot certify this tree.
+        _attestation_current = _validation_row.get("report_sha256") == _hashlib.sha256(
+            _report_path.read_bytes()
+        ).hexdigest()
+    else:
+        # Before the first-ever validate the row is deferred; currency is moot.
+        _attestation_current = bool(_validation_row.get("deferred_until_validation", not _attest_rows))
     checks["release_attestation_schema"] = (
         release_attestation.get("schema") == "template_active_inference.release_attestation.v1"
         and release_attestation.get("all_attested") is True
+        and _attestation_current
     )
     from visualizations.animation import validate_animation_frame_deltas
 

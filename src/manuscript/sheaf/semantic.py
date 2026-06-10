@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+
+from roadmap_tracks.supplemental import (
+    release_attestation_consistent_and_current as _attestation_consistent_and_current,
+)
 from typing import Any
 
 from gnn.parser import parse_gnn_file
@@ -304,7 +308,14 @@ def semantic_gluing_issues(project_root: Path) -> list[str]:
 
     from gates.claim_ledger import validate_typed_claim_evidence
 
-    if not validate_typed_claim_evidence(root, allow_missing_certificate=True):
+    if not validate_typed_claim_evidence(
+        root,
+        allow_missing_certificate=True,
+        skip_paths={
+            "output/reports/release_notes_evidence.json",
+            "output/reports/release_attestation.json",
+        },
+    ):
         issues.append("typed claim evidence failed")
 
     return issues
@@ -632,7 +643,7 @@ def build_semantic_gluing_certificate(project_root: Path) -> dict[str, Any]:
             "state_transition_row_count": int(transition_table.get("row_count", 0) or 0),
             "ablation_sensitivity_source_backed": ablation_sensitivity.get("all_effects_source_backed") is True,
             "ablation_sensitivity_row_count": int(ablation_sensitivity.get("row_count", 0) or 0),
-            "release_attestation_complete": release_attestation.get("all_attested") is True,
+            "release_attestation_complete": _attestation_consistent_and_current(root, release_attestation),
             "release_attestation_row_count": int(release_attestation.get("row_count", 0) or 0),
             "no_versioned_live_tracks": not any(
                 tid.endswith(("_v2", "_v3", "_v4", "_v5")) for tid in ctx.registry.tracks

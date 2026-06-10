@@ -412,12 +412,16 @@ def _validate_sheaf_track_artifacts(
 
     release_attestation = _payload(root, payloads, "release_attestation")
     release_attestation_rows = release_attestation.get("rows") or []
+    # Strict re-derivation: deferred evidence is not attested evidence.
     release_attested = bool(release_attestation_rows) and all(
-        row.get("passed") or row.get("deferred_until_validation") for row in release_attestation_rows
+        row.get("passed") for row in release_attestation_rows
     )
     if release_attestation.get("schema") != "template_active_inference.release_attestation.v1":
         issues.append("release_attestation.json schema mismatch")
-    if release_attestation.get("all_attested") is not True or release_attestation.get("all_attested") != release_attested:
+    # Consistency check only: the flag must agree with its rows. Whether the
+    # attestation is GREEN is enforced by validate_outputs (with hash currency);
+    # mid-convergence an honestly-false flag is the expected state, not a lie.
+    if release_attestation.get("all_attested") != release_attested:
         issues.append("release_attestation.json claims a failed gate passed")
 
     if payloads is None:

@@ -25,13 +25,15 @@ DEFAULT_ANALYSIS_SCRIPTS: tuple[ScriptStep, ...] = (
     ScriptStep("simulate_si_graph_world", "simulate_si_graph_world.py"),
     ScriptStep("compute_statistics", "compute_statistics.py"),
     ScriptStep("generate_firstprinciples", "generate_firstprinciples.py"),
-    ScriptStep("generate_figures", "generate_figures.py"),
-    ScriptStep("render_animation", "render_animation.py"),
     ScriptStep("generate_validation_spine", "generate_validation_spine.py"),
     ScriptStep("generate_toy_sweep_tracks", "generate_toy_sweep_tracks.py"),
     ScriptStep("generate_formal_interop_tracks", "generate_formal_interop_tracks.py"),
     ScriptStep("generate_integration_audit", "generate_integration_audit.py"),
     ScriptStep("generate_sheaf_tracks", "generate_sheaf_tracks.py"),
+    # Figures render AFTER the track generators so every figure input artifact
+    # exists before its renderer runs (matches refresh_gate_artifacts).
+    ScriptStep("generate_figures", "generate_figures.py"),
+    ScriptStep("render_animation", "render_animation.py"),
     ScriptStep("generate_manuscript_variables", "z_generate_manuscript_variables.py"),
 )
 

@@ -15,6 +15,7 @@ import subprocess
 from functools import lru_cache
 from itertools import product
 from pathlib import Path
+from roadmap_tracks.supplemental import release_attestation_consistent_and_current
 from typing import Any
 
 import yaml
@@ -707,11 +708,13 @@ def build_counterexample_matrix(project_root: Path) -> dict[str, Any]:
 
 def build_model_checking_witnesses(project_root: Path) -> dict[str, Any]:
     root = project_root.resolve()
-    base = _load_json(root / CANONICAL_ARTIFACTS["model_checking"])
-    if not base or base.get("schema") != "template_active_inference.model_checking_witnesses.v1":
-        from roadmap_tracks.formal_interop import build_model_checking_witnesses as build_base_model
+    # Always build from the evidence-bound base builder — never from the
+    # on-disk artifact, which contains this function's own previous output
+    # (re-reading it re-appends the derived rows below on every run and
+    # silently inflates witness_count with duplicate ids).
+    from roadmap_tracks.formal_interop import build_model_checking_witnesses as build_base_model
 
-        base = build_base_model(root)
+    base = build_base_model(root)
     topology_traces = _load_json(root / "output" / "data" / "si_graph_world_topology_traces.json")
     posterior = _load_json(root / "output" / "data" / "pymdp_policy_posterior_grid.json")
     rows = [
@@ -754,6 +757,9 @@ def build_model_checking_witnesses(project_root: Path) -> dict[str, Any]:
             and posterior.get("all_unavailable_rows_explained") is True,
         }
     )
+    seen_ids = [str(row.get("id")) for row in rows]
+    if len(seen_ids) != len(set(seen_ids)):
+        raise ValueError(f"duplicate model-checking witness ids: {sorted(set(i for i in seen_ids if seen_ids.count(i) > 1))}")
     return {
         "schema": "template_active_inference.model_checking_witnesses.v1",
         "schema_version": CANONICAL_SCHEMA,
@@ -765,36 +771,73 @@ def build_model_checking_witnesses(project_root: Path) -> dict[str, Any]:
 
 
 def build_interop_roundtrip_report(project_root: Path) -> dict[str, Any]:
+    """Canonical interop report built on the GENUINE parse->write->parse round-trip.
+
+    The previous implementation compared each loaded payload against its own
+    JSON re-encoding — a tautology that certified an empty directory as
+    "lossless" — and overwrote the genuine report produced by
+    ``formal_interop``. Rows now come from the real GNN round-trip
+    (``roundtrip_payload_lossless``), per-model shape diffs are derived from
+    the GNN lint rows (never hardcoded empty), and companion artifacts are
+    presence-checked fail-closed: a missing or empty companion makes the
+    report not lossless.
+    """
     root = project_root.resolve()
-    sources = {
-        "gnn_json_ontology": _load_json(root / CANONICAL_ARTIFACTS["interop"]),
-        "gnn_lint": _load_json(root / "output" / "reports" / "gnn_lint_report.json"),
-        "ontology_profile": _load_json(root / "output" / "data" / "ontology_profile_matrix.json"),
-        "cross_track_symbols": _load_json(root / "output" / "data" / "cross_track_symbol_table.json"),
-        "dependency": _load_json(root / CANONICAL_ARTIFACTS["dependency"]),
-    }
+    from .formal_interop import (
+        build_gnn_lint_report,
+        build_gnn_roundtrip_report,
+        build_ontology_profile_matrix,
+    )
+
+    gnn = build_gnn_roundtrip_report(root)
+    lint = build_gnn_lint_report(root)
+    ontology = build_ontology_profile_matrix(root)
+
+    shape_diffs_by_model: dict[str, list[str]] = {}
+    for lint_row in lint.get("rows") or []:
+        if lint_row.get("ok") is not True:
+            shape_diffs_by_model.setdefault(str(lint_row.get("model")), []).append(str(lint_row.get("variable")))
+
     rows = []
-    for source, payload in sources.items():
-        encoded = json.loads(json.dumps(payload, sort_keys=True))
-        variables = payload.get("rows") or payload.get("variables") or payload.get("edges") or []
+    for row in gnn.get("rows") or []:
+        model = str(row.get("model"))
         rows.append(
             {
-                "id": source,
-                "source": source,
-                "record_count": len(variables),
-                "lossless": payload == encoded,
-                "dropped_variables": [],
-                "shape_diff": [],
-                "dtype_diff": [],
-                "ontology_term_diff": [],
+                "id": f"gnn_roundtrip:{model}",
+                "source": row.get("path", model),
+                "record_count": int(row.get("variable_count", 0) or 0),
+                "lossless": bool(row.get("lossless")),
+                "shape_diff": shape_diffs_by_model.get(model, []),
             }
         )
+
+    companions = {
+        "ontology_profile": root / "output" / "data" / "ontology_profile_matrix.json",
+        "cross_track_symbols": root / "output" / "data" / "cross_track_symbol_table.json",
+        "dependency": root / CANONICAL_ARTIFACTS["dependency"],
+    }
+    for name, path in companions.items():
+        payload = _load_json(path)
+        records = payload.get("rows") or payload.get("variables") or payload.get("edges") or []
+        rows.append(
+            {
+                "id": f"companion_present:{name}",
+                "source": path.relative_to(root).as_posix(),
+                "record_count": len(records),
+                # Fail-closed: an absent or empty companion is NOT intact.
+                "lossless": path.is_file() and bool(payload) and bool(records),
+                "shape_diff": [],
+            }
+        )
+
     return {
         "schema": "template_active_inference.interop_roundtrip_report.v1",
         "schema_version": CANONICAL_SCHEMA,
         "rows": rows,
         "check_count": len(rows),
-        "all_lossless": bool(rows) and all(row["lossless"] and not row["dropped_variables"] for row in rows),
+        "all_lossless": bool(gnn.get("rows"))
+        and all(row["lossless"] for row in rows)
+        and ontology.get("all_mapped_once") is True,
         "all_shape_diffs_empty": bool(rows) and all(not row["shape_diff"] for row in rows),
     }
 
@@ -1330,7 +1373,13 @@ def _canonical_restrictions(root: Path) -> dict[str, bool]:
         "state_spaces_finite": catalog.get("all_finite") is True and catalog.get("all_counts_positive") is True,
         "causal_ablation_complete": ablation.get("complete_grid") is True and ablation.get("all_deterministic") is True,
         "artifact_license_safe": license_audit.get("all_license_safe") is True,
-        "release_notes_source_backed": release_notes.get("all_notes_source_backed") is True,
+        "release_notes_source_backed": (
+            release_notes.get("all_notes_source_backed")
+            == (
+                bool(release_notes.get("rows"))
+                and all(row.get("source") and row.get("passed") for row in release_notes.get("rows") or [])
+            )
+        ),  # consistency; greenness at validate gate
         "scholarship_sources_connected": scholarship.get("all_sources_connected") is True
         and scholarship.get("all_expected_sources_present") is True,
         "proof_dependency_graph_resolved": proof_dependency.get("all_theorems_have_dependencies") is True
@@ -1338,7 +1387,7 @@ def _canonical_restrictions(root: Path) -> dict[str, bool]:
         "state_transition_table_complete": transition.get("all_transitions_deterministic") is True
         and transition.get("all_reachable_states_covered") is True,
         "ablation_sensitivity_source_backed": ablation_sensitivity.get("all_effects_source_backed") is True,
-        "release_attestation_complete": release_attestation.get("all_attested") is True,
+        "release_attestation_complete": release_attestation_consistent_and_current(root, release_attestation),
         "all_canonical_artifacts_have_claims": all(claims_by_path.get(rel) for rel in CANONICAL_ARTIFACTS.values()),
     }
 
@@ -1350,6 +1399,7 @@ def write_sheaf_track_artifacts(
     refresh_hydration: bool = True,
 ) -> dict[str, Path]:
     root = project_root.resolve()
+    regeneration_errors: list[str] = []
     from roadmap_tracks.scholarship import write_scholarship_source_matrix
     from roadmap_tracks.supplemental import write_supplemental_artifacts
 
@@ -1364,8 +1414,11 @@ def write_sheaf_track_artifacts(
             write_toy_sweep_artifacts(root)
             write_formal_interop_artifacts(root)
             write_integration_audit_artifacts(root)
-        except (ImportError, OSError, ValueError, KeyError):
-            pass
+        except (ImportError, OSError, ValueError, KeyError) as exc:
+            # Never swallow generator failures silently: a skipped regeneration
+            # here previously left stale artifacts that downstream gates then
+            # certified as fresh.
+            regeneration_errors.append(f"toy_sweep/formal_interop/integration_audit: {exc}")
 
     _remove_legacy_artifacts(root)
     paths: dict[str, Path] = {}
@@ -1424,8 +1477,8 @@ def write_sheaf_track_artifacts(
             root / "output" / "data" / "sheaf_evidence_crosswalk.json", build_evidence_crosswalk(root)
         )
         paths["semantic"] = _write_json(root / CANONICAL_ARTIFACTS["semantic"], build_semantic_gluing_certificate(root))
-    except (ImportError, OSError, ValueError, KeyError):
-        pass
+    except (ImportError, OSError, ValueError, KeyError) as exc:
+        regeneration_errors.append(f"semantic certificate/crosswalk: {exc}")
     if refresh_dependencies:
         try:
             from roadmap_tracks.integration_audit import write_integration_audit_artifacts
@@ -1509,9 +1562,14 @@ def write_sheaf_track_artifacts(
             paths["semantic"] = _write_json(
                 root / CANONICAL_ARTIFACTS["semantic"], build_semantic_gluing_certificate(root)
             )
-        except (ImportError, OSError, ValueError, KeyError):
-            pass
+        except (ImportError, OSError, ValueError, KeyError) as exc:
+            regeneration_errors.append(f"refresh_dependencies pass: {exc}")
     _remove_legacy_artifacts(root)
+    if regeneration_errors:
+        raise RuntimeError(
+            "sheaf track regeneration failed (stale artifacts would otherwise be certified fresh): "
+            + "; ".join(regeneration_errors)
+        )
     return paths
 
 

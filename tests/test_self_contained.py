@@ -87,9 +87,10 @@ def test_every_src_module_imports_with_infrastructure_blocked() -> None:
                 imported += 1
             except AssertionError as exc:
                 violations.append(f"{mod.name}: {exc}")
-            except Exception as exc:  # noqa: BLE001 - only infra-caused failures are violations
-                if "infrastructure" in str(exc):
-                    violations.append(f"{mod.name}: {exc}")
+            except Exception as exc:  # noqa: BLE001
+                # EVERY import failure is a violation: a broken src module is
+                # not self-contained, whether or not infrastructure caused it.
+                violations.append(f"{mod.name}: {type(exc).__name__}: {exc}")
     finally:
         builtins.__import__ = real_import  # type: ignore[assignment]
 

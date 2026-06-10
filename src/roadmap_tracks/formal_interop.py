@@ -114,70 +114,89 @@ def roundtrip_payload_lossless(payload: dict[str, Any]) -> bool:
 
 
 def build_model_checking_witnesses(project_root: Path) -> dict[str, Any]:
-    _ = project_root
-    rows = [
-        {
-            "model": "graph_world_linear4",
-            "state_count": 4,
-            "action_count": 2,
-            "property": "goal_reachable",
-            "counterexamples": [],
-            "passed": True,
-        },
-        {
-            "model": "graph_world_branch4",
-            "state_count": 4,
-            "action_count": 2,
-            "property": "goal_reachable",
-            "counterexamples": [],
-            "passed": True,
-        },
-        {
-            "model": "graph_world_loop5",
-            "state_count": 5,
-            "action_count": 2,
-            "property": "goal_reachable",
-            "counterexamples": [],
-            "passed": True,
-        },
-        {
-            "model": "graph_world_diamond5",
-            "state_count": 5,
-            "action_count": 2,
-            "property": "goal_reachable",
-            "counterexamples": [],
-            "passed": True,
-        },
-        {
-            "model": "si_tmaze",
-            "state_count": 3,
-            "action_count": 2,
-            "property": "finite_policy_enumeration_nonempty",
-            "counterexamples": [],
-            "passed": True,
-        },
-        {
-            "model": "si_tmaze_belief",
-            "state_count": 2,
-            "action_count": 0,
-            "property": "finite_belief_weights_normalize_to_two",
-            "counterexamples": [],
-            "passed": True,
-        },
-        {
-            "model": "si_tmaze_policy_posterior",
-            "state_count": 2,
-            "action_count": 2,
-            "property": "finite_policy_posterior_weights_normalize_to_two",
-            "counterexamples": [],
-            "passed": True,
-        },
+    """Model-checking witnesses derived from real finite enumeration + Lean binding.
+
+    Each row is evidence-bound, never a literal constant: graph-world
+    reachability is established by actually walking the declared topology trace
+    (a genuine — if small — finite enumeration over the toy state list), and
+    every row additionally requires its corresponding Lean theorem to be
+    present in the proved theorem inventory. T-maze normalization properties
+    re-derive from the generated model-matrix audit. A missing artifact,
+    missing theorem, or failed walk fails the row — there is no
+    constant-``True`` path.
+    """
+    root = project_root.resolve()
+
+    def _theorem_names() -> set[str]:
+        inventory = build_lean_theorem_inventory(root)
+        if inventory.get("all_proved") is not True:
+            return set()
+        return {str(row.get("name")) for row in inventory.get("rows") or []}
+
+    proved = _theorem_names()
+
+    from .toy_sweep import _topology_trace
+
+    graph_theorems = {
+        "linear4": "graph_world_three_steps_reach_goal",
+        "branch4": "branch_graph_world_three_steps_reach_goal",
+        "loop5": "loop_graph_world_four_steps_reach_goal",
+        "diamond5": "diamond_graph_world_four_steps_reach_goal",
+    }
+    rows: list[dict[str, Any]] = []
+    for topology, theorem in graph_theorems.items():
+        trace = _topology_trace(topology)
+        nodes = [str(step.get("node")) for step in trace]
+        # Finite enumeration: walk every step of the declared trace and check
+        # the advance chain terminates at the goal node.
+        walk_reaches_goal = bool(nodes) and nodes[-1] == "goal" and all(
+            step.get("action") in {"advance", "stay_goal"} for step in trace
+        )
+        counterexamples = [] if walk_reaches_goal else [f"walk terminated at {nodes[-1] if nodes else 'nowhere'}"]
+        rows.append(
+            {
+                "model": f"graph_world_{topology}",
+                "state_count": len(nodes),
+                "action_count": 2,
+                "property": "goal_reachable",
+                "lean_theorem": theorem,
+                "counterexamples": counterexamples,
+                "passed": walk_reaches_goal and theorem in proved,
+            }
+        )
+
+    matrices = _load_json(root / "output" / "data" / "si_tmaze_model_matrices.json")
+    norm_rows = matrices.get("normalization_checks") or []
+    all_normalized = bool(norm_rows) and all(row.get("normalized") is True for row in norm_rows)
+    tmaze_properties = [
+        ("si_tmaze", 3, 2, "finite_policy_enumeration_nonempty", "policy_enumeration_contains_forward"),
+        ("si_tmaze_belief", 2, 0, "finite_belief_weights_normalize_to_two", "two_state_belief_weights_sum_to_two"),
+        (
+            "si_tmaze_policy_posterior",
+            2,
+            2,
+            "finite_policy_posterior_weights_normalize_to_two",
+            "two_policy_posterior_weights_sum_to_two",
+        ),
     ]
+    for model, state_count, action_count, prop, theorem in tmaze_properties:
+        ok = all_normalized and theorem in proved
+        rows.append(
+            {
+                "model": model,
+                "state_count": state_count,
+                "action_count": action_count,
+                "property": prop,
+                "lean_theorem": theorem,
+                "counterexamples": [] if ok else ["normalization audit or Lean theorem missing"],
+                "passed": ok,
+            }
+        )
     return {
         "schema": "template_active_inference.model_checking_witnesses.v1",
         "rows": rows,
         "witness_count": len(rows),
-        "all_passed": all(row["passed"] and not row["counterexamples"] for row in rows),
+        "all_passed": bool(rows) and all(row["passed"] and not row["counterexamples"] for row in rows),
     }
 
 

@@ -32,7 +32,7 @@ def load_track_registry(registry_path: Path) -> TrackRegistry:
 
 
 def track_order_for_section(
-    section,
+    section: "SectionSpec",
     registry: TrackRegistry | dict[str, TrackSpec],
 ) -> list[str]:
     specs = registry.tracks if isinstance(registry, TrackRegistry) else registry

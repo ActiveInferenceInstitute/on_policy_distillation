@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
@@ -11,7 +12,10 @@ from gates.validation import validate_manuscript
 
 from gate_support import ensure_gate_artifacts
 
-pytestmark = pytest.mark.timeout(300)
+# This module mutates tracked manuscript sources (with restoration) and runs
+# fixed-point artifact refreshes — it belongs in the slow mutating lane, not
+# the daily fast lane.
+pytestmark = [pytest.mark.timeout(300), pytest.mark.artifact_slow, pytest.mark.mutates_artifacts]
 
 
 @pytest.mark.timeout(300)
@@ -60,12 +64,17 @@ def test_validate_manuscript_methods_sheaf_layers_negative(project_root: Path) -
     if not path.is_file():
         compose_all_sections(project_root)
     original = path.read_text(encoding="utf-8")
+    stat = path.stat()
     try:
         path.write_text(original.replace("<!-- sheaf-layers:registry -->", ""), encoding="utf-8")
         checks = validate_manuscript(project_root, only={"methods_sheaf_layers"})
         assert checks["methods_sheaf_layers"] is False
     finally:
+        # Restore bytes AND mtime: a newer-looking composed file makes saved
+        # staleness reports look stale and poisons later tests (same class as
+        # the test_semantic_sheaf isolation defect).
         path.write_text(original, encoding="utf-8")
+        os.utime(path, (stat.st_atime, stat.st_mtime))
 
 
 @pytest.mark.parametrize(
@@ -88,23 +97,33 @@ def test_validate_manuscript_methods_sheaf_layers_negative_markers(
     if not path.is_file():
         compose_all_sections(project_root)
     original = path.read_text(encoding="utf-8")
+    stat = path.stat()
     try:
         path.write_text(original.replace(needle, replacement), encoding="utf-8")
         checks = validate_manuscript(project_root, only={"methods_sheaf_layers"})
         assert checks["methods_sheaf_layers"] is False
     finally:
+        # Restore bytes AND mtime: a newer-looking composed file makes saved
+        # staleness reports look stale and poisons later tests (same class as
+        # the test_semantic_sheaf isolation defect).
         path.write_text(original, encoding="utf-8")
+        os.utime(path, (stat.st_atime, stat.st_mtime))
 
 
 def test_validate_manuscript_full_sheaf_appendix_tracks_negative(project_root: Path) -> None:
     path = project_root / "manuscript" / "18_supplement_full_coverage.md"
     original = path.read_text(encoding="utf-8")
+    stat = path.stat()
     try:
         path.write_text(original.replace("sheaf-track:prose", "sheaf-track:broken"), encoding="utf-8")
         checks = validate_manuscript(project_root, only={"full_sheaf_appendix_tracks"})
         assert checks["full_sheaf_appendix_tracks"] is False
     finally:
+        # Restore bytes AND mtime: a newer-looking composed file makes saved
+        # staleness reports look stale and poisons later tests (same class as
+        # the test_semantic_sheaf isolation defect).
         path.write_text(original, encoding="utf-8")
+        os.utime(path, (stat.st_atime, stat.st_mtime))
 
 
 def test_validate_manuscript_resolved_hydrated_negative(project_root: Path) -> None:
@@ -160,12 +179,17 @@ def test_validate_manuscript_gnn_concordance_negative(project_root: Path) -> Non
 def test_validate_manuscript_tokens_registered_negative(project_root: Path) -> None:
     path = project_root / "manuscript" / "00_abstract.md"
     original = path.read_text(encoding="utf-8")
+    stat = path.stat()
     try:
         path.write_text(original + "\n{{not_a_registered_token}}\n", encoding="utf-8")
         checks = validate_manuscript(project_root, only={"manuscript_tokens_registered"})
         assert checks["manuscript_tokens_registered"] is False
     finally:
+        # Restore bytes AND mtime: a newer-looking composed file makes saved
+        # staleness reports look stale and poisons later tests (same class as
+        # the test_semantic_sheaf isolation defect).
         path.write_text(original, encoding="utf-8")
+        os.utime(path, (stat.st_atime, stat.st_mtime))
 
 
 def test_validate_manuscript_citation_keys_resolved_negative(project_root: Path) -> None:
@@ -173,13 +197,18 @@ def test_validate_manuscript_citation_keys_resolved_negative(project_root: Path)
 
     path = project_root / "manuscript" / "sections" / "imrad" / "methods_sheaf" / "prose.md"
     original = path.read_text(encoding="utf-8")
+    stat = path.stat()
     try:
         path.write_text(original + "\n\nBroken citation negative control [@not_a_real_bibkey].\n", encoding="utf-8")
         checks = validate_manuscript(project_root, only={"citation_keys_resolved"})
         assert checks["citation_keys_resolved"] is False
         assert run_compose_cli(["--validate-only", "--strict"], project_root=project_root) == 1
     finally:
+        # Restore bytes AND mtime: a newer-looking composed file makes saved
+        # staleness reports look stale and poisons later tests (same class as
+        # the test_semantic_sheaf isolation defect).
         path.write_text(original, encoding="utf-8")
+        os.utime(path, (stat.st_atime, stat.st_mtime))
 
 
 def test_validate_manuscript_duplicate_track_marker_negative(project_root: Path) -> None:
@@ -190,6 +219,7 @@ def test_validate_manuscript_duplicate_track_marker_negative(project_root: Path)
     if not path.is_file():
         compose_all_sections(project_root)
     original = path.read_text(encoding="utf-8")
+    stat = path.stat()
     marker = "<!-- sheaf-track:lean -->"
     assert marker in original
     try:
@@ -198,7 +228,11 @@ def test_validate_manuscript_duplicate_track_marker_negative(project_root: Path)
         checks = validate_manuscript(project_root, only={"no_duplicate_sheaf_track_markers"})
         assert checks["no_duplicate_sheaf_track_markers"] is False
     finally:
+        # Restore bytes AND mtime: a newer-looking composed file makes saved
+        # staleness reports look stale and poisons later tests (same class as
+        # the test_semantic_sheaf isolation defect).
         path.write_text(original, encoding="utf-8")
+        os.utime(path, (stat.st_atime, stat.st_mtime))
 
 
 def test_manuscript_review_citation_keys_and_overclaim_guards(project_root: Path) -> None:

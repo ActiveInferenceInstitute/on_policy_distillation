@@ -302,10 +302,10 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | --- | --- | ---: | ---: | ---: | ---: | --- |
 | `prose` | `markdown` | 12 | 12 | 0 | 0 | `complete` |
 | `formalism` | `markdown` | 5 | 5 | 0 | 0 | `complete` |
-| `simulation` | `markdown` | 5 | 5 | 0 | 19 | `complete` |
+| `simulation` | `markdown` | 5 | 5 | 0 | 22 | `complete` |
 | `assumption_index` | `markdown` | 2 | 2 | 0 | 1 | `complete` |
 | `layers` | `layers_report` | 1 | 1 | 0 | 1 | `complete` |
-| `pymdp` | `markdown` | 3 | 3 | 0 | 19 | `complete` |
+| `pymdp` | `markdown` | 3 | 3 | 0 | 20 | `complete` |
 | `interop` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
 | `provenance` | `markdown` | 2 | 2 | 0 | 12 | `complete` |
 | `replay_matrix` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
@@ -366,7 +366,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `evidence_field_index` | `output/data/evidence_field_index.json` | `generate_sheaf_tracks.py` | validate_outputs, validate_manuscript |
 | `validation_dependency_graph` | `output/data/validation_dependency_graph.json` | `generate_sheaf_tracks.py` | validate_manuscript, validate_outputs |
 
-**Claim rows:** 98 typed evidence claims.
+**Claim rows:** 101 typed evidence claims.
 
 <!-- sheaf-layers:artifact-producers -->
 ## Artifact producer graph

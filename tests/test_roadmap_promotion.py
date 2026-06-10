@@ -436,8 +436,10 @@ def test_integration_audit_negative_controls(project_root: Path) -> None:
 
         release_notes = paths[9]
         data = _load(release_notes)
+        # The validator is consistency-only (greenness lives at the validate
+        # gate): the catchable defect is a LYING flag, not an honest red.
         data["rows"][0]["passed"] = False
-        data["all_notes_source_backed"] = False
+        data["all_notes_source_backed"] = True
         _write(release_notes, data)
         assert any(
             "release_notes_evidence.json has unsupported notes" in issue

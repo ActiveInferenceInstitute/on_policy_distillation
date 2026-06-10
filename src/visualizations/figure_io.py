@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from pathlib import Path
+
+if TYPE_CHECKING:
+    from matplotlib.figure import Figure
 from tempfile import NamedTemporaryFile
 
 import matplotlib.pyplot as plt
@@ -10,7 +15,7 @@ from PIL import Image
 
 
 def save_figure_png(
-    fig,
+    fig: "Figure",
     path: Path,
     *,
     dpi: int,

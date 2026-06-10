@@ -43,32 +43,54 @@ def figure_invariant_dashboard(project_root: Path) -> Path:
     rows = _load_invariant_blocks(root)
     if not rows:
         raise FileNotFoundError("missing invariant rows in output/reports/invariants.json")
-    labels = [f"{domain}: {name}" for domain, name, _ in rows]
-    values = [1.0 if passed else 0.0 for _, _, passed in rows]
+    pass_color = "#0f766e"
+    fail_color = "#b91c1c"
+    # Two-column status layout: each invariant is a status dot + label + PASS/FAIL
+    # tag. Full-width identical bars carried no information beyond the tag itself.
+    n_columns = 2
+    per_column = -(-len(rows) // n_columns)  # ceil division
     with styled_figure(root, "invariant_dashboard") as (style, out):
-        colors = [style.color("pass") if passed else style.color("fail") for _, _, passed in rows]
-        fig_h = max(4.2, 0.36 * len(rows) + 1.5)
-        fig, ax = plt.subplots(figsize=(10.4, fig_h))
-        y_pos = np.arange(len(rows))
-        ax.barh(y_pos, values, color=colors, height=0.65)
-        ax.set_yticks(y_pos)
-        ax.set_yticklabels(labels, fontsize=style.font_size("dense"))
-        ax.set_xlim(0, 1.15)
-        ax.set_xticks([0, 1])
-        ax.set_xticklabels(["fail", "pass"])
-        ax.set_xlabel("Invariant status")
+        fig_h = max(4.2, 0.42 * per_column + 1.5)
+        fig, ax = plt.subplots(figsize=(12.6, fig_h))
+        ax.set_xlim(0, n_columns)
+        ax.set_ylim(0, per_column + 0.6)
+        ax.axis("off")
         ax.set_title("Analytical and simulation invariant dashboard")
-        for idx, (_, _, passed) in enumerate(rows):
+        for idx, (domain, name, passed) in enumerate(rows):
+            column = idx // per_column
+            row_in_column = idx % per_column
+            x0 = column + 0.04
+            y = per_column - row_in_column - 0.5
+            status_color = pass_color if passed else fail_color
+            ax.scatter([x0 + 0.03], [y], s=150, color=status_color, zorder=3)
             ax.text(
-                1.02,
-                idx,
-                "PASS" if passed else "FAIL",
+                x0 + 0.10,
+                y,
+                f"{domain}: {name}",
                 va="center",
+                ha="left",
                 fontsize=style.font_size("dense"),
                 color=style.color("primary"),
             )
-        style_grid(ax, style)
-        ax.grid(axis="x", alpha=0.25)
+            ax.text(
+                column + 0.96,
+                y,
+                "PASS" if passed else "FAIL",
+                va="center",
+                ha="right",
+                fontsize=style.font_size("dense"),
+                color=status_color,
+                fontweight="bold",
+            )
+        pass_count = sum(1 for _, _, passed in rows if passed)
+        fig.text(
+            0.01,
+            0.01,
+            f"{pass_count}/{len(rows)} invariants pass; green = pass, red = fail. "
+            "Source: output/reports/invariants.json",
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
+        )
         save_styled_figure(fig, out, style)
     return out
 
@@ -463,9 +485,9 @@ def figure_gnn_ontology_concordance(project_root: Path) -> Path:
                 xytext=(4.8, y),
                 arrowprops=dict(arrowstyle="->", color=style.color("grid")),
             )
-        ax.text(
+        fig.text(
             0.02,
-            0.04,
+            0.01,
             "Each row is a resolved symbol -> model variable -> ontology term binding.",
             transform=ax.transAxes,
             fontsize=style.font_size("source"),
