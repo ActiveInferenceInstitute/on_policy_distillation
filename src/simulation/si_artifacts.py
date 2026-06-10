@@ -9,6 +9,7 @@ from typing import Any
 import numpy as np
 
 from simulation.logging_utils import RunLogger
+from simulation.numerics import STEP_POSTERIOR_ATOL
 from simulation.pymdp_config import (
     ComparisonPlanner,
     PymdpConfig,
@@ -327,7 +328,7 @@ def write_policy_posterior_grid(
                     "q_pi_sum": q_sum,
                     "q_pi_entropy": step.get("q_pi_entropy"),
                     "action_probabilities": step.get("action_probabilities", {}),
-                    "normalized": q_sum is not None and abs(q_sum - 1.0) <= 1e-6,
+                    "normalized": q_sum is not None and abs(q_sum - 1.0) <= STEP_POSTERIOR_ATOL,
                     "fallback_reason": step.get("fallback_reason"),
                 }
             )

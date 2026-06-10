@@ -118,8 +118,11 @@ def build_release_bundle_manifest(project_root: Path) -> dict[str, Any]:
         "output/figures/exposure_bias_recovery.png",
         "output/figures/classroom_distillation_signal.png",
         "output/reports/manuscript_hardcoded_variable_audit.json",
-        "output/pdf/template_active_inference_combined.pdf",
-        "output/web/template_active_inference.html",
+        # Real render-stage deliverable names for THIS paper (the pre-Run-6
+        # rows named the template exemplar's PDF/HTML, which this project can
+        # never produce, so the rows were permanently vacuously deferred).
+        "output/pdf/on_policy_distillation.pdf",
+        "output/web/index.html",
         CANONICAL_ARTIFACTS["artifact_diffoscope"],
         CANONICAL_ARTIFACTS["proof_extraction"],
         CANONICAL_ARTIFACTS["state_space_catalog"],

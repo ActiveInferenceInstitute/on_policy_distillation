@@ -33,6 +33,7 @@ from roadmap_tracks.supplemental import (  # noqa: E402
 
 
 def build_artifact_diffoscope(project_root: Path) -> dict[str, Any]:
+    """Build the artifact_diffoscope.v1 payload comparing saved provenance sha256 digests against live file hashes, skipping cycle-excluded producers."""
     root = project_root.resolve()
     provenance = _load_json(root / "output" / "data" / "artifact_provenance.json")
     rows = []
@@ -63,6 +64,7 @@ def build_artifact_diffoscope(project_root: Path) -> dict[str, Any]:
 
 
 def build_artifact_license_audit(project_root: Path) -> dict[str, Any]:
+    """Build the artifact_license_audit.v1 payload labeling each provenance artifact with the project license and a license_safe flag."""
     root = project_root.resolve()
     provenance = _load_json(root / "output" / "data" / "artifact_provenance.json")
     project_license = "MIT"
@@ -92,6 +94,7 @@ def build_artifact_license_audit(project_root: Path) -> dict[str, Any]:
 
 
 def build_release_notes_evidence(project_root: Path) -> dict[str, Any]:
+    """Build the release_notes_evidence.v1 payload: three source-backed release notes (validation report, bundle sources, semantic certificate), deferring rows whose source artifact does not exist yet."""
     root = project_root.resolve()
     release_bundle = _load_json(root / "output" / "reports" / "release_bundle_manifest.json")
     semantic = _load_json(root / "output" / "data" / "sheaf_gluing_certificate.json")
@@ -137,6 +140,7 @@ def build_release_notes_evidence(project_root: Path) -> dict[str, Any]:
 
 
 def build_figure_source_map(project_root: Path) -> dict[str, Any]:
+    """Build the figure_source_map.v1 payload: per-registry-figure sources, source fields, validation gates, caption/alt tokens, and image dimensions."""
     root = project_root.resolve()
     from visualizations.figure_registry import load_figure_registry
 
@@ -455,6 +459,7 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
 
 
 def build_figure_hash_manifest(project_root: Path) -> dict[str, Any]:
+    """Build the figure_hash_manifest.v1 payload: sha256 and size for every PNG/GIF under output/figures/."""
     root = project_root.resolve()
     rows = []
     for path in sorted((root / "output" / "figures").glob("*")):
@@ -571,6 +576,7 @@ def _figure_hash_rows_complete(project_root: Path, payload: dict[str, Any]) -> b
 
 
 def build_scope_boundary_audit(project_root: Path) -> dict[str, Any]:
+    """Build the scope_boundary_audit.v1 payload scanning numbered manuscript sections for empirical-biological claims outside the allowed future-work files."""
     root = project_root.resolve()
     rows = []
     violations: list[str] = []
@@ -595,6 +601,7 @@ def build_scope_boundary_audit(project_root: Path) -> dict[str, Any]:
 
 
 def build_manuscript_evidence_tables(project_root: Path) -> dict[str, Any]:
+    """Build the manuscript_evidence_tables.v1 payload: an id/row_count/source index over twenty evidence artifacts."""
     root = project_root.resolve()
     claims = build_claim_evidence_audit(root)
     graph = build_integration_dependency_graph(root)
@@ -727,12 +734,14 @@ def build_manuscript_evidence_tables(project_root: Path) -> dict[str, Any]:
 
 
 def build_adversarial_audit(project_root: Path) -> dict[str, Any]:
+    """Return a copy of the canonical adversarial audit from roadmap_tracks.sheaf_tracks."""
     from roadmap_tracks.sheaf_tracks import build_adversarial_audit as build_canonical_adversarial_audit
 
     return dict(build_canonical_adversarial_audit(project_root))
 
 
 def build_integration_semantic_snapshot(project_root: Path) -> dict[str, Any]:
+    """Build the integration_semantic_snapshot.v1 payload: ~30 boolean restrictions over the saved artifacts plus structural/semantic/artifact/manuscript section rollups."""
     root = project_root.resolve()
     toy = _load_json(root / "output" / "data" / "sensitivity_sweep.json")
     assumptions = _load_json(root / "output" / "data" / "analytical_assumption_index.json")

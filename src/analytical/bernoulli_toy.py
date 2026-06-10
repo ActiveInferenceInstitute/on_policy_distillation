@@ -8,9 +8,11 @@ from numpy.typing import NDArray
 from .coupling import entangled_posterior
 from .free_energy import total_correlation
 
-ArrayF = NDArray[np.float64]
+# Single definition lives in hyperparameters (the numeric-parameter SSOT);
+# re-exported here because the closed-form toy is this constant's primary consumer.
+from .hyperparameters import BERNOULLI_VERIFICATION_TOLERANCE as BERNOULLI_VERIFICATION_TOLERANCE
 
-BERNOULLI_VERIFICATION_TOLERANCE = 1e-9
+ArrayF = NDArray[np.float64]
 
 
 def ising_coupling(shape: tuple[int, int] = (2, 2)) -> ArrayF:

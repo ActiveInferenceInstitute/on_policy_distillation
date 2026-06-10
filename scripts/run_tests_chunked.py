@@ -27,11 +27,21 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 _TAIL_RE = re.compile(r"(?:(\d+) failed)?(?:,? ?(\d+) passed)?(?:,? ?(\d+) skipped)?")
 
 
-def collect_chunks(project_root: Path, chunk_size: int) -> list[list[str]]:
+def collect_chunks(project_root: Path, chunk_size: int, shuffle_seed: int | None = None) -> list[list[str]]:
+    """Group test files into chunks; with a seed, shuffle deterministically.
+
+    The shuffle is file-order coverage for AI-TEST-ISOLATION-1 chain B: the
+    same seed always yields the same order, so a red shuffled run is exactly
+    reproducible (never re-roll to a passing seed — report it instead).
+    """
     files = sorted(str(p.relative_to(project_root)) for p in (project_root / "tests").glob("test_*.py"))
     gates = project_root / "tests" / "gates"
     if gates.is_dir() and any(gates.glob("test_*.py")):
         files.append("tests/gates")
+    if shuffle_seed is not None:
+        import random
+
+        random.Random(shuffle_seed).shuffle(files)
     return [files[i : i + chunk_size] for i in range(0, len(files), chunk_size)]
 
 
@@ -51,9 +61,18 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--chunk-size", type=int, default=6, help="test files per subprocess")
     parser.add_argument("--timeout", type=int, default=900, help="per-test timeout (pytest-timeout)")
+    parser.add_argument(
+        "--shuffle-seed",
+        type=int,
+        default=None,
+        help="deterministically shuffle test-file order (same seed = same order); "
+        "order-coverage soak for AI-TEST-ISOLATION-1 chain B",
+    )
     args = parser.parse_args(argv)
 
-    chunks = collect_chunks(PROJECT_ROOT, args.chunk_size)
+    chunks = collect_chunks(PROJECT_ROOT, args.chunk_size, args.shuffle_seed)
+    if args.shuffle_seed is not None:
+        print(f"shuffle-seed: {args.shuffle_seed} (deterministic file-order shuffle)")
     total_failed = total_passed = total_skipped = 0
     bad_chunks: list[int] = []
     for i, chunk in enumerate(chunks, 1):

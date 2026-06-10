@@ -6,6 +6,7 @@ from typing import Any
 
 import numpy as np
 
+from simulation.numerics import POLICY_POSTERIOR_ATOL
 from simulation.si_belief import marginal_state_belief
 
 _POLICY_INFERENCE_ERRORS = (
@@ -46,7 +47,7 @@ def select_policy_action(
             "q_pi": [float(value) for value in q_pi_norm],
             "q_pi_sum": float(q_pi_norm.sum()),
             "q_pi_entropy": q_pi_entropy,
-            "q_pi_normalized": abs(float(q_pi_norm.sum()) - 1.0) <= 1e-9,
+            "q_pi_normalized": abs(float(q_pi_norm.sum()) - 1.0) <= POLICY_POSTERIOR_ATOL,
             "selected_policy": policy_idx,
             "expected_free_energy_available": bool(efe_values),
             "expected_free_energy_values": efe_values,
@@ -84,7 +85,7 @@ def select_policy_action(
             "q_pi": [float(value) for value in policy_dist],
             "q_pi_sum": float(policy_dist.sum()),
             "q_pi_entropy": q_pi_entropy,
-            "q_pi_normalized": abs(float(policy_dist.sum()) - 1.0) <= 1e-9,
+            "q_pi_normalized": abs(float(policy_dist.sum()) - 1.0) <= POLICY_POSTERIOR_ATOL,
             "selected_policy": action,
             "expected_free_energy_available": False,
             "expected_free_energy_values": [],

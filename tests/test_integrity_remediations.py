@@ -159,7 +159,6 @@ def test_lean_axioms_clean_on_real_project() -> None:
 
 
 @pytest.mark.skipif(shutil.which("lake") is None, reason="lake toolchain not installed")
-@pytest.mark.skipif(shutil.which("lake") is None, reason="lake toolchain not installed")
 def test_lean_axioms_catches_native_decide(tmp_path: Path) -> None:
     """native_decide injects Lean.ofReduceBool (not in the whitelist) -> must fail."""
     assert lean_project_present(PROJECT_ROOT)

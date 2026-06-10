@@ -270,6 +270,7 @@ def build_analytical_assumption_index(project_root: Path) -> dict[str, Any]:
 
 
 def build_sensitivity_sweep(project_root: Path) -> dict[str, Any]:
+    """Build the sensitivity_sweep.v1 payload: the full lambda x horizon x seed x topology grid with closed-form MI per cell."""
     _ = project_root
     lambdas = [0.0, 1.0, 2.0]
     horizons = [2, 3]
@@ -300,6 +301,7 @@ def build_sensitivity_sweep(project_root: Path) -> dict[str, Any]:
 
 
 def build_uncertainty_summary(project_root: Path) -> dict[str, Any]:
+    """Build the uncertainty_summary.v1 payload: per-step belief entropy and normalized posteriors derived from si_tmaze_trace.json."""
     root = project_root.resolve()
     trace = _load_json(root / "output" / "data" / "si_tmaze_trace.json")
     rows = []
@@ -329,6 +331,7 @@ def build_uncertainty_summary(project_root: Path) -> dict[str, Any]:
 
 
 def build_toy_benchmark_matrix(project_root: Path) -> dict[str, Any]:
+    """Build the toy_benchmark_matrix.v1 payload: one gate row per model (bernoulli_ising, si_tmaze, graph_world) from existing artifacts."""
     root = project_root.resolve()
     si = _load_json(root / "output" / "data" / "si_tmaze_summary.json")
     graph = _load_json(root / "output" / "data" / "si_graph_world_summary.json")
@@ -367,6 +370,7 @@ def build_toy_benchmark_matrix(project_root: Path) -> dict[str, Any]:
 
 
 def build_policy_grid(project_root: Path) -> dict[str, Any]:
+    """Build the si_policy_grid.v1 payload from si_policy_comparison.json, flagging whether the planner x horizon x seed grid is complete."""
     root = project_root.resolve()
     comparison = _load_json(root / "output" / "data" / "si_policy_comparison.json")
     summary = comparison.get("summary") or {}
@@ -404,6 +408,7 @@ def build_policy_grid(project_root: Path) -> dict[str, Any]:
 
 
 def build_efe_terms(project_root: Path) -> dict[str, Any]:
+    """Build the si_efe_values.v1 payload: per-run expected-free-energy values from si_policy_comparison.json, with a fallback reason when pymdp exposed none."""
     root = project_root.resolve()
     comparison = _load_json(root / "output" / "data" / "si_policy_comparison.json")
     rows = []
@@ -459,6 +464,7 @@ def _topology_trace(topology: str) -> list[dict[str, Any]]:
 
 
 def build_graph_world_topology_sweep(project_root: Path) -> dict[str, Any]:
+    """Build the si_graph_world_topology_sweep.v1 payload: per-topology node/step counts and goal-reached flags from deterministic traces."""
     _ = project_root
     rows = []
     for topology in ("linear4", "branch4", "loop5", "diamond5"):
@@ -482,6 +488,7 @@ def build_graph_world_topology_sweep(project_root: Path) -> dict[str, Any]:
 
 
 def build_graph_world_topology_traces(project_root: Path) -> dict[str, Any]:
+    """Build the si_graph_world_topology_traces.v1 payload: full per-topology traces cross-checked against the topology sweep summary."""
     topology = build_graph_world_topology_sweep(project_root)
     rows = []
     for summary in topology["rows"]:
@@ -534,6 +541,7 @@ def _graph_world_trace_invariants(trace: list[dict[str, Any]]) -> dict[str, bool
 
 
 def build_graph_world_invariants(project_root: Path) -> dict[str, Any]:
+    """Build the graph_world_invariants.v1 payload: reachability/determinism/absorbing checks computed per topology trace."""
     _ = project_root
     rows = []
     for topology in ("linear4", "branch4", "loop5", "diamond5"):
@@ -549,6 +557,7 @@ def build_graph_world_invariants(project_root: Path) -> dict[str, Any]:
 
 
 def build_state_space_catalog(project_root: Path) -> dict[str, Any]:
+    """Build the state_space_catalog.v1 payload: state/action/policy counts for the toy models plus each graph-world topology."""
     topology = build_graph_world_topology_sweep(project_root)
     rows: list[dict[str, Any]] = [
         {
@@ -594,6 +603,7 @@ def build_state_space_catalog(project_root: Path) -> dict[str, Any]:
 
 
 def build_causal_ablation_matrix(project_root: Path) -> dict[str, Any]:
+    """Build the causal_ablation_matrix.v1 payload: deterministic topology x lambda x perturbation grid of toy goal-margin deltas."""
     topology = build_graph_world_topology_sweep(project_root)
     lambdas = [0.0, 1.0, 2.0]
     perturbations = ("preference_flattened", "likelihood_noise_low", "remove_shortcut_edge")
@@ -623,6 +633,10 @@ def build_causal_ablation_matrix(project_root: Path) -> dict[str, Any]:
 
 
 def write_toy_sweep_artifacts(project_root: Path) -> dict[str, Path]:
+    """Write all twelve toy-sweep JSON artifacts under output/data/ (and output/reports/ for graph invariants).
+
+    Returns a mapping from artifact key to written path.
+    """
     root = project_root.resolve()
     return {
         "analytical_observable": _write_json(
@@ -668,6 +682,10 @@ def write_toy_sweep_artifacts(project_root: Path) -> dict[str, Path]:
 
 
 def validate_toy_sweep_artifacts(project_root: Path) -> list[str]:
+    """Validate the written toy-sweep artifacts (schemas, grid completeness, re-derived summary booleans, residual bound).
+
+    Returns a list of human-readable issue strings; empty means all checks passed.
+    """
     root = project_root.resolve()
     issues: list[str] = []
     sensitivity = _load_json(root / "output" / "data" / "sensitivity_sweep.json")

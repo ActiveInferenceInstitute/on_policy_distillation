@@ -10,7 +10,6 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import numpy as np
 import yaml
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
 
@@ -21,7 +20,7 @@ from ontology.bindings import load_section_ontology
 from simulation.pymdp_config import load_pymdp_config
 from simulation.tmaze_model import spec_from_config
 from .figure_io import save_figure_png
-from .figure_helpers import save_styled_figure, styled_figure, style_grid
+from .figure_helpers import save_styled_figure, styled_figure
 from .lean_boundary import load_lean_boundary_rows
 
 

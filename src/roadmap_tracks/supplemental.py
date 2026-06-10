@@ -274,7 +274,7 @@ def build_release_attestation(project_root: Path) -> dict[str, Any]:
     release_path = root / "output" / "reports" / "release_bundle_manifest.json"
     semantic_path = root / "output" / "data" / "sheaf_gluing_certificate.json"
     validation = _load_json(validation_path)
-    release = _load_json(root / "output" / "reports" / "release_bundle_manifest.json")
+    release = _load_json(release_path)
     license_audit = _load_json(root / "output" / "reports" / "artifact_license_audit.json")
     blocked = _load_json(root / "output" / "reports" / "blocked_scope_manifest.json")
     semantic = _load_json(semantic_path)

@@ -9,6 +9,7 @@ from manuscript.sheaf.models import CoverageMatrix, SheafManifest, TrackRegistry
 
 
 def render_track_registry_table(registry: TrackRegistry) -> str:
+    """Render the track-registry markdown table (order, id, label, renderer, optional) with a {{sheaf_track_count}} token."""
     lines = [
         "<!-- sheaf-layers:registry -->",
         "## Sheaf fragment track registry",
@@ -33,6 +34,7 @@ def render_binding_matrix_table(
     *,
     project_root: Path | None = None,
 ) -> str:
+    """Render the IMRAD binding-matrix markdown table of P/—/M symbols per section row and track column."""
     header = "| Section | " + " | ".join(matrix.track_ids) + " |"
     sep = "| --- | " + " | ".join("---" for _ in matrix.track_ids) + " |"
     lines = [
@@ -64,6 +66,7 @@ def render_binding_matrix_table(
 
 
 def render_coverage_legend() -> str:
+    """Render the legend table mapping P/—/M symbols to coverage colors and meanings."""
     return "\n".join(
         [
             "<!-- sheaf-layers:legend -->",
@@ -78,6 +81,7 @@ def render_coverage_legend() -> str:
 
 
 def render_evidence_crosswalk_table(project_root: Path) -> str:
+    """Render the evidence-crosswalk markdown table (first 8 claims: id, artifact, producer, gates)."""
     from manuscript.sheaf.semantic import build_evidence_crosswalk
 
     crosswalk = build_evidence_crosswalk(project_root)
@@ -96,6 +100,7 @@ def render_evidence_crosswalk_table(project_root: Path) -> str:
 
 
 def render_artifact_producer_table(project_root: Path) -> str:
+    """Render the artifact-producer markdown table for output/data, output/reports, and the belief-trajectory GIF."""
     from manuscript.sheaf.semantic import build_validation_dependency_graph
 
     graph = build_validation_dependency_graph(project_root)
@@ -120,6 +125,7 @@ def render_artifact_producer_table(project_root: Path) -> str:
 
 
 def render_semantic_restrictions_table(project_root: Path) -> str:
+    """Render the semantic-gluing restrictions markdown table from the certificate, showing 'not evaluated' for None values."""
     from manuscript.sheaf.semantic import build_semantic_gluing_certificate
 
     def _cell(value: object) -> str:
@@ -166,6 +172,7 @@ def render_semantic_restrictions_table(project_root: Path) -> str:
 
 
 def render_track_improvement_scope_table(project_root: Path) -> str:
+    """Render the track-improvement-scope markdown table from output/data/track_improvement_scope.json, noting truncation."""
     import json
 
     path = project_root / "output" / "data" / "track_improvement_scope.json"
@@ -199,6 +206,7 @@ def render_track_improvement_scope_table(project_root: Path) -> str:
 
 
 def render_section_status_table(project_root: Path) -> str:
+    """Render the per-section status markdown table (bound/present/missing counts) for composable sections only."""
     from manuscript.sheaf.status import build_sheaf_section_status_matrix
 
     payload = build_sheaf_section_status_matrix(project_root)
@@ -232,6 +240,7 @@ def render_section_status_table(project_root: Path) -> str:
 
 
 def render_track_status_table(project_root: Path) -> str:
+    """Render the per-track status markdown table (renderer, bound/present/missing section counts, claims)."""
     from manuscript.sheaf.status import build_sheaf_section_status_matrix
 
     payload = build_sheaf_section_status_matrix(project_root)
@@ -254,6 +263,7 @@ def render_track_status_table(project_root: Path) -> str:
 
 
 def render_sheaf_render_log_table(project_root: Path) -> str:
+    """Render the render/logging event markdown table from the sheaf render log."""
     from manuscript.sheaf.status import build_sheaf_render_log
 
     payload = build_sheaf_render_log(project_root)
@@ -275,6 +285,7 @@ def render_sheaf_render_log_table(project_root: Path) -> str:
 
 
 def render_sheaf_layers_markdown(project_root: Path) -> str:
+    """Render the full sheaf-layers markdown page by concatenating all registry, matrix, status, and semantic tables."""
     ctx = load_sheaf_coverage_context(project_root)
     parts = [
         render_track_registry_table(ctx.registry),

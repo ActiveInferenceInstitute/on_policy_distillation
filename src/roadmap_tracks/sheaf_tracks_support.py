@@ -204,7 +204,12 @@ def _copied_parity(project_root: Path, rel_paths: list[str]) -> dict[str, Any]:
         copied_exists = copied.is_file()
         hash_matches = bool(source_hash) and source_hash == copied_hash
         render_deferred = rel.startswith("output/pdf/") or rel.startswith("output/web/")
-        deferred = (source_exists and not hash_matches) or (not source_exists and render_deferred)
+        # Comparison is deferred ONLY while the root copy does not exist yet
+        # (pre-copy stage) or when a render-stage deliverable has no source to
+        # compare. An existing root copy that fails to hash-match is DRIFT and
+        # must fail — the pre-Run-6 logic reclassified exactly that case as
+        # "deferred", which made the parity gate fail-open (AI-RELEASE-PARITY-1).
+        deferred = (not copied_exists) or (not source_exists and render_deferred)
         rows.append(
             {
                 "artifact": rel,

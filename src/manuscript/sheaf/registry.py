@@ -6,7 +6,7 @@ from pathlib import Path
 
 import yaml
 
-from manuscript.sheaf.models import TrackRegistry, TrackSpec
+from manuscript.sheaf.models import SheafSection, TrackRegistry, TrackSpec
 
 
 def load_track_registry(registry_path: Path) -> TrackRegistry:
@@ -32,7 +32,7 @@ def load_track_registry(registry_path: Path) -> TrackRegistry:
 
 
 def track_order_for_section(
-    section: "SectionSpec",
+    section: SheafSection,
     registry: TrackRegistry | dict[str, TrackSpec],
 ) -> list[str]:
     specs = registry.tracks if isinstance(registry, TrackRegistry) else registry

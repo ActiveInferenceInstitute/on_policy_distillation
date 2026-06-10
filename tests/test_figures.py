@@ -15,7 +15,6 @@ from visualizations.figures import (
     figure_diversity_tradeoff,
     figure_energy_decomposition,
     figure_free_energy_curve,
-    figure_graphical_abstract,
     figure_ising_mi_curve,
     figure_scholarship_source_map,
     generate_all_figures,

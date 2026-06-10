@@ -19,15 +19,18 @@ InvariantFn = Callable[[], bool]
 
 
 def inv_ising_mi_at_zero() -> bool:
+    """Check the closed-form Ising mutual information is zero at lambda = 0 within tolerance."""
     return abs(ising_mutual_information(0.0)) <= BERNOULLI_VERIFICATION_TOLERANCE
 
 
 def inv_ising_mi_saturates() -> bool:
+    """Check the Ising mutual information saturates to ln 2 at large lambda (100.0)."""
     high = ising_mutual_information(100.0)
     return bool(np.isclose(high, np.log(2.0), atol=1e-3))
 
 
 def inv_empirical_matches_closed_form() -> bool:
+    """Check empirical and closed-form mutual information agree within tolerance across the lambda grid."""
     hp = load_hyperparameters()
     for lam in lambda_grid(hp):
         closed = ising_mutual_information(lam)
@@ -38,6 +41,7 @@ def inv_empirical_matches_closed_form() -> bool:
 
 
 def inv_decomposition_identity() -> bool:
+    """Check the free-energy decomposition identity holds for the Ising joint posterior at lambda = 1.5."""
     lam = 1.5
     q = ising_joint_posterior(lam)
     from .bernoulli_toy import ising_coupling, symmetric_mean_field_prior
@@ -56,6 +60,7 @@ def inv_decomposition_identity() -> bool:
 
 
 def inv_joint_is_pmf() -> bool:
+    """Check the Ising joint posterior at lambda = 2.0 is a valid probability mass function."""
     from .joint_dist import is_pmf
 
     q = ising_joint_posterior(2.0)
@@ -63,6 +68,7 @@ def inv_joint_is_pmf() -> bool:
 
 
 def inv_mean_field_at_lambda_zero() -> bool:
+    """Check the Ising joint posterior factorizes (is mean-field) at lambda = 0."""
     from .joint_dist import is_mean_field
 
     q = ising_joint_posterior(0.0)
@@ -80,9 +86,11 @@ CORE_INVARIANTS: dict[str, InvariantFn] = {
 
 
 def run_invariants() -> dict[str, bool]:
+    """Run all CORE_INVARIANTS and return name -> pass mapping."""
     return {name: fn() for name, fn in CORE_INVARIANTS.items()}
 
 
 def all_invariants_pass(results: dict[str, bool] | None = None) -> bool:
+    """Return True when every invariant passes, running them when no results dict is given."""
     inv = results if results is not None else run_invariants()
     return all(inv.values())

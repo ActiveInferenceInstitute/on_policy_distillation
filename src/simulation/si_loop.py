@@ -11,6 +11,7 @@ from typing import Any, Literal
 import numpy as np
 
 from simulation.logging_utils import RunLogger
+from simulation.numerics import STEP_POSTERIOR_ATOL
 from simulation.pymdp_config import (
     ComparisonPlanner,
     PymdpConfig,
@@ -268,7 +269,7 @@ def _run_pymdp_rollout(
             "q_pi": q_pi_by_step[t],
             "q_pi_sum": float(sum(q_pi_by_step[t])),
             "q_pi_entropy": q_pi_entropy_by_step[t],
-            "q_pi_normalized": abs(float(sum(q_pi_by_step[t])) - 1.0) <= 1e-6,
+            "q_pi_normalized": abs(float(sum(q_pi_by_step[t])) - 1.0) <= STEP_POSTERIOR_ATOL,
             "action_probabilities": action_probabilities[t],
             "planner": planner,
             "profile": config.profile,

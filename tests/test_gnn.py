@@ -51,3 +51,48 @@ def test_gnn_roundtrip_detects_lossy_payload(project_root: Path) -> None:
     corrupted = {**payload, "connections": [dict(payload["connections"][0]), *payload["connections"][1:]]}
     corrupted["connections"][0]["label"] = "bad label"
     assert roundtrip_payload_lossless(corrupted) is False
+
+
+# --- _parse_param_blocks unit coverage (Run-6, AI-HYGIENE-1) -----------------
+
+
+def test_parse_param_blocks_happy_path() -> None:
+    from gnn.parser import _parse_param_blocks
+
+    body = """
+A = {(0.9, 0.1), (0.1, 0.9)}
+b = {0.5, 0.5}
+"""
+    params = _parse_param_blocks(body)
+    assert set(params) == {"A", "b"}
+    assert params["A"].shape == (2, 2)
+    assert abs(float(params["A"][0, 0]) - 0.9) < 1e-12
+    assert params["b"].shape == (2,)
+
+
+def test_parse_param_blocks_unbalanced_braces_raise() -> None:
+    import pytest as _pytest
+
+    from gnn.parser import GNNParseError, _parse_param_blocks
+
+    with _pytest.raises(GNNParseError, match="unbalanced braces"):
+        _parse_param_blocks("A = {(0.9, 0.1), (0.1, 0.9)")
+
+
+def test_parse_param_blocks_empty_and_comment_only_bodies() -> None:
+    from gnn.parser import _parse_param_blocks
+
+    assert _parse_param_blocks("") == {}
+    assert _parse_param_blocks("# only a comment line\n# another\n") == {}
+
+
+def test_parse_param_blocks_skips_comment_lines_between_blocks() -> None:
+    from gnn.parser import _parse_param_blocks
+
+    body = """
+# C = {9.0, 9.0}  (commented out -- must NOT be parsed)
+D = {0.25, 0.75}
+"""
+    params = _parse_param_blocks(body)
+    assert set(params) == {"D"}
+    assert abs(float(params["D"][1]) - 0.75) < 1e-12

@@ -75,6 +75,24 @@ def test_run_tests_chunked_help_and_chunking() -> None:
     assert all(len(chunk) <= 6 for chunk in chunks)
 
 
+def test_run_tests_chunked_shuffle_seed_is_deterministic_and_complete() -> None:
+    """--shuffle-seed: same seed = same order, different seed = (almost surely) different order, no file lost."""
+    sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
+    try:
+        from run_tests_chunked import collect_chunks  # noqa: PLC0415
+
+        plain = [f for c in collect_chunks(PROJECT_ROOT, 6) for f in c]
+        s7a = [f for c in collect_chunks(PROJECT_ROOT, 6, shuffle_seed=7) for f in c]
+        s7b = [f for c in collect_chunks(PROJECT_ROOT, 6, shuffle_seed=7) for f in c]
+        s11 = [f for c in collect_chunks(PROJECT_ROOT, 6, shuffle_seed=11) for f in c]
+    finally:
+        sys.path.pop(0)
+    assert s7a == s7b
+    assert sorted(s7a) == sorted(plain)
+    assert s7a != plain or s11 != plain
+    assert s7a != s11
+
+
 import json
 
 import pytest

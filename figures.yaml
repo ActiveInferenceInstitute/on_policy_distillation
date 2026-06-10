@@ -467,7 +467,8 @@ figures:
     caption: >-
       Concordance diagram aligning the analytical symbols of the Bernoulli--Ising toy with the
       generative-model variables declared in `bernoulli_toy.gnn.md` ({{gnn_spec_version}}) and
-      their corresponding Active Inference Ontology terms. The three-layer mapping certifies
+      their corresponding Active Inference Ontology terms. The three-layer mapping covers all
+      {{bernoulli_ontology_term_count}} expected variable--term pairs and certifies
       that the equations in the manuscript, the executable GNN specification, and the shared
       ontology vocabulary all refer to the same entities. This naming concordance is what lets
       the on-policy-distillation toy be read as a bona fide active-inference model rather than

@@ -22,6 +22,8 @@ from .models import (
 
 @dataclass(frozen=True)
 class SheafCoverageContext:
+    """Loaded manifest, track registry, and the coverage matrix built from them."""
+
     manifest: SheafManifest
     registry: TrackRegistry
     matrix: CoverageMatrix
@@ -32,6 +34,7 @@ def load_sheaf_coverage_context(
     *,
     manifest_path: Path | None = None,
 ) -> SheafCoverageContext:
+    """Load manifest.yaml and the track registry, build the coverage matrix, and return them as a context."""
     from manuscript.sheaf.manifest import load_manifest
     from manuscript.sheaf.registry import load_track_registry
 
@@ -50,6 +53,7 @@ def classify_cell(
     rel_path: str | None,
     file_exists: bool,
 ) -> tuple[CoverageStatus, CoverageColor]:
+    """Classify one cell: unbound -> (absent, white); bound and file exists -> (present, black); else (missing, gray)."""
     if not bound:
         return "absent", "white"
     if file_exists:
@@ -62,6 +66,7 @@ def build_coverage_matrix(
     manifest: SheafManifest,
     project_root: Path,
 ) -> CoverageMatrix:
+    """Build the section-by-track CoverageMatrix by classifying every manifest binding against files on disk."""
     root = project_root.resolve()
     track_ids = tuple(tid for tid, _ in sorted(registry.tracks.items(), key=lambda item: item[1].order))
     rows: list[CoverageSectionRow] = []
@@ -101,6 +106,7 @@ def build_coverage_matrix(
 
 
 def coverage_matrix_to_dict(matrix: CoverageMatrix) -> dict[str, Any]:
+    """Return the JSON-serializable dict form of a CoverageMatrix (tracks plus per-section cell records)."""
     return {
         "tracks": list(matrix.track_ids),
         "sections": [
@@ -128,6 +134,10 @@ def coverage_matrix_to_dict(matrix: CoverageMatrix) -> dict[str, Any]:
 
 
 def write_coverage_json(matrix: CoverageMatrix, path: Path) -> Path:
+    """Write the coverage matrix as indented JSON to path, skipping the write when content is unchanged.
+
+    Returns the resolved path.
+    """
     path = path.resolve()
     path.parent.mkdir(parents=True, exist_ok=True)
     content = json.dumps(coverage_matrix_to_dict(matrix), indent=2) + "\n"
@@ -138,11 +148,13 @@ def write_coverage_json(matrix: CoverageMatrix, path: Path) -> Path:
 
 
 def load_coverage_json(path: Path) -> dict[str, Any]:
+    """Load a previously written coverage JSON file and return its dict payload."""
     data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
     return data
 
 
 def validate_coverage_strict(matrix: CoverageMatrix) -> list[ManifestIssue]:
+    """Return one error-level coverage_missing issue per gray (bound-but-absent) cell in the matrix."""
     issues: list[ManifestIssue] = []
     for section_id, track_id in matrix.gray_cells():
         issues.append(
@@ -156,10 +168,12 @@ def validate_coverage_strict(matrix: CoverageMatrix) -> list[ManifestIssue]:
 
 
 def gray_cell_count(matrix: CoverageMatrix) -> int:
+    """Return the number of gray (bound-but-missing) cells in the matrix."""
     return len(matrix.gray_cells())
 
 
 def gray_cell_count_from_json(data: dict[str, Any]) -> int:
+    """Return the number of gray cells recorded in a coverage JSON payload."""
     total = 0
     for section in data.get("sections") or []:
         for cell in section.get("cells") or []:
@@ -173,6 +187,7 @@ def validate_coverage_json_data(
     manifest: SheafManifest,
     registry: TrackRegistry,
 ) -> list[ManifestIssue]:
+    """Validate a coverage JSON payload against the manifest and registry: track/section counts and zero gray cells."""
     issues: list[ManifestIssue] = []
     tracks = data.get("tracks") or []
     sections = data.get("sections") or []

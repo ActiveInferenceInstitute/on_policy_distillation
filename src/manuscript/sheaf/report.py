@@ -13,6 +13,8 @@ from .models import CoverageMatrix, ImradBlock, SheafManifest
 
 @dataclass(frozen=True)
 class HeatmapConfig:
+    """Coverage-heatmap rendering settings: indentation, separators, row height, DPI, and percentage display."""
+
     indent_prefix: str = "  "
     group_separator: bool = True
     row_height: float = 0.42
@@ -22,6 +24,8 @@ class HeatmapConfig:
 
 @dataclass(frozen=True)
 class CoverageColorConfig:
+    """Hex colors for present, absent, and missing coverage cells."""
+
     present: str = "#111827"
     absent: str = "#ffffff"
     missing: str = "#94a3b8"
@@ -29,6 +33,8 @@ class CoverageColorConfig:
 
 @dataclass(frozen=True)
 class ReportConfig:
+    """Coverage-page settings: title, section toggles, and the heatmap figure path."""
+
     title: str = "Sheaf Track Coverage"
     show_imrad_headers: bool = True
     show_summary_stats: bool = True
@@ -38,6 +44,8 @@ class ReportConfig:
 
 @dataclass(frozen=True)
 class CoverageConfig:
+    """Combined coverage configuration: report, heatmap, and color settings."""
+
     report: ReportConfig = field(default_factory=ReportConfig)
     heatmap: HeatmapConfig = field(default_factory=HeatmapConfig)
     colors: CoverageColorConfig = field(default_factory=CoverageColorConfig)
@@ -45,6 +53,8 @@ class CoverageConfig:
 
 @dataclass(frozen=True)
 class CoverageReport:
+    """Coverage matrix plus aggregated bound/present/missing totals and per-section row stats."""
+
     matrix: CoverageMatrix
     manifest: SheafManifest
     config: CoverageConfig
@@ -55,6 +65,10 @@ class CoverageReport:
 
 
 def load_coverage_config(path: Path, *, project_root: Path | None = None) -> CoverageConfig:
+    """Load CoverageConfig from a YAML file, falling back to defaults when absent.
+
+    When project_root is given, present/missing colors are overridden from the project figure style.
+    """
     if not path.is_file():
         base = CoverageConfig()
     else:
@@ -102,6 +116,7 @@ def load_coverage_config(path: Path, *, project_root: Path | None = None) -> Cov
 
 
 def default_coverage_config_path(project_root: Path) -> Path:
+    """Return the default manuscript/sheaf/coverage.yaml path under the project root."""
     return project_root.resolve() / "manuscript" / "sheaf" / "coverage.yaml"
 
 
@@ -110,6 +125,7 @@ def build_coverage_report(
     manifest: SheafManifest,
     config: CoverageConfig,
 ) -> CoverageReport:
+    """Aggregate per-section bound/present/missing counts from the matrix into a CoverageReport."""
     total_bound = total_present = total_missing = 0
     row_stats: list[tuple[str, int, int, int]] = []
     for row in matrix.sections:
@@ -141,6 +157,10 @@ def _imrad_heading(imrad: ImradBlock) -> str:
 
 
 def render_report_markdown(report: CoverageReport, *, project_root: Path) -> str:
+    """Render the sheaf coverage page markdown (totals, legend, IMRAD outline, registered figures).
+
+    Raises ValueError when figures.yaml declares no section_figures.coverage_page entry.
+    """
     cfg = report.config.report
     lines = [f"# {cfg.title} {{#sec:sheaf_coverage}}", ""]
     lines.append(
@@ -195,6 +215,10 @@ def render_report_markdown(report: CoverageReport, *, project_root: Path) -> str
 
 
 def write_coverage_page(project_root: Path) -> Path:
+    """Build the coverage report from the live manifest and write manuscript/00_00_sheaf_coverage.md.
+
+    Returns the written path.
+    """
     from manuscript.sheaf.coverage import load_sheaf_coverage_context
 
     root = project_root.resolve()

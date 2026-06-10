@@ -190,4 +190,10 @@ invoking generators individually: the attestation/certificate layer is a fixed
 point (the attestation records the previous validation report), and the runner
 converges it automatically. On loaded machines run tests via
 `scripts/run_tests_chunked.py` — single long pytest processes get killed by
-resource pressure.
+resource pressure. `--shuffle-seed N` shuffles test-file order
+deterministically (same seed = same order) for isolation soaks
+(AI-TEST-ISOLATION-1 chain B); a red shuffled run is a finding to report,
+never a seed to re-roll. Lint: `uvx ruff check src tests scripts` — the
+project `pyproject.toml` carries a `[tool.ruff]` block mirroring the
+template root's E/F + line-length-120 semantics, so the bare in-project
+run matches the root gate.

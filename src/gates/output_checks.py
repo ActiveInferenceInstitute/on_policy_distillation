@@ -74,6 +74,41 @@ def _efe_values_explained(payload: dict) -> bool:
     )
 
 
+#: Gate-index ids whose live check key differs from the row id.
+_GATE_INDEX_ALIASES = {
+    "canonical_sheaf_tracks": "canonical_sheaf_track_schemas",
+    "semantic_sheaf_gluing": "canonical_sheaf_track_schemas",
+    "typed_claim_evidence": "claim_evidence_audit_schema",
+}
+
+#: Gate-index ids that are external commands and cannot appear in `checks`:
+#: the validate runner itself, the manuscript CLI, and the Lean toolchain.
+_EXTERNAL_GATE_IDS = {"validate_outputs", "validate_manuscript", "lake_build"}
+
+
+def _gate_index_binding(gate_index: dict, check_keys: set[str]) -> bool:
+    """Every indexed gate-index row must bind to the live validator surface.
+
+    A row binds when its id (or alias) is an exact or prefix match of a check
+    key produced by THIS validate run, or names a known external gate. This is
+    the read-time control that keeps the declarative GATE_INDEX_ROWS registry
+    from drifting into phantom rows (AI-GATE-INDEX-3).
+    """
+    rows = gate_index.get("rows") or []
+    if not rows:
+        return False
+    for row in rows:
+        gate_id = str(row.get("id") or "")
+        if row.get("indexed") is not True:
+            return False
+        if gate_id in _EXTERNAL_GATE_IDS:
+            continue
+        target = _GATE_INDEX_ALIASES.get(gate_id, gate_id)
+        if target not in check_keys and not any(key.startswith(target) for key in check_keys):
+            return False
+    return True
+
+
 def _figure_source_map_ok(root: Path, payload: dict) -> bool:
     from roadmap_tracks.integration_audit import _figure_source_rows_complete
 
@@ -649,10 +684,17 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
         evidence_fields.get("schema") == "template_active_inference.evidence_field_index.v1"
         and evidence_fields.get("all_fields_mapped") is True
     )
+    # Parity flag re-derived from its (nested) rows at read time — the
+    # aggregate_rederivation table only addresses top-level `rows`, so the
+    # copied-output parity aggregate gets its flag↔rows check here (Run-6,
+    # AI-RELEASE-PARITY-1).
+    _parity_rows = (release_bundle.get("copied_output_parity") or {}).get("rows") or []
+    _parity_rederived = bool(_parity_rows) and all(row.get("matches_when_copied") is True for row in _parity_rows)
     checks["release_bundle_manifest_schema"] = (
         release_bundle.get("schema") == "template_active_inference.release_bundle_manifest.v1"
         and release_bundle.get("all_required_sources_present") is True
         and release_bundle.get("all_copied_outputs_match_or_deferred") is True
+        and _parity_rederived
     )
     checks["theorem_traceability_matrix_schema"] = (
         theorem_traceability.get("schema") == "template_active_inference.theorem_traceability_matrix.v1"
@@ -803,6 +845,10 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     from gates.aggregate_rederivation import aggregates_consistent
 
     checks["aggregate_rederivation"] = aggregates_consistent(root)
+
+    # Read-time honesty: every gate-index row must bind to a check key this
+    # run actually produced (or a known external gate) — AI-GATE-INDEX-3.
+    checks["validation_gate_index_binding"] = _gate_index_binding(gate_index, set(checks))
 
     log_path = root / "output" / "logs" / "pymdp_runs.jsonl"
     if _pymdp_logging_expected(root):

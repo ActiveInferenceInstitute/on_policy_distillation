@@ -40,7 +40,30 @@ literal.
   and an independent enumeration route; the validator re-derives the residual
   bound from rows and pins the observable set.
 - **Gate index** — `src/roadmap_tracks/integration_audit_builders.py`
-  (`build_validation_gate_index`). One row per promoted gate.
+  (`GATE_INDEX_ROWS` + `build_validation_gate_index`). One declarative
+  `(gate id, required inputs)` row per promoted gate; `indexed` is derived
+  from on-disk input existence, and `validate_outputs` re-derives a live
+  binding (`validation_gate_index_binding`) requiring every row id to match
+  a check key this run produced (or a known external gate: the validate
+  runner itself, the manuscript CLI, `lake build`). Phantom rows fail
+  validation (`tests/test_gate_index_binding.py`).
+- **Numeric tolerances** — writer-side constants live in
+  `src/analytical/hyperparameters.py` (`BERNOULLI_VERIFICATION_TOLERANCE`)
+  and `src/simulation/numerics.py` (`STEP_POSTERIOR_ATOL`,
+  `POLICY_POSTERIOR_ATOL`). Validator-side literals in `src/gates/` are
+  DELIBERATELY independent copies: across the writer/validator trust
+  boundary, duplication is the verification mechanism — do not "consolidate"
+  them into a shared constant.
+- **Scholarship registry** — `src/roadmap_tracks/scholarship/` (split from a
+  1471-line module in Run-6): `schema.py` (schema id + expected citation
+  keys), `sources_base.py` / `sources_review.py` (pure-data source batches by
+  provenance), `matrix.py` (build/write/validate logic). Every pre-split
+  import path still works via the package `__init__`; the emitted
+  `scholarship_source_matrix.json` is byte-identical to the pre-split output.
+- **Release parity** — `src/roadmap_tracks/sheaf_tracks_support.py`
+  (`_copied_parity`). Deferral means pre-copy or render-source-absent ONLY;
+  an existing root copy that fails to hash-match is drift and fails the
+  `release_bundle_manifest_schema` check (`tests/test_release_parity.py`).
 
 ## Add a figure (the six surfaces)
 
@@ -108,6 +131,8 @@ uv run --extra dev python -m pytest tests/test_figures.py --no-cov -q
 | manuscript fragments / manifest / figures.yaml | `uv run python scripts/compose_manuscript.py && uv run python scripts/z_generate_manuscript_variables.py` |
 | everything / unsure | `uv run python scripts/run_full_chain.py` (canonical convergent order with bounded retry) |
 | full release gate | `uv run python scripts/run_tests_chunked.py` then `uv run python scripts/render_pdf.py` |
+| isolation soak (order coverage) | `uv run python scripts/run_tests_chunked.py --shuffle-seed N` (deterministic; report a red run, never re-roll the seed) |
+| lint | `uvx ruff check src tests scripts` (project `[tool.ruff]` mirrors the template root gate) |
 
 ## Troubleshooting
 

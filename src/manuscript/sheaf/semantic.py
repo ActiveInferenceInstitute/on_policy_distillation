@@ -23,7 +23,7 @@ from ontology.bindings import (
 
 from .coverage import gray_cell_count, load_sheaf_coverage_context
 
-from artifact_contracts import (
+from artifact_contracts import (  # noqa: F401  (ARTIFACT_CONSUMERS: legacy re-export pinned by test_artifact_contracts)
     ARTIFACT_CONSUMERS,
     ARTIFACT_GATES,
     ARTIFACT_PRODUCERS,

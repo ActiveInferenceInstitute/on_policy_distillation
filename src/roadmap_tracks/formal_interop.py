@@ -201,6 +201,7 @@ def build_model_checking_witnesses(project_root: Path) -> dict[str, Any]:
 
 
 def build_gnn_roundtrip_report(project_root: Path) -> dict[str, Any]:
+    """Build the gnn_roundtrip_report.v1 payload: a parse-write-reparse losslessness row per gnn/*.gnn.md model."""
     root = project_root.resolve()
     rows = []
     for path in _gnn_paths(root):
@@ -223,6 +224,7 @@ def build_gnn_roundtrip_report(project_root: Path) -> dict[str, Any]:
 
 
 def build_gnn_lint_report(project_root: Path) -> dict[str, Any]:
+    """Build the gnn_lint_report.v1 payload: per-variable dtype/shape/ontology checks against the expected term maps."""
     root = project_root.resolve()
     from ontology.bindings import BERNOULLI_EXPECTED_TERMS, SI_EXPECTED_TERMS
 
@@ -269,6 +271,7 @@ def build_gnn_lint_report(project_root: Path) -> dict[str, Any]:
 
 
 def build_ontology_alias_index(project_root: Path) -> dict[str, Any]:
+    """Build the ontology_alias_index.v1 payload from per-section ontology.yaml files, flagging conflicting alias terms."""
     root = project_root.resolve()
     rows = []
     conflicts: list[str] = []
@@ -291,6 +294,7 @@ def build_ontology_alias_index(project_root: Path) -> dict[str, Any]:
 
 
 def build_ontology_profile_matrix(project_root: Path) -> dict[str, Any]:
+    """Build the ontology_profile_matrix.v1 payload: one row per GNN model variable with its ontology mapping."""
     root = project_root.resolve()
     rows = []
     for path in _gnn_paths(root):
@@ -321,6 +325,7 @@ def _lean_text(root: Path) -> str:
 
 
 def build_lean_theorem_inventory(project_root: Path) -> dict[str, Any]:
+    """Build the lean_theorem_inventory.v1 payload: theorem names from lean/OnPolicyDistillation/*.lean plus a sorry/axiom/native_decide token scan."""
     root = project_root.resolve()
     text = _lean_text(root)
     names = re.findall(r"^theorem\s+([A-Za-z0-9_']+)", text, flags=re.MULTILINE)
@@ -336,6 +341,7 @@ def build_lean_theorem_inventory(project_root: Path) -> dict[str, Any]:
 
 
 def build_lean_graph_world_inventory(project_root: Path) -> dict[str, Any]:
+    """Build the lean_graph_world_inventory.v1 payload: per-topology and policy-enumeration Lean witness presence checks."""
     root = project_root.resolve()
     text = _lean_text(root)
     topology_theorems = {
@@ -377,6 +383,7 @@ def build_lean_graph_world_inventory(project_root: Path) -> dict[str, Any]:
 
 
 def build_interop_roundtrip_report(project_root: Path) -> dict[str, Any]:
+    """Build the interop_roundtrip_report.v1 payload combining GNN round-trip losslessness with ontology mapping completeness."""
     gnn_report = build_gnn_roundtrip_report(project_root)
     ontology = build_ontology_profile_matrix(project_root)
     rows = [
@@ -437,6 +444,7 @@ def proof_inventory_mismatch(proof: dict[str, Any], lean_theorems: dict[str, Any
 
 
 def build_proof_extraction_index(project_root: Path) -> dict[str, Any]:
+    """Build the proof_extraction_index.v1 payload: per-theorem statement and leading tactic extracted from the Lean sources, cross-checked against the theorem inventory."""
     root = project_root.resolve()
     lean_theorems = build_lean_theorem_inventory(root)
     inventory_names = _theorem_names(lean_theorems, row_key="name")
@@ -484,6 +492,10 @@ def build_proof_extraction_index(project_root: Path) -> dict[str, Any]:
 
 
 def write_formal_interop_artifacts(project_root: Path) -> dict[str, Path]:
+    """Write the nine formal-interop JSON artifacts under output/data/ and output/reports/.
+
+    Returns a mapping from artifact key to written path.
+    """
     root = project_root.resolve()
     return {
         "model_checking": _write_json(
@@ -523,6 +535,10 @@ def write_formal_interop_artifacts(project_root: Path) -> dict[str, Path]:
 
 
 def validate_formal_interop_artifacts(project_root: Path) -> list[str]:
+    """Validate the written formal-interop artifacts (schemas, losslessness, proved theorems, staleness, inventory parity).
+
+    Returns a list of human-readable issue strings; empty means all checks passed.
+    """
     root = project_root.resolve()
     issues: list[str] = []
     model_checking = _load_json(root / "output" / "reports" / "model_checking_witnesses.json")

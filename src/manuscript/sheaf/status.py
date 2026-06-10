@@ -173,7 +173,6 @@ def build_sheaf_section_status_matrix(project_root: Path) -> dict[str, Any]:
         )
 
     composable = [row for row in section_summaries if row["compose"]]
-    methods_sheaf_output = "manuscript/19_supplement_reproducibility.md"
     return {
         "schema": STATUS_MATRIX_SCHEMA,
         "sections": section_summaries,

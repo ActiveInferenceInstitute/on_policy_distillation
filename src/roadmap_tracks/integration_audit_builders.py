@@ -403,68 +403,62 @@ def build_claim_evidence_audit(project_root: Path) -> dict[str, Any]:
     }
 
 
+#: Declarative gate-index registry: (gate id, required input paths). The id
+#: must bind to the live validator surface — ``validate_outputs`` re-derives
+#: the binding at read time (``validation_gate_index_binding``), so a phantom
+#: row here fails validation instead of silently inflating the index.
+GATE_INDEX_ROWS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("validate_outputs", ("output/data", "output/reports")),
+    ("aggregate_rederivation", ("output/data", "output/reports")),
+    ("validate_manuscript", ("manuscript/sheaf", "output/manuscript")),
+    ("semantic_sheaf_gluing", ("output/data/sheaf_gluing_certificate.json",)),
+    ("typed_claim_evidence", ("data/claim_ledger.yaml",)),
+    ("manuscript_staleness_report", ("output/manuscript", "output/data/manuscript_variables.json")),
+    ("animation_frame_deltas", ("output/figures/si_belief_trajectory.gif",)),
+    ("pymdp_runtime_diagnostics", ("output/reports/pymdp_runtime_diagnostics.json",)),
+    ("pymdp_policy_posterior_grid", ("output/data/pymdp_policy_posterior_grid.json",)),
+    ("analytical_assumption_index", ("output/data/analytical_assumption_index.json",)),
+    ("canonical_sheaf_tracks", ("output/data/track_improvement_scope.json",)),
+    ("release_bundle_manifest", ("output/reports/release_bundle_manifest.json",)),
+    ("evidence_field_index", ("output/data/evidence_field_index.json",)),
+    ("theorem_traceability_matrix", ("output/data/theorem_traceability_matrix.json",)),
+    ("artifact_diffoscope", ("output/reports/artifact_diffoscope.json",)),
+    ("proof_extraction_index", ("output/data/proof_extraction_index.json",)),
+    ("state_space_catalog", ("output/data/state_space_catalog.json",)),
+    ("causal_ablation_matrix", ("output/data/causal_ablation_matrix.json",)),
+    ("artifact_license_audit", ("output/reports/artifact_license_audit.json",)),
+    ("release_notes_evidence", ("output/reports/release_notes_evidence.json",)),
+    ("proof_dependency_graph", ("output/data/proof_dependency_graph.json",)),
+    ("state_transition_table", ("output/data/state_transition_table.json",)),
+    ("ablation_sensitivity_report", ("output/reports/ablation_sensitivity_report.json",)),
+    ("release_attestation", ("output/reports/release_attestation.json",)),
+    ("track_improvement_scope", ("output/data/track_improvement_scope.json",)),
+    ("blocked_scope_manifest", ("output/reports/blocked_scope_manifest.json",)),
+    ("lake_build", ("lean/lakefile.lean",)),
+)
+
+
 def build_validation_gate_index(project_root: Path) -> dict[str, Any]:
-    _ = project_root
-    rows = [
-        {"id": "validate_outputs", "inputs": ["output/data", "output/reports"], "indexed": True},
-        {
-            "id": "aggregate_rederivation",
-            "inputs": ["output/data", "output/reports"],
-            "indexed": True,
-        },
-        {"id": "validate_manuscript", "inputs": ["manuscript/sheaf", "output/manuscript"], "indexed": True},
-        {"id": "semantic_sheaf_gluing", "inputs": ["output/data/sheaf_gluing_certificate.json"], "indexed": True},
-        {"id": "typed_claim_evidence", "inputs": ["data/claim_ledger.yaml"], "indexed": True},
-        {
-            "id": "manuscript_staleness_report",
-            "inputs": ["output/manuscript", "output/data/manuscript_variables.json"],
-            "indexed": True,
-        },
-        {"id": "animation_frame_deltas", "inputs": ["output/figures/si_belief_trajectory.gif"], "indexed": True},
-        {
-            "id": "pymdp_runtime_diagnostics",
-            "inputs": ["output/reports/pymdp_runtime_diagnostics.json"],
-            "indexed": True,
-        },
-        {
-            "id": "pymdp_policy_posterior_grid",
-            "inputs": ["output/data/pymdp_policy_posterior_grid.json"],
-            "indexed": True,
-        },
-        {
-            "id": "analytical_assumption_index",
-            "inputs": ["output/data/analytical_assumption_index.json"],
-            "indexed": True,
-        },
-        {"id": "canonical_sheaf_tracks", "inputs": ["output/data/track_improvement_scope.json"], "indexed": True},
-        {"id": "release_bundle_manifest", "inputs": ["output/reports/release_bundle_manifest.json"], "indexed": True},
-        {"id": "evidence_field_index", "inputs": ["output/data/evidence_field_index.json"], "indexed": True},
-        {
-            "id": "theorem_traceability_matrix",
-            "inputs": ["output/data/theorem_traceability_matrix.json"],
-            "indexed": True,
-        },
-        {"id": "artifact_diffoscope", "inputs": ["output/reports/artifact_diffoscope.json"], "indexed": True},
-        {"id": "proof_extraction_index", "inputs": ["output/data/proof_extraction_index.json"], "indexed": True},
-        {"id": "state_space_catalog", "inputs": ["output/data/state_space_catalog.json"], "indexed": True},
-        {"id": "causal_ablation_matrix", "inputs": ["output/data/causal_ablation_matrix.json"], "indexed": True},
-        {"id": "artifact_license_audit", "inputs": ["output/reports/artifact_license_audit.json"], "indexed": True},
-        {"id": "release_notes_evidence", "inputs": ["output/reports/release_notes_evidence.json"], "indexed": True},
-        {"id": "proof_dependency_graph", "inputs": ["output/data/proof_dependency_graph.json"], "indexed": True},
-        {"id": "state_transition_table", "inputs": ["output/data/state_transition_table.json"], "indexed": True},
-        {
-            "id": "ablation_sensitivity_report",
-            "inputs": ["output/reports/ablation_sensitivity_report.json"],
-            "indexed": True,
-        },
-        {"id": "release_attestation", "inputs": ["output/reports/release_attestation.json"], "indexed": True},
-        {"id": "track_improvement_scope", "inputs": ["output/data/track_improvement_scope.json"], "indexed": True},
-        {"id": "blocked_scope_manifest", "inputs": ["output/reports/blocked_scope_manifest.json"], "indexed": True},
-        {"id": "lake_build", "inputs": ["lean/lakefile.lean"], "indexed": True},
-    ]
+    """Index the validator surface with per-gate required inputs.
+
+    ``indexed`` is DERIVED from on-disk input existence (pre-Run-6 it was a
+    hardcoded ``True`` and ``project_root`` was ignored — AI-GATE-INDEX-3).
+    """
+    root = project_root.resolve()
+    rows = []
+    for gate_id, inputs in GATE_INDEX_ROWS:
+        inputs_exist = all((root / rel).exists() for rel in inputs)
+        rows.append(
+            {
+                "id": gate_id,
+                "inputs": list(inputs),
+                "inputs_exist": inputs_exist,
+                "indexed": inputs_exist,
+            }
+        )
     return {
         "schema": "template_active_inference.validation_gate_index.v1",
         "rows": rows,
         "gate_count": len(rows),
-        "all_indexed": all(row["indexed"] for row in rows),
+        "all_indexed": bool(rows) and all(row["indexed"] for row in rows),
     }

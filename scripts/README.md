@@ -45,6 +45,9 @@ Thin orchestrators that import from `../src/` and handle I/O only.
   On a loaded machine a single long pytest process is reliably killed by
   resource pressure (observed exit 144); per-chunk subprocesses survive and
   cover the same files. Exit 0 only when every chunk is clean.
+  `--shuffle-seed N` shuffles file order deterministically (same seed = same
+  order) for isolation soaks; a red shuffled run is a finding to report,
+  never a seed to re-roll.
 
 ## Order matters
 

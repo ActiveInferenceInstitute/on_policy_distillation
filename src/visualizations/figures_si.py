@@ -166,7 +166,6 @@ def figure_si_tmaze_actions(project_root: Path) -> Path:
     action_probabilities = data.get("action_probabilities") or []
     _, vocab = _tmaze_action_vocabulary(root, data)
     planning_horizon = data.get("planning_horizon", "?")
-    tree_warnings = (data.get("expected_known_warnings") or {}).get("tree_max_nodes", 0)
     out = figure_output_path(root, "si_tmaze_actions")
     with apply_style(style):
         fig, axes = plt.subplots(1, 2, figsize=(12.4, 5.2), gridspec_kw={"width_ratios": [1.05, 1.9]})

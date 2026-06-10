@@ -19,6 +19,8 @@ CANONICAL_PLANNER: Planner = "sophisticated_inference"
 
 @dataclass(frozen=True)
 class EnvironmentConfig:
+    """T-maze environment settings: reward condition, cue validity, and outcome probabilities."""
+
     reward_condition: int | None = 0
     cue_validity: float = 0.95
     reward_probability: float = 1.0
@@ -29,6 +31,8 @@ class EnvironmentConfig:
 
 @dataclass(frozen=True)
 class AgentConfig:
+    """pymdp agent settings: policy lengths, gamma, inference algorithm, action selection, and learning flags."""
+
     si_policy_len: int = 1
     vanilla_policy_len: int = 4
     gamma: float = 3.0
@@ -41,6 +45,8 @@ class AgentConfig:
 
 @dataclass(frozen=True)
 class SISearchConfig:
+    """Sophisticated-inference tree-search settings: horizon, node/branching caps, and pruning thresholds."""
+
     horizon: int = 4
     max_nodes: int = 5000
     max_branching: int = 45
@@ -56,12 +62,16 @@ class SISearchConfig:
 
 @dataclass(frozen=True)
 class LoggingConfig:
+    """Run-logging settings: enabled flag and JSONL output path."""
+
     enabled: bool = True
     path: str = "output/logs/pymdp_runs.jsonl"
 
 
 @dataclass(frozen=True)
 class ValidationComparisonConfig:
+    """Planner-comparison settings for validation runs: enabled flag, planners, and seeds."""
+
     enabled: bool = True
     planners: tuple[ComparisonPlanner, ...] = ("sophisticated_inference", "vanilla")
     seeds: tuple[int, ...] = (0,)
@@ -69,6 +79,8 @@ class ValidationComparisonConfig:
 
 @dataclass(frozen=True)
 class PymdpConfig:
+    """Top-level config for the canonical full-TMaze sophisticated-inference rollout."""
+
     profile: str = CANONICAL_PROFILE
     planner: Planner = CANONICAL_PLANNER
     planning_horizon: int = 4
@@ -191,10 +203,12 @@ def _parse_raw(raw: dict[str, Any]) -> PymdpConfig:
 
 
 def default_pymdp_config() -> PymdpConfig:
+    """Return a PymdpConfig with all default values."""
     return PymdpConfig()
 
 
 def pymdp_config_path(project_root: Path) -> Path:
+    """Return the canonical pymdp.yaml path under the project root."""
     return project_root.resolve() / "pymdp.yaml"
 
 
@@ -203,6 +217,10 @@ def load_pymdp_config(
     *,
     config_path: Path | None = None,
 ) -> PymdpConfig:
+    """Load PymdpConfig from pymdp.yaml (or config_path), returning defaults when the file is absent.
+
+    Raises ValueError for legacy `mode` keys, non-canonical profiles/planners, or invalid reward conditions.
+    """
     path = config_path or pymdp_config_path(project_root)
     if not path.is_file():
         return default_pymdp_config()
@@ -219,6 +237,10 @@ def apply_pymdp_overrides(
     logging_enabled: bool | None = None,
     comparison_enabled: bool | None = None,
 ) -> PymdpConfig:
+    """Return a copy of the config with any provided steps/horizon/seed/logging/comparison overrides applied.
+
+    A horizon override also updates the SI search horizon, and vanilla_policy_len when it tracked the old horizon.
+    """
     updated = config
     if horizon is not None:
         updated = replace(updated, planning_horizon=horizon, si_search=replace(updated.si_search, horizon=horizon))
@@ -239,6 +261,7 @@ def apply_pymdp_overrides(
 
 
 def config_snapshot(config: PymdpConfig) -> dict[str, Any]:
+    """Return a JSON-serializable dict of every config field, used for logging and hashing."""
     return {
         "profile": config.profile,
         "planner": config.planner,
@@ -290,5 +313,6 @@ def config_snapshot(config: PymdpConfig) -> dict[str, Any]:
 
 
 def config_hash(config: PymdpConfig) -> str:
+    """Return the first 16 hex chars of the SHA-256 over the sorted JSON config snapshot."""
     payload = json.dumps(config_snapshot(config), sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
