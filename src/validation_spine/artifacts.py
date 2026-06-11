@@ -473,6 +473,43 @@ def validate_artifact_provenance(project_root: Path) -> list[str]:
             issues.append(f"{rel}: config digest mismatch")
         if not saved_record.get("source_commit"):
             issues.append(f"{rel}: missing source commit")
+
+    # AI-PROVENANCE-FIELDS-1: re-derive every per-field content hash from the
+    # artifact on disk. A change to a single field's value flips that field's
+    # stored hash; an empty field-row set (vacuous) or a missing producer /
+    # source_commit on a field row also fails closed.
+    field_rows = saved.get("field_rows")
+    if field_rows is not None:
+        if not isinstance(field_rows, list) or not field_rows:
+            issues.append("artifact_provenance.json field_rows empty or malformed")
+        else:
+            if saved.get("all_field_hashes_present") is not True:
+                issues.append("artifact_provenance.json does not record all_field_hashes_present=true")
+            for fr in field_rows:
+                if not isinstance(fr, dict):
+                    issues.append("artifact_provenance.json has a non-dict field row")
+                    continue
+                rel = str(fr.get("artifact") or "")
+                field = str(fr.get("field") or "")
+                if not fr.get("producer") or not fr.get("source_commit"):
+                    issues.append(f"{rel}#{field}: field row missing producer or source commit")
+                fpath = root / rel
+                if not fpath.is_file():
+                    issues.append(f"{rel}#{field}: field artifact missing")
+                    continue
+                try:
+                    fpayload = json.loads(fpath.read_text(encoding="utf-8"))
+                except (OSError, ValueError):
+                    issues.append(f"{rel}#{field}: field artifact unreadable")
+                    continue
+                if not isinstance(fpayload, dict) or field not in fpayload:
+                    issues.append(f"{rel}#{field}: field absent from artifact")
+                    continue
+                live_field_hash = hashlib.sha256(
+                    json.dumps(fpayload[field], sort_keys=True, default=str).encode("utf-8")
+                ).hexdigest()
+                if fr.get("field_sha256") != live_field_hash:
+                    issues.append(f"{rel}#{field}: field hash mismatch")
     return issues
 
 

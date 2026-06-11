@@ -30,9 +30,65 @@ from .sheaf_tracks_support import (
 )
 
 
+def _field_sha256(value: Any) -> str:
+    """Deterministic content hash of a single artifact field value."""
+    import json as _json
+
+    return hashlib.sha256(_json.dumps(value, sort_keys=True, default=str).encode("utf-8")).hexdigest()
+
+
+def _field_level_provenance_rows(root: Path, artifact_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Per-field lineage rows (AI-PROVENANCE-FIELDS-1).
+
+    For every JSON artifact that exists on disk, emit one lineage row per
+    top-level field: a content hash of that field plus the inheriting
+    artifact-level producer/seed/source_commit. A change to a single field's
+    value flips only that field's ``field_sha256``, so the read-time
+    re-derivation in ``validate_artifact_provenance`` localizes drift to the
+    exact field instead of the whole-artifact hash.
+    """
+    import json as _json
+
+    by_artifact = {row["artifact"]: row for row in artifact_rows}
+    field_rows: list[dict[str, Any]] = []
+    for rel, row in sorted(by_artifact.items()):
+        if not rel.endswith(".json"):
+            continue
+        # Skip cycle-excluded artifacts (provenance/semantic/dependency/etc.):
+        # their bytes legitimately change as this very artifact regenerates, so
+        # a pinned field hash would be self-referentially stale.
+        if row.get("cycle_excluded"):
+            continue
+        path = root / rel
+        if not path.is_file():
+            continue
+        try:
+            payload = _json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if not isinstance(payload, dict):
+            continue
+        for field in sorted(payload):
+            field_rows.append(
+                {
+                    "artifact": rel,
+                    "field": field,
+                    "jsonpath": f"$.{field}",
+                    "field_sha256": _field_sha256(payload[field]),
+                    "producer": row["producer"],
+                    "deterministic_seed": row["deterministic_seed"],
+                    "config_digest": row["config_digest"],
+                    "source_commit": row["source_commit"],
+                    "complete": bool(row["producer"]) and bool(row["source_commit"]),
+                }
+            )
+    return field_rows
+
+
 def build_artifact_provenance(project_root: Path) -> dict[str, Any]:
     root = project_root.resolve()
     rows = _canonical_artifact_rows(root)
+    field_rows = _field_level_provenance_rows(root, rows)
     artifacts = {
         row["artifact"]: {
             "path": row["artifact"],
@@ -55,6 +111,10 @@ def build_artifact_provenance(project_root: Path) -> dict[str, Any]:
         "producer_coverage": coverage,
         "artifacts": artifacts,
         "rows": rows,
+        "field_rows": field_rows,
+        "field_row_count": len(field_rows),
+        "all_field_hashes_present": bool(field_rows)
+        and all(bool(fr.get("field_sha256")) and fr.get("complete") for fr in field_rows),
         "artifact_count": len(rows),
         "bundles": bundles,
         "bundle_count": len(bundles),

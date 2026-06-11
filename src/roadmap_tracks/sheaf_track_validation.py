@@ -195,6 +195,20 @@ def _validate_sheaf_track_artifacts(
         issues.append("validation_dependency_graph.json schema mismatch")
     if dependency.get("all_required_edge_types_present") is not True:
         issues.append("validation_dependency_graph.json lacks required edge types")
+    # AI-DEPENDENCY-FIELDS-1: re-derive the field-level edge count from the edge
+    # list (never trust the stored count). A field edge deleted by hand desyncs
+    # the observed count from the re-derivation, and the field edge kinds must
+    # be present in the set.
+    dep_edges = dependency.get("edges") or []
+    field_edge_kinds = set(dependency.get("field_level_edge_kinds") or [])
+    if field_edge_kinds != {"artifact_to_field", "field_to_claim", "field_to_section"}:
+        issues.append("validation_dependency_graph.json missing field-level edge kinds")
+    observed_field_edges = sum(1 for edge in dep_edges if str(edge.get("kind")) in field_edge_kinds)
+    stored_field_edges = int(dependency.get("field_level_edge_count", -1) or -1)
+    if stored_field_edges <= 0 or stored_field_edges != observed_field_edges:
+        issues.append("validation_dependency_graph.json field-level edge count is stale")
+    if not field_edge_kinds.issubset(set(dependency.get("edge_types") or [])):
+        issues.append("validation_dependency_graph.json field-level edges absent")
 
     section_status = _payload(root, payloads, "section_status")
     if section_status.get("schema") != "template_active_inference.sheaf_section_status_matrix.v1":
@@ -257,7 +271,14 @@ def _validate_sheaf_track_artifacts(
     if evidence.get("schema") != "template_active_inference.evidence_field_index.v1":
         issues.append("evidence_field_index.json schema mismatch")
     evidence_fields_mapped = bool(evidence.get("rows")) and all(
-        row.get("artifact") and row.get("field_present") and row.get("claim_id") for row in evidence.get("rows") or []
+        row.get("artifact")
+        and row.get("field_present")
+        and row.get("claim_id")
+        # AI-EVIDENCE-FIELDS-1: a field with no JSONPath edge or no semantic
+        # restriction is not source-backed, even if field_present is true.
+        and row.get("jsonpath_present")
+        and row.get("semantic_restriction_present")
+        for row in evidence.get("rows") or []
     )
     if evidence.get("all_fields_mapped") is not True or evidence.get("all_fields_mapped") != evidence_fields_mapped:
         issues.append("evidence_field_index.json has unmapped evidence fields")

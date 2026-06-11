@@ -192,6 +192,24 @@ def validate_integration_audit_artifacts(project_root: Path) -> list[str]:
     tokens_derived = bool(tokens.get("tokens")) and all(row.get("mapped") for row in tokens.get("tokens") or [])
     if tokens.get("all_tokens_mapped") is not True or tokens.get("all_tokens_mapped") != tokens_derived:
         issues.append("manuscript_token_provenance.json has unmapped tokens")
+    # AI-MANUSCRIPT-TOKEN-3: re-scan the manuscript independently and require the
+    # stored rendered-token set, the stored provenance-key set, and the live
+    # re-scan all to set_equal. A hand-deleted provenance row (rendered token
+    # without provenance key) or a phantom token row (provenance key never
+    # rendered) breaks the equality.
+    live_token_provenance = build_manuscript_token_provenance(root)
+    live_rendered = {str(t) for t in live_token_provenance.get("rendered_tokens") or []}
+    stored_rendered = {str(t) for t in tokens.get("rendered_tokens") or []}
+    stored_provenance_keys = {str(t) for t in tokens.get("provenance_keys") or []}
+    row_tokens = {str(row.get("token")) for row in tokens.get("tokens") or []}
+    if (
+        tokens.get("rendered_tokens_match_provenance_keys") is not True
+        or not stored_rendered
+        or stored_rendered != stored_provenance_keys
+        or stored_rendered != row_tokens
+        or stored_rendered != live_rendered
+    ):
+        issues.append("manuscript_token_provenance.json rendered tokens do not set_equal provenance keys")
     hardcoded = _load_json(root / "output" / "reports" / "manuscript_hardcoded_variable_audit.json")
     if hardcoded.get("schema") != "template_active_inference.hardcoded_variable_audit.v1":
         issues.append("manuscript_hardcoded_variable_audit.json schema mismatch")

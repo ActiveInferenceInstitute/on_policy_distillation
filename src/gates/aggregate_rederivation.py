@@ -120,7 +120,19 @@ ARTIFACT_AGGREGATE_RULES: dict[str, tuple[tuple[str, Spec], ...]] = {
         ("all_ontology_terms_declared", ("true", "ontology_declared")),
         ("all_section_terms_declared", ("true", "section_ontology_declared")),
     ),
-    "output/data/evidence_field_index.json": (("all_fields_mapped", ("true", "field_present")),),
+    "output/data/evidence_field_index.json": (
+        (
+            "all_fields_mapped",
+            (
+                "all",
+                ("true", "field_present"),
+                # AI-EVIDENCE-FIELDS-1: each evidence field must carry a JSONPath
+                # edge and a semantic restriction, not just be present on disk.
+                ("true", "jsonpath_present"),
+                ("true", "semantic_restriction_present"),
+            ),
+        ),
+    ),
     "output/data/figure_source_map.json": (
         ("all_figures_mapped", ("true", "mapped")),
         ("all_figure_metadata_complete", ("true", "metadata_complete")),

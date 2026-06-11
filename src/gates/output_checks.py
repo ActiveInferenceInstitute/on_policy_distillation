@@ -531,6 +531,10 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
             and provenance.get("all_config_digests") is True
             and provenance.get("all_source_commits") is True
             and provenance.get("all_producers_configured") is True
+            # AI-PROVENANCE-FIELDS-1: field-level lineage must be present and the
+            # per-field hashes re-derive (the validator below re-hashes each field
+            # from disk; the flag here is a presence guard, the validator is truth).
+            and provenance.get("all_field_hashes_present") is True
             and not validate_artifact_provenance(root)
         )
     if replay_path.exists():

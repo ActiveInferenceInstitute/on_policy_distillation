@@ -123,3 +123,54 @@ def test_validate_gate_rederives_parity_from_nested_rows(tmp_path: Path) -> None
         path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
     checks = validate_outputs(project_root, only={"release_bundle_manifest_schema"})
     assert checks["release_bundle_manifest_schema"] is True
+
+
+def test_live_builder_drift_exercise_fails_parity(tmp_path: Path) -> None:
+    """AI-RELEASE-PARITY-1 post-pipeline live drift exercise (synthetic tree).
+
+    Exercise the FULL ``build_release_bundle_manifest`` end-to-end: populate
+    every required source, copy them to the root output dir (simulating the
+    post-root-pipeline copy stage), then drift ONE copied output. The live
+    builder must then report ``all_copied_outputs_match_or_deferred=False`` and
+    ``all_copied_outputs_match=False``. This is the co-actor-immune synthetic
+    stand-in for a real root-pipeline run (noted in TODO AI-RELEASE-PARITY-1).
+    """
+    from roadmap_tracks.sheaf_tracks_reports import build_release_bundle_manifest
+
+    template_root, project_root = _make_template_root(tmp_path)
+    # First pass: learn which sources the manifest requires (skip pdf/web,
+    # which are render-stage deferred deliverables).
+    manifest = build_release_bundle_manifest(project_root)
+    required = [
+        row["artifact"]
+        for row in manifest["rows"]
+        if not row["artifact"].startswith(("output/pdf/", "output/web/"))
+    ]
+    assert required
+    root_out = template_root / "output" / "templates" / project_root.name
+    for rel in required:
+        src = project_root / rel
+        src.parent.mkdir(parents=True, exist_ok=True)
+        src.write_text(f'{{"artifact": "{rel}"}}', encoding="utf-8")
+        copied = root_out / Path(rel).relative_to("output")
+        copied.parent.mkdir(parents=True, exist_ok=True)
+        copied.write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
+
+    clean = build_release_bundle_manifest(project_root)
+    assert clean["copied_output_parity"]["all_copied_outputs_match"] is True
+    assert clean["all_copied_outputs_match_or_deferred"] is True
+
+    # Drift exactly one copied output post-copy.
+    drift_rel = required[0]
+    drifted_copy = root_out / Path(drift_rel).relative_to("output")
+    drifted_copy.write_text('{"artifact": "DRIFTED"}', encoding="utf-8")
+
+    drifted = build_release_bundle_manifest(project_root)
+    assert drifted["copied_output_parity"]["all_copied_outputs_match"] is False
+    assert drifted["all_copied_outputs_match_or_deferred"] is False
+    drift_row = next(
+        row for row in drifted["copied_output_parity"]["rows"] if row["artifact"] == drift_rel
+    )
+    assert drift_row["copied_exists"] is True
+    assert drift_row["hash_matches"] is False
+    assert drift_row["matches_when_copied"] is False

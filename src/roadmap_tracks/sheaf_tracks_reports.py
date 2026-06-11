@@ -68,17 +68,28 @@ def build_evidence_field_index(project_root: Path) -> dict[str, Any]:
         evidence = claim.get("evidence") or {}
         field = str(evidence.get("field") or evidence.get("jsonpath") or "")
         payload = _load_structured(root / rel)
+        # AI-EVIDENCE-FIELDS-1: every evidence field is keyed on an explicit
+        # JSONPath edge (the field's location inside the artifact) AND a semantic
+        # restriction (the gate/validator that catches that field disagreeing,
+        # going missing, or going stale). A row with no JSONPath edge or no
+        # restriction is not source-backed even if the field happens to exist.
+        validators = list((_artifact_maps()[2]).get(rel, ("validate_outputs",)))
+        jsonpath = f"$.{field}" if field else "$"
+        semantic_restriction = validators[0] if validators else ""
         rows.append(
             {
                 "claim_id": claim.get("id"),
                 "artifact": rel,
                 "field": field,
-                "jsonpath": f"$.{field}" if field else "$",
+                "jsonpath": jsonpath,
+                "jsonpath_present": bool(jsonpath),
                 "field_present": field == "" or _field_value(payload, field) is not None,
                 "manuscript_section": claim.get("section", ""),
                 "tracks": claim.get("tracks") or [],
                 "tokens": sorted(set(tokens_by_source.get(rel, []))),
-                "validators": list((_artifact_maps()[2]).get(rel, ("validate_outputs",))),
+                "validators": validators,
+                "semantic_restriction": semantic_restriction,
+                "semantic_restriction_present": bool(semantic_restriction),
             }
         )
     return {
@@ -87,7 +98,14 @@ def build_evidence_field_index(project_root: Path) -> dict[str, Any]:
         "rows": rows,
         "field_count": len(rows),
         "all_fields_mapped": bool(rows)
-        and all(row["artifact"] and row["field_present"] and row["claim_id"] for row in rows),
+        and all(
+            row["artifact"]
+            and row["field_present"]
+            and row["claim_id"]
+            and row["jsonpath_present"]
+            and row["semantic_restriction_present"]
+            for row in rows
+        ),
     }
 
 
@@ -367,6 +385,27 @@ def build_validation_dependency_graph(project_root: Path) -> dict[str, Any]:
     for claim in _claim_records(root):
         if claim.get("id") and claim.get("section"):
             edges.append({"source": str(claim["id"]), "target": str(claim["section"]), "kind": "claim_to_section"})
+    # AI-DEPENDENCY-FIELDS-1: field-level JSONPath edges. Every claim whose
+    # evidence keys into a specific artifact field gets an explicit
+    # artifact->field (JSONPath) edge, a field->claim edge, and a field->section
+    # prose-span edge. An artifact field consumed in prose with no dependency
+    # edge therefore breaks the field-level edge count re-derivation.
+    field_level_edge_count = 0
+    for claim in _claim_records(root):
+        evidence = claim.get("evidence") or {}
+        field = str(evidence.get("field") or evidence.get("jsonpath") or "")
+        rel = str(claim.get("path") or "")
+        claim_id = str(claim.get("id") or "")
+        section = str(claim.get("section") or "")
+        if not field or not rel or not claim_id:
+            continue
+        jsonpath = f"$.{field}"
+        field_node = f"{rel}#{field}"
+        edges.append({"source": rel, "target": field_node, "kind": "artifact_to_field", "jsonpath": jsonpath})
+        edges.append({"source": field_node, "target": claim_id, "kind": "field_to_claim", "jsonpath": jsonpath})
+        if section:
+            edges.append({"source": field_node, "target": section, "kind": "field_to_section", "jsonpath": jsonpath})
+        field_level_edge_count += 1
     for row in build_counterexample_matrix(root).get("rows") or []:
         edges.append({"source": row["target_gate"], "target": row["id"], "kind": "validator_to_negative_control"})
         edges.append({"source": row["id"], "target": row["observed"], "kind": "fixture_to_expected_failure"})
@@ -394,6 +433,13 @@ def build_validation_dependency_graph(project_root: Path) -> dict[str, Any]:
         for rel, producer in sorted(producers.items())
         if producer not in configured
     ]
+    # AI-DEPENDENCY-FIELDS-1: the field-level edge kinds must be present and the
+    # observed field-edge count must re-derive (3 edges per claim-with-field, or
+    # 2 when the claim has no section). A hand-deleted field edge desyncs the
+    # observed count from the re-derived expectation.
+    field_edge_kinds = ("artifact_to_field", "field_to_claim", "field_to_section")
+    field_required = list(REQUIRED_EDGE_TYPES) + list(field_edge_kinds)
+    observed_field_edges = sum(1 for edge in edges if str(edge.get("kind")) in field_edge_kinds)
     return {
         "schema": DEPENDENCY_SCHEMA,
         "schema_version": CANONICAL_SCHEMA,
@@ -401,8 +447,11 @@ def build_validation_dependency_graph(project_root: Path) -> dict[str, Any]:
         "artifacts": artifacts,
         "edges": edges,
         "edge_types": edge_types,
-        "required_edge_types": list(REQUIRED_EDGE_TYPES),
-        "all_required_edge_types_present": set(REQUIRED_EDGE_TYPES).issubset(edge_types),
+        "required_edge_types": field_required,
+        "all_required_edge_types_present": set(field_required).issubset(edge_types),
+        "field_level_edge_kinds": list(field_edge_kinds),
+        "field_level_claim_count": field_level_edge_count,
+        "field_level_edge_count": observed_field_edges,
         "issues": issues,
     }
 

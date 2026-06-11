@@ -198,11 +198,13 @@ def build_manuscript_token_provenance(project_root: Path) -> dict[str, Any]:
     rows = []
     paths = sorted((root / "manuscript").glob("*.md")) + sorted((root / "manuscript" / "sections").glob("**/*.md"))
     excluded = {"AGENTS.md", "README.md", "SYNTAX.md", "preamble.md"}
+    rendered_tokens: set[str] = set()
     for path in paths:
         if path.name in excluded:
             continue
         text = path.read_text(encoding="utf-8")
         for token in sorted(set(TOKEN_RE.findall(text))):
+            rendered_tokens.add(token)
             rows.append(
                 {
                     "section": path.relative_to(root).as_posix(),
@@ -211,11 +213,22 @@ def build_manuscript_token_provenance(project_root: Path) -> dict[str, Any]:
                     "mapped": token in variables,
                 }
             )
+    # AI-MANUSCRIPT-TOKEN-3: rendered token set (every distinct {{token}} that
+    # appears in a manuscript source and therefore renders into the hydrated
+    # output) must set_equal the provenance-key set (every distinct token a
+    # provenance row covers). A phantom row whose token is never rendered, or a
+    # rendered token whose provenance row was hand-deleted, breaks the equality.
+    provenance_keys = {str(row["token"]) for row in rows}
+    rendered_sorted = sorted(rendered_tokens)
+    provenance_sorted = sorted(provenance_keys)
     return {
         "schema": "template_active_inference.manuscript_token_provenance.v1",
         "tokens": rows,
         "token_count": len(rows),
         "all_tokens_mapped": all(row["mapped"] for row in rows),
+        "rendered_tokens": rendered_sorted,
+        "provenance_keys": provenance_sorted,
+        "rendered_tokens_match_provenance_keys": bool(rendered_tokens) and rendered_tokens == provenance_keys,
     }
 
 
