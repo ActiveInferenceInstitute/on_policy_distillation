@@ -39,11 +39,6 @@ def _numbers_equal(left: Any, right: Any, tolerance: float) -> bool:
 
 NON_SUBSTANTIVE_PREDICATES = {"exists", "file_exists", "truthy", "non_empty"}
 SUBSTANTIVE_EVIDENCE_KEYS = {
-    # A claim that names a specific `field` targets a value location (not just
-    # the artifact path), so it is NOT path-only — even with a shallow predicate
-    # like non_empty. Only FIELDLESS bare-presence evidence is path-only and
-    # requires an explicit waiver (AI-CLAIM-PREDICATE-3).
-    "field",
     "equals",
     "approx",
     "min",
@@ -232,9 +227,15 @@ def typed_claim_evidence_issues(
         predicate = str(evidence_dict.get("predicate", ""))
         has_substantive_key = any(key in evidence_dict for key in SUBSTANTIVE_EVIDENCE_KEYS)
         has_substantive_predicate = bool(predicate) and predicate not in NON_SUBSTANTIVE_PREDICATES
+        # A claim is substantive via `field` only when the field's VALUE is actually
+        # exercised by a predicate (field-presence != field-substance; a bare
+        # `field:` with no predicate locates but does not check). The predicate is
+        # already evaluated above (_evidence_spec_holds), so reaching here means it
+        # held — a field+predicate claim genuinely checked a value location.
+        has_checked_field = "field" in evidence_dict and bool(predicate)
         waiver = claim.get("waiver")
         has_waiver = isinstance(waiver, str) and bool(waiver.strip())
-        if evidence_dict and not (has_substantive_key or has_substantive_predicate or has_waiver):
+        if evidence_dict and not (has_substantive_key or has_substantive_predicate or has_checked_field or has_waiver):
             issues.append(f"{claim_id}: path-only evidence without waiver")
     return issues
 
