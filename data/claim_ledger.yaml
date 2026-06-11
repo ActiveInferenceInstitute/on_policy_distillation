@@ -1189,3 +1189,89 @@ claims:
     field: baseline_gap
     equals: 0.0
     tolerance: 1.0e-09
+- id: analytical_observable_sweep_residual_tight
+  statement: Analytical observable sweep closes every row to floating-point precision,
+    with the maximum absolute residual at or below a 1e-12 tolerance.
+  path: output/data/analytical_observable_sweep.json
+  section: methods_analytical
+  tracks:
+  - analytical
+  - manuscript
+  evidence:
+    field: max_abs_residual
+    max: 1.0e-12
+- id: correspondence_map_row_count
+  statement: The first-principles correspondence map enumerates exactly 25 distillation-to-active-inference
+    correspondence rows with zero unresolved issues.
+  path: output/data/firstprinciples/correspondence_map.json
+  section: methods_analytical
+  tracks:
+  - analytical
+  - manuscript
+  evidence:
+    field: row_count
+    equals: 25
+- id: fp_empirical_benchmark_literature_reported
+  statement: The empirical OPD benchmark is recorded as EXTERNAL literature-reported context
+    (Qwen technical report relayed by the Thinking Machines replication), never an original
+    measurement of this exemplar.
+  path: output/data/firstprinciples/empirical_benchmark.json
+  section: intro_contributions
+  tracks:
+  - scholarship
+  - manuscript
+  evidence:
+    field: source
+    equals: literature_reported
+- id: fp_energy_efe_decompositions_agree
+  statement: The energy demonstration certifies the EFE identity that risk plus ambiguity equals
+    minus (epistemic plus pragmatic) value, with both decompositions agreeing to tolerance.
+  path: output/data/firstprinciples/energy_demo.json
+  section: methods_analytical
+  tracks:
+  - analytical
+  - simulation
+  evidence:
+    field: efe.decompositions_agree
+    equals: true
+- id: fp_reward_tilting_optimal
+  statement: The reward-tilting demonstration certifies that the tilted target distribution
+    is the free-energy optimum (beats every competitor) for the canonical reward/reference pair.
+  path: output/data/firstprinciples/reward_tilting_demo.json
+  section: methods_analytical
+  tracks:
+  - analytical
+  - simulation
+  evidence:
+    field: optimality.optimal
+    equals: true
+- id: gnn_roundtrip_lossless
+  statement: The GNN round-trip report certifies lossless GNN serialization round-trips.
+  path: output/data/gnn_roundtrip_report.json
+  section: methods_pymdp
+  tracks:
+  - interop
+  - gnn
+  evidence:
+    field: all_lossless
+    equals: true
+- id: ontology_alias_index_no_conflicts
+  statement: The ontology alias index records no alias-to-canonical conflicts across registered terms.
+  path: output/data/ontology_alias_index.json
+  section: methods_pymdp
+  tracks:
+  - ontology
+  - interop
+  evidence:
+    field: no_conflicts
+    equals: true
+- id: ontology_profile_matrix_all_mapped_once
+  statement: The ontology profile matrix maps every profile row to exactly one canonical term.
+  path: output/data/ontology_profile_matrix.json
+  section: methods_pymdp
+  tracks:
+  - ontology
+  - interop
+  evidence:
+    field: all_mapped_once
+    equals: true
