@@ -53,6 +53,7 @@ __all__ = [
 #   ("all", spec, ...)           -> conjunction
 #   ("any", spec, ...)           -> disjunction
 #   ("implies", cond, then)      -> (not cond(row)) or then(row)
+#   ("recompute_ok", field)      -> row[field] == ((not forbidden) or negated or allowed)
 Spec = tuple[Any, ...]
 
 
@@ -84,6 +85,9 @@ def _eval_spec(spec: Spec, row: dict[str, Any]) -> bool:
         return any(_eval_spec(sub, row) for sub in spec[1:])
     if kind == "implies":
         return (not _eval_spec(spec[1], row)) or _eval_spec(spec[2], row)
+    if kind == "recompute_ok":
+        expected = (not bool(row.get("has_forbidden_wording"))) or row.get("is_negated") is True or row.get("allowed") is True
+        return row.get(spec[1]) is expected
     raise ValueError(f"unknown predicate spec kind: {kind!r}")
 
 
@@ -231,7 +235,7 @@ ARTIFACT_AGGREGATE_RULES: dict[str, tuple[tuple[str, Spec], ...]] = {
         ),
     ),
     "output/reports/replay_matrix.json": (("all_replay_rows_matched", ("true", "matched")),),
-    "output/reports/scope_boundary_audit.json": (("all_current_claims_toy", ("true", "ok")),),
+    "output/reports/scope_boundary_audit.json": (("all_current_claims_toy", ("recompute_ok", "ok")),),
     "output/reports/stale_artifact_report.json": (("all_fresh", ("true", "fresh")),),
 }
 

@@ -587,7 +587,16 @@ def build_scope_boundary_audit(project_root: Path) -> dict[str, Any]:
         negated = "not empirical" in text or "future" in text
         allowed = path.name in allowed_future_files
         ok = not forbidden or negated or allowed
-        rows.append({"section": path.name, "classification": "toy_or_future", "ok": ok})
+        rows.append(
+            {
+                "section": path.name,
+                "classification": "toy_or_future",
+                "has_forbidden_wording": forbidden,
+                "is_negated": negated,
+                "allowed": allowed,
+                "ok": ok,
+            }
+        )
         if not ok:
             violations.append(path.name)
     return {

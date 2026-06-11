@@ -12,7 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from gates.output_checks import _gate_index_binding
-from roadmap_tracks.integration_audit_builders import GATE_INDEX_ROWS, build_validation_gate_index
+from roadmap_tracks.integration_audit_builders import GATE_INDEX_ROWS, _rows_fully_specified, build_validation_gate_index
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -50,6 +50,7 @@ def _index_payload() -> dict:
 def test_gate_index_derives_indexed_from_disk() -> None:
     payload = _index_payload()
     assert payload["all_indexed"] is True
+    assert payload["all_rows_fully_specified"] is True
     assert all(row["inputs_exist"] for row in payload["rows"])
 
 
@@ -83,6 +84,14 @@ def test_empty_rows_fail_binding() -> None:
     assert _gate_index_binding({"rows": []}, LIVE_CHECK_KEYS) is False
 
 
+def test_gate_index_empty_command_fails_full_specification() -> None:
+    payload = _index_payload()
+    assert payload["all_rows_fully_specified"] is True
+    mutated = [dict(row) for row in payload["rows"]]
+    mutated[0]["command"] = ""
+    assert _rows_fully_specified(mutated) is False
+
+
 def test_registry_ids_are_unique() -> None:
-    ids = [gate_id for gate_id, _ in GATE_INDEX_ROWS]
+    ids = [gate_id for gate_id, *_ in GATE_INDEX_ROWS]
     assert len(ids) == len(set(ids))

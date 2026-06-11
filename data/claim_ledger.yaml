@@ -9,6 +9,9 @@ claims:
   evidence:
     field: tracks
     predicate: non_empty
+  waiver: Presence/non-empty check is intentionally shallow here; the registry's
+    full track schema and compose-order semantics are validated by the sheaf
+    manifest/coverage gates, which fail closed on malformed track definitions.
 - id: sheaf_manifest
   statement: IMRAD section manifest binds track fragments for composition.
   path: manuscript/sheaf/manifest.yaml
@@ -19,6 +22,9 @@ claims:
   evidence:
     field: sections
     predicate: non_empty
+  waiver: Presence/non-empty check is intentionally shallow here; the manifest's
+    IMRAD section-to-fragment bindings are fully validated by the sheaf manifest
+    loader and composition gates, which fail closed on malformed bindings.
 - id: sheaf_coverage_config
   statement: Coverage report and heatmap settings are configurable.
   path: manuscript/sheaf/coverage.yaml
@@ -29,6 +35,9 @@ claims:
   evidence:
     field: heatmap
     predicate: non_empty
+  waiver: Presence/non-empty check is intentionally shallow here; the coverage
+    config's heatmap settings are consumed and validated by the coverage-matrix
+    and heatmap-render gates, which fail closed on malformed settings.
 - id: sheaf_coverage_matrix
   statement: Coverage matrix JSON reflects manifest track bindings with IMRAD metadata.
   path: output/data/sheaf_coverage_matrix.json
@@ -39,6 +48,9 @@ claims:
   evidence:
     field: sections
     predicate: non_empty
+  waiver: Non-empty field check is intentionally shallow here; the coverage
+    matrix's full IMRAD metadata and gray-cell count are re-derived by the
+    coverage_no_gray claim and validate_coverage_json_data, which fail closed.
 - id: sheaf_gluing_certificate
   statement: Semantic gluing certificate records cross-track symbols and typed claims.
   path: output/data/sheaf_gluing_certificate.json
@@ -93,6 +105,9 @@ claims:
   - sheaf
   evidence:
     predicate: file_exists
+  waiver: Presence-only by design; this is a rendered visual artifact whose pixel
+    content is validated by the figure_source_map and figure_hash_manifest gates,
+    not by the claim ledger.
 - id: artifact_provenance_spine
   statement: Artifact provenance spine records hashes and configured producers for
     core outputs.
@@ -148,6 +163,9 @@ claims:
   - manuscript
   evidence:
     predicate: file_exists
+  waiver: Presence-only by design; this is a rendered visual artifact whose pixel
+    content is validated by the figure_source_map and figure_hash_manifest gates,
+    not by the claim ledger.
 - id: coverage_no_gray
   statement: Coverage matrix JSON has zero gray cells on a clean tree.
   path: output/data/sheaf_gluing_certificate.json
@@ -166,6 +184,9 @@ claims:
   - manuscript
   evidence:
     predicate: file_exists
+  waiver: Presence-only by design; this composed IMRAD section file's content is
+    validated by the sheaf composition and manuscript_staleness gates, which fail
+    closed on missing fragments or stale hydrated variables.
 - id: composed_methods_analytical
   statement: Composed Methods analytical subsection exists for PDF pipeline.
   path: manuscript/05_methods_analytical.md
@@ -175,6 +196,9 @@ claims:
   - manuscript
   evidence:
     predicate: file_exists
+  waiver: Presence-only by design; this composed IMRAD section file's content is
+    validated by the sheaf composition and manuscript_staleness gates, which fail
+    closed on missing fragments or stale hydrated variables.
 - id: composed_results_mi
   statement: Composed Results MI sweep subsection exists for PDF pipeline.
   path: manuscript/10_results_mi_sweep.md
@@ -185,6 +209,9 @@ claims:
   - manuscript
   evidence:
     predicate: file_exists
+  waiver: Presence-only by design; this composed IMRAD section file's content is
+    validated by the sheaf composition and manuscript_staleness gates, which fail
+    closed on missing fragments or stale hydrated variables.
 - id: composed_appendix_full_sheaf
   statement: Appendix binds and composes appendix_sheaf_track_count fragment track
     types from the live manifest.
@@ -216,6 +243,9 @@ claims:
   evidence:
     field: steps
     predicate: non_empty
+  waiver: Non-empty field check is intentionally shallow here; the trace's
+    per-step beliefs/actions and its length-vs-summary consistency are re-derived
+    by the si_trace_present output_checks gate, which fails closed.
 - id: si_policy_comparison
   statement: Policy comparison artifact records state and policy inference comparison
     rows.
@@ -283,6 +313,9 @@ claims:
   evidence:
     field: steps
     predicate: non_empty
+  waiver: Non-empty field check is intentionally shallow here; the graph-world
+    trace's per-step states and its summary-step-count agreement are re-derived
+    by the si_graph_world_trace_consistency claim, which fails closed.
 - id: si_graph_world_trace_consistency
   statement: Graph-world summary step count agrees with trace length.
   path: output/data/sheaf_gluing_certificate.json
@@ -303,6 +336,9 @@ claims:
   - pymdp
   evidence:
     predicate: file_exists
+  waiver: Presence-only by design; this is a rendered visual artifact whose pixel
+    content is validated by the figure_source_map and figure_hash_manifest gates,
+    not by the claim ledger.
 - id: si_belief_trajectory_gif
   statement: Belief trajectory GIF is generated from multi-step trace artifacts.
   path: output/figures/si_belief_trajectory.gif
@@ -312,6 +348,9 @@ claims:
   - visualization
   evidence:
     predicate: file_exists
+  waiver: Presence-only by design; this animated visual artifact's adjacent-frame
+    deltas are validated by the animation_frame_deltas gate, not by the claim
+    ledger.
 - id: composed_discussion
   statement: Discussion outlook section binds simulation and ontology tracks.
   path: manuscript/15_discussion_outlook.md
@@ -322,6 +361,9 @@ claims:
   - manuscript
   evidence:
     predicate: file_exists
+  waiver: Presence-only by design; this composed IMRAD section file's content is
+    validated by the sheaf composition and manuscript_staleness gates, which fail
+    closed on missing fragments or stale hydrated variables.
 - id: sheaf_layers_overview
   statement: Main-body sheaf layers overview figure combines registry stack and binding
     heatmap.
@@ -332,6 +374,9 @@ claims:
   - sheaf
   evidence:
     predicate: file_exists
+  waiver: Presence-only by design; this is a rendered visual artifact whose pixel
+    content is validated by the figure_source_map and figure_hash_manifest gates,
+    not by the claim ledger.
 - id: lean_graph_world_policy_boundary
   statement: Lean boundary includes finite graph-world reachability and policy-enumeration
     witnesses.
@@ -353,6 +398,9 @@ claims:
   - sheaf
   evidence:
     predicate: file_exists
+  waiver: Presence-only by design; this composed IMRAD section file's content is
+    validated by the sheaf composition and manuscript_staleness gates, which fail
+    closed on missing fragments or stale hydrated variables.
 - id: sensitivity_complete_grid
   statement: Sensitivity track records a complete deterministic toy grid.
   path: output/data/sensitivity_sweep.json
@@ -946,6 +994,9 @@ claims:
   - visualization
   evidence:
     predicate: file_exists
+  waiver: Presence-only by design; this is a rendered visual artifact whose pixel
+    content is validated by the figure_source_map and figure_hash_manifest gates,
+    not by the claim ledger.
 - id: release_attestation_complete
   statement: Release attestation binds validation, bundle hash, license audit, semantic
     certificate, and blocked-scope status.
@@ -990,6 +1041,10 @@ claims:
   evidence:
     field: teacher_belief_entropies
     predicate: non_empty
+  waiver: Non-empty field check is intentionally shallow here; the per-decision
+    entropy series length is horizon/run-dependent (no fixed expected count to
+    pin), and the inferential statistics that derive from this series carry their
+    own substantive claim-ledger gates.
 - id: fp_parallel_frameworks_agree
   statement: The two-framework parallel demonstration certifies that the jax-distilled
     student matches the active-inference posterior within tolerance.

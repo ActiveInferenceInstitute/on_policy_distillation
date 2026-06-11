@@ -403,39 +403,208 @@ def build_claim_evidence_audit(project_root: Path) -> dict[str, Any]:
     }
 
 
-#: Declarative gate-index registry: (gate id, required input paths). The id
+#: Declarative gate-index registry:
+#: (gate id, required input paths, command, output, negative control). The id
 #: must bind to the live validator surface — ``validate_outputs`` re-derives
 #: the binding at read time (``validation_gate_index_binding``), so a phantom
 #: row here fails validation instead of silently inflating the index.
-GATE_INDEX_ROWS: tuple[tuple[str, tuple[str, ...]], ...] = (
-    ("validate_outputs", ("output/data", "output/reports")),
-    ("aggregate_rederivation", ("output/data", "output/reports")),
-    ("validate_manuscript", ("manuscript/sheaf", "output/manuscript")),
-    ("semantic_sheaf_gluing", ("output/data/sheaf_gluing_certificate.json",)),
-    ("typed_claim_evidence", ("data/claim_ledger.yaml",)),
-    ("manuscript_staleness_report", ("output/manuscript", "output/data/manuscript_variables.json")),
-    ("animation_frame_deltas", ("output/figures/si_belief_trajectory.gif",)),
-    ("pymdp_runtime_diagnostics", ("output/reports/pymdp_runtime_diagnostics.json",)),
-    ("pymdp_policy_posterior_grid", ("output/data/pymdp_policy_posterior_grid.json",)),
-    ("analytical_assumption_index", ("output/data/analytical_assumption_index.json",)),
-    ("canonical_sheaf_tracks", ("output/data/track_improvement_scope.json",)),
-    ("release_bundle_manifest", ("output/reports/release_bundle_manifest.json",)),
-    ("evidence_field_index", ("output/data/evidence_field_index.json",)),
-    ("theorem_traceability_matrix", ("output/data/theorem_traceability_matrix.json",)),
-    ("artifact_diffoscope", ("output/reports/artifact_diffoscope.json",)),
-    ("proof_extraction_index", ("output/data/proof_extraction_index.json",)),
-    ("state_space_catalog", ("output/data/state_space_catalog.json",)),
-    ("causal_ablation_matrix", ("output/data/causal_ablation_matrix.json",)),
-    ("artifact_license_audit", ("output/reports/artifact_license_audit.json",)),
-    ("release_notes_evidence", ("output/reports/release_notes_evidence.json",)),
-    ("proof_dependency_graph", ("output/data/proof_dependency_graph.json",)),
-    ("state_transition_table", ("output/data/state_transition_table.json",)),
-    ("ablation_sensitivity_report", ("output/reports/ablation_sensitivity_report.json",)),
-    ("release_attestation", ("output/reports/release_attestation.json",)),
-    ("track_improvement_scope", ("output/data/track_improvement_scope.json",)),
-    ("blocked_scope_manifest", ("output/reports/blocked_scope_manifest.json",)),
-    ("lake_build", ("lean/lakefile.lean",)),
+GATE_INDEX_ROWS: tuple[tuple[str, tuple[str, ...], str, str, str], ...] = (
+    (
+        "validate_outputs",
+        ("output/data", "output/reports"),
+        "uv run python scripts/validate_outputs.py",
+        "validate_outputs check map over generated output artifacts",
+        "remove a required output artifact or falsify a stored schema boolean",
+    ),
+    (
+        "aggregate_rederivation",
+        ("output/data", "output/reports"),
+        "uv run python -c \"from gates.aggregate_rederivation import aggregates_consistent; import pathlib; raise SystemExit(0 if aggregates_consistent(pathlib.Path('.')) else 1)\"",
+        "stored all_* aggregates agree with row-level re-derivations",
+        "mutate a row while leaving the stored all_* flag unchanged",
+    ),
+    (
+        "validate_manuscript",
+        ("manuscript/sheaf", "output/manuscript"),
+        "uv run python scripts/compose_manuscript.py --validate-only --strict",
+        "strict manuscript compose validation across the sheaf tree",
+        "delete a bound manuscript fragment or inject an unknown token",
+    ),
+    (
+        "semantic_sheaf_gluing",
+        ("output/data/sheaf_gluing_certificate.json",),
+        "uv run python scripts/validate_manuscript.py",
+        "semantic sheaf gluing certificate and cross-track restrictions",
+        "drop a required symbol or force cross-track disagreement in the certificate",
+    ),
+    (
+        "typed_claim_evidence",
+        ("data/claim_ledger.yaml",),
+        "uv run python scripts/validate_manuscript.py",
+        "typed claim evidence ledger for manuscript-facing claims",
+        "point a claim at a missing artifact or contradict its evidence predicate",
+    ),
+    (
+        "manuscript_staleness_report",
+        ("output/manuscript", "output/data/manuscript_variables.json"),
+        "uv run python scripts/generate_integration_audit.py",
+        "output/reports/manuscript_staleness_report.json",
+        "mutate resolved markdown while leaving all_fresh true",
+    ),
+    (
+        "animation_frame_deltas",
+        ("output/figures/si_belief_trajectory.gif",),
+        "uv run python scripts/render_animation.py",
+        "output/data/animation_frame_deltas.json",
+        "replace a delta row with zero change while leaving all_nonzero true",
+    ),
+    (
+        "pymdp_runtime_diagnostics",
+        ("output/reports/pymdp_runtime_diagnostics.json",),
+        "uv run python scripts/simulate_si_tmaze.py --comparison",
+        "output/reports/pymdp_runtime_diagnostics.json",
+        "inject an unexpected runtime warning while keeping the summary clean",
+    ),
+    (
+        "pymdp_policy_posterior_grid",
+        ("output/data/pymdp_policy_posterior_grid.json",),
+        "uv run python scripts/simulate_si_tmaze.py --comparison",
+        "output/data/pymdp_policy_posterior_grid.json",
+        "delete one configured planner-seed cell or unnormalize q_pi in an available row",
+    ),
+    (
+        "analytical_assumption_index",
+        ("output/data/analytical_assumption_index.json",),
+        "uv run python scripts/generate_toy_sweep_tracks.py",
+        "output/data/analytical_assumption_index.json",
+        "blank an equation_id or assumptions list while leaving all_equations_indexed true",
+    ),
+    (
+        "canonical_sheaf_tracks",
+        ("output/data/track_improvement_scope.json",),
+        "uv run python scripts/generate_sheaf_tracks.py",
+        "canonical promoted sheaf-track artifact bundle",
+        "remove a required promoted track artifact from the canonical bundle",
+    ),
+    (
+        "release_bundle_manifest",
+        ("output/reports/release_bundle_manifest.json",),
+        "uv run python scripts/generate_sheaf_tracks.py",
+        "output/reports/release_bundle_manifest.json",
+        "drop a required release artifact row while leaving all_artifacts_present true",
+    ),
+    (
+        "evidence_field_index",
+        ("output/data/evidence_field_index.json",),
+        "uv run python scripts/generate_sheaf_tracks.py",
+        "output/data/evidence_field_index.json",
+        "clear a mapped evidence field while leaving all_fields_mapped true",
+    ),
+    (
+        "theorem_traceability_matrix",
+        ("output/data/theorem_traceability_matrix.json",),
+        "uv run python scripts/generate_sheaf_tracks.py",
+        "output/data/theorem_traceability_matrix.json",
+        "remove a theorem trace row while leaving all_rows_traced true",
+    ),
+    (
+        "artifact_diffoscope",
+        ("output/reports/artifact_diffoscope.json",),
+        "uv run python scripts/generate_integration_audit.py",
+        "output/reports/artifact_diffoscope.json",
+        "flip a row equal=false while leaving all_equal true",
+    ),
+    (
+        "proof_extraction_index",
+        ("output/data/proof_extraction_index.json",),
+        "uv run python scripts/generate_sheaf_tracks.py",
+        "output/data/proof_extraction_index.json",
+        "remove an extracted theorem row while leaving all_extracted true",
+    ),
+    (
+        "state_space_catalog",
+        ("output/data/state_space_catalog.json",),
+        "uv run python scripts/generate_sheaf_tracks.py",
+        "output/data/state_space_catalog.json",
+        "clear a state identifier while leaving all_states_cataloged true",
+    ),
+    (
+        "causal_ablation_matrix",
+        ("output/data/causal_ablation_matrix.json",),
+        "uv run python scripts/generate_sheaf_tracks.py",
+        "output/data/causal_ablation_matrix.json",
+        "mark a row non-deterministic while leaving all_deterministic true",
+    ),
+    (
+        "artifact_license_audit",
+        ("output/reports/artifact_license_audit.json",),
+        "uv run python scripts/generate_integration_audit.py",
+        "output/reports/artifact_license_audit.json",
+        "blank a license source row while leaving all_licenses_resolved true",
+    ),
+    (
+        "release_notes_evidence",
+        ("output/reports/release_notes_evidence.json",),
+        "uv run python scripts/generate_integration_audit.py",
+        "output/reports/release_notes_evidence.json",
+        "delete a cited release-note row while leaving all_release_notes_backed true",
+    ),
+    (
+        "proof_dependency_graph",
+        ("output/data/proof_dependency_graph.json",),
+        "uv run python scripts/generate_sheaf_tracks.py",
+        "output/data/proof_dependency_graph.json",
+        "remove a required dependency edge while leaving all_dependencies_resolved true",
+    ),
+    (
+        "state_transition_table",
+        ("output/data/state_transition_table.json",),
+        "uv run python scripts/generate_toy_sweep_tracks.py",
+        "output/data/state_transition_table.json",
+        "drop a transition row while leaving all_rows_total true",
+    ),
+    (
+        "ablation_sensitivity_report",
+        ("output/reports/ablation_sensitivity_report.json",),
+        "uv run python scripts/generate_toy_sweep_tracks.py",
+        "output/reports/ablation_sensitivity_report.json",
+        "set a sensitivity row unexplained while leaving all_rows_explained true",
+    ),
+    (
+        "release_attestation",
+        ("output/reports/release_attestation.json",),
+        "uv run python scripts/run_full_chain.py --tail-only",
+        "output/reports/release_attestation.json",
+        "contradict one attested dependency while leaving attestation_complete true",
+    ),
+    (
+        "track_improvement_scope",
+        ("output/data/track_improvement_scope.json",),
+        "uv run python scripts/generate_sheaf_tracks.py",
+        "output/data/track_improvement_scope.json",
+        "mark a blocked track live while leaving all_live_tracks_valid true",
+    ),
+    (
+        "blocked_scope_manifest",
+        ("output/reports/blocked_scope_manifest.json",),
+        "uv run python scripts/generate_sheaf_tracks.py",
+        "output/reports/blocked_scope_manifest.json",
+        "flip a blocked row to unblocked while leaving all_blocked true",
+    ),
+    (
+        "lake_build",
+        ("lean/lakefile.lean",),
+        "cd lean && lake build",
+        "Lean theorem inventory and lake build status",
+        "introduce a sorry theorem or break the Lean build graph",
+    ),
 )
+
+
+def _rows_fully_specified(rows: list[dict[str, Any]]) -> bool:
+    return bool(rows) and all(
+        bool(str(row.get(field, "")).strip()) for row in rows for field in ("command", "output", "negative_control")
+    )
 
 
 def build_validation_gate_index(project_root: Path) -> dict[str, Any]:
@@ -446,12 +615,15 @@ def build_validation_gate_index(project_root: Path) -> dict[str, Any]:
     """
     root = project_root.resolve()
     rows = []
-    for gate_id, inputs in GATE_INDEX_ROWS:
+    for gate_id, inputs, command, output, negative_control in GATE_INDEX_ROWS:
         inputs_exist = all((root / rel).exists() for rel in inputs)
         rows.append(
             {
                 "id": gate_id,
                 "inputs": list(inputs),
+                "command": command,
+                "output": output,
+                "negative_control": negative_control,
                 "inputs_exist": inputs_exist,
                 "indexed": inputs_exist,
             }
@@ -461,4 +633,5 @@ def build_validation_gate_index(project_root: Path) -> dict[str, Any]:
         "rows": rows,
         "gate_count": len(rows),
         "all_indexed": bool(rows) and all(row["indexed"] for row in rows),
+        "all_rows_fully_specified": _rows_fully_specified(rows),
     }

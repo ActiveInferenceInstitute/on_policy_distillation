@@ -37,10 +37,29 @@ def _numbers_equal(left: Any, right: Any, tolerance: float) -> bool:
     return bool(left == right)
 
 
-def _predicate_holds(value: Any, predicate: str) -> bool:
+NON_SUBSTANTIVE_PREDICATES = {"exists", "file_exists", "truthy", "non_empty"}
+SUBSTANTIVE_EVIDENCE_KEYS = {
+    "equals",
+    "approx",
+    "min",
+    "max",
+    "contains",
+    "set_equals",
+    "len_equals",
+    "len_min",
+    "all",
+    "any",
+    "equals_difference",
+    "leq_field",
+    "matches_artifact_field",
+}
+
+
+def _predicate_holds(value: Any, predicate: str, *, root: Path | None = None) -> bool:
     if predicate == "exists":
         return value is not None
     if predicate == "file_exists":
+        _ = root
         return bool(value)
     if predicate == "truthy":
         return bool(value)
@@ -149,7 +168,7 @@ def _evidence_spec_holds(value: Any, evidence: dict[str, Any], *, root: Path | N
         if not any(_evidence_spec_holds(item, nested, root=root) for item in value):
             return False
     predicate = evidence.get("predicate")
-    if predicate and not _predicate_holds(value, str(predicate)):
+    if predicate and not _predicate_holds(value, str(predicate), root=root):
         return False
     return True
 
@@ -173,6 +192,7 @@ def typed_claim_evidence_issues(
     skipped = skip_paths or set()
     for claim in ledger.get("claims") or []:
         claim_id = str(claim.get("id") or "<unknown>")
+        issue_count_before_claim = len(issues)
         rel = claim.get("path")
         if not rel:
             issues.append(f"{claim_id}: missing path")
@@ -201,6 +221,16 @@ def typed_claim_evidence_issues(
                 issues.append(f"{claim_id}: evidence predicate failed for {rel}")
         if "tracks" in claim and not claim.get("tracks"):
             issues.append(f"{claim_id}: tracks must not be empty")
+        if len(issues) != issue_count_before_claim:
+            continue
+        evidence_dict = evidence if isinstance(evidence, dict) else {}
+        predicate = str(evidence_dict.get("predicate", ""))
+        has_substantive_key = any(key in evidence_dict for key in SUBSTANTIVE_EVIDENCE_KEYS)
+        has_substantive_predicate = bool(predicate) and predicate not in NON_SUBSTANTIVE_PREDICATES
+        waiver = claim.get("waiver")
+        has_waiver = isinstance(waiver, str) and bool(waiver.strip())
+        if evidence_dict and not (has_substantive_key or has_substantive_predicate or has_waiver):
+            issues.append(f"{claim_id}: path-only evidence without waiver")
     return issues
 
 

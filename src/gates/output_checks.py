@@ -235,14 +235,20 @@ def _validate_outputs_selected(root: Path, selected: set[str]) -> dict[str, bool
         )
 
     if "pymdp_policy_posterior_grid_schema" in selected:
+        from simulation.pymdp_config import load_pymdp_config
+
+        cfg = load_pymdp_config(root)
         posterior = _read_json(root / "output" / "data" / "pymdp_policy_posterior_grid.json")
         rows = posterior.get("rows") or []
+        actual_cells = {(row.get("planner"), row.get("seed")) for row in rows}
         checks["pymdp_policy_posterior_grid_schema"] = (
             posterior.get("schema") == "template_active_inference.pymdp_policy_posterior_grid.v1"
             and bool(rows)
             and posterior.get("scope") == "comparison_only"
             and posterior.get("all_available_posteriors_normalized") is True
             and posterior.get("all_unavailable_rows_explained") is True
+            and actual_cells == {(planner, seed) for planner in cfg.validation_comparison.planners for seed in cfg.validation_comparison.seeds}
+            and all(row.get("horizon") == cfg.planning_horizon for row in rows)
             and all(
                 (not row.get("posterior_available")) or abs(float(sum(row.get("q_pi") or [])) - 1.0) <= 1e-9
                 for row in rows
@@ -669,7 +675,9 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
         and int(hardcoded_variables.get("issue_count", 0) or 0) == 0
     )
     checks["claim_evidence_audit_schema"] = claim_audit.get("all_claims_typed") is True
-    checks["validation_gate_index_schema"] = gate_index.get("all_indexed") is True
+    checks["validation_gate_index_schema"] = (
+        gate_index.get("all_indexed") is True and gate_index.get("all_rows_fully_specified") is True
+    )
     checks["sheaf_section_status_matrix_schema"] = (
         section_status.get("schema") == "template_active_inference.sheaf_section_status_matrix.v1"
         and section_status.get("all_bound_fragments_present") is True

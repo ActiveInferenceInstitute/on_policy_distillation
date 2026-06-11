@@ -251,3 +251,26 @@ def test_validate_outputs_rejects_unnormalized_policy_posterior(project_root: Pa
         path.write_text(original, encoding="utf-8")
 
     assert checks["pymdp_policy_posterior_grid_schema"] is False
+
+
+@pytest.mark.render_slow
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_validate_outputs_rejects_missing_grid_cell(project_root: Path) -> None:
+    from gates.validation import validate_outputs
+    from simulation.si_artifacts import write_policy_comparison, write_policy_posterior_grid
+
+    write_policy_comparison(project_root)
+    path = write_policy_posterior_grid(project_root)
+    baseline = validate_outputs(project_root, only={"pymdp_policy_posterior_grid_schema"})
+    assert baseline["pymdp_policy_posterior_grid_schema"] is True
+    original = path.read_text(encoding="utf-8")
+    try:
+        payload = json.loads(original)
+        payload["rows"] = [row for row in payload["rows"] if row["planner"] != "vanilla"]
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        checks = validate_outputs(project_root, only={"pymdp_policy_posterior_grid_schema"})
+    finally:
+        path.write_text(original, encoding="utf-8")
+
+    assert checks["pymdp_policy_posterior_grid_schema"] is False

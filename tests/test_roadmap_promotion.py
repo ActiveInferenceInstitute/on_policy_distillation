@@ -692,3 +692,50 @@ def test_promoted_claims_have_falsifiable_negative_controls(project_root: Path) 
             )
         finally:
             path.write_text(original, encoding="utf-8")
+
+
+def test_path_only_claim_without_waiver_is_flagged(project_root: Path, tmp_path: Path) -> None:
+    from gates.claim_ledger import typed_claim_evidence_issues
+
+    artifact = tmp_path / "output" / "data" / "present.json"
+    artifact.parent.mkdir(parents=True, exist_ok=True)
+    artifact.write_text(json.dumps({"status": "ok"}) + "\n", encoding="utf-8")
+    ledger = tmp_path / "claim_ledger.yaml"
+    ledger.write_text(
+        "\n".join(
+            [
+                "claims:",
+                "  - id: path_only_presence",
+                "    statement: Synthetic path-only evidence claim.",
+                "    path: output/data/present.json",
+                "    tracks: [sheaf]",
+                "    evidence:",
+                "      predicate: file_exists",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    issues = typed_claim_evidence_issues(tmp_path, ledger_path=ledger)
+    assert "path_only_presence: path-only evidence without waiver" in issues
+
+    ledger.write_text(
+        "\n".join(
+            [
+                "claims:",
+                "  - id: path_only_presence",
+                "    statement: Synthetic path-only evidence claim.",
+                "    path: output/data/present.json",
+                "    tracks: [sheaf]",
+                "    waiver: Presence-only smoke check; semantics are validated elsewhere in this synthetic control.",
+                "    evidence:",
+                "      predicate: file_exists",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    assert typed_claim_evidence_issues(tmp_path, ledger_path=ledger) == []
+    live_issues = typed_claim_evidence_issues(project_root)
+    assert not [issue for issue in live_issues if "path-only evidence without waiver" in issue]

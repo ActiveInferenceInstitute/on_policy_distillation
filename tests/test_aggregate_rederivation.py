@@ -29,6 +29,8 @@ def _spec_fields(spec: tuple) -> set[str]:
         return {spec[1]}
     if kind == "fields_equal":
         return {spec[1], spec[2]}
+    if kind == "recompute_ok":
+        return {spec[1], "has_forbidden_wording", "is_negated", "allowed"}
     if kind in {"all", "any"}:
         return set().union(*(_spec_fields(sub) for sub in spec[1:]))
     if kind == "implies":
@@ -159,6 +161,31 @@ def test_lying_flag_caught_conditional_posterior_grid(project_root: Path, tmp_pa
         for r in rows
         if r["artifact"] == rel and r["aggregate"] == "all_available_posteriors_normalized"
     ]
+    assert lying and not lying[0]["consistent"]
+
+
+def test_scope_boundary_wording_mutation_caught(project_root: Path, tmp_path: Path) -> None:
+    rel = "output/reports/scope_boundary_audit.json"
+    scope_spec = ARTIFACT_AGGREGATE_RULES[rel][0][1]
+    live_payload = json.loads((project_root / rel).read_text(encoding="utf-8"))
+    assert rederive_aggregate(live_payload, scope_spec) is True
+
+    payload = json.loads(json.dumps(live_payload))
+    payload["all_current_claims_toy"] = True
+    payload["rows"][0] = {
+        **payload["rows"][0],
+        "has_forbidden_wording": True,
+        "is_negated": False,
+        "allowed": False,
+        "ok": True,
+    }
+
+    assert rederive_aggregate(payload, scope_spec) is False
+
+    root = _isolated_copy(project_root, tmp_path, [rel])
+    (root / rel).write_text(json.dumps(payload), encoding="utf-8")
+    rows = aggregate_rederivation_rows(root)
+    lying = [row for row in rows if row["artifact"] == rel and row["aggregate"] == "all_current_claims_toy"]
     assert lying and not lying[0]["consistent"]
 
 
