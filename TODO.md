@@ -19,6 +19,49 @@ artifacts, and a blocked empirical boundary. Live proofs belong in the registry,
 project docs, generated certificates, `output/data/track_improvement_scope.json`,
 and output reports rather than repeated here as completed TODO work.
 
+## Status & what's needed from here (2026-06-11, after Runs 10–11)
+
+**The project is mature and green — nothing here is blocking.** Full suite
+`483 passed / 0 failed` across the chunked runner; `validate_outputs` ALL TRUE
+(reproduced across two independent clean regenerations); eleven hardening runs.
+Runs 10–11 landed **7 promotion chains** (each: production-path gate in
+`_validate_outputs_full` + a biting negative control + write-path verification +
+Forge GPT-5.4 cross-vendor PASS): `AI-PYMDP-POLICY-3`, `AI-PYMDP-RUNTIME-3`,
+`AI-GNN-SHAPE-3`, `AI-ANIMATION-HASH-2`, `AI-CLAIM-PREDICATE-3`, `AI-SCOPE-ROWS-1`,
+`AI-GATE-INDEX-3` (see their LANDED notes below).
+
+What remains is **optional future deepening or externally-gated**, in priority order:
+
+1. **Needs a human decision / external input (cannot proceed unilaterally):**
+   - *Venue/submission decision* → unblocks `REVIEW-FIGURE-RELOCATION-1` (move dense
+     dashboard figures to a supplement) and `TMAZE-MATRIX-TABLE-1` (typeset table vs
+     figure). Deliberately not done: current genre is an auditable artifact paper.
+   - *Primary Qwen3 report PDF* → `QWEN-TABLE-PIN-1` (pin the external OPD-vs-RL values
+     to an exact table/figure locator; must be verified against the source PDF, never
+     fabricated).
+   - *Publish decision* — this exemplar is LOCAL-ONLY by design; if publishing, the
+     release path is reserve-DOI-first → GitHub release → Zenodo (out of TODO scope).
+2. **Additive deepening (doable in a future session, medium value, under the promotion rule):**
+   - Integration field-level rows: `AI-DEPENDENCY-FIELDS-1`, `AI-PROVENANCE-FIELDS-1`,
+     `AI-EVIDENCE-FIELDS-1` (JSONPath/prose-span edges, field-level lineage),
+     `AI-SYMBOL-SPINE-3` (manuscript-variable + figure-label + Lean-name joins),
+     `AI-SEMANTIC-CLASSIFIED-1` (typed restriction classes + proof obligations).
+   - `AI-MANUSCRIPT-TOKEN-3` (rendered↔provenance token `set_equals`),
+     `AI-RELEASE-PARITY-1` (post-root-pipeline live drift exercise).
+   - `AI-ONTOLOGY-PROFILE-3` — **low value / high risk** (needs a graph-world GNN +
+     true uniqueness check; current artifact is a name-matched shell). Consider
+     descoping rather than building.
+   - Future sheaf tracks (`proof_dependency_graph`, `state_transition_table`,
+     `ablation_sensitivity_report`, `release_attestation`) — some artifacts already
+     exist; promotion needs the full 7-part chain + manuscript binding before going live.
+3. **Environment-gated maintenance:** `AI-TEST-ISOLATION-1` — the 5-consecutive-run
+   idle-host soak needs an idle host (the codex co-actor's continuous short pytest
+   bursts make the host non-idle); the chunked runner already isolates the
+   `mutates_artifacts` class, so this is confirmation, not a fix.
+4. **Intentionally blocked (do NOT build without the unblock artifacts + gates):** all
+   rows under "Blocked scope" — empirical/biological, private data, network-dependent,
+   LLM-generated evidence, non-toy claims.
+
 ## Promotion rule
 
 A future capability becomes live only after every row below is satisfied in the
@@ -45,7 +88,7 @@ implementation begins.
 | `AI-PYMDP-POLICY-3` | PyMDP/T-maze | Add measured policy posterior summaries for every configured mode/horizon/seed cell. *Run-6 audit: PARTIAL — 14-row grid covers the full configured planner×seed×horizon set, per-row 1e-9 normalization re-derived at validate, unnormalized negative control live; grid set_equals lives on the sibling `si_policy_comparison` artifact and no test deletes a grid cell* **Run-10 LANDED (2026-06-11, c1ca822+eecf581): production `_validate_outputs_full` re-derives the expected planner×seed grid from config + horizon check + `set_equals`; cell-deletion NC bites `validate_outputs(root)` full path (Forge GPT-5.4 cross-vendor PASS — caught+fixed an initial lazy-path-only green-wash)** | `output/data/pymdp_policy_posterior_grid.json` | `set_equals` configured grid and `all` normalized posteriors | Missing or unnormalized posterior cell passes |
 | ~~`AI-PYMDP-EFE-3`~~ | PyMDP/T-maze | **DONE (verified Run-6 audit 2026-06-10):** rows carry `terms`/`terms_available`/`fallback_reason`; `_efe_values_explained` re-derives `all_rows_explained` (`output_checks.py:68-74`); `break_efe` negative control (`test_roadmap_promotion.py:650-671`). All current rows are honest fallbacks — pymdp exposes opaque arrays only (ISA Out-of-Scope); the row's "where available" wording is satisfied | `output/data/si_efe_terms.json` | `all` rows have terms or fallback reason | Row lacks both terms and fallback |
 | ~~`AI-GRAPH-TOPOLOGY-3`~~ | Graph-world | **DONE (verified Run-6 audit 2026-06-10):** 4 deterministic topologies (incl. `loop5`, `diamond5`) with full traces, `trace_summary_agree` re-derivation, invariants, and per-topology Lean witnesses (`formal_interop.py:141-166`); negative control mutates `trace_steps=999` → gate fails (`test_roadmap_promotion.py:237-246`) | `output/data/si_graph_world_topology_traces.json` | `all` topology summaries agree with traces and witnesses | Summary path length disagrees with trace |
-| `AI-ANIMATION-HASH-2` | Animation | Add stable per-frame perceptual hashes and frame metadata to the delta manifest. *Run-6 audit: NOT started on the headline item — rows carry bbox deltas only, no per-frame hashes or frame metadata; static-manifest negative control and GIF staleness re-derivation are live* **Run-11 LANDED (2026-06-11, 2489eb5): per-frame deterministic sha256 of frame pixel bytes + frame metadata (index/width/height) + per-row from_hash/to_hash/hashes_differ + `all_hashes_distinct` aggregate; production gate re-derives `all(row.hashes_differ)` so duplicate/static adjacent frames fail; NC (duplicate adjacent hash) bites `validate_outputs(root)`; aggregate_rederivation rule added; write-path verified; Forge cross-vendor PASS** | `output/data/animation_frame_deltas.json` | `len_min` frames and `all` nonzero deltas/hashes | Duplicate/static frames pass |
+| `AI-ANIMATION-HASH-2` | Animation | Add stable per-frame perceptual hashes and frame metadata to the delta manifest. *Run-6 audit: NOT started on the headline item — rows carry bbox deltas only, no per-frame hashes or frame metadata; static-manifest negative control and GIF staleness re-derivation are live* **Run-11 LANDED (2026-06-11, 2489eb5): per-frame deterministic sha256 of frame pixel bytes + frame metadata (index/width/height) + per-row from_hash/to_hash/hashes_differ + `all_hashes_distinct` aggregate; production gate re-derives `all(row.hashes_differ)` so duplicate/static adjacent frames fail; NC (duplicate adjacent hash) bites `validate_outputs(root)`; aggregate_rederivation rule added; write-path verified; Forge cross-vendor PASS. NB: this is an EXACT content hash (sha256 of frame bytes), NOT a perceptual/near-duplicate hash — scoped to catching byte-identical duplicate/static frames, which is the row's negative control.** | `output/data/animation_frame_deltas.json` | `len_min` frames and `all` nonzero deltas/hashes | Duplicate/static frames pass |
 | ~~`AI-VIZ-PIXEL-2`~~ | Visualization | **DONE (verified Run-6 audit 2026-06-10):** 28 figure rows with `sources`/`source_fields`/pixel dims/`validation_gates`; `_figure_source_rows_complete` enforces true set-equality vs the figure registry (`integration_audit_artifacts.py:479-519`); provenance-drop negative control (`test_roadmap_promotion.py:410-428`) | `output/data/figure_source_map.json` | `set_equals` figure ids against `figures.yaml` | Figure lacks source artifact |
 | ~~`AI-LEAN-BELIEF-3`~~ | Lean/model-checking | **DONE (verified Run-6 audit 2026-06-10):** finite belief/posterior normalization theorems (`two_state_belief_weights_sum_to_two`, `two_policy_posterior_weights_sum_to_two`) tied to finite models via witnesses; `all_proved` + extracted==inventory set-equality + forbidden-token scan; planted-`axiom` and dropped-theorem negative controls (`test_roadmap_promotion.py:339-367`) | `output/reports/lean_theorem_inventory.json` | `set_equals` theorem names and `all` proved | `sorry`, `axiom`, `native_decide`, or missing theorem passes |
 | `AI-GNN-SHAPE-3` | GNN | Require every variable to carry exactly one ontology term, dtype, shape, and round-trip row. *Run-6 audit: PARTIAL — 17 per-variable rows with dtype/shape/ontology + unused-term detection; missing per-variable round-trip rows (round-trip is per-model) and a missing-shape negative control on the lint report* **Run-11 LANDED (2026-06-11, 2489eb5): each lint row now carries `round_trip_ok` via `roundtrip_payload_lossless` on the single-variable payload (real parse→write→parse; empty dims → GNNParseError → False) + `all_round_trip_ok` aggregate; production gate requires `all(row.round_trip_ok)`; missing-shape NC bites `validate_outputs(root)`; aggregate_rederivation rule added; write-path verified; Forge cross-vendor PASS** | `output/reports/gnn_lint_report.json` | `all` variables mapped once with type and shape | Duplicate alias or missing shape passes |
