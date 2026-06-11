@@ -212,3 +212,41 @@ def test_flag9_live_tracks_valid_lying_flag_dies(project_root: Path) -> None:
     assert any(
         "track_improvement_scope.json has incomplete live-track promotion rows" in i for i in issues
     )
+
+
+# --- Advisor hardening: empty / missing rows must NOT vacuously pass ----------
+
+
+def test_empty_or_missing_rows_do_not_vacuously_pass() -> None:
+    """A stored flag ``True`` over EMPTY rows must re-derive to ``False``.
+
+    Closes the empty/missing-rows hole an adversary would aim for: every
+    remediated predicate is ``bool(rows) and all(...)``, so ``recompute([])`` is
+    ``False`` and a lying ``all_*=True`` over no rows is caught, not vacuously
+    accepted. Also covers the coordinated bad-row case and confirms honest data
+    still passes (no false-fail).
+    """
+    # Empty rows + would-be-True flag -> re-derivation is False (lie caught).
+    assert _si_invariants_all_pass_ok({}) is False
+    assert _si_efe_rows_explained({"runs": []}) is False
+    # Coordinated bad row (one invariant / one posterior step bad) -> still False.
+    assert _si_invariants_all_pass_ok({"a": True, "b": False}) is False
+    assert (
+        _si_efe_rows_explained(
+            {"runs": [{"policy_posterior_steps": [{"posterior_available": False, "fallback_reason": ""}]}]}
+        )
+        is False
+    )
+    # Honest data (posterior available, or a fallback_reason present) -> True (no false-fail).
+    assert (
+        _si_efe_rows_explained(
+            {"runs": [{"policy_posterior_steps": [{"posterior_available": True, "fallback_reason": ""}]}]}
+        )
+        is True
+    )
+    assert (
+        _si_efe_rows_explained(
+            {"runs": [{"policy_posterior_steps": [{"posterior_available": False, "fallback_reason": "no_pymdp"}]}]}
+        )
+        is True
+    )
