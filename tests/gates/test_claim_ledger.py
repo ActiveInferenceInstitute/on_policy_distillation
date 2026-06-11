@@ -91,6 +91,7 @@ def test_typed_claim_evidence_exercises_success_predicates(tmp_path: Path) -> No
                 "    tracks: [sheaf]",
                 "    evidence:",
                 "      predicate: file_exists",
+                "    waiver: synthetic fixture exercises bare file_exists; fieldless path-only presence is acceptable here",
                 "  - id: exists_predicate",
                 "    statement: value exists",
                 "    path: output/data/predicate_payload.json",

@@ -39,6 +39,11 @@ def _numbers_equal(left: Any, right: Any, tolerance: float) -> bool:
 
 NON_SUBSTANTIVE_PREDICATES = {"exists", "file_exists", "truthy", "non_empty"}
 SUBSTANTIVE_EVIDENCE_KEYS = {
+    # A claim that names a specific `field` targets a value location (not just
+    # the artifact path), so it is NOT path-only — even with a shallow predicate
+    # like non_empty. Only FIELDLESS bare-presence evidence is path-only and
+    # requires an explicit waiver (AI-CLAIM-PREDICATE-3).
+    "field",
     "equals",
     "approx",
     "min",
