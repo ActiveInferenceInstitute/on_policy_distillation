@@ -262,14 +262,17 @@ def test_validate_outputs_rejects_missing_grid_cell(project_root: Path) -> None:
 
     write_policy_comparison(project_root)
     path = write_policy_posterior_grid(project_root)
-    baseline = validate_outputs(project_root, only={"pymdp_policy_posterior_grid_schema"})
+    # Exercise the PRODUCTION full path (validate_outputs with no `only=`), not the
+    # lazy selected path — a prior fix lived only in the selected path and the
+    # production gate stayed weak (cross-vendor caught the green-wash).
+    baseline = validate_outputs(project_root)
     assert baseline["pymdp_policy_posterior_grid_schema"] is True
     original = path.read_text(encoding="utf-8")
     try:
         payload = json.loads(original)
         payload["rows"] = [row for row in payload["rows"] if row["planner"] != "vanilla"]
         path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        checks = validate_outputs(project_root, only={"pymdp_policy_posterior_grid_schema"})
+        checks = validate_outputs(project_root)
     finally:
         path.write_text(original, encoding="utf-8")
 

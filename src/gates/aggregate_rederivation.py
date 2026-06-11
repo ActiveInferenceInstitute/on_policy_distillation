@@ -86,6 +86,10 @@ def _eval_spec(spec: Spec, row: dict[str, Any]) -> bool:
     if kind == "implies":
         return (not _eval_spec(spec[1], row)) or _eval_spec(spec[2], row)
     if kind == "recompute_ok":
+        # A row missing any classification flag cannot vacuously pass: require all
+        # three flag fields present, else the re-derivation fails closed.
+        if not all(field in row for field in ("has_forbidden_wording", "is_negated", "allowed")):
+            return row.get(spec[1]) is False
         expected = (not bool(row.get("has_forbidden_wording"))) or row.get("is_negated") is True or row.get("allowed") is True
         return row.get(spec[1]) is expected
     raise ValueError(f"unknown predicate spec kind: {kind!r}")

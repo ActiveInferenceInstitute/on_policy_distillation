@@ -433,14 +433,14 @@ GATE_INDEX_ROWS: tuple[tuple[str, tuple[str, ...], str, str, str], ...] = (
     (
         "semantic_sheaf_gluing",
         ("output/data/sheaf_gluing_certificate.json",),
-        "uv run python scripts/validate_manuscript.py",
+        "uv run python scripts/compose_manuscript.py --validate-only --strict",
         "semantic sheaf gluing certificate and cross-track restrictions",
         "drop a required symbol or force cross-track disagreement in the certificate",
     ),
     (
         "typed_claim_evidence",
         ("data/claim_ledger.yaml",),
-        "uv run python scripts/validate_manuscript.py",
+        "uv run python scripts/compose_manuscript.py --validate-only --strict",
         "typed claim evidence ledger for manuscript-facing claims",
         "point a claim at a missing artifact or contradict its evidence predicate",
     ),

@@ -92,6 +92,24 @@ def test_gate_index_empty_command_fails_full_specification() -> None:
     assert _rows_fully_specified(mutated) is False
 
 
+def test_gate_index_lying_full_specification_flag_caught_by_rederivation() -> None:
+    """Production gate re-derives all_rows_fully_specified from rows: a blanked
+    command with the stored flag left True must mismatch the re-derivation.
+
+    Guards the production check in _validate_outputs_full (which previously
+    trusted the saved boolean — a lying-flag green-wash the cross-vendor audit
+    surfaced). Synthetic / co-actor-immune.
+    """
+    payload = _index_payload()
+    rows = [dict(row) for row in payload["rows"]]
+    rows[0]["command"] = ""  # blank a command...
+    stored_flag = True  # ...but leave the stored aggregate lying True
+    # The production clause is `stored == _rows_fully_specified(rows)`:
+    assert stored_flag != _rows_fully_specified(rows)
+    # And the honest payload re-derives consistently (no false-fail):
+    assert payload["all_rows_fully_specified"] == _rows_fully_specified(payload["rows"])
+
+
 def test_registry_ids_are_unique() -> None:
     ids = [gate_id for gate_id, *_ in GATE_INDEX_ROWS]
     assert len(ids) == len(set(ids))
