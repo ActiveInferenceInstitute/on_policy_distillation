@@ -271,6 +271,14 @@ def write_policy_comparison(
             diagnostics.append(result.runtime_diagnostics)
             rows.append(_comparison_row(result, planner=planner, seed=seed))
     expected_run_count = len(configured_planners) * len(configured_seeds)
+    all_efe_rows_explained = bool(rows) and all(
+        bool(row.get("policy_posterior_steps"))
+        and all(
+            step.get("posterior_available") is True or bool(step.get("fallback_reason"))
+            for step in row.get("policy_posterior_steps") or []
+        )
+        for row in rows
+    )
     payload = {
         "schema": "template_active_inference.si_policy_comparison.v2",
         "scope": "comparison_only",
@@ -287,7 +295,7 @@ def write_policy_comparison(
             "goal_reached_count": sum(1 for row in rows if row["goal_reached"]),
             "posterior_available_run_count": sum(1 for row in rows if row["policy_posterior_available_count"]),
             "all_available_posteriors_normalized": all(row["policy_posterior_all_normalized"] for row in rows),
-            "all_efe_rows_explained": True,
+            "all_efe_rows_explained": all_efe_rows_explained,
         },
     }
     out = root / "output" / "data" / "si_policy_comparison.json"

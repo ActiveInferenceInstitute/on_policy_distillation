@@ -96,11 +96,19 @@ def _validate_sheaf_track_artifacts(
     if replay.get("schema") != "template_active_inference.replay_matrix.v1":
         issues.append("replay_matrix.json schema mismatch")
     replay_rows_matched = _all_rows(replay, "matched")
+    producers_represented_ok = bool(replay.get("rows")) and {
+        row.get("producer_script") for row in replay.get("rows") or []
+    } == set(replay.get("configured_scripts") or [])
     if (
         replay.get("all_replay_rows_matched") is not True
         or replay.get("all_replay_rows_matched") != replay_rows_matched
     ):
         issues.append("replay_matrix.json records a replay mismatch")
+    if (
+        replay.get("all_configured_producers_represented") is not True
+        or replay.get("all_configured_producers_represented") != producers_represented_ok
+    ):
+        issues.append("replay_matrix.json does not represent every configured producer")
 
     sensitivity = _payload(root, payloads, "sensitivity")
     if sensitivity.get("schema") != "template_active_inference.sensitivity_sweep.v1":
@@ -191,24 +199,45 @@ def _validate_sheaf_track_artifacts(
     section_status = _payload(root, payloads, "section_status")
     if section_status.get("schema") != "template_active_inference.sheaf_section_status_matrix.v1":
         issues.append("sheaf_section_status_matrix.json schema mismatch")
-    if section_status.get("all_bound_fragments_present") is not True:
+    bound_fragments_ok = bool(section_status.get("cells")) and not any(
+        cell.get("bound") and cell.get("coverage_status") == "missing" and not cell.get("optional")
+        for cell in section_status.get("cells") or []
+    )
+    if (
+        section_status.get("all_bound_fragments_present") is not True
+        or section_status.get("all_bound_fragments_present") != bound_fragments_ok
+    ):
         issues.append("sheaf_section_status_matrix.json has missing bound fragments")
+    sections_have_status_ok = bool(section_status.get("sections")) and all(
+        bool(row.get("status")) for row in section_status.get("sections") or []
+    )
+    tracks_have_status_ok = bool(section_status.get("tracks")) and all(
+        bool(row.get("status")) for row in section_status.get("tracks") or []
+    )
     if (
         section_status.get("all_sections_have_status") is not True
+        or section_status.get("all_sections_have_status") != sections_have_status_ok
         or section_status.get("all_tracks_have_status") is not True
+        or section_status.get("all_tracks_have_status") != tracks_have_status_ok
     ):
         issues.append("sheaf_section_status_matrix.json has incomplete status rows")
 
     render_log = _payload(root, payloads, "render_log")
     if render_log.get("schema") != "template_active_inference.sheaf_render_log.v1":
         issues.append("sheaf_render_log.json schema mismatch")
-    if render_log.get("all_events_ok") is not True:
+    events_ok = bool(render_log.get("events")) and all(
+        event.get("status") == "ok" for event in render_log.get("events") or []
+    )
+    if render_log.get("all_events_ok") is not True or render_log.get("all_events_ok") != events_ok:
         issues.append("sheaf_render_log.json has failed render events")
 
     scope = _payload(root, payloads, "track_improvement_scope")
     if scope.get("schema") != "template_active_inference.track_improvement_scope.v1":
         issues.append("track_improvement_scope.json schema mismatch")
-    if scope.get("all_live_tracks_valid") is not True:
+    live_tracks_ok = bool(scope.get("promotion_matrix")) and all(
+        row.get("promotion_complete") for row in scope.get("promotion_matrix") or []
+    )
+    if scope.get("all_live_tracks_valid") is not True or scope.get("all_live_tracks_valid") != live_tracks_ok:
         issues.append("track_improvement_scope.json has incomplete live-track promotion rows")
 
     blocked = _payload(root, payloads, "blocked_scope_manifest")

@@ -74,6 +74,23 @@ def _efe_values_explained(payload: dict) -> bool:
     )
 
 
+def _si_invariants_all_pass_ok(payload: dict) -> bool:
+    invariants = payload.get("invariants") or {}
+    return bool(invariants) and all(value is True for value in invariants.values())
+
+
+def _si_efe_rows_explained(payload: dict) -> bool:
+    runs = payload.get("runs") or []
+    return bool(runs) and all(
+        bool(run.get("policy_posterior_steps"))
+        and all(
+            step.get("posterior_available") is True or bool(step.get("fallback_reason"))
+            for step in run.get("policy_posterior_steps") or []
+        )
+        for run in runs
+    )
+
+
 #: Gate-index ids whose live check key differs from the row id.
 _GATE_INDEX_ALIASES = {
     "canonical_sheaf_tracks": "canonical_sheaf_track_schemas",
@@ -167,14 +184,17 @@ def _validate_outputs_selected(root: Path, selected: set[str]) -> dict[str, bool
         if summary_path.exists() and not si_inv_path.exists():
             checks["si_invariants_all_pass"] = False
         elif si_inv_path.exists():
-            checks["si_invariants_all_pass"] = bool(_read_json(si_inv_path).get("all_pass"))
+            payload = _read_json(si_inv_path)
+            checks["si_invariants_all_pass"] = (
+                payload.get("all_pass") is True and payload.get("all_pass") == _si_invariants_all_pass_ok(payload)
+            )
         else:
             checks["si_invariants_all_pass"] = False
 
     if "invariants_all_pass" in selected or "simulation_invariants_all_pass" in selected:
         inv = _read_json(root / "output" / "reports" / "invariants.json")
         if "invariants_all_pass" in selected:
-            checks["invariants_all_pass"] = bool(inv.get("all_pass"))
+            checks["invariants_all_pass"] = inv.get("all_pass") is True
         if "simulation_invariants_all_pass" in selected:
             checks["simulation_invariants_all_pass"] = all((inv.get("simulation") or {}).values())
 
@@ -356,12 +376,14 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
         checks["si_invariants_all_pass"] = False
     elif si_inv_path.exists():
         si_inv = json.loads(si_inv_path.read_text(encoding="utf-8"))
-        checks["si_invariants_all_pass"] = bool(si_inv.get("all_pass"))
+        checks["si_invariants_all_pass"] = (
+            si_inv.get("all_pass") is True and si_inv.get("all_pass") == _si_invariants_all_pass_ok(si_inv)
+        )
 
     inv_path = root / "output" / "reports" / "invariants.json"
     if inv_path.exists():
         inv = json.loads(inv_path.read_text(encoding="utf-8"))
-        checks["invariants_all_pass"] = bool(inv.get("all_pass"))
+        checks["invariants_all_pass"] = inv.get("all_pass") is True
         sim = inv.get("simulation") or {}
         if sim:
             checks["simulation_invariants_all_pass"] = all(sim.values())
@@ -413,6 +435,7 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
             and (comparison.get("summary") or {}).get("complete_grid") is True
             and (comparison.get("summary") or {}).get("vanilla_role") == "comparison_only"
             and (comparison.get("summary") or {}).get("all_efe_rows_explained") is True
+            and (comparison.get("summary") or {}).get("all_efe_rows_explained") == _si_efe_rows_explained(comparison)
         )
     posterior_path = root / "output" / "data" / "pymdp_policy_posterior_grid.json"
     if posterior_path.exists():

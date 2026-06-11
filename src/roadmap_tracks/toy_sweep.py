@@ -706,7 +706,10 @@ def validate_toy_sweep_artifacts(project_root: Path) -> list[str]:
         issues.append("toy_benchmark_matrix.json schema mismatch")
     if set(benchmark.get("models") or []) != {"bernoulli_ising", "si_tmaze", "graph_world"}:
         issues.append("toy_benchmark_matrix.json model set is incomplete")
-    if benchmark.get("all_models_complete") is not True:
+    models_complete_ok = bool(benchmark.get("rows")) and all(
+        row.get("artifact") and row.get("metric") and row.get("gate_passed") for row in benchmark.get("rows") or []
+    )
+    if benchmark.get("all_models_complete") is not True or benchmark.get("all_models_complete") != models_complete_ok:
         issues.append("toy_benchmark_matrix.json has incomplete model rows")
     policy = _load_json(root / "output" / "data" / "si_policy_grid.json")
     if policy.get("complete_grid") is not True:
