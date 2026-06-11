@@ -14,6 +14,90 @@ KNOWN_JAX_STATIC_WARNING = "A JAX array is being set as static"
 KNOWN_TREE_MAX_NODES_WARNING = "Used up all"
 RUNTIME_DIAGNOSTICS_SCHEMA = "template_active_inference.pymdp_runtime_diagnostics.v1"
 
+# Every categorized diagnostic row must carry one of these category labels; the
+# read-time gate fails closed on any unknown category.
+RUNTIME_ROW_CATEGORIES = frozenset({"construction", "inference", "backend", "warning", "fallback"})
+# Categories whose rows must additionally carry a non-empty ``reason`` field.
+RUNTIME_REASONED_CATEGORIES = frozenset({"inference", "fallback"})
+
+
+def _categorized_rows(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Derive explicit per-construction categorized diagnostic rows.
+
+    Each agent-construction record fans out into category-labelled rows spanning
+    ``construction``, ``inference``, ``backend``, optional ``warning`` rows, and a
+    ``fallback`` row whenever the JAX backend reported an error (a genuine runtime
+    fallback). ``inference`` and ``fallback`` rows always carry a non-empty
+    ``reason``; the gate re-derives that every row has a known category and that
+    every reasoned-category row is explained — an empty/blank reason fails closed.
+    """
+    rows: list[dict[str, Any]] = []
+    for record in records:
+        context = str(record.get("context", ""))
+        backend_flags = record.get("backend_flags") or {}
+        tree_count = int(record.get("known_tree_warning_count", 0) or 0)
+        rows.append(
+            {
+                "category": "construction",
+                "context": context,
+                "reason": "",
+                "explained": True,
+            }
+        )
+        rows.append(
+            {
+                "category": "inference",
+                "context": context,
+                "reason": (
+                    f"sophisticated-inference tree expanded with {tree_count} max-node warning(s)"
+                    if tree_count
+                    else "policy posterior computed via finite tree enumeration"
+                ),
+                "explained": True,
+            }
+        )
+        rows.append(
+            {
+                "category": "backend",
+                "context": context,
+                "reason": "",
+                "explained": True,
+            }
+        )
+        for warning in (record.get("unexpected_warnings") or []) + (record.get("known_warnings") or []):
+            rows.append(
+                {
+                    "category": "warning",
+                    "context": context,
+                    "reason": str(warning.get("message", "")),
+                    "explained": True,
+                }
+            )
+        backend_error = backend_flags.get("jax_backend_error")
+        if backend_error:
+            rows.append(
+                {
+                    "category": "fallback",
+                    "context": context,
+                    "reason": f"jax backend unavailable ({backend_error}); diagnostics recorded on fallback path",
+                    "explained": True,
+                }
+            )
+    return rows
+
+
+def _runtime_rows_explained(rows: list[dict[str, Any]]) -> bool:
+    """True iff every row has a known category and every reasoned-category row has a reason."""
+    if not rows:
+        return False
+    for row in rows:
+        category = row.get("category")
+        if category not in RUNTIME_ROW_CATEGORIES:
+            return False
+        if category in RUNTIME_REASONED_CATEGORIES and not str(row.get("reason") or "").strip():
+            return False
+    return True
+
 
 def _package_version(name: str) -> str:
     try:
@@ -104,9 +188,12 @@ def build_runtime_diagnostics(records: list[dict[str, Any]]) -> dict[str, Any]:
     tree_count = sum(int(record.get("known_tree_warning_count", 0) or 0) for record in records)
     versions = records[-1].get("versions", {}) if records else {}
     backend_flags = records[-1].get("backend_flags", {}) if records else {}
+    rows = _categorized_rows(records)
     return {
         "schema": RUNTIME_DIAGNOSTICS_SCHEMA,
         "records": records,
+        "rows": rows,
+        "row_count": len(rows),
         "construction_count": len(records),
         "config_hashes": sorted({str(record.get("config_hash")) for record in records if record.get("config_hash")}),
         "versions": versions,
@@ -114,6 +201,7 @@ def build_runtime_diagnostics(records: list[dict[str, Any]]) -> dict[str, Any]:
         "known_warning_count": known_count,
         "known_tree_warning_count": tree_count,
         "unexpected_warning_count": unexpected_count,
+        "all_rows_explained": _runtime_rows_explained(rows),
         "ok": bool(records) and unexpected_count == 0,
     }
 
@@ -142,6 +230,16 @@ def validate_runtime_diagnostics(project_root: Path) -> list[str]:
         issues.append("pymdp_runtime_diagnostics.json records no agent constructions")
     if int(payload.get("unexpected_warning_count", 0) or 0) != 0:
         issues.append("pymdp_runtime_diagnostics.json captured unexpected warning")
+    # Re-derive the categorized-row contract from the stored rows (never trust the
+    # stored boolean): every row must have a known category and every
+    # inference/fallback row must carry a reason. Empty rows fail closed.
+    rows = payload.get("rows") or []
+    if not _runtime_rows_explained(rows):
+        issues.append("pymdp_runtime_diagnostics.json has uncategorized or unexplained inference/fallback rows")
+    if payload.get("all_rows_explained") is not _runtime_rows_explained(rows):
+        issues.append("pymdp_runtime_diagnostics.json all_rows_explained disagrees with row re-derivation")
+    if not {str(row.get("category")) for row in rows} >= {"construction", "inference", "backend"}:
+        issues.append("pymdp_runtime_diagnostics.json missing required diagnostic categories")
     if not payload.get("config_hashes"):
         issues.append("pymdp_runtime_diagnostics.json lacks config hashes")
     if not payload.get("versions"):

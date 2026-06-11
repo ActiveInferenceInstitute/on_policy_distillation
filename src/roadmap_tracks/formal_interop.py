@@ -246,8 +246,20 @@ def build_gnn_lint_report(project_root: Path) -> dict[str, Any]:
             ontology = model.ontology.get(name)
             expected = expected_terms.get(name)
             ok = bool(var.dims and var.dtype and ontology and expected and ontology == expected)
+            # Single-variable parse->write->parse round-trip: a mangled/empty shape,
+            # dropped dtype, or lost ontology term fails closed (returns False).
+            single_payload = {
+                "section": model.section,
+                "version": model.version,
+                "name": model.name,
+                "variables": {name: {"dims": list(var.dims), "dtype": var.dtype, "ontology": ontology}},
+                "connections": [],
+            }
+            round_trip_ok = roundtrip_payload_lossless(single_payload)
             if not ok:
                 issues.append(f"{path.name}:{name} missing or conflicting type, shape, or ontology")
+            if not round_trip_ok:
+                issues.append(f"{path.name}:{name} failed parse-write-parse round-trip")
             rows.append(
                 {
                     "model": model_id,
@@ -257,6 +269,7 @@ def build_gnn_lint_report(project_root: Path) -> dict[str, Any]:
                     "ontology": ontology,
                     "expected_ontology": expected,
                     "ok": ok,
+                    "round_trip_ok": round_trip_ok,
                 }
             )
         for name in sorted(set(model.ontology) - set(model.variables)):
@@ -267,6 +280,7 @@ def build_gnn_lint_report(project_root: Path) -> dict[str, Any]:
         "variable_count": len(rows),
         "issues": issues,
         "all_variables_mapped_once": not issues,
+        "all_round_trip_ok": bool(rows) and all(row["round_trip_ok"] for row in rows),
     }
 
 
@@ -554,6 +568,11 @@ def validate_formal_interop_artifacts(project_root: Path) -> list[str]:
     gnn_lint = _load_json(root / "output" / "reports" / "gnn_lint_report.json")
     if gnn_lint.get("all_variables_mapped_once") is not True:
         issues.append("gnn_lint_report.json has unmapped variables")
+    # Re-derive the per-variable round-trip contract from rows (never trust the
+    # stored boolean); empty rows fail closed.
+    gnn_lint_rows = gnn_lint.get("rows") or []
+    if not (bool(gnn_lint_rows) and all(row.get("round_trip_ok") is True for row in gnn_lint_rows)):
+        issues.append("gnn_lint_report.json has variables that fail the round-trip check")
     ontology_alias = _load_json(root / "output" / "data" / "ontology_alias_index.json")
     if ontology_alias.get("no_conflicts") is not True:
         issues.append("ontology_alias_index.json has conflicting aliases")

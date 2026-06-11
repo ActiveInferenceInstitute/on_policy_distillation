@@ -471,13 +471,18 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
         )
     runtime_path = root / "output" / "reports" / "pymdp_runtime_diagnostics.json"
     if runtime_path.exists():
-        from simulation.pymdp_runtime import validate_runtime_diagnostics
+        from simulation.pymdp_runtime import _runtime_rows_explained, validate_runtime_diagnostics
 
         runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
+        _runtime_rows = runtime.get("rows") or []
         checks["pymdp_runtime_diagnostics_schema"] = (
             runtime.get("schema") == "template_active_inference.pymdp_runtime_diagnostics.v1"
             and runtime.get("ok") is True
             and int(runtime.get("unexpected_warning_count", 0) or 0) == 0
+            # Re-derive the categorized-row contract from rows (never trust the
+            # stored all_rows_explained boolean); empty rows fail closed.
+            and runtime.get("all_rows_explained") is True
+            and _runtime_rows_explained(_runtime_rows)
             and not validate_runtime_diagnostics(root)
         )
 
@@ -655,7 +660,15 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
         and interop.get("all_lossless") is True
     )
     checks["gnn_roundtrip_schema"] = gnn_roundtrip.get("all_lossless") is True
-    checks["gnn_lint_schema"] = gnn_lint.get("all_variables_mapped_once") is True
+    _gnn_lint_rows = gnn_lint.get("rows") or []
+    checks["gnn_lint_schema"] = (
+        gnn_lint.get("all_variables_mapped_once") is True
+        # Re-derive the per-variable round-trip contract from rows (never trust the
+        # stored boolean); empty rows fail closed.
+        and gnn_lint.get("all_round_trip_ok") is True
+        and bool(_gnn_lint_rows)
+        and all(row.get("round_trip_ok") is True for row in _gnn_lint_rows)
+    )
     checks["ontology_alias_schema"] = ontology_alias.get("no_conflicts") is True
     checks["ontology_profile_schema"] = ontology_profile.get("all_mapped_once") is True
     checks["lean_theorem_inventory_schema"] = lean_theorems.get("all_proved") is True
@@ -879,9 +892,15 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     )
     from visualizations.animation import validate_animation_frame_deltas
 
+    _animation_rows = animation_deltas.get("rows") or []
     checks["animation_frame_deltas_schema"] = (
         animation_deltas.get("schema") == "template_active_inference.animation_frame_deltas.v1"
         and animation_deltas.get("all_nonzero") is True
+        # Re-derive the duplicate/static-frame guard from rows (never trust the
+        # stored boolean); empty rows must not vacuously pass.
+        and animation_deltas.get("all_hashes_distinct") is True
+        and bool(_animation_rows)
+        and all(row.get("hashes_differ") is True for row in _animation_rows)
         and not validate_animation_frame_deltas(root)
     )
     checks["toy_sweep_track_schemas"] = not validate_toy_sweep_artifacts(root)

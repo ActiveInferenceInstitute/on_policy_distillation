@@ -100,7 +100,10 @@ ARTIFACT_AGGREGATE_RULES: dict[str, tuple[tuple[str, Spec], ...]] = {
     "output/data/analytical_assumption_index.json": (
         ("all_equations_indexed", ("all", ("nonempty", "equation_id"), ("nonempty", "assumptions"))),
     ),
-    "output/data/animation_frame_deltas.json": (("all_nonzero", ("true", "nonzero")),),
+    "output/data/animation_frame_deltas.json": (
+        ("all_nonzero", ("true", "nonzero")),
+        ("all_hashes_distinct", ("true", "hashes_differ")),
+    ),
     "output/data/artifact_provenance.json": (
         ("all_records_complete", ("true", "complete")),
         # cycle-excluded artifacts (provenance of provenance) legitimately skip hashing
@@ -214,7 +217,10 @@ ARTIFACT_AGGREGATE_RULES: dict[str, tuple[tuple[str, Spec], ...]] = {
     "output/reports/figure_hash_manifest.json": (
         ("all_hashes_present", ("all", ("nonempty", "sha256"), ("true", "fresh"))),
     ),
-    "output/reports/gnn_lint_report.json": (("all_variables_mapped_once", ("true", "ok")),),
+    "output/reports/gnn_lint_report.json": (
+        ("all_variables_mapped_once", ("true", "ok")),
+        ("all_round_trip_ok", ("true", "round_trip_ok")),
+    ),
     "output/reports/graph_world_invariants.json": (("all_passed", ("true", "passed")),),
     "output/reports/lean_graph_world_inventory.json": (
         ("all_policy_witnesses_present", ("true", "present")),

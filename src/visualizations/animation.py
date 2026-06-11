@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
 
 ANIMATION_DELTAS_SCHEMA = "template_active_inference.animation_frame_deltas.v1"
+
+
+def _frame_hash(frame: Any) -> str:
+    """Deterministic sha256 over a frame's raw RGB pixel bytes (no new deps)."""
+    return hashlib.sha256(frame.tobytes()).hexdigest()
 
 
 def _load_trace_steps(root: Path) -> list[dict]:
@@ -74,12 +80,26 @@ def build_animation_frame_deltas(project_root: Path) -> dict[str, Any]:
             "artifact": "output/figures/si_belief_trajectory.gif",
             "frame_count": 0,
             "delta_count": 0,
+            "frames": [],
             "rows": [],
             "all_nonzero": False,
+            "all_hashes_distinct": False,
         }
 
     with Image.open(gif_path) as image:
         frames = [frame.convert("RGB") for frame in ImageSequence.Iterator(image)]
+    # Per-frame metadata + deterministic pixel-byte hash. A duplicated/static frame
+    # produces an identical consecutive hash, which the gate rejects.
+    frame_meta: list[dict[str, Any]] = []
+    for idx, frame in enumerate(frames):
+        frame_meta.append(
+            {
+                "index": idx,
+                "width": int(frame.width),
+                "height": int(frame.height),
+                "sha256": _frame_hash(frame),
+            }
+        )
     rows: list[dict[str, Any]] = []
     for idx, (left, right) in enumerate(zip(frames, frames[1:], strict=False), start=1):
         diff = ImageChops.difference(left, right)
@@ -91,6 +111,8 @@ def build_animation_frame_deltas(project_root: Path) -> dict[str, Any]:
             x0, y0, x1, y1 = bbox
             area = int((x1 - x0) * (y1 - y0))
             bbox_values = [int(x0), int(y0), int(x1), int(y1)]
+        from_hash = frame_meta[idx - 1]["sha256"]
+        to_hash = frame_meta[idx]["sha256"]
         rows.append(
             {
                 "from_frame": idx - 1,
@@ -98,6 +120,9 @@ def build_animation_frame_deltas(project_root: Path) -> dict[str, Any]:
                 "changed_bbox": bbox_values,
                 "delta_bbox_area": area,
                 "nonzero": bool(bbox is not None and area > 0),
+                "from_hash": from_hash,
+                "to_hash": to_hash,
+                "hashes_differ": from_hash != to_hash,
             }
         )
     return {
@@ -105,8 +130,10 @@ def build_animation_frame_deltas(project_root: Path) -> dict[str, Any]:
         "artifact": "output/figures/si_belief_trajectory.gif",
         "frame_count": len(frames),
         "delta_count": len(rows),
+        "frames": frame_meta,
         "rows": rows,
         "all_nonzero": len(frames) >= 2 and bool(rows) and all(row["nonzero"] for row in rows),
+        "all_hashes_distinct": len(frames) >= 2 and bool(rows) and all(row["hashes_differ"] for row in rows),
     }
 
 
@@ -135,8 +162,14 @@ def validate_animation_frame_deltas(project_root: Path) -> list[str]:
         issues.append("animation_frame_deltas.json delta count does not match frame count")
     if payload.get("all_nonzero") is not True:
         issues.append("animation_frame_deltas.json contains static adjacent frames")
+    # Re-derive the duplicate-frame guard from the stored rows: empty rows must
+    # NOT vacuously pass, and any consecutive identical hash fails the row.
+    rows = payload.get("rows") or []
+    rederived_distinct = bool(rows) and all(row.get("hashes_differ") is True for row in rows)
+    if payload.get("all_hashes_distinct") is not True or not rederived_distinct:
+        issues.append("animation_frame_deltas.json contains duplicate adjacent frame hashes")
     live = build_animation_frame_deltas(root)
-    stable_keys = ("frame_count", "delta_count", "rows", "all_nonzero")
+    stable_keys = ("frame_count", "delta_count", "frames", "rows", "all_nonzero", "all_hashes_distinct")
     if payload and {key: payload.get(key) for key in stable_keys} != {key: live.get(key) for key in stable_keys}:
         issues.append("animation_frame_deltas.json is stale relative to GIF frames")
     return issues

@@ -277,3 +277,183 @@ def test_validate_outputs_rejects_missing_grid_cell(project_root: Path) -> None:
         path.write_text(original, encoding="utf-8")
 
     assert checks["pymdp_policy_posterior_grid_schema"] is False
+
+
+# --- AI-ANIMATION-HASH-2: per-frame hash + duplicate-frame guard ---------------
+
+
+def test_animation_frame_deltas_carries_per_frame_hash_and_metadata(project_root: Path) -> None:
+    """Write-path: the builder emits a passing artifact with per-frame hash + metadata."""
+    from visualizations.animation import build_animation_frame_deltas, validate_animation_frame_deltas
+
+    payload = build_animation_frame_deltas(project_root)
+    assert payload["frame_count"] >= 2
+    assert payload["all_nonzero"] is True
+    assert payload["all_hashes_distinct"] is True
+    for frame in payload["frames"]:
+        assert {"index", "width", "height", "sha256"} <= set(frame)
+        assert len(frame["sha256"]) == 64
+    for row in payload["rows"]:
+        assert row["hashes_differ"] is True
+        assert row["from_hash"] != row["to_hash"]
+    # The honest live artifact passes the strengthened validator.
+    assert validate_animation_frame_deltas(project_root) == []
+
+
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_validate_outputs_rejects_duplicate_animation_frame_hash(project_root: Path) -> None:
+    """NC (production path): two consecutive identical frame hashes must fail the gate."""
+    from gates.validation import validate_outputs
+
+    path = project_root / "output" / "data" / "animation_frame_deltas.json"
+    baseline = validate_outputs(project_root)
+    assert baseline["animation_frame_deltas_schema"] is True
+    original = path.read_text(encoding="utf-8")
+    try:
+        payload = json.loads(original)
+        # Inject a static/duplicate adjacent frame: copy the first frame's hash
+        # onto the second frame so a consecutive pair becomes identical.
+        dup = payload["frames"][0]["sha256"]
+        payload["frames"][1]["sha256"] = dup
+        payload["rows"][0]["to_hash"] = dup
+        payload["rows"][0]["hashes_differ"] = payload["rows"][0]["from_hash"] != dup
+        if len(payload["rows"]) > 1:
+            payload["rows"][1]["from_hash"] = dup
+            payload["rows"][1]["hashes_differ"] = dup != payload["rows"][1]["to_hash"]
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        checks = validate_outputs(project_root)
+    finally:
+        path.write_text(original, encoding="utf-8")
+
+    assert checks["animation_frame_deltas_schema"] is False
+
+
+# --- AI-PYMDP-RUNTIME-3: categorized inference/fallback rows --------------------
+
+
+def test_runtime_diagnostics_emit_categorized_inference_rows(project_root: Path) -> None:
+    """Write-path: build_runtime_diagnostics fans records into explained categorized rows."""
+    import json as _json
+
+    from simulation.pymdp_runtime import (
+        RUNTIME_ROW_CATEGORIES,
+        _runtime_rows_explained,
+        build_runtime_diagnostics,
+    )
+
+    live = project_root / "output" / "reports" / "pymdp_runtime_diagnostics.json"
+    records = _json.loads(live.read_text(encoding="utf-8")).get("records") or []
+    payload = build_runtime_diagnostics(records)
+    categories = {row["category"] for row in payload["rows"]}
+    assert {"construction", "inference", "backend"} <= categories
+    assert categories <= RUNTIME_ROW_CATEGORIES
+    for row in payload["rows"]:
+        if row["category"] in {"inference", "fallback"}:
+            assert row["reason"].strip()
+    assert payload["all_rows_explained"] is True
+    assert _runtime_rows_explained(payload["rows"]) is True
+
+    # A fabricated backend error fans out a reasoned fallback row.
+    faulted = [dict(records[0], backend_flags={"jax_backend_error": "RuntimeError"})] if records else []
+    fb = build_runtime_diagnostics(faulted)
+    if faulted:
+        fallback_rows = [r for r in fb["rows"] if r["category"] == "fallback"]
+        assert fallback_rows and all(r["reason"].strip() for r in fallback_rows)
+
+
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_validate_outputs_rejects_unexplained_inference_row(project_root: Path) -> None:
+    """NC (production path): an inference row with a blank reason must fail the gate."""
+    from gates.validation import validate_outputs
+
+    path = project_root / "output" / "reports" / "pymdp_runtime_diagnostics.json"
+    baseline = validate_outputs(project_root)
+    assert baseline["pymdp_runtime_diagnostics_schema"] is True
+    original = path.read_text(encoding="utf-8")
+    try:
+        payload = json.loads(original)
+        inference_row = next(row for row in payload["rows"] if row["category"] == "inference")
+        inference_row["reason"] = ""
+        # Leave the stored aggregate True to prove the gate re-derives from rows.
+        payload["all_rows_explained"] = True
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        checks = validate_outputs(project_root)
+    finally:
+        path.write_text(original, encoding="utf-8")
+
+    assert checks["pymdp_runtime_diagnostics_schema"] is False
+
+
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_validate_outputs_rejects_unknown_runtime_category(project_root: Path) -> None:
+    """NC (production path): an unknown diagnostic category must fail the gate."""
+    from gates.validation import validate_outputs
+
+    path = project_root / "output" / "reports" / "pymdp_runtime_diagnostics.json"
+    original = path.read_text(encoding="utf-8")
+    try:
+        payload = json.loads(original)
+        payload["rows"][0]["category"] = "totally_unknown_category"
+        payload["all_rows_explained"] = True
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        checks = validate_outputs(project_root)
+    finally:
+        path.write_text(original, encoding="utf-8")
+
+    assert checks["pymdp_runtime_diagnostics_schema"] is False
+
+
+# --- AI-GNN-SHAPE-3: per-variable round-trip check -----------------------------
+
+
+def test_gnn_lint_report_carries_round_trip_field(project_root: Path) -> None:
+    """Write-path: build_gnn_lint_report emits a passing per-variable round-trip field."""
+    from roadmap_tracks.formal_interop import (
+        build_gnn_lint_report,
+        roundtrip_payload_lossless,
+        validate_formal_interop_artifacts,
+    )
+
+    payload = build_gnn_lint_report(project_root)
+    assert payload["rows"]
+    assert payload["all_round_trip_ok"] is True
+    for row in payload["rows"]:
+        assert row["round_trip_ok"] is True
+    assert validate_formal_interop_artifacts(project_root) == []
+
+    # The round-trip field is a real parse->write->parse check: empty dims break it.
+    broken = {
+        "section": "S",
+        "version": "1",
+        "name": "N",
+        "variables": {"x": {"dims": [], "dtype": "float", "ontology": "HiddenState"}},
+        "connections": [],
+    }
+    assert roundtrip_payload_lossless(broken) is False
+
+
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_validate_outputs_rejects_gnn_round_trip_break(project_root: Path) -> None:
+    """NC (production path): a variable that fails the round-trip must fail the gate."""
+    from gates.validation import validate_outputs
+
+    path = project_root / "output" / "reports" / "gnn_lint_report.json"
+    baseline = validate_outputs(project_root)
+    assert baseline["gnn_lint_schema"] is True
+    original = path.read_text(encoding="utf-8")
+    try:
+        payload = json.loads(original)
+        # Break a single variable's round-trip while leaving the stored aggregate
+        # True — the gate must re-derive the per-row contract.
+        payload["rows"][0]["round_trip_ok"] = False
+        payload["all_round_trip_ok"] = True
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        checks = validate_outputs(project_root)
+    finally:
+        path.write_text(original, encoding="utf-8")
+
+    assert checks["gnn_lint_schema"] is False
