@@ -728,7 +728,7 @@ claims:
   evidence:
     field: all_replay_rows_matched
     equals: true
-- id: sensitivity_complete_grid
+- id: sensitivity_canonical_grid_complete
   statement: Canonical sensitivity sweep covers every configured finite planner, horizon,
     seed, topology, and lambda cell.
   path: output/data/sensitivity_sweep.json

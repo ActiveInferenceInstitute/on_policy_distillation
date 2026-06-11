@@ -304,11 +304,11 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | --- | --- | ---: | ---: | ---: | ---: | --- |
 | `prose` | `markdown` | 12 | 12 | 0 | 0 | `complete` |
 | `formalism` | `markdown` | 5 | 5 | 0 | 0 | `complete` |
-| `simulation` | `markdown` | 5 | 5 | 0 | 24 | `complete` |
+| `simulation` | `markdown` | 5 | 5 | 0 | 26 | `complete` |
 | `assumption_index` | `markdown` | 2 | 2 | 0 | 1 | `complete` |
 | `layers` | `layers_report` | 1 | 1 | 0 | 1 | `complete` |
 | `pymdp` | `markdown` | 3 | 3 | 0 | 22 | `complete` |
-| `interop` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
+| `interop` | `markdown` | 2 | 2 | 0 | 6 | `complete` |
 | `provenance` | `markdown` | 2 | 2 | 0 | 12 | `complete` |
 | `replay_matrix` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
 | `counterexample` | `markdown` | 2 | 2 | 0 | 2 | `complete` |
@@ -318,8 +318,8 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `gate_ergonomics` | `markdown` | 2 | 2 | 0 | 5 | `complete` |
 | `artifact_diffoscope` | `markdown` | 2 | 2 | 0 | 1 | `complete` |
 | `artifact_license` | `markdown` | 2 | 2 | 0 | 1 | `complete` |
-| `scholarship` | `markdown` | 3 | 3 | 0 | 2 | `complete` |
-| `sensitivity` | `markdown` | 2 | 2 | 0 | 9 | `complete` |
+| `scholarship` | `markdown` | 3 | 3 | 0 | 3 | `complete` |
+| `sensitivity` | `markdown` | 2 | 2 | 0 | 10 | `complete` |
 | `uncertainty` | `markdown` | 2 | 2 | 0 | 4 | `complete` |
 | `benchmark` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
 | `manuscript_staleness` | `markdown` | 2 | 2 | 0 | 1 | `complete` |
@@ -330,8 +330,8 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `proof_extraction` | `markdown` | 2 | 2 | 0 | 2 | `complete` |
 | `state_space_catalog` | `markdown` | 2 | 2 | 0 | 2 | `complete` |
 | `causal_ablation` | `markdown` | 2 | 2 | 0 | 2 | `complete` |
-| `gnn` | `markdown` | 3 | 3 | 0 | 4 | `complete` |
-| `ontology` | `ontology_yaml` | 5 | 5 | 0 | 5 | `complete` |
+| `gnn` | `markdown` | 3 | 3 | 0 | 5 | `complete` |
+| `ontology` | `ontology_yaml` | 5 | 5 | 0 | 7 | `complete` |
 | `animation` | `markdown` | 1 | 1 | 0 | 2 | `complete` |
 | `animation_delta` | `markdown` | 1 | 1 | 0 | 1 | `complete` |
 | `release_notes` | `markdown` | 2 | 2 | 0 | 2 | `complete` |
@@ -368,7 +368,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `evidence_field_index` | `output/data/evidence_field_index.json` | `generate_sheaf_tracks.py` | validate_outputs, validate_manuscript |
 | `validation_dependency_graph` | `output/data/validation_dependency_graph.json` | `generate_sheaf_tracks.py` | validate_manuscript, validate_outputs |
 
-**Claim rows:** 103 typed evidence claims.
+**Claim rows:** 111 typed evidence claims.
 
 <!-- sheaf-layers:artifact-producers -->
 ## Artifact producer graph
