@@ -272,5 +272,9 @@ def test_manuscript_review_citation_keys_and_overclaim_guards(project_root: Path
         "Markov-blanket asymmetry in this toy system",
         "solid and dashed",
         "Reproduced from [@fig:ising_mi_curve]",
+        "the analytic analogue of the literature-reported finding",
+        "mechanism-level empirical signature at scale",
+        "Posterior sharpening under self-generated observations is the mechanism the thesis names",
+        "Their convergent behaviour is what the thesis predicts if reverse-KL distillation truly is variational free-energy minimisation",
     ):
         assert forbidden not in text

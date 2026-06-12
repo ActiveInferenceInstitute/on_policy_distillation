@@ -55,6 +55,32 @@ def test_validate_outputs_selected_strict_rejects_unknown_key(project_root: Path
 
 @pytest.mark.artifact_slow
 @pytest.mark.mutates_artifacts
+def test_validate_outputs_negative_hidden_temp_figure_artifact_fails(project_root: Path) -> None:
+    ensure_gate_artifacts_for(project_root, "output/figures/ising_mi_curve.png")
+    temp = project_root / "output" / "figures" / ".distillation_divergence_geometry.broken.png"
+    try:
+        temp.write_bytes(b"")
+        checks = validate_outputs_selected_strict(project_root, {"figure_output_integrity"})
+        assert checks["figure_output_integrity"] is False
+    finally:
+        temp.unlink(missing_ok=True)
+
+
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_validate_outputs_negative_unreadable_visible_figure_fails(project_root: Path) -> None:
+    ensure_gate_artifacts_for(project_root, "output/figures/ising_mi_curve.png")
+    broken = project_root / "output" / "figures" / "unreadable_regression.png"
+    try:
+        broken.write_bytes(b"not a png")
+        checks = validate_outputs_selected_strict(project_root, {"figure_output_integrity"})
+        assert checks["figure_output_integrity"] is False
+    finally:
+        broken.unlink(missing_ok=True)
+
+
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_validate_outputs_negative_si_invariants_fail(project_root: Path, tmp_path: Path) -> None:
     path = project_root / "output" / "reports" / "si_invariants.json"
     if not path.is_file():

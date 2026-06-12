@@ -1223,6 +1223,50 @@ claims:
   evidence:
     field: source
     equals: literature_reported
+- id: fp_empirical_benchmark_primary_key
+  statement: The empirical OPD benchmark binds its direct source key to the Qwen3
+    technical report rather than to a relay or summary.
+  path: output/data/firstprinciples/empirical_benchmark.json
+  section: intro_contributions
+  tracks:
+  - scholarship
+  - manuscript
+  evidence:
+    field: direct_bibkey
+    equals: qwen2025technical_report
+- id: fp_empirical_benchmark_relay_key
+  statement: The empirical OPD benchmark records Thinking Machines only as relay and
+    replication context for the Qwen-reported table values.
+  path: output/data/firstprinciples/empirical_benchmark.json
+  section: intro_contributions
+  tracks:
+  - scholarship
+  - manuscript
+  evidence:
+    field: relayed_by_bibkey
+    equals: thinkingmachines2025opd
+- id: fp_empirical_benchmark_table_locator
+  statement: The empirical OPD benchmark records the primary source locator for the
+    table values it quotes.
+  path: output/data/firstprinciples/empirical_benchmark.json
+  section: intro_contributions
+  tracks:
+  - scholarship
+  - manuscript
+  evidence:
+    field: source_locator
+    equals: Qwen3 Technical Report, Table 21
+- id: fp_empirical_benchmark_table_heading
+  statement: The empirical OPD benchmark records the Qwen table heading that scopes
+    the quoted OPD-vs-RL values to Qwen3-8B.
+  path: output/data/firstprinciples/empirical_benchmark.json
+  section: intro_contributions
+  tracks:
+  - scholarship
+  - manuscript
+  evidence:
+    field: source_heading
+    equals: Comparison of reinforcement learning and on-policy distillation on Qwen3-8B
 - id: fp_energy_efe_decompositions_agree
   statement: The energy demonstration certifies the EFE identity that risk plus ambiguity equals
     minus (epistemic plus pragmatic) value, with both decompositions agreeing to tolerance.

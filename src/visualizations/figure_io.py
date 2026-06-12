@@ -35,19 +35,20 @@ def save_figure_png(
             delete=False,
         ) as tmp:
             raw_path = Path(tmp.name)
-    fig.savefig(
-        raw_path,
-        dpi=dpi,
-        bbox_inches=bbox_inches,
-        facecolor=facecolor,
-        transparent=transparent,
-    )
-    plt.close(fig)
-    if normalize_rgb:
-        try:
+    try:
+        fig.savefig(
+            raw_path,
+            dpi=dpi,
+            bbox_inches=bbox_inches,
+            facecolor=facecolor,
+            transparent=transparent,
+        )
+        if normalize_rgb:
             with Image.open(raw_path) as img:
                 rgb = img.convert("RGB")
                 rgb.save(path, format="PNG")
-        finally:
+    finally:
+        plt.close(fig)
+        if normalize_rgb and raw_path != path:
             raw_path.unlink(missing_ok=True)
     return path

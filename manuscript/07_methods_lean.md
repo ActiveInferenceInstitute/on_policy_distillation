@@ -10,7 +10,7 @@ That interface is intentionally redundant with the non-Lean finite checks rather
 
 <!-- sheaf-track:visualization -->
 
-![Lean formalization boundary: a table of modules, declaration kinds, names, and proved-versus-sorry status under `lean/OnPolicyDistillation/`, each row a witness checked by `lake build`. Proved rows mark the claims about the distillation/active-inference correspondence that are machine-verified, while any sorry row honestly demarcates the edge of what is formally established. The figure makes the trust boundary explicit: the theory underwriting on-policy distillation here is not merely stated but compiled, so its formal core stands on a checker rather than on prose.](../output/figures/lean_boundary_status.png){#fig:lean_boundary_status width=90% fig-alt="Table figure listing Lean modules, declaration kinds, names, and proved versus sorry status under lean/OnPolicyDistillation/."}
+![Lean formalization boundary: a table of modules, declaration kinds, names, and proved-versus-sorry status under `lean/OnPolicyDistillation/`, each row a witness checked by `lake build`. Proved rows mark the finite boundary claims in this inventory that are machine-verified, while any sorry row honestly demarcates the edge of what is formally established. The figure makes the trust boundary explicit: the compiled core is the declared finite witness set, not a general proof about all OPD or active-inference systems.](../output/figures/lean_boundary_status.png){#fig:lean_boundary_status width=90% fig-alt="Table figure listing Lean modules, declaration kinds, names, and proved versus sorry status under lean/OnPolicyDistillation/."}
 
 <!-- sheaf-track:lean -->
 

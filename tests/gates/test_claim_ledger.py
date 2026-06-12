@@ -53,6 +53,31 @@ def test_validate_manuscript_claim_ledger_negative(project_root: Path, tmp_path:
         os.utime(ledger, ns=(original_stat.st_atime_ns, original_stat.st_mtime_ns))
 
 
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_validate_manuscript_claim_ledger_negative_empirical_locator(project_root: Path, tmp_path: Path) -> None:
+    import yaml
+
+    ledger = project_root / "data" / "claim_ledger.yaml"
+    backup = tmp_path / "claim_ledger.yaml.bak"
+    original_stat = ledger.stat()
+    backup.write_text(ledger.read_text(encoding="utf-8"), encoding="utf-8")
+    try:
+        payload = yaml.safe_load(backup.read_text(encoding="utf-8")) or {}
+        for claim in payload.get("claims") or []:
+            if claim.get("id") == "fp_empirical_benchmark_table_locator":
+                claim["evidence"]["equals"] = "Qwen3 Technical Report"
+                break
+        else:
+            raise AssertionError("missing empirical benchmark locator claim")
+        ledger.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+        checks = validate_manuscript(project_root, only={"claim_ledger_valid"})
+        assert checks["claim_ledger_valid"] is False
+    finally:
+        ledger.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+        os.utime(ledger, ns=(original_stat.st_atime_ns, original_stat.st_mtime_ns))
+
+
 def test_typed_claim_evidence_exercises_success_predicates(tmp_path: Path) -> None:
     from gates.claim_ledger import typed_claim_evidence_issues
 

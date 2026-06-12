@@ -225,6 +225,18 @@ def test_interpretive_figures_expose_formula_signs_and_caveats(project_root: Pat
     assert "print-condensed" in registry["scholarship_source_map"].caption
 
 
+def test_figure_registry_rejects_formal_and_causal_overclaim_phrases(project_root: Path) -> None:
+    registry = load_figure_registry(project_root)
+    text = "\n".join(f"{spec.alt}\n{spec.caption}" for spec in registry.values())
+    for forbidden in (
+        "gap-free chain",
+        "theory underwriting on-policy distillation here is not merely stated but compiled",
+        "grounding the active-inference claims in measured causal dependence rather than correlation",
+        "production-scale causal effects",
+    ):
+        assert forbidden not in text
+
+
 def test_figure_sheaf_layers_overview_dimensions(project_root: Path) -> None:
     from manuscript.sheaf.coverage import emit_coverage_artifacts
 

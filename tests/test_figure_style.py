@@ -104,6 +104,23 @@ def test_save_figure_png_normalizes_rgb_atomically(tmp_path: Path) -> None:
     assert not list(out.parent.glob(".line.*.png"))
 
 
+def test_save_figure_png_cleans_temp_file_after_save_failure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fig, ax = plt.subplots()
+    ax.plot([0, 1], [0, 1])
+    out = tmp_path / "figures" / "line.png"
+
+    def fail_after_partial_write(path: Path, *args: object, **kwargs: object) -> None:
+        Path(path).write_bytes(b"partial png")
+        raise RuntimeError("synthetic save failure")
+
+    monkeypatch.setattr(fig, "savefig", fail_after_partial_write)
+    with pytest.raises(RuntimeError, match="synthetic save failure"):
+        save_figure_png(fig, out, dpi=72)
+
+    assert not out.exists()
+    assert not list(out.parent.glob(".line.*.png"))
+
+
 def test_save_figure_png_can_skip_rgb_normalization(tmp_path: Path) -> None:
     fig, ax = plt.subplots()
     ax.scatter([0, 1], [1, 0])

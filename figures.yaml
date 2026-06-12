@@ -453,11 +453,11 @@ figures:
     caption: >-
       Lean formalization boundary: a table of modules, declaration kinds, names, and
       proved-versus-sorry status under `lean/OnPolicyDistillation/`, each row a witness
-      checked by `lake build`. Proved rows mark the claims about the distillation/active-inference
-      correspondence that are machine-verified, while any sorry row honestly demarcates the
-      edge of what is formally established. The figure makes the trust boundary explicit:
-      the theory underwriting on-policy distillation here is not merely stated but compiled,
-      so its formal core stands on a checker rather than on prose.
+      checked by `lake build`. Proved rows mark the finite boundary claims in this inventory
+      that are machine-verified, while any sorry row honestly demarcates the edge of what is
+      formally established. The figure makes the trust boundary explicit: the compiled core is
+      the declared finite witness set, not a general proof about all OPD or active-inference
+      systems.
     width: 0.9
   gnn_ontology_concordance:
     filename: gnn_ontology_concordance.png
@@ -505,8 +505,9 @@ figures:
       resolved dependency edges: {{proof_dependency_all_resolved}}. The graph exposes the
       deductive backbone of the formal track -- which lemmas each
       distillation/active-inference theorem rests on and which finite models witness it.
-      Fully resolved dependencies certify that the machine-checked claims form a closed,
-      gap-free chain rather than isolated assertions.
+      Fully resolved dependencies show that each declared finite theorem row has a registered
+      proof-dependency chain rather than appearing as an isolated assertion; they do not close
+      formal obligations outside this inventory.
     width: 0.95
   causal_ablation_heatmap:
     filename: causal_ablation_heatmap.png
@@ -522,9 +523,9 @@ figures:
       topologies, columns are perturbation types, and each cell reports the maximum
       absolute deterministic effect of that intervention. The map shows which structural
       assumptions of the generative model the distillation outcome is sensitive to and
-      which it is robust against, grounding the active-inference claims in measured causal
-      dependence rather than correlation and flagging where on-policy behavior would shift
-      under model misspecification.
+      which it is robust against inside this toy intervention matrix, flagging where the
+      generated on-policy behavior would shift under declared model misspecification without
+      asserting deployment-scale effects.
     width: 0.92
   scholarship_source_map:
     filename: scholarship_source_map.png

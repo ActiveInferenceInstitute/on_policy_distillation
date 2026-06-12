@@ -2,7 +2,7 @@
 
 Generated documentation coverage for every Python `def` and `class` under `src/` and `scripts/`. Entries marked `inventory fallback` have no inline docstring yet, but remain documented here by path, line, kind, and qualified name.
 
-Total documented definitions: 864
+Total documented definitions: 865
 
 ## `src/analytical/bernoulli_toy.py`
 
@@ -393,27 +393,28 @@ Total documented definitions: 864
 
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
-| 37 | `function` | `_read_json` | inventory fallback | Inventory fallback for function `_read_json` defined at `src/gates/output_checks.py:37`. |
-| 47 | `function` | `_as_float` | inventory fallback | Inventory fallback for function `_as_float` defined at `src/gates/output_checks.py:47`. |
-| 54 | `function` | `_as_int` | inventory fallback | Inventory fallback for function `_as_int` defined at `src/gates/output_checks.py:54`. |
-| 73 | `function` | `_float_field_equals` | inventory fallback | Inventory fallback for function `_float_field_equals` defined at `src/gates/output_checks.py:73`. |
-| 79 | `function` | `_firstprinciples_empirical_benchmark_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_empirical_benchmark_ok` defined at `src/gates/output_checks.py:79`. |
-| 122 | `function` | `_firstprinciples_taxonomy_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_taxonomy_ok` defined at `src/gates/output_checks.py:122`. |
-| 141 | `function` | `_pymdp_logging_expected` | inventory fallback | Inventory fallback for function `_pymdp_logging_expected` defined at `src/gates/output_checks.py:141`. |
-| 151 | `function` | `_efe_values_explained` | inventory fallback | Inventory fallback for function `_efe_values_explained` defined at `src/gates/output_checks.py:151`. |
-| 160 | `function` | `_si_invariants_all_pass_ok` | inventory fallback | Inventory fallback for function `_si_invariants_all_pass_ok` defined at `src/gates/output_checks.py:160`. |
-| 165 | `function` | `_si_efe_rows_explained` | inventory fallback | Inventory fallback for function `_si_efe_rows_explained` defined at `src/gates/output_checks.py:165`. |
-| 189 | `function` | `_gate_index_binding` | docstring | Every indexed gate-index row must bind to the live validator surface. |
-| 212 | `function` | `_figure_source_map_ok` | inventory fallback | Inventory fallback for function `_figure_source_map_ok` defined at `src/gates/output_checks.py:212`. |
-| 222 | `function` | `_figure_hash_manifest_ok` | inventory fallback | Inventory fallback for function `_figure_hash_manifest_ok` defined at `src/gates/output_checks.py:222`. |
-| 232 | `function` | `_proof_extraction_ok` | inventory fallback | Inventory fallback for function `_proof_extraction_ok` defined at `src/gates/output_checks.py:232`. |
-| 252 | `function` | `_ontology_profile_ok` | inventory fallback | Inventory fallback for function `_ontology_profile_ok` defined at `src/gates/output_checks.py:252`. |
-| 281 | `function` | `_cross_track_symbol_table_ok` | inventory fallback | Inventory fallback for function `_cross_track_symbol_table_ok` defined at `src/gates/output_checks.py:281`. |
-| 321 | `function` | `_firstprinciples_classroom_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_classroom_ok` defined at `src/gates/output_checks.py:321`. |
-| 327 | `function` | `_validate_outputs_selected` | inventory fallback | Inventory fallback for function `_validate_outputs_selected` defined at `src/gates/output_checks.py:327`. |
-| 486 | `function` | `validate_outputs_selected_strict` | docstring | Validate selected output keys without falling back to the full gate. |
-| 505 | `function` | `validate_outputs` | inventory fallback | Inventory fallback for function `validate_outputs` defined at `src/gates/output_checks.py:505`. |
-| 516 | `function` | `_validate_outputs_full` | inventory fallback | Inventory fallback for function `_validate_outputs_full` defined at `src/gates/output_checks.py:516`. |
+| 38 | `function` | `_read_json` | inventory fallback | Inventory fallback for function `_read_json` defined at `src/gates/output_checks.py:38`. |
+| 48 | `function` | `_as_float` | inventory fallback | Inventory fallback for function `_as_float` defined at `src/gates/output_checks.py:48`. |
+| 55 | `function` | `_as_int` | inventory fallback | Inventory fallback for function `_as_int` defined at `src/gates/output_checks.py:55`. |
+| 75 | `function` | `_float_field_equals` | inventory fallback | Inventory fallback for function `_float_field_equals` defined at `src/gates/output_checks.py:75`. |
+| 81 | `function` | `_firstprinciples_empirical_benchmark_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_empirical_benchmark_ok` defined at `src/gates/output_checks.py:81`. |
+| 124 | `function` | `_firstprinciples_taxonomy_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_taxonomy_ok` defined at `src/gates/output_checks.py:124`. |
+| 143 | `function` | `_pymdp_logging_expected` | inventory fallback | Inventory fallback for function `_pymdp_logging_expected` defined at `src/gates/output_checks.py:143`. |
+| 153 | `function` | `_efe_values_explained` | inventory fallback | Inventory fallback for function `_efe_values_explained` defined at `src/gates/output_checks.py:153`. |
+| 162 | `function` | `_si_invariants_all_pass_ok` | inventory fallback | Inventory fallback for function `_si_invariants_all_pass_ok` defined at `src/gates/output_checks.py:162`. |
+| 167 | `function` | `_si_efe_rows_explained` | inventory fallback | Inventory fallback for function `_si_efe_rows_explained` defined at `src/gates/output_checks.py:167`. |
+| 191 | `function` | `_gate_index_binding` | docstring | Every indexed gate-index row must bind to the live validator surface. |
+| 214 | `function` | `_figure_source_map_ok` | inventory fallback | Inventory fallback for function `_figure_source_map_ok` defined at `src/gates/output_checks.py:214`. |
+| 224 | `function` | `_figure_hash_manifest_ok` | inventory fallback | Inventory fallback for function `_figure_hash_manifest_ok` defined at `src/gates/output_checks.py:224`. |
+| 234 | `function` | `_figure_output_integrity_ok` | inventory fallback | Inventory fallback for function `_figure_output_integrity_ok` defined at `src/gates/output_checks.py:234`. |
+| 265 | `function` | `_proof_extraction_ok` | inventory fallback | Inventory fallback for function `_proof_extraction_ok` defined at `src/gates/output_checks.py:265`. |
+| 285 | `function` | `_ontology_profile_ok` | inventory fallback | Inventory fallback for function `_ontology_profile_ok` defined at `src/gates/output_checks.py:285`. |
+| 314 | `function` | `_cross_track_symbol_table_ok` | inventory fallback | Inventory fallback for function `_cross_track_symbol_table_ok` defined at `src/gates/output_checks.py:314`. |
+| 354 | `function` | `_firstprinciples_classroom_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_classroom_ok` defined at `src/gates/output_checks.py:354`. |
+| 360 | `function` | `_validate_outputs_selected` | inventory fallback | Inventory fallback for function `_validate_outputs_selected` defined at `src/gates/output_checks.py:360`. |
+| 521 | `function` | `validate_outputs_selected_strict` | docstring | Validate selected output keys without falling back to the full gate. |
+| 540 | `function` | `validate_outputs` | inventory fallback | Inventory fallback for function `validate_outputs` defined at `src/gates/output_checks.py:540`. |
+| 551 | `function` | `_validate_outputs_full` | inventory fallback | Inventory fallback for function `_validate_outputs_full` defined at `src/gates/output_checks.py:551`. |
 
 ## `src/gnn/concordance.py`
 

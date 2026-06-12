@@ -16,6 +16,7 @@ SUPPORTED_SELECTED_OUTPUT_CHECKS = {
     "si_summary_schema",
     "si_tmaze_model_matrices_schema",
     "pymdp_policy_posterior_grid_schema",
+    "figure_output_integrity",
     "figure_source_map_schema",
     "figure_hash_manifest_schema",
     "firstprinciples_empirical_benchmark_schema",
@@ -68,6 +69,7 @@ _QWEN_EMPIRICAL_ROWS = {
     "reinforcement_learning": {"aime24": 67.6, "gpqa_diamond": 61.3, "gpu_hours": 17920.0},
     "on_policy_distillation": {"aime24": 74.4, "gpqa_diamond": 63.3, "gpu_hours": 1800.0},
 }
+_FIGURE_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
 
 
 def _float_field_equals(value: object, expected: float | None) -> bool:
@@ -227,6 +229,37 @@ def _figure_hash_manifest_ok(root: Path, payload: dict) -> bool:
         and payload.get("all_hashes_present") is True
         and _figure_hash_rows_complete(root, payload)
     )
+
+
+def _figure_output_integrity_ok(root: Path) -> bool:
+    figures_dir = root / "output" / "figures"
+    if not figures_dir.is_dir():
+        return False
+    hidden_images = [
+        path
+        for path in figures_dir.iterdir()
+        if path.is_file() and path.name.startswith(".") and path.suffix.lower() in _FIGURE_IMAGE_SUFFIXES
+    ]
+    if hidden_images:
+        return False
+    pngs = sorted(figures_dir.glob("*.png"))
+    if not pngs:
+        return False
+    try:
+        from PIL import Image
+    except ImportError:
+        return False
+    for path in pngs:
+        try:
+            with Image.open(path) as img:
+                img.load()
+                width, height = img.size
+                extrema = img.convert("L").getextrema()
+        except (OSError, ValueError):
+            return False
+        if width <= 0 or height <= 0 or extrema[0] >= extrema[1]:
+            return False
+    return True
 
 
 def _proof_extraction_ok(proof_extraction: dict, lean_theorems: dict) -> bool:
@@ -417,6 +450,8 @@ def _validate_outputs_selected(root: Path, selected: set[str]) -> dict[str, bool
             root,
             _read_json(root / "output" / "reports" / "figure_hash_manifest.json"),
         )
+    if "figure_output_integrity" in selected:
+        checks["figure_output_integrity"] = _figure_output_integrity_ok(root)
 
     if "firstprinciples_empirical_benchmark_schema" in selected:
         fp_empirical = _read_json(root / "output" / "data" / "firstprinciples" / "empirical_benchmark.json")
@@ -866,6 +901,7 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     )
     checks["figure_source_map_schema"] = _figure_source_map_ok(root, figure_source)
     checks["figure_hash_manifest_schema"] = _figure_hash_manifest_ok(root, figure_hash)
+    checks["figure_output_integrity"] = _figure_output_integrity_ok(root)
     checks["scope_boundary_audit_schema"] = scope.get("scope_boundary_status") == "toy_only_pass"
     checks["adversarial_audit_schema"] = (
         adversarial.get("all_expected_failures_documented") is True
@@ -1104,6 +1140,7 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
             "sheaf_render_log_schema",
             "figure_source_map_schema",
             "figure_hash_manifest_schema",
+            "figure_output_integrity",
             "artifact_diffoscope_schema",
             "proof_extraction_index_schema",
             "state_space_catalog_schema",
