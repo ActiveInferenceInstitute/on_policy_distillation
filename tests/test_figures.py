@@ -16,11 +16,15 @@ from visualizations.figures import (
     figure_energy_decomposition,
     figure_free_energy_curve,
     figure_ising_mi_curve,
+    figure_opd_taxonomy_landscape,
     figure_scholarship_source_map,
+    figure_semantic_gluing_graph,
     generate_all_figures,
     run_figure,
 )
+from visualizations.figures_interpretability import _taxonomy_label_offset
 from visualizations.figures_sheaf import coverage_heatmap_payload, figure_sheaf_layers_overview
+from visualizations.figures_validation import _compact_list_label
 
 
 def _assert_png(path: Path, *, min_width: int = 400, min_height: int = 200) -> None:
@@ -223,6 +227,28 @@ def test_interpretive_figures_expose_formula_signs_and_caveats(project_root: Pat
     assert "G = risk + ambiguity = -(epistemic + pragmatic)" in registry["energy_decomposition"].caption
     assert "max_display_families = 12" in scholarship_source
     assert "print-condensed" in registry["scholarship_source_map"].caption
+
+
+def test_dense_figures_disclose_readability_compression(project_root: Path) -> None:
+    registry = load_figure_registry(project_root)
+    taxonomy_source = inspect.getsource(figure_opd_taxonomy_landscape)
+    gluing_source = inspect.getsource(figure_semantic_gluing_graph)
+
+    assert "_taxonomy_label_offset" in taxonomy_source
+    assert "arrowprops" in taxonomy_source
+    assert "bbox=dict(boxstyle=\"round,pad=0.14\"" in taxonomy_source
+    assert "right-side label key" in registry["opd_taxonomy_landscape"].caption
+    dx, dy, ha = _taxonomy_label_offset(slot=1, cluster_count=3)
+    assert dx < 0
+    assert dy != 0
+    assert ha == "right"
+
+    assert "_compact_list_label" in gluing_source
+    assert "max_items=2" in gluing_source
+    assert "Long consumer lists are compacted" in gluing_source
+    assert "`+N` counts" in registry["semantic_gluing_graph"].caption
+    compacted = _compact_list_label(["gate_a", "gate_b", "gate_c"], width=30, max_items=2, more_word="bindings")
+    assert compacted.endswith("+1 more bindings")
 
 
 def test_figure_registry_rejects_formal_and_causal_overclaim_phrases(project_root: Path) -> None:

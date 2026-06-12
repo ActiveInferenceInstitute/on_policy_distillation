@@ -2,7 +2,7 @@
 
 Generated documentation coverage for every Python `def` and `class` under `src/` and `scripts/`. Entries marked `inventory fallback` have no inline docstring yet, but remain documented here by path, line, kind, and qualified name.
 
-Total documented definitions: 865
+Total documented definitions: 868
 
 ## `src/analytical/bernoulli_toy.py`
 
@@ -1272,11 +1272,12 @@ Total documented definitions: 865
 
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
-| 24 | `function` | `_load_json` | inventory fallback | Inventory fallback for function `_load_json` defined at `src/visualizations/figures_interpretability.py:24`. |
-| 28 | `function` | `figure_correspondence_map` | docstring | Render the audited OPD <-> active inference dictionary as the paper's visual spine. |
-| 41 | `function` | `figure_correspondence_map._wrap` | inventory fallback | Inventory fallback for function `figure_correspondence_map._wrap` defined at `src/visualizations/figures_interpretability.py:41`. |
-| 97 | `function` | `figure_policy_posterior_grid` | docstring | Render the measured per-step policy posteriors for both planners. |
-| 183 | `function` | `figure_opd_taxonomy_landscape` | docstring | Render the audited method taxonomy as a year-by-design-quadrant landscape. |
+| 25 | `function` | `_load_json` | inventory fallback | Inventory fallback for function `_load_json` defined at `src/visualizations/figures_interpretability.py:25`. |
+| 29 | `function` | `figure_correspondence_map` | docstring | Render the audited OPD <-> active inference dictionary as the paper's visual spine. |
+| 42 | `function` | `figure_correspondence_map._wrap` | inventory fallback | Inventory fallback for function `figure_correspondence_map._wrap` defined at `src/visualizations/figures_interpretability.py:42`. |
+| 98 | `function` | `figure_policy_posterior_grid` | docstring | Render the measured per-step policy posteriors for both planners. |
+| 184 | `function` | `_taxonomy_label_offset` | docstring | Return a deterministic leader-line offset for dense same-year method clusters. |
+| 196 | `function` | `figure_opd_taxonomy_landscape` | docstring | Render the audited method taxonomy as a year-by-design-quadrant landscape. |
 
 ## `src/visualizations/figures_sheaf.py`
 
@@ -1319,11 +1320,13 @@ Total documented definitions: 865
 
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
-| 22 | `function` | `figure_semantic_gluing_graph` | inventory fallback | Inventory fallback for function `figure_semantic_gluing_graph` defined at `src/visualizations/figures_validation.py:22`. |
-| 91 | `function` | `figure_theorem_traceability_graph` | docstring | Render theorem → proof dependency → witness links from generated JSON rows. |
-| 185 | `function` | `figure_causal_ablation_heatmap` | docstring | Render source-backed causal-ablation effects as topology × perturbation heatmap. |
-| 228 | `function` | `figure_scholarship_source_map` | docstring | Render bibliography-to-method-source bindings from the scholarship matrix. |
-| 240 | `function` | `figure_scholarship_source_map.artifact_bucket` | inventory fallback | Inventory fallback for function `figure_scholarship_source_map.artifact_bucket` defined at `src/visualizations/figures_validation.py:240`. |
+| 22 | `function` | `_wrap_label` | inventory fallback | Inventory fallback for function `_wrap_label` defined at `src/visualizations/figures_validation.py:22`. |
+| 26 | `function` | `_compact_list_label` | inventory fallback | Inventory fallback for function `_compact_list_label` defined at `src/visualizations/figures_validation.py:26`. |
+| 34 | `function` | `figure_semantic_gluing_graph` | inventory fallback | Inventory fallback for function `figure_semantic_gluing_graph` defined at `src/visualizations/figures_validation.py:34`. |
+| 149 | `function` | `figure_theorem_traceability_graph` | docstring | Render theorem → proof dependency → witness links from generated JSON rows. |
+| 243 | `function` | `figure_causal_ablation_heatmap` | docstring | Render source-backed causal-ablation effects as topology × perturbation heatmap. |
+| 286 | `function` | `figure_scholarship_source_map` | docstring | Render bibliography-to-method-source bindings from the scholarship matrix. |
+| 298 | `function` | `figure_scholarship_source_map.artifact_bucket` | inventory fallback | Inventory fallback for function `figure_scholarship_source_map.artifact_bucket` defined at `src/visualizations/figures_validation.py:298`. |
 
 ## `src/visualizations/lean_boundary.py`
 

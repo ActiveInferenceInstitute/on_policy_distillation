@@ -7,6 +7,7 @@ panel titles are derived from the loaded rows ("shown N of M" discipline)."""
 from __future__ import annotations
 
 import json
+from collections import Counter
 from pathlib import Path
 
 import matplotlib
@@ -180,6 +181,18 @@ _QUADRANTS: tuple[tuple[bool, bool, str], ...] = (
 )
 
 
+def _taxonomy_label_offset(slot: int, cluster_count: int) -> tuple[int, int, str]:
+    """Return a deterministic leader-line offset for dense same-year method clusters."""
+    if cluster_count <= 1:
+        return 6, 0, "left"
+    vertical_cycle = (-15, 15, -28, 28, -41, 41)
+    dy = vertical_cycle[slot % len(vertical_cycle)]
+    dx = 10 + 10 * (slot // len(vertical_cycle))
+    if slot % 2:
+        dx *= -1
+    return dx, dy, "right" if dx < 0 else "left"
+
+
 def figure_opd_taxonomy_landscape(project_root: Path) -> Path:
     """Render the audited method taxonomy as a year-by-design-quadrant landscape."""
     root = project_root.resolve()
@@ -190,7 +203,7 @@ def figure_opd_taxonomy_landscape(project_root: Path) -> Path:
         raise RuntimeError("opd_taxonomy.json has no method rows")
     out = figure_output_path(root, "opd_taxonomy_landscape")
     with apply_style(style):
-        fig, ax = plt.subplots(figsize=(12.6, 6.4))
+        fig, ax = plt.subplots(figsize=(17.4, 7.0))
         lane_color = {0: "muted", 1: "fail", 2: "secondary", 3: "accent"}
         years = [int(row["year"]) for row in methods]
         for lane, (on_policy, privileged, label) in enumerate(_QUADRANTS):
@@ -210,37 +223,96 @@ def figure_opd_taxonomy_landscape(project_root: Path) -> Path:
                 fontweight="bold",
                 ha="left",
             )
-            occupancy: dict[int, int] = {}
+            year_counts = Counter(int(row["year"]) for row in lane_rows)
+            rows_by_year: dict[int, list[dict]] = {}
             for row in sorted(lane_rows, key=lambda item: (int(item["year"]), str(item["acronym"]))):
-                year = int(row["year"])
-                slot = occupancy.get(year, 0)
-                occupancy[year] = slot + 1
-                # stack within a year (4 vertical slots), then shift a full label
-                # column right; labels alternate sides so dense modern clusters
-                # stay legible at print scale
-                y = lane - 0.27 + (slot % 4) * 0.17
-                x = year + 1.05 * (slot // 4)
-                ax.scatter([x], [y], s=26, color=color, zorder=3)
-                left_side = slot % 2 == 1
-                ax.annotate(
-                    str(row["acronym"]),
-                    xy=(x, y),
-                    xytext=(-5 if left_side else 5, 0),
-                    textcoords="offset points",
-                    fontsize=style.font_size("small"),
-                    color=style.color("primary"),
-                    va="center",
-                    ha="right" if left_side else "left",
-                )
+                rows_by_year.setdefault(int(row["year"]), []).append(row)
+            crowded_lane = len(lane_rows) >= 8
+            anchors: list[tuple[dict, float, float, int, int]] = []
+            for year, cluster_rows in rows_by_year.items():
+                cluster_count = year_counts[year]
+                jitter = min(0.13, 0.38 / max(1, cluster_count - 1))
+                for slot, row in enumerate(cluster_rows):
+                    x = year + (slot - (cluster_count - 1) / 2) * jitter
+                    y = lane + (slot - (cluster_count - 1) / 2) * min(0.018, 0.10 / max(1, cluster_count - 1))
+                    marker = "D" if bool(row["privileged_info"]) else "o"
+                    ax.scatter(
+                        [x],
+                        [y],
+                        s=36 if bool(row["on_policy"]) else 28,
+                        marker=marker,
+                        color=color,
+                        edgecolor="white",
+                        linewidth=0.7,
+                        zorder=3,
+                    )
+                    anchors.append((row, x, y, slot, cluster_count))
+                    if not crowded_lane:
+                        dx, dy, ha = _taxonomy_label_offset(slot, cluster_count)
+                        ax.annotate(
+                            str(row["acronym"]),
+                            xy=(x, y),
+                            xytext=(dx, dy),
+                            textcoords="offset points",
+                            fontsize=style.font_size("small"),
+                            color=style.color("primary"),
+                            va="center",
+                            ha=ha,
+                            arrowprops={
+                                "arrowstyle": "-",
+                                "color": color,
+                                "linewidth": 0.65,
+                                "alpha": 0.62,
+                                "shrinkA": 0,
+                                "shrinkB": 2,
+                            }
+                            if cluster_count > 1
+                            else None,
+                            bbox=dict(boxstyle="round,pad=0.14", facecolor="white", edgecolor="none", alpha=0.82),
+                            zorder=4,
+                        )
+            if crowded_lane:
+                label_columns = 3 if len(anchors) > 12 else 2
+                per_column = (len(anchors) + label_columns - 1) // label_columns
+                for index, (row, x, y, _slot, _cluster_count) in enumerate(anchors):
+                    column = index // per_column
+                    row_in_column = index % per_column
+                    column_size = min(per_column, len(anchors) - column * per_column)
+                    y_slots = np.linspace(lane + 0.36, lane - 0.36, column_size)
+                    label_x = max(years) + 0.50 + 2.45 * column
+                    ax.text(
+                        label_x,
+                        y_slots[row_in_column],
+                        str(row["acronym"]),
+                        fontsize=style.font_size("small"),
+                        color=style.color("primary"),
+                        va="center",
+                        ha="left",
+                        bbox=dict(boxstyle="round,pad=0.14", facecolor="white", edgecolor="none", alpha=0.85),
+                        zorder=4,
+                    )
         from matplotlib.ticker import MaxNLocator
 
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
         ax.set_yticks(range(len(_QUADRANTS)))
         ax.set_yticklabels(["" for _ in _QUADRANTS])
         ax.set_xlabel("publication year", fontsize=style.font_size("label"))
-        ax.set_xlim(min(years) - 0.8, max(years) + 2.6)
+        label_region_start = max(years) + 0.28
+        ax.axvspan(label_region_start, max(years) + 7.7, color=style.color("muted"), alpha=0.035, lw=0)
+        ax.text(
+            label_region_start + 0.08,
+            len(_QUADRANTS) - 0.33,
+            "label key",
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
+            ha="left",
+        )
+        ax.set_xlim(min(years) - 0.8, max(years) + 7.7)
+        tick_start = min(years) - (min(years) % 3)
+        ax.set_xticks(list(range(tick_start, max(years) + 1, 3)))
         ax.set_ylim(-0.6, len(_QUADRANTS) - 0.3)
         ax.grid(True, axis="x", alpha=0.25)
+        ax.spines[["top", "right", "left"]].set_visible(False)
         ax.set_title(
             f"The distillation literature as a design landscape (all {len(methods)} audited methods)",
             fontsize=style.font_size("title"),

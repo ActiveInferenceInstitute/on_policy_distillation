@@ -266,8 +266,8 @@ figures:
       at once — is exactly the regime the active inference reading describes as a
       variational posterior generating its own observations under a generative model
       conditioned on privileged beliefs. Lane membership is read from the artifact, not
-      hand-assigned; points within a crowded publication year are dodged vertically and
-      horizontally for legibility, so horizontal position is approximate within one year.
+      hand-assigned; crowded lanes use a right-side label key, and remaining point labels
+      use deterministic offsets, so horizontal position is approximate within one year.
       Source: `output/data/firstprinciples/opd_taxonomy.json`.
     width: 0.99
   si_tmaze_actions:
@@ -489,6 +489,8 @@ figures:
       downstream. It is the operational embodiment of the sheaf gluing condition for this
       artifact contract: producers, artifacts, and consumers must agree along the registered
       edges before the assembled active-inference / on-policy-distillation argument is accepted.
+      Long consumer lists are visually compacted with `+N` counts while remaining bound to
+      `output/data/validation_dependency_graph.json`.
     width: 0.95
   theorem_traceability_graph:
     filename: theorem_traceability_graph.png

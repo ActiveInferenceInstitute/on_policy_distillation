@@ -19,6 +19,18 @@ from .figure_registry import figure_output_path
 from .figure_style import apply_style, load_figure_style
 
 
+def _wrap_label(text: str, width: int) -> str:
+    return "\n".join(textwrap.wrap(str(text), width=width, break_long_words=False)) or str(text)
+
+
+def _compact_list_label(values: list[str], *, width: int, max_items: int, more_word: str) -> str:
+    cleaned = [str(value).strip() for value in values if str(value).strip()]
+    shown = [_wrap_label(value, width) for value in cleaned[:max_items]]
+    if len(cleaned) > max_items:
+        shown.append(f"+{len(cleaned) - max_items} more {more_word}")
+    return "\n".join(shown) or "validate_outputs"
+
+
 def figure_semantic_gluing_graph(project_root: Path) -> Path:
     root = project_root.resolve()
     style = load_figure_style(root)
@@ -44,34 +56,72 @@ def figure_semantic_gluing_graph(project_root: Path) -> Path:
     artifacts = graph.get("artifacts") or {}
     out = figure_output_path(root, "semantic_gluing_graph")
     with apply_style(style):
-        fig, ax = plt.subplots(figsize=(13.2, 9.2))
+        fig, ax = plt.subplots(figsize=(14.7, 11.4))
         ax.axis("off")
-        producer_x, artifact_x, consumer_x = 0.05, 0.42, 0.78
-        y_positions = np.linspace(0.86, 0.14, len(selected))
-        ax.text(producer_x, 0.96, "Producer script", weight="bold", color=style.color("primary"))
-        ax.text(artifact_x, 0.96, "Evidence artifact", weight="bold", color=style.color("primary"))
-        ax.text(consumer_x, 0.96, "Consumer / gate", weight="bold", color=style.color("primary"))
+        ax.set_xlim(0.0, 1.0)
+        ax.set_ylim(0.0, 1.0)
+        producer_x, artifact_x, consumer_x = 0.05, 0.40, 0.74
+        fig.text(
+            0.05,
+            0.965,
+            "Every generated claim flows through a producer, artifact, and checked binding",
+            fontsize=style.font_size("title"),
+            color=style.color("primary"),
+            ha="left",
+            va="top",
+        )
+        header_y = 0.89
+        y_positions = np.linspace(0.80, 0.10, len(selected))
+        ax.text(
+            producer_x,
+            header_y,
+            "Producer script",
+            weight="bold",
+            color=style.color("primary"),
+            fontsize=style.font_size("annotation"),
+        )
+        ax.text(
+            artifact_x,
+            header_y,
+            "Evidence artifact",
+            weight="bold",
+            color=style.color("primary"),
+            fontsize=style.font_size("annotation"),
+        )
+        ax.text(
+            consumer_x,
+            header_y,
+            "Compact consumers / gates",
+            weight="bold",
+            color=style.color("primary"),
+            fontsize=style.font_size("annotation"),
+        )
         for y, rel in zip(y_positions, selected, strict=True):
             record = artifacts.get(rel, {})
             producer = str(record.get("producer", "?"))
-            consumers = ", ".join(record.get("consumers") or record.get("validation_gates") or ["validate_outputs"])
+            consumer_values = record.get("consumers") or record.get("validation_gates") or ["validate_outputs"]
+            consumers = _compact_list_label(consumer_values, width=30, max_items=2, more_word="bindings")
             ok = bool(record.get("produced_by_configured_analysis"))
             box_color = style.color("pass") if ok else style.color("fail")
+            band_alpha = 0.055 if selected.index(rel) % 2 == 0 else 0.0
+            ax.axhspan(y - 0.028, y + 0.028, xmin=0.025, xmax=0.97, color=style.color("muted"), alpha=band_alpha, lw=0)
             ax.text(
                 producer_x,
                 y,
-                producer,
+                _wrap_label(producer, 25),
                 fontsize=style.font_size("dense"),
                 va="center",
-                bbox=dict(boxstyle="round,pad=0.25", facecolor="#f8fafc", edgecolor=box_color),
+                linespacing=1.12,
+                bbox=dict(boxstyle="round,pad=0.24", facecolor="#f8fafc", edgecolor=box_color),
             )
             ax.text(
                 artifact_x,
                 y,
-                rel.replace("output/", ""),
+                _wrap_label(rel.replace("output/", ""), 35),
                 fontsize=style.font_size("dense"),
                 va="center",
-                bbox=dict(boxstyle="round,pad=0.25", facecolor="#ffffff", edgecolor=style.color("secondary")),
+                linespacing=1.12,
+                bbox=dict(boxstyle="round,pad=0.24", facecolor="#ffffff", edgecolor=style.color("secondary")),
             )
             ax.text(
                 consumer_x,
@@ -79,11 +129,19 @@ def figure_semantic_gluing_graph(project_root: Path) -> Path:
                 consumers,
                 fontsize=style.font_size("dense"),
                 va="center",
-                bbox=dict(boxstyle="round,pad=0.25", facecolor="#f8fafc", edgecolor=style.color("accent")),
+                linespacing=1.10,
+                bbox=dict(boxstyle="round,pad=0.24", facecolor="#f8fafc", edgecolor=style.color("accent")),
             )
-            ax.annotate("", xy=(artifact_x - 0.02, y), xytext=(producer_x + 0.24, y), arrowprops={"arrowstyle": "->"})
-            ax.annotate("", xy=(consumer_x - 0.02, y), xytext=(artifact_x + 0.29, y), arrowprops={"arrowstyle": "->"})
-        ax.set_title("Every generated claim flows through a producer, artifact, and gate", loc="left", pad=16)
+            arrow = {"arrowstyle": "->", "linewidth": 0.9, "color": style.color("muted"), "alpha": 0.82}
+            ax.annotate("", xy=(artifact_x - 0.025, y), xytext=(producer_x + 0.255, y), arrowprops=arrow)
+            ax.annotate("", xy=(consumer_x - 0.025, y), xytext=(artifact_x + 0.285, y), arrowprops=arrow)
+        fig.text(
+            0.05,
+            0.035,
+            "Long consumer lists are compacted with +N counts; bindings remain sourced from validation_dependency_graph.json.",
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
+        )
         save_styled_figure(fig, out, style)
     return out
 
@@ -364,4 +422,3 @@ def figure_scholarship_source_map(project_root: Path) -> Path:
             transparent=style.transparent,
         )
     return out
-
