@@ -591,6 +591,7 @@ def test_scholarship_matrix_has_row_level_negative_control(project_root: Path) -
         "li2026rethinking_opd",
         "luo2026demystifying_opd",
         "han2026adaptive_teacher_exposure",
+        "chen2026freshness_opd",
         "ke2019f_divergence_imitation",
         "hernandezlobato2016blackbox_alpha",
         "shrivastava2021mi_kd",
@@ -617,10 +618,18 @@ def test_scholarship_matrix_has_row_level_negative_control(project_root: Path) -
     assert thinking_machines["url"] == "https://thinkingmachines.ai/blog/on-policy-distillation/"
     assert thinking_machines["source_locator"] == "Thinking Machines Lab blog post, section 'On-policy distillation'"
     assert thinking_machines["source_heading"] == "On-Policy Distillation"
+    freshness = next(row for row in data["rows"] if row["citation_key"] == "chen2026freshness_opd")
+    assert freshness["source_family"] == "opd_stabilization"
+    assert freshness["method_role"] == "freshness_aware_long_horizon_opd"
+    assert freshness["source_locator"] == "arXiv:2605.17862v1, Sections 3-4"
+    assert freshness["source_heading"] == "f-OPD: Stabilizing Long-Horizon On-Policy Distillation with Freshness-Aware Control"
+    assert freshness["doi"] == "10.48550/arXiv.2605.17862"
+    assert freshness["url"] == "https://arxiv.org/abs/2605.17862"
+    assert freshness["arxiv_id"] == "2605.17862"
 
     missing_new_source = json.loads(json.dumps(data))
     missing_new_source["rows"] = [
-        row for row in missing_new_source["rows"] if row["citation_key"] != "oh2026vopd"
+        row for row in missing_new_source["rows"] if row["citation_key"] != "chen2026freshness_opd"
     ]
     missing_new_source["observed_sources"] = sorted(row["citation_key"] for row in missing_new_source["rows"])
     missing_new_source["source_count"] = len(missing_new_source["rows"])

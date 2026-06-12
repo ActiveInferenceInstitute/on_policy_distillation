@@ -316,6 +316,18 @@ _REDTEAM_REVIEW_SOURCES: tuple[dict[str, Any], ...] = (
         "claim_boundary": "teacher-exposure scheduling context only; classroom entropy values remain local",
     },
     {
+        "citation_key": "chen2026freshness_opd",
+        "source_kind": "primary_preprint",
+        "source_family": "opd_stabilization",
+        "method_role": "freshness_aware_long_horizon_opd",
+        "tracks": ["prose", "scholarship"],
+        "artifact": "output/data/firstprinciples/opd_taxonomy.json",
+        "manuscript_sections": ["discussion_outlook"],
+        "source_locator": "arXiv:2605.17862v1, Sections 3-4",
+        "source_heading": "f-OPD: Stabilizing Long-Horizon On-Policy Distillation with Freshness-Aware Control",
+        "claim_boundary": "freshness-aware asynchronous OPD context only; no f-OPD benchmark is reproduced",
+    },
+    {
         "citation_key": "ke2019f_divergence_imitation",
         "source_kind": "primary_preprint",
         "source_family": "kl_geometry_caveats",

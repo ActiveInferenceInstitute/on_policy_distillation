@@ -19,6 +19,7 @@ SUPPORTED_SELECTED_OUTPUT_CHECKS = {
     "figure_source_map_schema",
     "figure_hash_manifest_schema",
     "firstprinciples_empirical_benchmark_schema",
+    "firstprinciples_taxonomy_schema",
     "firstprinciples_statistics_schema",
     "firstprinciples_privilege_sweep_schema",
     "firstprinciples_classroom_schema",
@@ -55,6 +56,86 @@ def _as_int(value: object, default: int = 0) -> int:
         return int(value)
     except (TypeError, ValueError):
         return default
+
+
+_QWEN_SOURCE_LOCATOR = "Qwen3 Technical Report, Table 21"
+_QWEN_SOURCE_HEADING = "Comparison of reinforcement learning and on-policy distillation on Qwen3-8B"
+_QWEN_SOURCE_TABLE = "Table 21"
+_QWEN_SOURCE_URL = "https://arxiv.org/abs/2505.09388"
+_QWEN_SOURCE_ARXIV_ID = "2505.09388"
+_QWEN_EMPIRICAL_ROWS = {
+    "off_policy_distillation": {"aime24": 55.0, "gpqa_diamond": 55.6, "gpu_hours": None},
+    "reinforcement_learning": {"aime24": 67.6, "gpqa_diamond": 61.3, "gpu_hours": 17920.0},
+    "on_policy_distillation": {"aime24": 74.4, "gpqa_diamond": 63.3, "gpu_hours": 1800.0},
+}
+
+
+def _float_field_equals(value: object, expected: float | None) -> bool:
+    if expected is None:
+        return value is None
+    return abs(_as_float(value, 1e100) - expected) <= 1e-9
+
+
+def _firstprinciples_empirical_benchmark_ok(payload: dict) -> bool:
+    rows = payload.get("rows") or []
+    by_method = {str(row.get("method")): row for row in rows if isinstance(row, dict)}
+    replication = payload.get("thinking_machines_replication") or {}
+    efficiency_min = _as_float(replication.get("efficiency_range_min"), -1.0)
+    efficiency_max = _as_float(replication.get("efficiency_range_max"), -1.0)
+    top_level_source_ok = (
+        payload.get("schema") == "firstprinciples.empirical_benchmark.v1"
+        and payload.get("source") == "literature_reported"
+        and payload.get("direct_bibkey") == "qwen2025technical_report"
+        and payload.get("relayed_by_bibkey") == "thinkingmachines2025opd"
+        and payload.get("source_locator") == _QWEN_SOURCE_LOCATOR
+        and payload.get("source_heading") == _QWEN_SOURCE_HEADING
+        and payload.get("source_table") == _QWEN_SOURCE_TABLE
+        and payload.get("source_url") == _QWEN_SOURCE_URL
+        and payload.get("source_arxiv_id") == _QWEN_SOURCE_ARXIV_ID
+        and _as_int(payload.get("row_count"), -1) == len(_QWEN_EMPIRICAL_ROWS)
+        and len(rows) == len(_QWEN_EMPIRICAL_ROWS)
+        and set(by_method) == set(_QWEN_EMPIRICAL_ROWS)
+    )
+    rows_ok = all(
+        row.get("bibkey") == "qwen2025technical_report"
+        and row.get("relayed_by") == "thinkingmachines2025opd"
+        and row.get("source_locator") == _QWEN_SOURCE_LOCATOR
+        and row.get("source_heading") == _QWEN_SOURCE_HEADING
+        and row.get("source_table") == _QWEN_SOURCE_TABLE
+        and row.get("source_url") == _QWEN_SOURCE_URL
+        and row.get("source_arxiv_id") == _QWEN_SOURCE_ARXIV_ID
+        and _float_field_equals(row.get("aime24"), expected["aime24"])
+        and _float_field_equals(row.get("gpqa_diamond"), expected["gpqa_diamond"])
+        and _float_field_equals(row.get("gpu_hours"), expected["gpu_hours"])
+        for method, expected in _QWEN_EMPIRICAL_ROWS.items()
+        for row in [by_method.get(method, {})]
+    )
+    replication_ok = (
+        replication.get("bibkey") == "thinkingmachines2025opd"
+        and _as_float(replication.get("aime24_accuracy"), 0.0) > 0.0
+        and _as_int(replication.get("training_steps"), 0) > 0
+        and 0.0 < efficiency_min <= efficiency_max
+    )
+    return bool(top_level_source_ok and rows_ok and replication_ok)
+
+
+def _firstprinciples_taxonomy_ok(payload: dict) -> bool:
+    methods = payload.get("methods") or []
+    by_key = {str(row.get("bibkey")): row for row in methods if isinstance(row, dict)}
+    freshness = by_key.get("chen2026freshness_opd") or {}
+    return (
+        payload.get("schema") == "firstprinciples.opd_taxonomy.v1"
+        and int(payload.get("method_count", 0) or 0) == len(methods)
+        and int(payload.get("method_count", 0) or 0) >= 8
+        and int(payload.get("on_policy_count", 0) or 0) >= 1
+        and "freshness_aware_async_buffer" in set(payload.get("signal_sources") or [])
+        and freshness.get("acronym") == "f-OPD"
+        and freshness.get("signal_source") == "freshness_aware_async_buffer"
+        and freshness.get("divergence") == "freshness_weighted_reverse_kl"
+        and freshness.get("on_policy") is True
+        and freshness.get("privileged_info") is False
+        and "staleness" in str(freshness.get("note", "")).lower()
+    )
 
 
 def _pymdp_logging_expected(root: Path) -> bool:
@@ -339,26 +420,11 @@ def _validate_outputs_selected(root: Path, selected: set[str]) -> dict[str, bool
 
     if "firstprinciples_empirical_benchmark_schema" in selected:
         fp_empirical = _read_json(root / "output" / "data" / "firstprinciples" / "empirical_benchmark.json")
-        fp_empirical_rows = fp_empirical.get("rows") or []
-        fp_replication = fp_empirical.get("thinking_machines_replication") or {}
-        fp_efficiency_min = _as_float(fp_replication.get("efficiency_range_min"), -1.0)
-        fp_efficiency_max = _as_float(fp_replication.get("efficiency_range_max"), -1.0)
-        checks["firstprinciples_empirical_benchmark_schema"] = (
-            fp_empirical.get("schema") == "firstprinciples.empirical_benchmark.v1"
-            and fp_empirical.get("direct_bibkey") == "qwen2025technical_report"
-            and fp_empirical.get("relayed_by_bibkey") == "thinkingmachines2025opd"
-            and _as_int(fp_empirical.get("row_count"), -1) == 3
-            and len(fp_empirical_rows) == 3
-            and all(
-                row.get("bibkey") == "qwen2025technical_report"
-                and row.get("relayed_by") == "thinkingmachines2025opd"
-                for row in fp_empirical_rows
-            )
-            and fp_replication.get("bibkey") == "thinkingmachines2025opd"
-            and _as_float(fp_replication.get("aime24_accuracy"), 0.0) > 0.0
-            and _as_int(fp_replication.get("training_steps"), 0) > 0
-            and 0.0 < fp_efficiency_min <= fp_efficiency_max
-        )
+        checks["firstprinciples_empirical_benchmark_schema"] = _firstprinciples_empirical_benchmark_ok(fp_empirical)
+
+    if "firstprinciples_taxonomy_schema" in selected:
+        fp_taxonomy = _read_json(root / "output" / "data" / "firstprinciples" / "opd_taxonomy.json")
+        checks["firstprinciples_taxonomy_schema"] = _firstprinciples_taxonomy_ok(fp_taxonomy)
 
     if "firstprinciples_statistics_schema" in selected:
         fp_statistics = _read_json(root / "output" / "data" / "firstprinciples" / "statistics_demo.json")
@@ -883,31 +949,8 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
         and float(exposure_gap.get("terminal_gap", -1.0)) > 0.0
     )
     checks["firstprinciples_classroom_schema"] = _firstprinciples_classroom_ok(fp_classroom)
-    checks["firstprinciples_taxonomy_schema"] = (
-        fp_taxonomy.get("schema") == "firstprinciples.opd_taxonomy.v1"
-        and int(fp_taxonomy.get("method_count", 0) or 0) >= 8
-        and int(fp_taxonomy.get("on_policy_count", 0) or 0) >= 1
-    )
-    fp_empirical_rows = fp_empirical.get("rows") or []
-    fp_replication = fp_empirical.get("thinking_machines_replication") or {}
-    fp_efficiency_min = _as_float(fp_replication.get("efficiency_range_min"), -1.0)
-    fp_efficiency_max = _as_float(fp_replication.get("efficiency_range_max"), -1.0)
-    checks["firstprinciples_empirical_benchmark_schema"] = (
-        fp_empirical.get("schema") == "firstprinciples.empirical_benchmark.v1"
-        and fp_empirical.get("direct_bibkey") == "qwen2025technical_report"
-        and fp_empirical.get("relayed_by_bibkey") == "thinkingmachines2025opd"
-        and _as_int(fp_empirical.get("row_count"), -1) == 3
-        and len(fp_empirical_rows) == 3
-        and all(
-            row.get("bibkey") == "qwen2025technical_report"
-            and row.get("relayed_by") == "thinkingmachines2025opd"
-            for row in fp_empirical_rows
-        )
-        and fp_replication.get("bibkey") == "thinkingmachines2025opd"
-        and _as_float(fp_replication.get("aime24_accuracy"), 0.0) > 0.0
-        and _as_int(fp_replication.get("training_steps"), 0) > 0
-        and 0.0 < fp_efficiency_min <= fp_efficiency_max
-    )
+    checks["firstprinciples_taxonomy_schema"] = _firstprinciples_taxonomy_ok(fp_taxonomy)
+    checks["firstprinciples_empirical_benchmark_schema"] = _firstprinciples_empirical_benchmark_ok(fp_empirical)
     fp_permutation = fp_statistics.get("paired_permutation") or {}
     checks["firstprinciples_statistics_schema"] = (
         fp_statistics.get("schema") == "firstprinciples.statistics_demo.v1"

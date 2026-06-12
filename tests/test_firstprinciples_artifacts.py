@@ -38,6 +38,13 @@ def test_correspondence_and_taxonomy_payloads(tmp_path: Path) -> None:
     assert corr["ok"] is True and corr["row_count"] >= 10
     tax = _load(paths["opd_taxonomy.json"])
     assert tax["method_count"] >= 8
+    by_key = {row["bibkey"]: row for row in tax["methods"]}
+    assert by_key["chen2026freshness_opd"]["acronym"] == "f-OPD"
+    assert by_key["chen2026freshness_opd"]["signal_source"] == "freshness_aware_async_buffer"
+    assert by_key["chen2026freshness_opd"]["divergence"] == "freshness_weighted_reverse_kl"
+    assert by_key["chen2026freshness_opd"]["on_policy"] is True
+    assert by_key["chen2026freshness_opd"]["privileged_info"] is False
+    assert "freshness_aware_async_buffer" in tax["signal_sources"]
 
 
 def test_divergence_demo_mode_seeking() -> None:

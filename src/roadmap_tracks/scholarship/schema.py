@@ -74,6 +74,7 @@ EXPECTED_SCHOLARSHIP_KEYS: tuple[str, ...] = (
     "li2026rethinking_opd",
     "luo2026demystifying_opd",
     "han2026adaptive_teacher_exposure",
+    "chen2026freshness_opd",
     "zhao2026opsd",
     "shenfeld2026sdft",
     "hubotter2026sdpo",

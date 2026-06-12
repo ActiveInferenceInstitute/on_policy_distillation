@@ -255,6 +255,7 @@ def test_manuscript_review_citation_keys_and_overclaim_guards(project_root: Path
         "li2026rethinking_opd",
         "luo2026demystifying_opd",
         "han2026adaptive_teacher_exposure",
+        "chen2026freshness_opd",
         "zhong2026sod",
         "zhang2026opsdl",
         "fellows2018virel",

@@ -15,6 +15,9 @@ def test_benchmark_rows_present_and_attributed() -> None:
         assert row.relayed_by == "thinkingmachines2025opd"  # contextual relay/replication post
         assert row.source_locator == "Qwen3 Technical Report, Table 21"
         assert "Qwen3-8B" in row.source_heading
+        assert row.source_table == "Table 21"
+        assert row.source_url == "https://arxiv.org/abs/2505.09388"
+        assert row.source_arxiv_id == "2505.09388"
         assert row.source_note
 
 
@@ -33,7 +36,20 @@ def test_payload_honest_flags() -> None:
     assert payload["direct_bibkey"] == "qwen2025technical_report"
     assert payload["source_locator"] == "Qwen3 Technical Report, Table 21"
     assert payload["source_heading"] == "Comparison of reinforcement learning and on-policy distillation on Qwen3-8B"
+    assert payload["source_table"] == "Table 21"
+    assert payload["source_url"] == "https://arxiv.org/abs/2505.09388"
+    assert payload["source_arxiv_id"] == "2505.09388"
     assert payload["relayed_by_bibkey"] == "thinkingmachines2025opd"
+    rows = {row["method"]: row for row in payload["rows"]}
+    assert rows["off_policy_distillation"]["aime24"] == pytest.approx(55.0)
+    assert rows["off_policy_distillation"]["gpqa_diamond"] == pytest.approx(55.6)
+    assert rows["off_policy_distillation"]["gpu_hours"] is None
+    assert rows["reinforcement_learning"]["aime24"] == pytest.approx(67.6)
+    assert rows["reinforcement_learning"]["gpqa_diamond"] == pytest.approx(61.3)
+    assert rows["reinforcement_learning"]["gpu_hours"] == pytest.approx(17920.0)
+    assert rows["on_policy_distillation"]["aime24"] == pytest.approx(74.4)
+    assert rows["on_policy_distillation"]["gpqa_diamond"] == pytest.approx(63.3)
+    assert rows["on_policy_distillation"]["gpu_hours"] == pytest.approx(1800.0)
     assert payload["thinking_machines_replication"]["aime24_accuracy"] == pytest.approx(70.0)
     assert payload["thinking_machines_replication"]["efficiency_range_min"] == pytest.approx(9.0)
     assert payload["thinking_machines_replication"]["efficiency_range_max"] == pytest.approx(30.0)

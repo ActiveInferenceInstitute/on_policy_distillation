@@ -268,28 +268,48 @@ def test_validate_outputs_negative_firstprinciples_benchmark_and_statistics_cont
     ensure_gate_artifacts_for(
         project_root,
         "output/data/firstprinciples/empirical_benchmark.json",
+        "output/data/firstprinciples/opd_taxonomy.json",
         "output/data/firstprinciples/statistics_demo.json",
         "output/data/firstprinciples/benchmark_table.md",
     )
     empirical_path = project_root / "output" / "data" / "firstprinciples" / "empirical_benchmark.json"
+    taxonomy_path = project_root / "output" / "data" / "firstprinciples" / "opd_taxonomy.json"
     statistics_path = project_root / "output" / "data" / "firstprinciples" / "statistics_demo.json"
     table_path = project_root / "output" / "data" / "firstprinciples" / "benchmark_table.md"
     empirical_backup = tmp_path / "empirical_benchmark.json.bak"
+    taxonomy_backup = tmp_path / "opd_taxonomy.json.bak"
     statistics_backup = tmp_path / "statistics_demo.json.bak"
     table_backup = tmp_path / "benchmark_table.md.bak"
     empirical_backup.write_text(empirical_path.read_text(encoding="utf-8"), encoding="utf-8")
+    taxonomy_backup.write_text(taxonomy_path.read_text(encoding="utf-8"), encoding="utf-8")
     statistics_backup.write_text(statistics_path.read_text(encoding="utf-8"), encoding="utf-8")
     table_backup.write_text(table_path.read_text(encoding="utf-8"), encoding="utf-8")
 
     try:
         empirical = json.loads(empirical_backup.read_text(encoding="utf-8"))
         empirical["direct_bibkey"] = "thinkingmachines2025opd"
+        empirical["source_locator"] = "Qwen3 Technical Report"
+        empirical["source_url"] = ""
+        empirical["rows"][2]["aime24"] = 70.0
         empirical["thinking_machines_replication"]["aime24_accuracy"] = 0.0
         empirical_path.write_text(json.dumps(empirical, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         checks = validate_outputs(project_root, only={"firstprinciples_empirical_benchmark_schema"})
         assert checks["firstprinciples_empirical_benchmark_schema"] is False
 
         empirical_path.write_text(empirical_backup.read_text(encoding="utf-8"), encoding="utf-8")
+        taxonomy = json.loads(taxonomy_backup.read_text(encoding="utf-8"))
+        taxonomy["methods"] = [
+            row for row in taxonomy["methods"] if row["bibkey"] != "chen2026freshness_opd"
+        ]
+        taxonomy["method_count"] = len(taxonomy["methods"])
+        taxonomy["signal_sources"] = [
+            source for source in taxonomy["signal_sources"] if source != "freshness_aware_async_buffer"
+        ]
+        taxonomy_path.write_text(json.dumps(taxonomy, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        checks = validate_outputs(project_root, only={"firstprinciples_taxonomy_schema"})
+        assert checks["firstprinciples_taxonomy_schema"] is False
+
+        taxonomy_path.write_text(taxonomy_backup.read_text(encoding="utf-8"), encoding="utf-8")
         statistics = json.loads(statistics_backup.read_text(encoding="utf-8"))
         statistics["sample_size"] = 0
         statistics["paired_permutation"]["n_perm"] = 0
@@ -304,6 +324,7 @@ def test_validate_outputs_negative_firstprinciples_benchmark_and_statistics_cont
         assert checks["firstprinciples_benchmark_table_present"] is False
     finally:
         empirical_path.write_text(empirical_backup.read_text(encoding="utf-8"), encoding="utf-8")
+        taxonomy_path.write_text(taxonomy_backup.read_text(encoding="utf-8"), encoding="utf-8")
         statistics_path.write_text(statistics_backup.read_text(encoding="utf-8"), encoding="utf-8")
         table_path.write_text(table_backup.read_text(encoding="utf-8"), encoding="utf-8")
 

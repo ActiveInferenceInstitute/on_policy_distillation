@@ -22,6 +22,9 @@ from dataclasses import asdict, dataclass
 SCHEMA = "firstprinciples.empirical_benchmark.v1"
 QWEN_SOURCE_LOCATOR = "Qwen3 Technical Report, Table 21"
 QWEN_SOURCE_HEADING = "Comparison of reinforcement learning and on-policy distillation on Qwen3-8B"
+QWEN_SOURCE_TABLE = "Table 21"
+QWEN_SOURCE_URL = "https://arxiv.org/abs/2505.09388"
+QWEN_SOURCE_ARXIV_ID = "2505.09388"
 
 __all__ = [
     "BenchmarkRow",
@@ -46,6 +49,9 @@ class BenchmarkRow:
     relayed_by: str
     source_locator: str
     source_heading: str
+    source_table: str
+    source_url: str
+    source_arxiv_id: str
     source_note: str
 
 
@@ -61,6 +67,9 @@ BENCHMARKS: tuple[BenchmarkRow, ...] = (
         "thinkingmachines2025opd",
         QWEN_SOURCE_LOCATOR,
         QWEN_SOURCE_HEADING,
+        QWEN_SOURCE_TABLE,
+        QWEN_SOURCE_URL,
+        QWEN_SOURCE_ARXIV_ID,
         "Qwen3 Table 21 value relayed by Thinking Machines as the off-policy distillation baseline.",
     ),
     BenchmarkRow(
@@ -72,6 +81,9 @@ BENCHMARKS: tuple[BenchmarkRow, ...] = (
         "thinkingmachines2025opd",
         QWEN_SOURCE_LOCATOR,
         QWEN_SOURCE_HEADING,
+        QWEN_SOURCE_TABLE,
+        QWEN_SOURCE_URL,
+        QWEN_SOURCE_ARXIV_ID,
         "Qwen3 Table 21 RL baseline value relayed by Thinking Machines.",
     ),
     BenchmarkRow(
@@ -83,6 +95,9 @@ BENCHMARKS: tuple[BenchmarkRow, ...] = (
         "thinkingmachines2025opd",
         QWEN_SOURCE_LOCATOR,
         QWEN_SOURCE_HEADING,
+        QWEN_SOURCE_TABLE,
+        QWEN_SOURCE_URL,
+        QWEN_SOURCE_ARXIV_ID,
         "Qwen3 Table 21 on-policy distillation value relayed by Thinking Machines.",
     ),
 )
@@ -158,6 +173,9 @@ def build_payload() -> dict[str, object]:
         "direct_bibkey": "qwen2025technical_report",
         "source_locator": QWEN_SOURCE_LOCATOR,
         "source_heading": QWEN_SOURCE_HEADING,
+        "source_table": QWEN_SOURCE_TABLE,
+        "source_url": QWEN_SOURCE_URL,
+        "source_arxiv_id": QWEN_SOURCE_ARXIV_ID,
         "relayed_by_bibkey": "thinkingmachines2025opd",
         "rows": as_records(),
         "row_count": len(BENCHMARKS),
