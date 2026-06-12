@@ -46,14 +46,14 @@ def test_hydrate_manuscript_fixed_point_clears_stale_figure_source_map(
         path.write_text("{}\n", encoding="utf-8")
         return {"figure_source_map": path}
 
-    def fake_sheaf_tracks(root: Path) -> dict[str, Path]:
+    def fake_sheaf_tracks(root: Path, **_: object) -> dict[str, Path]:
         state["sheaf_writes"] += 1
         path = root / "output" / "data" / "sheaf_gluing_certificate.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("{}\n", encoding="utf-8")
         return {"semantic": path}
 
-    def fake_semantic(root: Path) -> dict[str, Path]:
+    def fake_semantic(root: Path, **_: object) -> dict[str, Path]:
         state["semantic_writes"] += 1
         path = root / "output" / "data" / "validation_dependency_graph.json"
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -72,13 +72,16 @@ def test_hydrate_manuscript_fixed_point_clears_stale_figure_source_map(
     monkeypatch.setattr(roadmap_tracks, "write_integration_audit_artifacts", fake_audit)
     monkeypatch.setattr(roadmap_tracks, "write_sheaf_track_artifacts", fake_sheaf_tracks)
     monkeypatch.setattr(semantic, "write_semantic_gluing_outputs", fake_semantic)
+    import roadmap_tracks.sheaf_tracks as sheaf_tracks
+
+    monkeypatch.setattr(sheaf_tracks, "build_artifact_provenance", lambda root: {"schema": "test"})
     monkeypatch.setattr(roadmap_tracks, "validate_integration_audit_artifacts", validate_audit)
     monkeypatch.setattr(roadmap_tracks, "validate_sheaf_track_artifacts", lambda root: [])
     monkeypatch.setattr(semantic, "validate_semantic_gluing", lambda root: [])
 
     paths = hydrate_manuscript_fixed_point(tmp_path, require_analysis_outputs=False, max_passes=2)
 
-    assert state == {"audit_writes": 2, "semantic_writes": 2, "sheaf_writes": 1}
+    assert state == {"audit_writes": 2, "semantic_writes": 2, "sheaf_writes": 2}
     assert paths["variables"] == tmp_path / "output" / "data" / "manuscript_variables.json"
     assert paths["resolved_manuscript"] == tmp_path / "output" / "manuscript"
     assert paths["figure_source_map"] == tmp_path / "output" / "data" / "figure_source_map.json"
@@ -106,8 +109,11 @@ def test_hydrate_manuscript_fixed_point_fails_closed_when_still_stale(
         lambda root: root / "output" / "reports" / "manuscript_staleness_report.json",
     )
     monkeypatch.setattr(roadmap_tracks, "write_integration_audit_artifacts", lambda root: {})
-    monkeypatch.setattr(roadmap_tracks, "write_sheaf_track_artifacts", lambda root: {})
-    monkeypatch.setattr(semantic, "write_semantic_gluing_outputs", lambda root: {})
+    monkeypatch.setattr(roadmap_tracks, "write_sheaf_track_artifacts", lambda root, **_: {})
+    monkeypatch.setattr(semantic, "write_semantic_gluing_outputs", lambda root, **_: {})
+    import roadmap_tracks.sheaf_tracks as sheaf_tracks
+
+    monkeypatch.setattr(sheaf_tracks, "build_artifact_provenance", lambda root: {"schema": "test"})
     monkeypatch.setattr(
         roadmap_tracks,
         "validate_integration_audit_artifacts",

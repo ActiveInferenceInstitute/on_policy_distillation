@@ -157,6 +157,17 @@ def write_sheaf_track_artifacts(
     from roadmap_tracks.scholarship import write_scholarship_source_matrix
     from roadmap_tracks.supplemental import write_supplemental_artifacts
 
+    semantic_cache: dict | None = None
+
+    def _semantic_certificate() -> dict:
+        nonlocal semantic_cache
+        if semantic_cache is not None:
+            return semantic_cache
+        from manuscript.sheaf.semantic import _with_proof_obligations, build_semantic_gluing_certificate
+
+        semantic_cache = _with_proof_obligations(root, build_semantic_gluing_certificate(root))
+        return semantic_cache
+
     if refresh_dependencies:
         try:
             from roadmap_tracks import (
@@ -225,12 +236,12 @@ def write_sheaf_track_artifacts(
     paths["provenance"] = _write_json(root / CANONICAL_ARTIFACTS["provenance"], build_artifact_provenance(root))
     paths["dependency"] = _write_json(root / CANONICAL_ARTIFACTS["dependency"], build_validation_dependency_graph(root))
     try:
-        from manuscript.sheaf.semantic import build_evidence_crosswalk, build_semantic_gluing_certificate
+        from manuscript.sheaf.semantic import build_evidence_crosswalk
 
         paths["crosswalk"] = _write_json(
             root / "output" / "data" / "sheaf_evidence_crosswalk.json", build_evidence_crosswalk(root)
         )
-        paths["semantic"] = _write_json(root / CANONICAL_ARTIFACTS["semantic"], build_semantic_gluing_certificate(root))
+        paths["semantic"] = _write_json(root / CANONICAL_ARTIFACTS["semantic"], _semantic_certificate())
     except (ImportError, OSError, ValueError, KeyError) as exc:
         regeneration_errors.append(f"semantic certificate/crosswalk: {exc}")
     if refresh_dependencies:
@@ -273,7 +284,7 @@ def write_sheaf_track_artifacts(
             )
             status_paths = write_sheaf_status_outputs(root)
             paths.update(status_paths)
-            from manuscript.sheaf.semantic import build_evidence_crosswalk, build_semantic_gluing_certificate
+            from manuscript.sheaf.semantic import build_evidence_crosswalk
 
             if refresh_hydration:
                 _refresh_hydrated_manuscript(root)
@@ -283,14 +294,14 @@ def write_sheaf_track_artifacts(
                 root / "output" / "data" / "sheaf_evidence_crosswalk.json", build_evidence_crosswalk(root)
             )
             paths["semantic"] = _write_json(
-                root / CANONICAL_ARTIFACTS["semantic"], build_semantic_gluing_certificate(root)
+                root / CANONICAL_ARTIFACTS["semantic"], _semantic_certificate()
             )
             if refresh_hydration:
                 _refresh_hydrated_manuscript(root)
             status_paths = write_sheaf_status_outputs(root)
             paths.update(status_paths)
             paths["semantic"] = _write_json(
-                root / CANONICAL_ARTIFACTS["semantic"], build_semantic_gluing_certificate(root)
+                root / CANONICAL_ARTIFACTS["semantic"], _semantic_certificate()
             )
             paths.update(write_supplemental_artifacts(root))
             if refresh_hydration:
@@ -300,7 +311,7 @@ def write_sheaf_track_artifacts(
                 root / CANONICAL_ARTIFACTS["dependency"], build_validation_dependency_graph(root)
             )
             paths["semantic"] = _write_json(
-                root / CANONICAL_ARTIFACTS["semantic"], build_semantic_gluing_certificate(root)
+                root / CANONICAL_ARTIFACTS["semantic"], _semantic_certificate()
             )
             paths.update(write_supplemental_artifacts(root))
             if refresh_hydration:
@@ -310,11 +321,11 @@ def write_sheaf_track_artifacts(
                 root / CANONICAL_ARTIFACTS["dependency"], build_validation_dependency_graph(root)
             )
             paths["semantic"] = _write_json(
-                root / CANONICAL_ARTIFACTS["semantic"], build_semantic_gluing_certificate(root)
+                root / CANONICAL_ARTIFACTS["semantic"], _semantic_certificate()
             )
             paths.update(write_supplemental_artifacts(root))
             paths["semantic"] = _write_json(
-                root / CANONICAL_ARTIFACTS["semantic"], build_semantic_gluing_certificate(root)
+                root / CANONICAL_ARTIFACTS["semantic"], _semantic_certificate()
             )
         except (ImportError, OSError, ValueError, KeyError) as exc:
             regeneration_errors.append(f"refresh_dependencies pass: {exc}")

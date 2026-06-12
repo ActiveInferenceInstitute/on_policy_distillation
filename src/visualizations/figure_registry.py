@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -40,7 +41,14 @@ def _load_figures_yaml(project_root: Path) -> dict[str, Any]:
     path = _figures_yaml_path(project_root)
     if not path.is_file():
         raise FileNotFoundError(f"missing figure registry: {path}")
-    return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    stat = path.stat()
+    return _load_figures_yaml_cached(str(path), stat.st_mtime_ns, stat.st_size)
+
+
+@lru_cache(maxsize=16)
+def _load_figures_yaml_cached(path: str, mtime_ns: int, size: int) -> dict[str, Any]:
+    del mtime_ns, size
+    return yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
 
 
 def load_figure_registry(project_root: Path) -> dict[str, FigureSpec]:

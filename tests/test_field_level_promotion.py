@@ -25,7 +25,7 @@ from pathlib import Path
 
 import pytest
 
-from gate_support import ensure_gate_artifacts
+from gate_support import ensure_gate_artifacts, refresh_generated_gate_artifacts
 
 pytestmark = pytest.mark.timeout(600)
 
@@ -103,6 +103,7 @@ def test_token_provenance_production_gate_fails_on_phantom_provenance_key(tmp_pa
         assert checks["integration_audit_track_schemas"] is False
     finally:
         path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+    refresh_generated_gate_artifacts(PROJECT_ROOT)
     checks = validate_outputs(PROJECT_ROOT)
     assert checks["integration_audit_track_schemas"] is True
 
@@ -231,6 +232,7 @@ def test_artifact_provenance_production_gate_fails_on_field_hash_drift(tmp_path:
         assert checks["artifact_provenance_schema"] is False
     finally:
         path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+    refresh_generated_gate_artifacts(PROJECT_ROOT)
     checks = validate_outputs(PROJECT_ROOT)
     assert checks["artifact_provenance_schema"] is True
 
@@ -283,4 +285,278 @@ def test_dependency_graph_production_gate_fails_on_deleted_field_edge(tmp_path: 
     finally:
         path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
     checks = validate_outputs(PROJECT_ROOT)
+    assert checks["canonical_sheaf_track_schemas"] is True
+
+
+# ---------------------------------------------------------------------------
+# AI-ONTOLOGY-PROFILE-3
+# ---------------------------------------------------------------------------
+
+
+def test_ontology_profile_builder_covers_graph_world_and_benchmarks(project_root: Path) -> None:
+    """Write-path: graph-world and toy benchmark rows are first-class profile rows."""
+    from roadmap_tracks.formal_interop import build_ontology_profile_matrix
+
+    payload = build_ontology_profile_matrix(project_root)
+    assert payload["all_mapped_once"] is True
+    assert payload["all_expected_models_present"] is True
+    assert payload["all_terms_used"] is True
+    models = set(payload["models_present"])
+    assert {"bernoulli_toy", "si_tmaze", "graph_world", "bernoulli_ising"} <= models
+    graph_rows = [row for row in payload["rows"] if row["model"] == "graph_world"]
+    assert graph_rows
+    assert all(row["mapping_count"] == 1 for row in graph_rows)
+    assert any(row["ontology"] == "ToyBenchmarkMetric" for row in payload["rows"])
+
+
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_ontology_profile_production_gate_fails_on_dropped_graph_world_row(tmp_path: Path) -> None:
+    """Production path: deleting graph-world profile rows fails ontology_profile_schema."""
+    from gates.output_checks import validate_outputs
+
+    path = PROJECT_ROOT / "output" / "data" / "ontology_profile_matrix.json"
+    if not path.is_file() or "expected_models" not in _load(path):
+        ensure_gate_artifacts(PROJECT_ROOT)
+    backup = tmp_path / "ontology_profile_matrix.bak"
+    backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+    payload = _load(path)
+    payload["rows"] = [row for row in payload["rows"] if row.get("model") != "graph_world"]
+    payload["models_present"] = sorted({row["model"] for row in payload["rows"]})
+    payload["all_expected_models_present"] = True
+    payload["all_mapped_once"] = True
+    try:
+        _write(path, payload)
+        checks = validate_outputs(PROJECT_ROOT, only={"ontology_profile_schema"})
+        assert checks["ontology_profile_schema"] is False
+    finally:
+        path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+    checks = validate_outputs(PROJECT_ROOT, only={"ontology_profile_schema"})
+    assert checks["ontology_profile_schema"] is True
+
+
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_ontology_profile_gate_derives_expected_models_from_rows(tmp_path: Path) -> None:
+    """Production path: lying summary arrays cannot hide deleted model rows."""
+    from gates.output_checks import validate_outputs_selected_strict
+
+    path = PROJECT_ROOT / "output" / "data" / "ontology_profile_matrix.json"
+    if not path.is_file() or "expected_models" not in _load(path):
+        ensure_gate_artifacts(PROJECT_ROOT)
+    backup = tmp_path / "ontology_profile_matrix.bak"
+    backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+    payload = _load(path)
+    payload["rows"] = [row for row in payload["rows"] if row.get("model") != "graph_world"]
+    payload["all_expected_models_present"] = True
+    payload["all_mapped_once"] = True
+    try:
+        _write(path, payload)
+        checks = validate_outputs_selected_strict(PROJECT_ROOT, {"ontology_profile_schema"})
+        assert checks["ontology_profile_schema"] is False
+    finally:
+        path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+    checks = validate_outputs_selected_strict(PROJECT_ROOT, {"ontology_profile_schema"})
+    assert checks["ontology_profile_schema"] is True
+
+
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_ontology_profile_production_gate_fails_on_duplicate_mapping_count(tmp_path: Path) -> None:
+    """Production path: mapped_once cannot hide a duplicate mapping count."""
+    from gates.output_checks import validate_outputs
+
+    path = PROJECT_ROOT / "output" / "data" / "ontology_profile_matrix.json"
+    if not path.is_file() or "mapping_count" not in (_load(path).get("rows") or [{}])[0]:
+        ensure_gate_artifacts(PROJECT_ROOT)
+    backup = tmp_path / "ontology_profile_matrix.bak"
+    backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+    payload = _load(path)
+    payload["rows"][0]["mapping_count"] = 2
+    payload["rows"][0]["mapped_once"] = True
+    payload["all_mapped_once"] = True
+    try:
+        _write(path, payload)
+        checks = validate_outputs(PROJECT_ROOT, only={"ontology_profile_schema"})
+        assert checks["ontology_profile_schema"] is False
+    finally:
+        path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+    checks = validate_outputs(PROJECT_ROOT, only={"ontology_profile_schema"})
+    assert checks["ontology_profile_schema"] is True
+
+
+# ---------------------------------------------------------------------------
+# AI-SYMBOL-SPINE-3
+# ---------------------------------------------------------------------------
+
+
+def test_cross_track_symbol_builder_emits_required_domains(project_root: Path) -> None:
+    """Write-path: cross-track symbol table spans the required symbol domains."""
+    from roadmap_tracks.integration_audit_builders import build_cross_track_symbol_table
+
+    payload = build_cross_track_symbol_table(project_root)
+    assert payload["all_required_domains_present"] is True
+    assert payload["all_domain_rows_consistent"] is True
+    assert set(payload["required_domains"]) == {
+        "gnn_variable",
+        "ontology_term",
+        "lean_theorem",
+        "manuscript_variable",
+        "json_field",
+        "figure_label",
+        "rendered_manuscript_consumer",
+    }
+    assert set(payload["domains_present"]) == set(payload["required_domains"])
+
+
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_cross_track_symbol_production_gate_fails_on_dropped_figure_label(tmp_path: Path) -> None:
+    """Production path: deleting the figure-label domain fails the symbol spine gate."""
+    from gates.output_checks import validate_outputs
+
+    path = PROJECT_ROOT / "output" / "data" / "cross_track_symbol_table.json"
+    if not path.is_file() or "domain_rows" not in _load(path):
+        ensure_gate_artifacts(PROJECT_ROOT)
+    backup = tmp_path / "cross_track_symbol_table.bak"
+    backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+    payload = _load(path)
+    payload["domain_rows"] = [row for row in payload["domain_rows"] if row.get("domain") != "figure_label"]
+    payload["domains_present"] = sorted({row["domain"] for row in payload["domain_rows"]})
+    payload["all_required_domains_present"] = True
+    payload["all_consistent"] = True
+    try:
+        _write(path, payload)
+        checks = validate_outputs(PROJECT_ROOT, only={"cross_track_symbol_table_schema"})
+        assert checks["cross_track_symbol_table_schema"] is False
+    finally:
+        path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+    checks = validate_outputs(PROJECT_ROOT, only={"cross_track_symbol_table_schema"})
+    assert checks["cross_track_symbol_table_schema"] is True
+
+
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_cross_track_symbol_gate_derives_domains_from_rows(tmp_path: Path) -> None:
+    """Production path: lying summary arrays cannot hide deleted domain rows."""
+    from gates.output_checks import validate_outputs_selected_strict
+
+    path = PROJECT_ROOT / "output" / "data" / "cross_track_symbol_table.json"
+    if not path.is_file() or "domain_rows" not in _load(path):
+        ensure_gate_artifacts(PROJECT_ROOT)
+    backup = tmp_path / "cross_track_symbol_table.bak"
+    backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+    payload = _load(path)
+    payload["domain_rows"] = [row for row in payload["domain_rows"] if row.get("domain") != "figure_label"]
+    payload["all_required_domains_present"] = True
+    payload["all_domain_rows_consistent"] = True
+    try:
+        _write(path, payload)
+        checks = validate_outputs_selected_strict(PROJECT_ROOT, {"cross_track_symbol_table_schema"})
+        assert checks["cross_track_symbol_table_schema"] is False
+    finally:
+        path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+    checks = validate_outputs_selected_strict(PROJECT_ROOT, {"cross_track_symbol_table_schema"})
+    assert checks["cross_track_symbol_table_schema"] is True
+
+
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_cross_track_symbol_production_gate_fails_on_inconsistent_lean_domain(tmp_path: Path) -> None:
+    """Production path: a broken Lean theorem domain row fails even if flags lie."""
+    from gates.output_checks import validate_outputs
+
+    path = PROJECT_ROOT / "output" / "data" / "cross_track_symbol_table.json"
+    if not path.is_file() or "domain_rows" not in _load(path):
+        ensure_gate_artifacts(PROJECT_ROOT)
+    backup = tmp_path / "cross_track_symbol_table.bak"
+    backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+    payload = _load(path)
+    target = next(row for row in payload["domain_rows"] if row.get("domain") == "lean_theorem")
+    target["consumer"] = ""
+    target["consistent"] = False
+    payload["all_domain_rows_consistent"] = True
+    payload["all_consistent"] = True
+    try:
+        _write(path, payload)
+        checks = validate_outputs(PROJECT_ROOT, only={"cross_track_symbol_table_schema"})
+        assert checks["cross_track_symbol_table_schema"] is False
+    finally:
+        path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+    checks = validate_outputs(PROJECT_ROOT, only={"cross_track_symbol_table_schema"})
+    assert checks["cross_track_symbol_table_schema"] is True
+
+
+# ---------------------------------------------------------------------------
+# AI-SEMANTIC-CLASSIFIED-1
+# ---------------------------------------------------------------------------
+
+
+def test_semantic_certificate_emits_typed_proof_obligations(project_root: Path) -> None:
+    """Write-path: the saved semantic certificate has typed proof-obligation classes."""
+    from manuscript.sheaf.semantic import _with_proof_obligations, build_semantic_gluing_certificate
+
+    ensure_gate_artifacts(project_root)
+    payload = _with_proof_obligations(project_root, build_semantic_gluing_certificate(project_root))
+    assert payload["all_proof_obligations_passed"] is True
+    assert set(payload["restriction_classes"]) == {
+        "scope",
+        "provenance",
+        "dependency",
+        "evidence",
+        "formal",
+        "render",
+        "release",
+        "blocked_scope",
+    }
+    bool_restrictions = {key for key, value in payload["restrictions"].items() if isinstance(value, bool)}
+    obligation_restrictions = {row["semantic_restriction"] for row in payload["proof_obligations"]}
+    assert obligation_restrictions == bool_restrictions
+
+
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_semantic_obligation_production_gate_fails_on_missing_obligation(tmp_path: Path) -> None:
+    """Production path: deleting a proof obligation fails canonical sheaf validation."""
+    from gates.output_checks import validate_outputs
+
+    path = PROJECT_ROOT / "output" / "data" / "sheaf_gluing_certificate.json"
+    if not path.is_file() or "proof_obligations" not in _load(path):
+        ensure_gate_artifacts(PROJECT_ROOT)
+    backup = tmp_path / "sheaf_gluing_certificate.bak"
+    backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+    payload = _load(path)
+    payload["proof_obligations"] = payload["proof_obligations"][1:]
+    payload["all_proof_obligations_passed"] = True
+    try:
+        _write(path, payload)
+        checks = validate_outputs(PROJECT_ROOT, only={"canonical_sheaf_track_schemas"})
+        assert checks["canonical_sheaf_track_schemas"] is False
+    finally:
+        path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+    checks = validate_outputs(PROJECT_ROOT, only={"canonical_sheaf_track_schemas"})
+    assert checks["canonical_sheaf_track_schemas"] is True
+
+
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_semantic_obligation_production_gate_fails_on_stale_gate_mapping(tmp_path: Path) -> None:
+    """Production path: stale obligation gate metadata cannot pass as typed proof."""
+    from gates.output_checks import validate_outputs
+
+    path = PROJECT_ROOT / "output" / "data" / "sheaf_gluing_certificate.json"
+    if not path.is_file() or "proof_obligations" not in _load(path):
+        ensure_gate_artifacts(PROJECT_ROOT)
+    backup = tmp_path / "sheaf_gluing_certificate.bak"
+    backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+    payload = _load(path)
+    payload["proof_obligations"][0]["gate"] = "validate_outputs.this_gate_does_not_exist"
+    payload["all_proof_obligations_passed"] = True
+    try:
+        _write(path, payload)
+        checks = validate_outputs(PROJECT_ROOT, only={"canonical_sheaf_track_schemas"})
+        assert checks["canonical_sheaf_track_schemas"] is False
+    finally:
+        path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+    checks = validate_outputs(PROJECT_ROOT, only={"canonical_sheaf_track_schemas"})
     assert checks["canonical_sheaf_track_schemas"] is True

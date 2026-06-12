@@ -163,6 +163,8 @@ _BASE_SCHOLARSHIP_SOURCES: tuple[dict[str, Any], ...] = (
         "tracks": ["prose", "scholarship"],
         "artifact": "output/data/firstprinciples/empirical_benchmark.json",
         "manuscript_sections": ["discussion_outlook", "appendix_full_sheaf"],
+        "source_locator": "Qwen3 Technical Report, Table 21",
+        "source_heading": "Comparison of reinforcement learning and on-policy distillation on Qwen3-8B",
         "claim_boundary": "direct source for literature-reported benchmark cells; not reproduced locally",
     },
     {
@@ -463,6 +465,8 @@ _BASE_SCHOLARSHIP_SOURCES: tuple[dict[str, Any], ...] = (
         "tracks": ["prose", "scholarship"],
         "artifact": "output/data/firstprinciples/empirical_benchmark.json",
         "manuscript_sections": ["discussion_outlook", "appendix_full_sheaf"],
+        "source_locator": "Thinking Machines Lab blog post, section 'On-policy distillation'",
+        "source_heading": "On-Policy Distillation",
         "claim_boundary": "relays Qwen table values and reports a separate replication; no benchmark is reproduced here",
     },
     {
@@ -726,4 +730,3 @@ _BASE_SCHOLARSHIP_SOURCES: tuple[dict[str, Any], ...] = (
         "claim_boundary": "applied local/global consistency analogy only",
     },
 )
-

@@ -57,6 +57,7 @@ def test_run_tests_chunked_help_and_chunking() -> None:
     proc = _run("run_tests_chunked.py", "--help")
     assert proc.returncode == 0
     assert "chunk" in proc.stdout.lower()
+    assert "--failure-tail-lines" in proc.stdout
 
     # Real chunk collection over the real tests directory: every test file is
     # covered exactly once and ordering is deterministic.
@@ -91,6 +92,18 @@ def test_run_tests_chunked_shuffle_seed_is_deterministic_and_complete() -> None:
     assert sorted(s7a) == sorted(plain)
     assert s7a != plain or s11 != plain
     assert s7a != s11
+
+
+def test_run_tests_chunked_failure_tail_is_bounded() -> None:
+    sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
+    try:
+        from run_tests_chunked import _tail_lines  # noqa: PLC0415
+
+        assert _tail_lines("a\nb\nc\n", 2) == ["b", "c"]
+        assert _tail_lines("a\nb\n", 0) == []
+        assert _tail_lines("", 10) == []
+    finally:
+        sys.path.pop(0)
 
 
 import json

@@ -607,6 +607,16 @@ def test_scholarship_matrix_has_row_level_negative_control(project_root: Path) -
     qwen = next(row for row in data["rows"] if row["citation_key"] == "qwen2025technical_report")
     assert qwen["source_family"] == "empirical_reasoning_distillation_context"
     assert qwen["connected"] is True
+    assert qwen["source_locator"] == "Qwen3 Technical Report, Table 21"
+    assert qwen["source_heading"] == "Comparison of reinforcement learning and on-policy distillation on Qwen3-8B"
+    assert qwen["doi"] == "10.48550/arXiv.2505.09388"
+    assert qwen["url"] == "https://arxiv.org/abs/2505.09388"
+    assert qwen["arxiv_id"] == "2505.09388"
+    thinking_machines = next(row for row in data["rows"] if row["citation_key"] == "thinkingmachines2025opd")
+    assert thinking_machines["doi"] == "10.64434/tml.20251026"
+    assert thinking_machines["url"] == "https://thinkingmachines.ai/blog/on-policy-distillation/"
+    assert thinking_machines["source_locator"] == "Thinking Machines Lab blog post, section 'On-policy distillation'"
+    assert thinking_machines["source_heading"] == "On-Policy Distillation"
 
     missing_new_source = json.loads(json.dumps(data))
     missing_new_source["rows"] = [

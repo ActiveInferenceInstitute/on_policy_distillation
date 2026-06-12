@@ -7,12 +7,20 @@ from gnn.concordance import concordance_holds, parity_gaps
 
 ROOT = Path(__file__).resolve().parents[1]
 TOY = ROOT / "gnn" / "bernoulli_toy.gnn.md"
+GRAPH_WORLD = ROOT / "gnn" / "graph_world.gnn.md"
 
 
 def test_parse_bernoulli_toy() -> None:
     model = parse_gnn_file(TOY)
     assert model.has("J")
     assert model.ontology["J"] == "CrossStreamCouplingPotential"
+
+
+def test_parse_graph_world_gnn() -> None:
+    model = parse_gnn_file(GRAPH_WORLD)
+    assert model.has("node")
+    assert model.ontology["goal_reached"] == "GraphWorldReachability"
+    assert any(edge.label == "reachability_witness" for edge in model.connections)
 
 
 def test_concordance_holds_for_toy() -> None:

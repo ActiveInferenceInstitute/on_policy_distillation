@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
 from pathlib import Path
 from typing import cast
 
@@ -42,7 +43,8 @@ def load_manifest(
     else:
         root = manifest_path.parent
     registry = registry_path or (root / DEFAULT_REGISTRY_REL)
-    raw = yaml.safe_load(manifest_path.read_text(encoding="utf-8")) or {}
+    stat = manifest_path.stat()
+    raw = _load_manifest_yaml_cached(str(manifest_path), stat.st_mtime_ns, stat.st_size)
     defaults_raw = raw.get("defaults") or {}
     manifest_defaults = SheafDefaults(
         missing_track=parse_missing(defaults_raw.get("missing_track"), MissingTrackPolicy.SKIP),
@@ -96,6 +98,12 @@ def load_manifest(
         sections=tuple(sorted(sections, key=lambda s: s.order)),
         registry_path=registry,
     )
+
+
+@lru_cache(maxsize=16)
+def _load_manifest_yaml_cached(path: str, mtime_ns: int, size: int) -> dict:
+    del mtime_ns, size
+    return yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
 
 
 def default_manifest_path(project_root: Path) -> Path:

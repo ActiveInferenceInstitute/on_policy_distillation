@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -100,7 +101,14 @@ def load_figure_style(project_root: Path) -> FigureStyleConfig:
     path = project_root.resolve() / "figures.yaml"
     if not path.is_file():
         return DEFAULT_FIGURE_STYLE
-    raw: dict[str, Any] = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    stat = path.stat()
+    return _load_figure_style_cached(str(path), stat.st_mtime_ns, stat.st_size)
+
+
+@lru_cache(maxsize=16)
+def _load_figure_style_cached(path: str, mtime_ns: int, size: int) -> FigureStyleConfig:
+    del mtime_ns, size
+    raw: dict[str, Any] = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
     palette = dict(_DEFAULT_PALETTE)
     palette.update(dict(raw.get("palette") or {}))
     return FigureStyleConfig(

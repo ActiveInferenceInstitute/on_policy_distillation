@@ -20,6 +20,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 
 SCHEMA = "firstprinciples.empirical_benchmark.v1"
+QWEN_SOURCE_LOCATOR = "Qwen3 Technical Report, Table 21"
+QWEN_SOURCE_HEADING = "Comparison of reinforcement learning and on-policy distillation on Qwen3-8B"
 
 __all__ = [
     "BenchmarkRow",
@@ -42,6 +44,8 @@ class BenchmarkRow:
     gpu_hours: float | None  # reported training GPU-hours (None if unreported)
     bibkey: str
     relayed_by: str
+    source_locator: str
+    source_heading: str
     source_note: str
 
 
@@ -55,6 +59,8 @@ BENCHMARKS: tuple[BenchmarkRow, ...] = (
         None,
         "qwen2025technical_report",
         "thinkingmachines2025opd",
+        QWEN_SOURCE_LOCATOR,
+        QWEN_SOURCE_HEADING,
         "Qwen3 Table 21 value relayed by Thinking Machines as the off-policy distillation baseline.",
     ),
     BenchmarkRow(
@@ -64,6 +70,8 @@ BENCHMARKS: tuple[BenchmarkRow, ...] = (
         17920.0,
         "qwen2025technical_report",
         "thinkingmachines2025opd",
+        QWEN_SOURCE_LOCATOR,
+        QWEN_SOURCE_HEADING,
         "Qwen3 Table 21 RL baseline value relayed by Thinking Machines.",
     ),
     BenchmarkRow(
@@ -73,6 +81,8 @@ BENCHMARKS: tuple[BenchmarkRow, ...] = (
         1800.0,
         "qwen2025technical_report",
         "thinkingmachines2025opd",
+        QWEN_SOURCE_LOCATOR,
+        QWEN_SOURCE_HEADING,
         "Qwen3 Table 21 on-policy distillation value relayed by Thinking Machines.",
     ),
 )
@@ -146,6 +156,8 @@ def build_payload() -> dict[str, object]:
         "source": "literature_reported",
         "bibkey": "qwen2025technical_report",
         "direct_bibkey": "qwen2025technical_report",
+        "source_locator": QWEN_SOURCE_LOCATOR,
+        "source_heading": QWEN_SOURCE_HEADING,
         "relayed_by_bibkey": "thinkingmachines2025opd",
         "rows": as_records(),
         "row_count": len(BENCHMARKS),

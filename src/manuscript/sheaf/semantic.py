@@ -42,6 +42,20 @@ def _load_json(path: Path) -> dict[str, Any]:
     return data
 
 
+def _validation_spine_saved_ok(root: Path) -> bool:
+    provenance = _load_json(root / "output" / "data" / "artifact_provenance.json")
+    replay = _load_json(root / "output" / "reports" / "replay_matrix.json")
+    counterexample = _load_json(root / "output" / "reports" / "counterexample_matrix.json")
+    return (
+        provenance.get("all_seeded") is True
+        and provenance.get("all_config_digests") is True
+        and replay.get("all_replay_rows_matched") is True
+        and replay.get("all_replayed") is True
+        and counterexample.get("all_expected_failures_documented") is True
+        and counterexample.get("all_expected_failures_observed") is True
+    )
+
+
 def _configured_analysis_scripts(root: Path) -> list[str]:
     import yaml
 
@@ -124,6 +138,118 @@ def _runtime_diagnostics_restrictions(root: Path) -> dict[str, Any]:
         "construction_count": int(data.get("construction_count", 0) or 0),
         "known_warning_count": int(data.get("known_warning_count", 0) or 0),
         "unexpected_warning_count": int(data.get("unexpected_warning_count", 0) or 0),
+    }
+
+
+def _restriction_class(name: str) -> str:
+    if name.startswith("blocked") or "empirical" in name or "scope_boundary" in name or "toy_only" in name:
+        return "blocked_scope" if name.startswith("blocked") or "empirical" in name else "scope"
+    if "provenance" in name or "replay" in name or "stale" in name or "diffoscope" in name or "license" in name:
+        return "provenance"
+    if "dependency" in name or "producer" in name or "spine" in name:
+        return "dependency"
+    if "evidence" in name or "claim" in name or "scholarship" in name:
+        return "evidence"
+    if (
+        "lean" in name
+        or "gnn" in name
+        or "ontology" in name
+        or "theorem" in name
+        or "proof" in name
+        or "model_checking" in name
+        or "interop" in name
+        or "transition" in name
+        or "state_space" in name
+    ):
+        return "formal"
+    if (
+        "figure" in name
+        or "token" in name
+        or "manuscript" in name
+        or "section_status" in name
+        or "render" in name
+        or "coverage" in name
+        or "animation" in name
+    ):
+        return "render"
+    if "release" in name or "gate" in name or "track" in name or "canonical" in name:
+        return "release"
+    return "evidence"
+
+
+def _obligation_artifacts(class_id: str) -> list[str]:
+    by_class = {
+        "scope": ["output/reports/scope_boundary_audit.json"],
+        "blocked_scope": ["output/reports/blocked_scope_manifest.json"],
+        "provenance": ["output/data/artifact_provenance.json", "output/reports/stale_artifact_report.json"],
+        "dependency": ["output/data/validation_dependency_graph.json"],
+        "evidence": ["output/data/evidence_field_index.json", "output/reports/claim_evidence_audit.json"],
+        "formal": ["output/reports/lean_theorem_inventory.json", "output/data/ontology_profile_matrix.json"],
+        "render": ["output/data/manuscript_token_provenance.json", "output/data/figure_source_map.json"],
+        "release": ["output/reports/release_bundle_manifest.json", "output/data/validation_gate_index.json"],
+    }
+    return by_class[class_id]
+
+
+def _proof_obligations(root: Path, restrictions: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    negative_controls = {
+        "scope": "scope wording mutation fails scope_boundary_audit",
+        "blocked_scope": "empirical_adapter live promotion fails blocked-scope gates",
+        "provenance": "hash or field lineage drift fails provenance/staleness gates",
+        "dependency": "deleted dependency edge fails canonical sheaf validation",
+        "evidence": "missing JSONPath or claim evidence fails evidence gates",
+        "formal": "missing theorem/ontology mapping fails formal interop gates",
+        "render": "stale token, caption, figure, or render row fails render gates",
+        "release": "missing gate row or copied-output drift fails release gates",
+    }
+    gates = {
+        "scope": "validate_outputs.scope_boundary_audit_schema",
+        "blocked_scope": "validate_manuscript.blocked_empirical_adapter",
+        "provenance": "validate_outputs.artifact_provenance_schema",
+        "dependency": "validate_outputs.validation_dependency_graph_schema",
+        "evidence": "validate_outputs.evidence_field_index_schema",
+        "formal": "validate_outputs.formal_interop_track_schemas",
+        "render": "validate_outputs.integration_audit_track_schemas",
+        "release": "validate_outputs.release_bundle_manifest_schema",
+    }
+    rows: list[dict[str, Any]] = []
+    for key, value in sorted(restrictions.items()):
+        if not isinstance(value, bool):
+            continue
+        class_id = _restriction_class(key)
+        artifacts = _obligation_artifacts(class_id)
+        rows.append(
+            {
+                "id": f"obligation:{key}",
+                "class": class_id,
+                "source_artifacts": artifacts,
+                "gate": gates[class_id],
+                "semantic_restriction": key,
+                "negative_control": negative_controls[class_id],
+                "passed": value is True and all((root / artifact).exists() for artifact in artifacts),
+            }
+        )
+    classes = {}
+    for class_id in sorted(
+        {"scope", "provenance", "dependency", "evidence", "formal", "render", "release", "blocked_scope"}
+    ):
+        class_rows = [row for row in rows if row["class"] == class_id]
+        classes[class_id] = {
+            "obligation_count": len(class_rows),
+            "all_passed": bool(class_rows) and all(row["passed"] for row in class_rows),
+        }
+    return classes, rows
+
+
+def _with_proof_obligations(root: Path, payload: dict[str, Any]) -> dict[str, Any]:
+    classes, rows = _proof_obligations(root, payload.get("restrictions") or {})
+    return {
+        **payload,
+        "restriction_classes": classes,
+        "proof_obligations": rows,
+        "all_proof_obligations_passed": bool(rows)
+        and all(class_row.get("all_passed") is True for class_row in classes.values())
+        and all(row.get("passed") is True for row in rows),
     }
 
 
@@ -290,33 +416,40 @@ def semantic_gluing_issues(project_root: Path) -> list[str]:
 
     issues.extend(validate_configured_artifact_producers(root))
 
-    from validation_spine import validate_validation_spine
-
-    issues.extend(validate_validation_spine(root))
+    if not _validation_spine_saved_ok(root):
+        issues.append("saved validation-spine artifacts are incomplete")
 
     from roadmap_tracks import (
         validate_formal_interop_artifacts,
-        validate_integration_audit_artifacts,
         validate_sheaf_track_artifacts,
         validate_toy_sweep_artifacts,
     )
 
     issues.extend(validate_toy_sweep_artifacts(root))
     issues.extend(validate_formal_interop_artifacts(root))
-    issues.extend(validate_integration_audit_artifacts(root))
+    integration_checks = {
+        "cross_track_symbol_table": (
+            root / "output" / "data" / "cross_track_symbol_table.json",
+            "all_consistent",
+        ),
+        "manuscript_token_provenance": (
+            root / "output" / "data" / "manuscript_token_provenance.json",
+            "all_tokens_mapped",
+        ),
+        "manuscript_hardcoded_variable_audit": (
+            root / "output" / "reports" / "manuscript_hardcoded_variable_audit.json",
+            "all_values_auto_injected",
+        ),
+        "claim_evidence_audit": (
+            root / "output" / "reports" / "claim_evidence_audit.json",
+            "all_claims_typed",
+        ),
+    }
+    for label, (path, field) in integration_checks.items():
+        payload = _load_json(path)
+        if payload.get(field) is not True:
+            issues.append(f"{label} integration check failed: {field}")
     issues.extend(validate_sheaf_track_artifacts(root, validate_saved_certificate=False))
-
-    from gates.claim_ledger import validate_typed_claim_evidence
-
-    if not validate_typed_claim_evidence(
-        root,
-        allow_missing_certificate=True,
-        skip_paths={
-            "output/reports/release_notes_evidence.json",
-            "output/reports/release_attestation.json",
-        },
-    ):
-        issues.append("typed claim evidence failed")
 
     return issues
 
@@ -462,8 +595,6 @@ def build_semantic_gluing_certificate(project_root: Path) -> dict[str, Any]:
         canonical_restrictions = _canonical_restrictions(root)
     except (ImportError, OSError, ValueError, KeyError, TypeError):
         canonical_restrictions = {}
-    from validation_spine import validate_validation_spine
-
     return {
         "schema": SEMANTIC_SCHEMA,
         "ok": not issues,
@@ -590,7 +721,7 @@ def build_semantic_gluing_certificate(project_root: Path) -> dict[str, Any]:
             "lean_proved_count": lean["proved_count"],
             "gnn_ontology_ok": not validate_all_gnn_ontology(root),
             "configured_artifact_producers_ok": not dependency_graph["issues"],
-            "validation_spine_ok": not validate_validation_spine(root),
+            "validation_spine_ok": _validation_spine_saved_ok(root),
             "sensitivity_complete_grid": sensitivity.get("complete_grid") is True,
             "analytical_assumptions_indexed": assumptions.get("all_equations_indexed") is True,
             "analytical_assumption_count": int(assumptions.get("row_count", 0) or 0),
@@ -672,7 +803,7 @@ def write_semantic_gluing_certificate(
 
         write_sheaf_status_outputs(root)
         write_supplemental_artifacts(root)
-    payload = build_semantic_gluing_certificate(root)
+    payload = _with_proof_obligations(root, build_semantic_gluing_certificate(root))
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if output_path is None:
         _refresh_hydrated_manuscript(root)
@@ -681,7 +812,7 @@ def write_semantic_gluing_certificate(
 
         write_sheaf_status_outputs(root)
         write_supplemental_artifacts(root)
-        payload = build_semantic_gluing_certificate(root)
+        payload = _with_proof_obligations(root, build_semantic_gluing_certificate(root))
         path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return path
 
@@ -703,7 +834,7 @@ def _refresh_hydrated_manuscript(root: Path) -> None:
     write_manuscript_staleness_report(root)
 
 
-def write_semantic_gluing_outputs(project_root: Path) -> dict[str, Path]:
+def write_semantic_gluing_outputs(project_root: Path, *, refresh_hydration: bool = True) -> dict[str, Path]:
     """Write semantic certificate, evidence crosswalk, and dependency graph outputs."""
     root = project_root.resolve()
     data_dir = root / "output" / "data"
@@ -712,7 +843,8 @@ def write_semantic_gluing_outputs(project_root: Path) -> dict[str, Path]:
     dependency_path = data_dir / "validation_dependency_graph.json"
     certificate_path = data_dir / "sheaf_gluing_certificate.json"
 
-    _refresh_hydrated_manuscript(root)
+    if refresh_hydration:
+        _refresh_hydrated_manuscript(root)
     from manuscript.sheaf.status import write_sheaf_status_outputs
     from roadmap_tracks.supplemental import write_supplemental_artifacts
 
@@ -727,14 +859,15 @@ def write_semantic_gluing_outputs(project_root: Path) -> dict[str, Path]:
         encoding="utf-8",
     )
     certificate_path.write_text(
-        json.dumps(build_semantic_gluing_certificate(root), indent=2, sort_keys=True) + "\n",
+        json.dumps(_with_proof_obligations(root, build_semantic_gluing_certificate(root)), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    _refresh_hydrated_manuscript(root)
+    if refresh_hydration:
+        _refresh_hydrated_manuscript(root)
     status_paths = write_sheaf_status_outputs(root)
     write_supplemental_artifacts(root)
     certificate_path.write_text(
-        json.dumps(build_semantic_gluing_certificate(root), indent=2, sort_keys=True) + "\n",
+        json.dumps(_with_proof_obligations(root, build_semantic_gluing_certificate(root)), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     return {

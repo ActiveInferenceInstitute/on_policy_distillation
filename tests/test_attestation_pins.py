@@ -104,6 +104,7 @@ def test_carveout_is_exactly_one_row_wide(tmp_path: Path) -> None:
     # And the admitted set stays an explicit, reviewable constant — a silent
     # wildcard, empty set, or accidental broadening would gut this pin.
     expected_fixed_point_checks = {
+        "artifact_provenance_schema",
         "canonical_sheaf_track_schemas",
         "resolved_manuscript_hydrated",
         "canonical_sheaf_tracks",

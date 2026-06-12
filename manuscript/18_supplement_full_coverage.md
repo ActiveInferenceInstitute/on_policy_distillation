@@ -26,7 +26,7 @@ The full variational- and expected-free-energy decomposition for the minimal mod
 
 ### Supplemental table: empirical OPD-vs-RL benchmark (literature-reported)
 
-The literature-reported AIME-24 benchmark (referenced from the discussion) is tabulated here. These are external empirical results from the Qwen3 technical report [@qwen2025technical_report], relayed and discussed by Thinking Machines [@thinkingmachines2025opd], not measured in this manuscript; only the toy-model statistics reported elsewhere here are hydrated from our own generated artifacts.
+The literature-reported AIME-24 benchmark (referenced from the discussion) is tabulated here. These are external empirical results from Table {{qwen_table_number}} of the Qwen3 technical report [@qwen2025technical_report], relayed and discussed by Thinking Machines [@thinkingmachines2025opd], not measured in this manuscript; only the toy-model statistics reported elsewhere here are hydrated from our own generated artifacts.
 
 | Quantity (literature-reported) | On-policy distillation | Reinforcement learning |
 | --- | --- | --- |
@@ -35,7 +35,7 @@ The literature-reported AIME-24 benchmark (referenced from the discussion) is ta
 | Training cost (GPU-hours) | {{empirical_opd_gpu_hours:.0f}} | {{empirical_rl_gpu_hours:.0f}} |
 | Compute reduction vs RL | {{empirical_compute_reduction:.1f}}x | 1.0x |
 
-Table: AIME-24 accuracy and training cost for on-policy distillation versus reinforcement learning. The table cells are attributed directly to @qwen2025technical_report; @thinkingmachines2025opd relays those Qwen values and separately reports a {{empirical_tm_replication_aime24:.0f}} percent AIME-24 replication in about {{empirical_tm_replication_steps}} steps with a {{empirical_tm_efficiency_min:.0f}}-{{empirical_tm_efficiency_max:.0f}}x efficiency range. These are external empirical results, not measured in this manuscript; only the toy-model statistics reported elsewhere here are hydrated from our own generated artifacts.
+Table: AIME-24 accuracy and training cost for on-policy distillation versus reinforcement learning. The table cells are attributed directly to Table {{qwen_table_number}} of @qwen2025technical_report; @thinkingmachines2025opd relays those Qwen values and separately reports a {{empirical_tm_replication_aime24:.0f}} percent AIME-24 replication in about {{empirical_tm_replication_steps}} steps with a {{empirical_tm_efficiency_min:.0f}}-{{empirical_tm_efficiency_max:.0f}}x efficiency range. These are external empirical results, not measured in this manuscript; only the toy-model statistics reported elsewhere here are hydrated from our own generated artifacts.
 
 <!-- sheaf-track:formalism -->
 

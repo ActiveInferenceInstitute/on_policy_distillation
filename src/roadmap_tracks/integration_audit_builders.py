@@ -144,9 +144,11 @@ def build_cross_track_symbol_table(project_root: Path) -> dict[str, Any]:
     from ontology.bindings import load_section_ontology
 
     rows = []
+    domain_rows: list[dict[str, Any]] = []
     section_ontology_paths = {
         "bernoulli_toy": root / "manuscript" / "sections" / "imrad" / "methods_analytical" / "ontology.yaml",
         "si_tmaze": root / "manuscript" / "sections" / "imrad" / "methods_pymdp" / "ontology.yaml",
+        "graph_world": root / "manuscript" / "sections" / "imrad" / "results_invariants" / "ontology.yaml",
     }
     for path in sorted((root / "gnn").glob("*.gnn.md")):
         model_id = path.stem.replace(".gnn", "")
@@ -158,16 +160,20 @@ def build_cross_track_symbol_table(project_root: Path) -> dict[str, Any]:
             gnn_term = model.ontology.get(variable)
             section_term = section_ontology.get(variable)
             term_consistent = bool(gnn_term) and bool(section_term) and gnn_term == section_term
+            symbol_id = f"{model_id}:{variable}"
             rows.append(
                 {
                     "model": model_id,
                     "symbol": variable,
+                    "symbol_id": symbol_id,
                     "shape": list(var.dims),
                     "dtype": var.dtype,
                     "gnn_term": gnn_term,
                     "section_ontology_term": section_term,
                     "json_field": variable,
                     "lean_namespace": "OnPolicyDistillation",
+                    "domains": ["gnn_variable", "ontology_term", "json_field"],
+                    "consumers": [model_id, f"ontology:{section_term}", f"json:{variable}"],
                     "shape_declared": bool(var.dims),
                     "dtype_declared": bool(var.dtype),
                     "ontology_declared": bool(gnn_term),
@@ -176,15 +182,125 @@ def build_cross_track_symbol_table(project_root: Path) -> dict[str, Any]:
                     "consistent": bool(var.dims and var.dtype and term_consistent),
                 }
             )
+            domain_rows.extend(
+                [
+                    {
+                        "domain": "gnn_variable",
+                        "symbol": symbol_id,
+                        "source": path.relative_to(root).as_posix(),
+                        "consumer": model_id,
+                        "consistent": bool(var.dims and var.dtype and gnn_term),
+                    },
+                    {
+                        "domain": "ontology_term",
+                        "symbol": symbol_id,
+                        "source": section_ontology_paths.get(model_id, path).relative_to(root).as_posix(),
+                        "consumer": section_term or "",
+                        "consistent": term_consistent,
+                    },
+                    {
+                        "domain": "json_field",
+                        "symbol": symbol_id,
+                        "source": path.relative_to(root).as_posix(),
+                        "consumer": variable,
+                        "consistent": bool(variable),
+                    },
+                ]
+            )
+    lean = _load_json(root / "output" / "reports" / "lean_theorem_inventory.json")
+    for row in lean.get("rows") or []:
+        theorem = str(row.get("name") or "")
+        if theorem:
+            domain_rows.append(
+                {
+                    "domain": "lean_theorem",
+                    "symbol": theorem,
+                    "source": "output/reports/lean_theorem_inventory.json",
+                    "consumer": "OnPolicyDistillation",
+                    "consistent": row.get("status") == "proved",
+                }
+            )
+    variables = _load_json(root / "output" / "data" / "manuscript_variables.json")
+    for token in sorted(variables):
+        domain_rows.append(
+            {
+                "domain": "manuscript_variable",
+                "symbol": str(token),
+                "source": "output/data/manuscript_variables.json",
+                "consumer": "hydration",
+                "consistent": True,
+            }
+        )
+    evidence = _load_json(root / "output" / "data" / "evidence_field_index.json")
+    for row in evidence.get("rows") or []:
+        jsonpath = str(row.get("jsonpath") or "")
+        if jsonpath:
+            domain_rows.append(
+                {
+                    "domain": "json_field",
+                    "symbol": f"{row.get('artifact')}#{jsonpath}",
+                    "source": str(row.get("artifact") or ""),
+                    "consumer": str(row.get("claim_id") or ""),
+                    "consistent": row.get("jsonpath_present") is True,
+                }
+            )
+    figures = _load_json(root / "output" / "figures" / "figure_registry.json")
+    figure_rows: Any = figures.get("figures") or figures.get("rows") or figures
+    if isinstance(figure_rows, dict):
+        figure_iter = [{"id": key, **(value if isinstance(value, dict) else {})} for key, value in figure_rows.items()]
+    else:
+        figure_iter = [row for row in figure_rows if isinstance(row, dict)]
+    for row in figure_iter:
+        figure_id = str(row.get("id") or row.get("figure_id") or "").removeprefix("fig:")
+        if figure_id:
+            domain_rows.append(
+                {
+                    "domain": "figure_label",
+                    "symbol": f"fig:{figure_id}",
+                    "source": "output/figures/figure_registry.json",
+                    "consumer": str(row.get("path") or row.get("filename") or figure_id),
+                    "consistent": True,
+                }
+            )
+    token_provenance = _load_json(root / "output" / "data" / "manuscript_token_provenance.json")
+    for row in token_provenance.get("tokens") or []:
+        domain_rows.append(
+            {
+                "domain": "rendered_manuscript_consumer",
+                "symbol": str(row.get("token") or ""),
+                "source": str(row.get("section") or ""),
+                "consumer": str(row.get("source") or ""),
+                "consistent": row.get("mapped") is True,
+            }
+        )
+    required_domains = {
+        "gnn_variable",
+        "ontology_term",
+        "lean_theorem",
+        "manuscript_variable",
+        "json_field",
+        "figure_label",
+        "rendered_manuscript_consumer",
+    }
+    observed_domains = {str(row.get("domain")) for row in domain_rows if row.get("domain")}
     return {
         "schema": "template_active_inference.cross_track_symbol_table.v1",
         "rows": rows,
+        "domain_rows": domain_rows,
         "symbol_count": len(rows),
+        "domain_row_count": len(domain_rows),
+        "required_domains": sorted(required_domains),
+        "domains_present": sorted(observed_domains),
+        "all_required_domains_present": required_domains == observed_domains,
+        "all_domain_rows_consistent": bool(domain_rows) and all(row.get("consistent") is True for row in domain_rows),
         "all_shapes_declared": bool(rows) and all(row["shape_declared"] for row in rows),
         "all_dtypes_declared": bool(rows) and all(row["dtype_declared"] for row in rows),
         "all_ontology_terms_declared": bool(rows) and all(row["ontology_declared"] for row in rows),
         "all_section_terms_declared": bool(rows) and all(row["section_ontology_declared"] for row in rows),
-        "all_consistent": bool(rows) and all(row["consistent"] for row in rows),
+        "all_consistent": bool(rows)
+        and required_domains == observed_domains
+        and all(row["consistent"] for row in rows)
+        and all(row.get("consistent") is True for row in domain_rows),
     }
 
 
@@ -387,6 +503,15 @@ def build_manuscript_staleness_report(project_root: Path) -> dict[str, Any]:
             resolved_path = root / str(row["resolved_path"])
             resolved_text = resolved_path.read_text(encoding="utf-8") if resolved_path.is_file() else ""
             row["fresh"] = resolved_path.is_file() and row["expected"] in resolved_text
+    rows = sorted(
+        rows,
+        key=lambda row: (
+            str(row.get("section") or ""),
+            str(row.get("token") or ""),
+            str(row.get("resolved_path") or ""),
+            str(row.get("expected") or ""),
+        ),
+    )
     return {
         "schema": "template_active_inference.manuscript_staleness_report.v1",
         "rows": rows,

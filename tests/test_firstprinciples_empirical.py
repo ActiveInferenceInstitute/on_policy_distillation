@@ -13,6 +13,8 @@ def test_benchmark_rows_present_and_attributed() -> None:
     for row in empirical.BENCHMARKS:
         assert row.bibkey == "qwen2025technical_report"  # direct table source
         assert row.relayed_by == "thinkingmachines2025opd"  # contextual relay/replication post
+        assert row.source_locator == "Qwen3 Technical Report, Table 21"
+        assert "Qwen3-8B" in row.source_heading
         assert row.source_note
 
 
@@ -29,6 +31,8 @@ def test_payload_honest_flags() -> None:
     assert payload["schema"] == empirical.SCHEMA
     assert payload["source"] == "literature_reported"  # not measured here
     assert payload["direct_bibkey"] == "qwen2025technical_report"
+    assert payload["source_locator"] == "Qwen3 Technical Report, Table 21"
+    assert payload["source_heading"] == "Comparison of reinforcement learning and on-policy distillation on Qwen3-8B"
     assert payload["relayed_by_bibkey"] == "thinkingmachines2025opd"
     assert payload["thinking_machines_replication"]["aime24_accuracy"] == pytest.approx(70.0)
     assert payload["thinking_machines_replication"]["efficiency_range_min"] == pytest.approx(9.0)

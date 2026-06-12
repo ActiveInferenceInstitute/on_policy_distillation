@@ -40,14 +40,35 @@ def _bib_entries(root: Path) -> dict[str, str]:
     return {match.group(1).strip(): match.group(2) for match in pattern.finditer(text)}
 
 
-def _citation_present(root: Path, key: str) -> bool:
+def _bib_field(entry: str, field: str) -> str:
+    match = re.search(rf"\b{re.escape(field)}\s*=\s*\{{([^}}]+)\}}", entry, re.I | re.S)
+    if not match:
+        return ""
+    return " ".join(match.group(1).split())
+
+
+def _arxiv_id(entry: str) -> str:
+    text = " ".join(entry.split())
+    match = re.search(r"arXiv[:. ]+(\d{4}\.\d{4,5})(?:v\d+)?", text, re.I)
+    if match:
+        return match.group(1)
+    doi = _bib_field(entry, "doi")
+    match = re.search(r"arXiv\.(\d{4}\.\d{4,5})", doi, re.I)
+    return match.group(1) if match else ""
+
+
+def _manuscript_citation_text(root: Path) -> str:
     paths = sorted((root / "manuscript" / "sections").glob("**/*.md")) + sorted(
         path
         for path in (root / "manuscript").glob("*.md")
         if path.name not in {"99_references.md", "SYNTAX.md", "README.md", "AGENTS.md"}
     )
+    return "\n".join(path.read_text(encoding="utf-8") for path in paths if path.is_file())
+
+
+def _citation_present(text: str, key: str) -> bool:
     needle = f"@{key}"
-    return any(needle in path.read_text(encoding="utf-8") for path in paths if path.is_file())
+    return needle in text
 
 
 def _registry_tracks(root: Path) -> set[str]:
@@ -71,6 +92,7 @@ def build_scholarship_source_matrix(project_root: Path) -> dict[str, Any]:
     bib_entries = _bib_entries(root)
     registry = _registry_tracks(root)
     sections = _manifest_sections(root)
+    citation_text = _manuscript_citation_text(root)
     rows: list[dict[str, Any]] = []
     for source in SCHOLARSHIP_SOURCES:
         key = str(source["citation_key"])
@@ -80,9 +102,12 @@ def build_scholarship_source_matrix(project_root: Path) -> dict[str, Any]:
         section_ids = [str(section) for section in source["manuscript_sections"]]
         row = {
             **source,
+            "doi": _bib_field(entry, "doi"),
+            "url": _bib_field(entry, "url"),
+            "arxiv_id": _arxiv_id(entry),
             "bib_has_entry": bool(entry),
             "bib_has_locator": bool(entry and _has_locator(entry)),
-            "cited_in_manuscript": _citation_present(root, key),
+            "cited_in_manuscript": _citation_present(citation_text, key),
             "artifact_exists": artifact == "output/data/scholarship_source_matrix.json" or (root / artifact).is_file(),
             "tracks_registered": set(track_ids).issubset(registry),
             "sections_bound": set(section_ids).issubset(sections),

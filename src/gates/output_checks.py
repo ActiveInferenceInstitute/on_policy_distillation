@@ -25,7 +25,9 @@ SUPPORTED_SELECTED_OUTPUT_CHECKS = {
     "firstprinciples_benchmark_table_present",
     "toy_sweep_track_schemas",
     "formal_interop_track_schemas",
+    "ontology_profile_schema",
     "integration_audit_track_schemas",
+    "cross_track_symbol_table_schema",
     "canonical_sheaf_track_schemas",
     "aggregate_rederivation",
 }
@@ -163,6 +165,75 @@ def _proof_extraction_ok(proof_extraction: dict, lean_theorems: dict) -> bool:
         == int(lean_theorems.get("theorem_count", -2) or -2)
         and bool(inventory)
         and extracted == inventory
+    )
+
+
+def _ontology_profile_ok(payload: dict) -> bool:
+    rows = payload.get("rows") or []
+    expected = set(payload.get("expected_models") or [])
+    present = set(payload.get("models_present") or [])
+    present_from_rows = {str(row.get("model")) for row in rows if row.get("model")}
+    return (
+        payload.get("schema") == "template_active_inference.ontology_profile_matrix.v1"
+        and bool(rows)
+        and expected == {"bernoulli_toy", "si_tmaze", "graph_world", "bernoulli_ising"}
+        and present == expected
+        and present_from_rows == expected
+        and payload.get("all_expected_models_present") is True
+        and payload.get("all_terms_used") is True
+        and payload.get("unused_profile_terms") == []
+        and payload.get("all_mapped_once") is True
+        and all(any(row.get("model") == model for row in rows) for model in expected)
+        and all(
+            row.get("model") in expected
+            and row.get("mapping_count") == 1
+            and row.get("mapped_once") is True
+            and row.get("unused_profile_term") is False
+            and bool(row.get("jsonpath"))
+            and bool(row.get("variable"))
+            and bool(row.get("ontology"))
+            for row in rows
+        )
+    )
+
+
+def _cross_track_symbol_table_ok(payload: dict) -> bool:
+    rows = payload.get("rows") or []
+    domain_rows = payload.get("domain_rows") or []
+    required = set(payload.get("required_domains") or [])
+    present = set(payload.get("domains_present") or [])
+    present_from_rows = {str(row.get("domain")) for row in domain_rows if row.get("domain")}
+    return (
+        payload.get("schema") == "template_active_inference.cross_track_symbol_table.v1"
+        and bool(rows)
+        and bool(domain_rows)
+        and required
+        == {
+            "gnn_variable",
+            "ontology_term",
+            "lean_theorem",
+            "manuscript_variable",
+            "json_field",
+            "figure_label",
+            "rendered_manuscript_consumer",
+        }
+        and required == present
+        and required == present_from_rows
+        and payload.get("all_required_domains_present") is True
+        and payload.get("all_domain_rows_consistent") is True
+        and payload.get("all_consistent") is True
+        and payload.get("all_shapes_declared") is True
+        and payload.get("all_dtypes_declared") is True
+        and payload.get("all_ontology_terms_declared") is True
+        and payload.get("all_section_terms_declared") is True
+        and all(
+            row.get("domain") in required
+            and row.get("consistent") is True
+            and bool(row.get("symbol"))
+            and bool(row.get("source"))
+            and bool(row.get("consumer"))
+            for row in domain_rows
+        )
     )
 
 
@@ -326,10 +397,18 @@ def _validate_outputs_selected(root: Path, selected: set[str]) -> dict[str, bool
         from roadmap_tracks import validate_formal_interop_artifacts
 
         checks["formal_interop_track_schemas"] = not validate_formal_interop_artifacts(root)
+    if "ontology_profile_schema" in selected:
+        checks["ontology_profile_schema"] = _ontology_profile_ok(
+            _read_json(root / "output" / "data" / "ontology_profile_matrix.json")
+        )
     if "integration_audit_track_schemas" in selected:
         from roadmap_tracks import validate_integration_audit_artifacts
 
         checks["integration_audit_track_schemas"] = not validate_integration_audit_artifacts(root)
+    if "cross_track_symbol_table_schema" in selected:
+        checks["cross_track_symbol_table_schema"] = _cross_track_symbol_table_ok(
+            _read_json(root / "output" / "data" / "cross_track_symbol_table.json")
+        )
     if "canonical_sheaf_track_schemas" in selected:
         from roadmap_tracks import validate_sheaf_track_artifacts
 
@@ -674,7 +753,7 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
         and all(row.get("round_trip_ok") is True for row in _gnn_lint_rows)
     )
     checks["ontology_alias_schema"] = ontology_alias.get("no_conflicts") is True
-    checks["ontology_profile_schema"] = ontology_profile.get("all_mapped_once") is True
+    checks["ontology_profile_schema"] = _ontology_profile_ok(ontology_profile)
     checks["lean_theorem_inventory_schema"] = lean_theorems.get("all_proved") is True
     checks["lean_graph_world_inventory_schema"] = lean_graph.get("all_topologies_witnessed") is True
     checks["lean_graph_world_inventory_schema"] = (
@@ -688,13 +767,7 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
         manuscript_staleness.get("schema") == "template_active_inference.manuscript_staleness_report.v1"
         and manuscript_staleness.get("all_fresh") is True
     )
-    checks["cross_track_symbol_table_schema"] = (
-        cross_symbols.get("all_consistent") is True
-        and cross_symbols.get("all_shapes_declared") is True
-        and cross_symbols.get("all_dtypes_declared") is True
-        and cross_symbols.get("all_ontology_terms_declared") is True
-        and cross_symbols.get("all_section_terms_declared") is True
-    )
+    checks["cross_track_symbol_table_schema"] = _cross_track_symbol_table_ok(cross_symbols)
     checks["manuscript_evidence_tables_schema"] = evidence_tables.get("all_source_backed") is True
     checks["manuscript_token_provenance_schema"] = token_provenance.get("all_tokens_mapped") is True
     checks["manuscript_hardcoded_variable_audit_schema"] = (

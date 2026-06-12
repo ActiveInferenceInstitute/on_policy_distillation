@@ -69,12 +69,21 @@ It also writes `output/data/sheaf_evidence_crosswalk.json` and
 `output/data/validation_dependency_graph.json`. Together these artifacts bind shared
 GNN/ontology symbols, typed claims, artifact producers, validation gates, and manuscript
 variables so the project validates semantic agreement, not only coverage shape.
+The certificate now carries typed `restriction_classes` and `proof_obligations`
+covering scope, provenance, dependency, evidence, formal, render, release, and
+blocked-scope restrictions. The ontology profile matrix covers the Bernoulli toy
+model, SI T-maze, graph-world GNN surface, and toy benchmark models with true
+mapped-once uniqueness checks. The cross-track symbol table validates required
+domains for GNN variables, ontology terms, Lean theorem names, manuscript
+variables, JSON fields, figure labels, and rendered-manuscript consumers.
 The promoted validation-spine and canonical roadmap artifacts cover provenance,
 replay, counterexamples, toy sweeps, uncertainty summaries, benchmark rows,
 finite model-checking witnesses, interop reports, semantic gluing, dependency
 graphs, evidence-field indexing, release-bundle parity, theorem traceability,
 gate ergonomics, scholarship source mapping, artifact diffing, Lean proof extraction, finite state-space
-catalogs, causal ablations, artifact license checks, release-note evidence,
+catalogs, proof dependency graphs, state transition tables, causal ablations,
+ablation sensitivity reports, artifact license checks, release-note evidence,
+release attestation,
 track-improvement scope, and adversarial/scope audits. Live track IDs are stable
 canonical names; future work improves those tracks rather than adding `_vN`
 siblings.

@@ -524,6 +524,7 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
         "empirical_tm_replication_steps": int(empirical_replication.get("training_steps", 0) or 0),
         "empirical_tm_efficiency_min": float(empirical_replication.get("efficiency_range_min", 0.0)),
         "empirical_tm_efficiency_max": float(empirical_replication.get("efficiency_range_max", 0.0)),
+        "qwen_table_number": 21,
         "parallel_max_abs_difference": float(parallel_data.get("max_abs_difference", 0.0)),
         "parallel_student_free_energy": float(parallel_data.get("student_free_energy", 0.0)),
         "parallel_neg_log_evidence": float(parallel_data.get("neg_log_evidence", 0.0)),

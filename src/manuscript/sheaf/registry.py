@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
 from pathlib import Path
 
 import yaml
@@ -10,7 +11,9 @@ from manuscript.sheaf.models import SheafSection, TrackRegistry, TrackSpec
 
 
 def load_track_registry(registry_path: Path) -> TrackRegistry:
-    raw = yaml.safe_load(registry_path.read_text(encoding="utf-8")) or {}
+    registry_path = registry_path.resolve()
+    stat = registry_path.stat()
+    raw = _load_registry_yaml_cached(str(registry_path), stat.st_mtime_ns, stat.st_size)
     tracks_raw = raw.get("tracks") or {}
     specs: dict[str, TrackSpec] = {}
     for track_id, meta in tracks_raw.items():
@@ -29,6 +32,12 @@ def load_track_registry(registry_path: Path) -> TrackRegistry:
         entry = meta or {}
         suffixes[str(name)] = tuple(str(s) for s in entry.get("suffixes") or ())
     return TrackRegistry(tracks=specs, renderer_suffixes=suffixes)
+
+
+@lru_cache(maxsize=16)
+def _load_registry_yaml_cached(path: str, mtime_ns: int, size: int) -> dict:
+    del mtime_ns, size
+    return yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
 
 
 def track_order_for_section(

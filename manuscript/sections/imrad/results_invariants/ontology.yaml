@@ -1,0 +1,7 @@
+node: GraphWorldState
+edge: GraphWorldTopology
+action: GraphWorldAction
+graph_policy: GraphWorldPolicy
+goal: GraphWorldGoal
+trace_step: GraphWorldTrace
+goal_reached: GraphWorldReachability

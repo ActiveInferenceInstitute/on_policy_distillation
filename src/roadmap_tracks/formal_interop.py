@@ -226,11 +226,12 @@ def build_gnn_roundtrip_report(project_root: Path) -> dict[str, Any]:
 def build_gnn_lint_report(project_root: Path) -> dict[str, Any]:
     """Build the gnn_lint_report.v1 payload: per-variable dtype/shape/ontology checks against the expected term maps."""
     root = project_root.resolve()
-    from ontology.bindings import BERNOULLI_EXPECTED_TERMS, SI_EXPECTED_TERMS
+    from ontology.bindings import BERNOULLI_EXPECTED_TERMS, GRAPH_WORLD_EXPECTED_TERMS, SI_EXPECTED_TERMS
 
     expected_by_model = {
         "bernoulli_toy": BERNOULLI_EXPECTED_TERMS,
         "si_tmaze": SI_EXPECTED_TERMS,
+        "graph_world": GRAPH_WORLD_EXPECTED_TERMS,
     }
     rows = []
     issues: list[str] = []
@@ -308,25 +309,98 @@ def build_ontology_alias_index(project_root: Path) -> dict[str, Any]:
 
 
 def build_ontology_profile_matrix(project_root: Path) -> dict[str, Any]:
-    """Build the ontology_profile_matrix.v1 payload: one row per GNN model variable with its ontology mapping."""
+    """Build ontology_profile_matrix.v1 with true per-variable uniqueness checks."""
     root = project_root.resolve()
-    rows = []
+    from ontology.bindings import (
+        BERNOULLI_EXPECTED_TERMS,
+        GRAPH_WORLD_EXPECTED_TERMS,
+        SI_EXPECTED_TERMS,
+    )
+
+    expected_by_model = {
+        "bernoulli_toy": BERNOULLI_EXPECTED_TERMS,
+        "si_tmaze": SI_EXPECTED_TERMS,
+        "graph_world": GRAPH_WORLD_EXPECTED_TERMS,
+    }
+    rows: list[dict[str, Any]] = []
+    seen_profile_terms: dict[str, set[str]] = {model: set() for model in expected_by_model}
     for path in _gnn_paths(root):
         model = parse_gnn_file(path)
+        model_id = path.stem.replace(".gnn", "")
+        expected_terms = expected_by_model.get(model_id, {})
+        model_terms = dict(model.ontology)
         for variable in sorted(model.variables):
+            terms = [term for name, term in model_terms.items() if name == variable and term]
+            expected = expected_terms.get(variable)
+            term = terms[0] if terms else None
+            seen_profile_terms.setdefault(model_id, set()).update(terms)
             rows.append(
                 {
-                    "model": path.stem.replace(".gnn", ""),
+                    "model": model_id,
                     "variable": variable,
-                    "ontology": model.ontology.get(variable),
-                    "mapped_once": bool(model.ontology.get(variable)),
+                    "source": path.relative_to(root).as_posix(),
+                    "jsonpath": f"$.models.{model_id}.variables.{variable}.ontology",
+                    "ontology": term,
+                    "expected_ontology": expected,
+                    "mapping_count": len(terms),
+                    "mapped_once": len(terms) == 1 and bool(term) and (expected is None or term == expected),
+                    "unused_profile_term": False,
                 }
             )
+    benchmark = _load_json(root / "output" / "data" / "toy_benchmark_matrix.json")
+    for row in benchmark.get("rows") or []:
+        model_id = str(row.get("model") or "")
+        metric = str(row.get("metric") or "")
+        artifact = str(row.get("artifact") or "")
+        if not model_id or not metric:
+            continue
+        rows.append(
+            {
+                "model": model_id,
+                "variable": metric,
+                "source": "output/data/toy_benchmark_matrix.json",
+                "jsonpath": f"$.rows[?(@.model=='{model_id}' && @.metric=='{metric}')]",
+                "ontology": "ToyBenchmarkMetric",
+                "expected_ontology": "ToyBenchmarkMetric",
+                "mapping_count": 1,
+                "mapped_once": bool(artifact),
+                "unused_profile_term": False,
+            }
+        )
+    expected_model_set = {"bernoulli_toy", "si_tmaze", "graph_world", "bernoulli_ising"}
+    models_present = {str(row.get("model")) for row in rows if row.get("model")}
+    unused_terms = [
+        {"model": model_id, "ontology": term}
+        for model_id, expected in sorted(expected_by_model.items())
+        for term in sorted(set(expected.values()) - seen_profile_terms.get(model_id, set()))
+    ]
+    for unused in unused_terms:
+        rows.append(
+            {
+                "model": unused["model"],
+                "variable": "<unused-profile-term>",
+                "source": "ontology.bindings",
+                "jsonpath": "$.expected_terms",
+                "ontology": unused["ontology"],
+                "expected_ontology": unused["ontology"],
+                "mapping_count": 0,
+                "mapped_once": False,
+                "unused_profile_term": True,
+            }
+        )
     return {
         "schema": "template_active_inference.ontology_profile_matrix.v1",
         "rows": rows,
         "row_count": len(rows),
-        "all_mapped_once": bool(rows) and all(row["mapped_once"] for row in rows),
+        "models_present": sorted(models_present),
+        "expected_models": sorted(expected_model_set),
+        "all_expected_models_present": expected_model_set.issubset(models_present),
+        "unused_profile_terms": unused_terms,
+        "all_terms_used": not unused_terms,
+        "all_mapped_once": bool(rows)
+        and expected_model_set.issubset(models_present)
+        and not unused_terms
+        and all(row["mapped_once"] and not row["unused_profile_term"] for row in rows),
     }
 
 

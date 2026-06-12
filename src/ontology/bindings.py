@@ -33,6 +33,26 @@ SI_EXPECTED_TERMS: dict[str, str] = {
     "si_tree_nodes": "PolicyPosterior",
 }
 
+GRAPH_WORLD_SYMBOL_MAP: dict[str, str] = {
+    "node": "node",
+    "edge": "edge",
+    "action": "action",
+    "graph_policy": "graph_policy",
+    "goal": "goal",
+    "trace_step": "trace_step",
+    "goal_reached": "goal_reached",
+}
+
+GRAPH_WORLD_EXPECTED_TERMS: dict[str, str] = {
+    "node": "GraphWorldState",
+    "edge": "GraphWorldTopology",
+    "action": "GraphWorldAction",
+    "graph_policy": "GraphWorldPolicy",
+    "goal": "GraphWorldGoal",
+    "trace_step": "GraphWorldTrace",
+    "goal_reached": "GraphWorldReachability",
+}
+
 
 def load_section_ontology(path: Path) -> dict[str, str]:
     if not path.exists():
@@ -98,6 +118,13 @@ def validate_all_gnn_ontology(project_root: Path) -> list[str]:
             SI_SYMBOL_MAP,
             SI_EXPECTED_TERMS,
             "si_tmaze",
+        ),
+        (
+            root / "gnn" / "graph_world.gnn.md",
+            root / "manuscript" / "sections" / "imrad" / "results_invariants" / "ontology.yaml",
+            GRAPH_WORLD_SYMBOL_MAP,
+            GRAPH_WORLD_EXPECTED_TERMS,
+            "graph_world",
         ),
     )
     gaps: list[str] = []

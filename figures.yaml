@@ -369,10 +369,10 @@ figures:
       check in the validation registry: {{invariants_passed}} of {{invariants_total}} merged
       checks pass on the combined report. These invariants are the machine-enforced
       correctness conditions -- conservation of probability mass, divergence non-negativity,
-      free-energy bounds, and rollout consistency -- that bind the on-policy-distillation
-      claims to the active-inference math. An all-green dashboard certifies that the
-      executable evidence underwriting the manuscript actually satisfies the theory it
-      reports.
+      free-energy bounds, and rollout consistency -- that bind the toy
+      on-policy-distillation claims to the active-inference math. An all-green dashboard
+      means the registered analytical and simulation invariants pass for the generated
+      toy artifacts.
     width: 0.9
   tmaze_schematic:
     filename: tmaze_schematic.png
@@ -468,11 +468,11 @@ figures:
       Concordance diagram aligning the analytical symbols of the Bernoulli--Ising toy with the
       generative-model variables declared in `bernoulli_toy.gnn.md` ({{gnn_spec_version}}) and
       their corresponding Active Inference Ontology terms. The three-layer mapping covers all
-      {{bernoulli_ontology_term_count}} expected variable--term pairs and certifies
+      {{bernoulli_ontology_term_count}} expected variable--term pairs and checks
       that the equations in the manuscript, the executable GNN specification, and the shared
-      ontology vocabulary all refer to the same entities. This naming concordance is what lets
-      the on-policy-distillation toy be read as a bona fide active-inference model rather than
-      a loose analogy, giving every quantity a single cross-track-stable identity.
+      ontology vocabulary use the same declared names. This naming concordance keeps
+      the on-policy-distillation toy aligned with a GNN/ontology-scoped active-inference
+      specification rather than relying on a loose analogy.
     width: 0.9
   semantic_gluing_graph:
     filename: semantic_gluing_graph.png
@@ -484,11 +484,11 @@ figures:
       Semantic gluing graph tracing the dependency chain from configured analysis scripts
       (producers) through the generated evidence artifacts to the manuscript consumers and
       validation gates that close the multi-track sheaf certificate. Each edge records a
-      provenance link, so the graph is the auditable trail showing every figure and number is
-      derived from a declared producer and re-checked downstream. It is the operational
-      embodiment of the sheaf gluing condition: only when producers, artifacts, and consumers
-      agree along every edge does the assembled active-inference / on-policy-distillation
-      argument certify as globally consistent.
+      declared provenance link, so the graph is the auditable trail showing that registered
+      figure and variable dependencies are traced to declared producers and re-checked
+      downstream. It is the operational embodiment of the sheaf gluing condition for this
+      artifact contract: producers, artifacts, and consumers must agree along the registered
+      edges before the assembled active-inference / on-policy-distillation argument is accepted.
     width: 0.95
   theorem_traceability_graph:
     filename: theorem_traceability_graph.png

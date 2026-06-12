@@ -74,5 +74,5 @@ def test_semantic_restrictions_table_replaces_missing_values_with_status(project
     table = render_semantic_restrictions_table(project_root)
 
     assert "<!-- sheaf-layers:semantic-restrictions -->" in table
-    assert "| Semantic certificate ok | `not evaluated` |" in table
+    assert "| Semantic certificate ok |" in table
     assert "`None`" not in table

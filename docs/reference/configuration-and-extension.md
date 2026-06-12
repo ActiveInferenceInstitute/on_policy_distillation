@@ -64,6 +64,26 @@ literal.
   (`_copied_parity`). Deferral means pre-copy or render-source-absent ONLY;
   an existing root copy that fails to hash-match is drift and fails the
   `release_bundle_manifest_schema` check (`tests/test_release_parity.py`).
+- **Ontology profile matrix** — `src/roadmap_tracks/formal_interop.py`
+  (`build_ontology_profile_matrix`). Rows cover `bernoulli_toy`, `si_tmaze`,
+  the graph-world GNN surface, and toy benchmark models. `mapped_once` is a
+  uniqueness check, not a presence check; duplicate aliases, missing graph-world
+  rows, and unused/unmapped terms fail validation.
+- **Cross-track symbol spine** — `src/roadmap_tracks/integration_audit_builders.py`
+  (`build_cross_track_symbol_table`). Required domains are GNN variables,
+  ontology terms, Lean theorem names, manuscript variables, JSON fields, figure
+  labels, and rendered-manuscript consumers; the validator re-derives exact
+  domain coverage and per-row consistency.
+- **Semantic proof obligations** — `src/manuscript/sheaf/semantic.py`.
+  `sheaf_gluing_certificate.json` includes typed `restriction_classes` and
+  `proof_obligations`; every boolean restriction must have an obligation with
+  source artifacts, a gate, a semantic restriction, a negative control, and
+  `passed=true`.
+- **Fixed-point release/provenance tail** —
+  `src/orchestration/artifact_pipeline.py`. The tail refreshes sheaf artifacts,
+  rewrites variables and hydrated manuscript, refreshes staleness/provenance
+  currency, then emits semantic/release artifacts so `validate_outputs.py`
+  sees current hashes and the current validation report.
 
 ## Add a figure (the six surfaces)
 
@@ -127,7 +147,7 @@ uv run --extra dev python -m pytest tests/test_figures.py --no-cov -q
 | You edited | Run |
 | --- | --- |
 | `src/` methods or gates | `uv run --extra dev python -m pytest tests/ -m "not artifact_slow and not render_slow" --no-cov` |
-| any generated-artifact producer | the producer script, then `uv run python scripts/generate_validation_spine.py && uv run python scripts/generate_integration_audit.py && uv run python scripts/generate_sheaf_tracks.py && uv run python scripts/z_generate_manuscript_variables.py && uv run python scripts/validate_outputs.py` |
+| any generated-artifact producer | `uv run python scripts/run_full_chain.py --tail-only` after tail-only edits, or `uv run python scripts/run_full_chain.py` when producer dependencies changed |
 | manuscript fragments / manifest / figures.yaml | `uv run python scripts/compose_manuscript.py && uv run python scripts/z_generate_manuscript_variables.py` |
 | everything / unsure | `uv run python scripts/run_full_chain.py` (canonical convergent order with bounded retry) |
 | full release gate | `uv run python scripts/run_tests_chunked.py` then `uv run python scripts/render_pdf.py` |
@@ -144,9 +164,12 @@ uv run --extra dev python -m pytest tests/test_figures.py --no-cov -q
   `_TOKEN_RE` (the fail-closed collector cannot flag a spec it cannot parse —
   check the regex before inventing new specs).
 - **Validation red after a partial regen** — the attestation binds the
-  validation report by hash, so a half-regenerated tree fails on staleness.
-  Re-run the spine→audit→sheaf→variables chain and validate **again**
-  (attestation-circularity: one more validate pass after any red).
+  validation report by hash, and provenance binds terminal artifact fields by
+  hash, so a half-regenerated tree fails on staleness. Run
+  `uv run python scripts/z_generate_manuscript_variables.py` followed by
+  `uv run python scripts/validate_outputs.py`; the fixed-point tail refreshes
+  the sheaf, variables, staleness, provenance, semantic certificate, release
+  notes, and attestation in the convergent order.
 - **Full pytest dies with exit 143/144 under load** — the machine's resource
   killer, not a test failure. Use `scripts/run_tests_chunked.py`, which runs
   per-file chunks that survive.

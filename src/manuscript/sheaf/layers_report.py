@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from manuscript.sheaf.coverage import load_sheaf_coverage_context
@@ -126,12 +127,21 @@ def render_artifact_producer_table(project_root: Path) -> str:
 
 def render_semantic_restrictions_table(project_root: Path) -> str:
     """Render the semantic-gluing restrictions markdown table from the certificate, showing 'not evaluated' for None values."""
-    from manuscript.sheaf.semantic import build_semantic_gluing_certificate
+    certificate_path = project_root / "output" / "data" / "sheaf_gluing_certificate.json"
 
     def _cell(value: object) -> str:
         return "not evaluated" if value is None else str(value)
 
-    restrictions = build_semantic_gluing_certificate(project_root).get("restrictions") or {}
+    if certificate_path.is_file():
+        try:
+            saved = json.loads(certificate_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            saved = {}
+        restrictions = saved.get("restrictions") or {}
+    else:
+        from manuscript.sheaf.semantic import build_semantic_gluing_certificate
+
+        restrictions = build_semantic_gluing_certificate(project_root).get("restrictions") or {}
     rows = [
         ("Coverage missing", restrictions.get("coverage_missing")),
         ("Policy comparison rows", restrictions.get("policy_comparison_run_count")),

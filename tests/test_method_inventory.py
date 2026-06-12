@@ -42,9 +42,24 @@ def test_method_inventory_render_groups_by_module(project_root: Path) -> None:
     assert "`class`" in report
 
 
+def test_method_inventory_checked_in_doc_is_current(project_root: Path) -> None:
+    expected = render_method_inventory_markdown(collect_method_entries(project_root))
+    actual = (project_root / "docs" / "reference" / "method-inventory.md").read_text(encoding="utf-8")
+
+    assert actual == expected
+
+
 def test_docs_signpost_method_inventory(project_root: Path) -> None:
     docs_readme = (project_root / "docs" / "README.md").read_text(encoding="utf-8")
     project_readme = (project_root / "README.md").read_text(encoding="utf-8")
 
     assert "method-inventory.md" in docs_readme
     assert "generate_method_inventory.py" in project_readme
+
+
+def test_configuration_docs_use_convergent_chain_for_generated_artifacts(project_root: Path) -> None:
+    guide = (project_root / "docs" / "reference" / "configuration-and-extension.md").read_text(encoding="utf-8")
+    producer_row = next(line for line in guide.splitlines() if line.startswith("| any generated-artifact producer |"))
+
+    assert "run_full_chain.py" in producer_row
+    assert "generate_validation_spine.py &&" not in producer_row

@@ -258,6 +258,7 @@ sections:
     benchmark: manuscript/sections/imrad/results_invariants/benchmark.md
     state_space_catalog: manuscript/sections/imrad/results_invariants/state_space_catalog.md
     causal_ablation: manuscript/sections/imrad/results_invariants/causal_ablation.md
+    ontology: manuscript/sections/imrad/results_invariants/ontology.yaml
     visualization: manuscript/sections/imrad/results_invariants/visualization.md
     lean: manuscript/sections/imrad/appendix_full_sheaf/lean.md
     model_checking: manuscript/sections/imrad/appendix_full_sheaf/model_checking.md

@@ -19,6 +19,59 @@ def _all_rows_absent(payload: dict, field: str) -> bool:
     return bool(rows) and all(not row.get(field) for row in rows)
 
 
+def _semantic_obligation_issues(root: Path, semantic: dict) -> list[str]:
+    from manuscript.sheaf.semantic import _proof_obligations
+
+    classes = semantic.get("restriction_classes") or {}
+    rows = semantic.get("proof_obligations") or []
+    required_classes = {"scope", "provenance", "dependency", "evidence", "formal", "render", "release", "blocked_scope"}
+    issues: list[str] = []
+    if set(classes) != required_classes:
+        issues.append("sheaf_gluing_certificate.json restriction classes are incomplete")
+    if not rows:
+        issues.append("sheaf_gluing_certificate.json has no proof obligations")
+        return issues
+    boolean_restrictions = {
+        key for key, value in (semantic.get("restrictions") or {}).items() if isinstance(value, bool)
+    }
+    obligation_restrictions = {str(row.get("semantic_restriction")) for row in rows}
+    if obligation_restrictions != boolean_restrictions:
+        issues.append("sheaf_gluing_certificate.json proof obligations do not cover every boolean restriction")
+    expected_classes, expected_rows = _proof_obligations(root, semantic.get("restrictions") or {})
+    expected_by_restriction = {str(row.get("semantic_restriction")): row for row in expected_rows}
+    rows_by_restriction = {str(row.get("semantic_restriction")): row for row in rows}
+    if set(classes) == required_classes and classes != expected_classes:
+        issues.append("sheaf_gluing_certificate.json restriction classes drifted from live proof obligations")
+    if rows_by_restriction.keys() == expected_by_restriction.keys():
+        comparable_fields = ("class", "source_artifacts", "gate", "negative_control", "passed")
+        for restriction, row in rows_by_restriction.items():
+            expected = expected_by_restriction[restriction]
+            if any(row.get(field) != expected.get(field) for field in comparable_fields):
+                issues.append("sheaf_gluing_certificate.json proof-obligation row drifted from live mapping")
+                break
+    for class_id, class_row in classes.items():
+        class_rows = [row for row in rows if row.get("class") == class_id]
+        if not class_rows or class_row.get("obligation_count") != len(class_rows) or class_row.get("all_passed") is not True:
+            issues.append(f"sheaf_gluing_certificate.json class {class_id} has incomplete proof obligations")
+            break
+    for row in rows:
+        artifacts = row.get("source_artifacts") or []
+        if (
+            row.get("passed") is not True
+            or row.get("class") not in required_classes
+            or not row.get("gate")
+            or not row.get("negative_control")
+            or not row.get("semantic_restriction")
+            or not artifacts
+            or any(not (root / str(artifact)).exists() for artifact in artifacts)
+        ):
+            issues.append("sheaf_gluing_certificate.json has an invalid proof-obligation row")
+            break
+    if semantic.get("all_proof_obligations_passed") is not True:
+        issues.append("sheaf_gluing_certificate.json proof obligations did not all pass")
+    return issues
+
+
 def load_sheaf_track_payloads(project_root: Path) -> dict[str, dict]:
     """Load the canonical artifact payload set once for cheap in-memory checks."""
     root = project_root.resolve()
@@ -496,6 +549,7 @@ def _validate_sheaf_track_artifacts(
             if saved_restrictions.get(key) != expected:
                 issues.append("sheaf_gluing_certificate.json is stale relative to canonical restrictions")
                 break
+        issues.extend(_semantic_obligation_issues(root, semantic))
 
     if "empirical_adapter" in registry:
         issues.append("empirical_adapter blocked track was promoted live")

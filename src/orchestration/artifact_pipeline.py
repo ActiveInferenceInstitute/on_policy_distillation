@@ -120,14 +120,21 @@ def hydrate_manuscript_fixed_point(
         paths["resolved_manuscript"] = resolved_dir
         paths["manuscript_staleness"] = write_manuscript_staleness_report(root)
         paths.update(write_integration_audit_artifacts(root))
-        paths.update(write_sheaf_track_artifacts(root))
-        paths.update(write_semantic_gluing_outputs(root))
+        paths.update(write_sheaf_track_artifacts(root, refresh_hydration=False))
+        paths.update(write_semantic_gluing_outputs(root, refresh_hydration=False))
         paths.update(write_integration_audit_artifacts(root))
+        paths.update(write_sheaf_track_artifacts(root, refresh_dependencies=False, refresh_hydration=False))
         _, variables_path, resolved_dir = _write_variables(root, require_analysis_outputs=require_analysis_outputs)
         paths["variables"] = variables_path
         paths["resolved_manuscript"] = resolved_dir
         paths["manuscript_staleness"] = write_manuscript_staleness_report(root)
-        paths.update(write_semantic_gluing_outputs(root))
+        from roadmap_tracks.sheaf_tracks import CANONICAL_ARTIFACTS, _write_json, build_artifact_provenance
+
+        paths["provenance"] = _write_json(
+            root / CANONICAL_ARTIFACTS["provenance"],
+            build_artifact_provenance(root),
+        )
+        paths.update(write_semantic_gluing_outputs(root, refresh_hydration=False))
 
         remaining_issues = {
             "integration_audit": validate_integration_audit_artifacts(root),
