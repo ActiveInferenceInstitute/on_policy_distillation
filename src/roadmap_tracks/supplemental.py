@@ -199,11 +199,22 @@ def _tmaze_transition_rows() -> list[dict[str, Any]]:
     return rows
 
 
+def _transition_key(row: dict[str, Any]) -> str:
+    """Stable deterministic transition key for row-level duplicate detection."""
+    return "::".join(str(row.get(field) or "") for field in ("model", "state", "action"))
+
+
 def build_state_transition_table(project_root: Path) -> dict[str, Any]:
     """Build explicit finite transition rows for graph-world topologies and T-maze actions."""
     root = project_root.resolve()
     catalog = _load_json(root / "output" / "data" / "state_space_catalog.json")
     rows = _graph_world_transition_rows(root) + _tmaze_transition_rows()
+    for row in rows:
+        row["transition_key"] = _transition_key(row)
+    transition_key_counts: dict[str, int] = defaultdict(int)
+    for row in rows:
+        transition_key_counts[str(row["transition_key"])] += 1
+    duplicate_transition_keys = sorted(key for key, count in transition_key_counts.items() if count > 1)
     models_with_rows = {row["model"] for row in rows}
     required_models = {
         str(row.get("model"))
@@ -217,7 +228,10 @@ def build_state_transition_table(project_root: Path) -> dict[str, Any]:
         "model_count": len(models_with_rows),
         "required_models": sorted(required_models),
         "covered_models": sorted(models_with_rows),
+        "transition_key_count": len(transition_key_counts),
+        "duplicate_transition_keys": duplicate_transition_keys,
         "all_transitions_deterministic": bool(rows) and all(row["deterministic"] for row in rows),
+        "all_transition_keys_unique": bool(rows) and not duplicate_transition_keys,
         "all_reachable_states_covered": bool(required_models) and required_models.issubset(models_with_rows),
     }
 
@@ -400,12 +414,20 @@ def validate_supplemental_artifacts(project_root: Path) -> list[str]:
     deterministic = bool(transition_rows) and all(
         row.get("deterministic") and row.get("next_state") for row in transition_rows
     )
+    keys = [str(row.get("transition_key") or "") for row in transition_rows]
+    unique_keys = bool(keys) and all(keys) and len(keys) == len(set(keys))
     covered = set(transitions.get("required_models") or []).issubset(set(transitions.get("covered_models") or []))
     if (
         transitions.get("all_transitions_deterministic") is not True
         or transitions.get("all_transitions_deterministic") != deterministic
     ):
         issues.append("state_transition_table.json has nondeterministic or incomplete transitions")
+    if (
+        transitions.get("all_transition_keys_unique") is not True
+        or transitions.get("all_transition_keys_unique") != unique_keys
+        or transitions.get("duplicate_transition_keys")
+    ):
+        issues.append("state_transition_table.json has duplicate transition keys")
     if (
         transitions.get("all_reachable_states_covered") is not True
         or transitions.get("all_reachable_states_covered") != covered

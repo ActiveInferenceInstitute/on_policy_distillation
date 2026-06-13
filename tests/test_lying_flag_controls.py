@@ -20,6 +20,7 @@ import json
 import shutil
 from pathlib import Path
 
+from gate_support import ensure_gate_artifacts
 from gates.output_checks import (
     _si_efe_rows_explained,
     _si_invariants_all_pass_ok,
@@ -39,10 +40,12 @@ def _sheaf_issues(project_root: Path, mutate) -> list[str]:
     re-derivation rather than a saved-certificate short circuit; this mirrors
     ``validate_sheaf_track_payloads``'s documented negative-control use.
     """
-    payloads = load_sheaf_track_payloads(project_root.resolve())
+    root = project_root.resolve()
+    ensure_gate_artifacts(root, verify=True)
+    payloads = load_sheaf_track_payloads(root)
     mutate(payloads)
     return validate_sheaf_track_payloads(
-        project_root.resolve(), payloads, validate_saved_certificate=False
+        root, payloads, validate_saved_certificate=False
     )
 
 

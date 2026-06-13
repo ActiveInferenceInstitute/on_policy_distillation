@@ -2,7 +2,7 @@
 
 Generated documentation coverage for every Python `def` and `class` under `src/` and `scripts/`. Entries marked `inventory fallback` have no inline docstring yet, but remain documented here by path, line, kind, and qualified name.
 
-Total documented definitions: 891
+Total documented definitions: 899
 
 ## `src/analytical/bernoulli_toy.py`
 
@@ -343,11 +343,11 @@ Total documented definitions: 891
 
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
-| 60 | `function` | `_eval_spec` | inventory fallback | Inventory fallback for function `_eval_spec` defined at `src/gates/aggregate_rederivation.py:60`. |
-| 265 | `function` | `rederive_aggregate` | docstring | Re-derive an aggregate from ``payload['rows']``; vacuous truth is False. |
-| 275 | `function` | `aggregate_rederivation_rows` | docstring | One row per covered (artifact, aggregate): stored vs re-derived. |
-| 314 | `function` | `aggregates_consistent` | docstring | True iff every covered stored aggregate equals its row-level re-derivation. |
-| 319 | `function` | `rule_count` | docstring | Number of (artifact, aggregate) pairs re-derived at validation time. |
+| 61 | `function` | `_eval_spec` | inventory fallback | Inventory fallback for function `_eval_spec` defined at `src/gates/aggregate_rederivation.py:61`. |
+| 267 | `function` | `rederive_aggregate` | docstring | Re-derive an aggregate from ``payload['rows']``; vacuous truth is False. |
+| 280 | `function` | `aggregate_rederivation_rows` | docstring | One row per covered (artifact, aggregate): stored vs re-derived. |
+| 319 | `function` | `aggregates_consistent` | docstring | True iff every covered stored aggregate equals its row-level re-derivation. |
+| 324 | `function` | `rule_count` | docstring | Number of (artifact, aggregate) pairs re-derived at validation time. |
 
 ## `src/gates/claim_ledger.py`
 
@@ -959,12 +959,13 @@ Total documented definitions: 891
 | 91 | `function` | `build_proof_dependency_graph` | docstring | Build theorem-to-source, theorem-to-symbol, and theorem-to-witness edges. |
 | 143 | `function` | `_graph_world_transition_rows` | inventory fallback | Inventory fallback for function `_graph_world_transition_rows` defined at `src/roadmap_tracks/supplemental.py:143`. |
 | 177 | `function` | `_tmaze_transition_rows` | inventory fallback | Inventory fallback for function `_tmaze_transition_rows` defined at `src/roadmap_tracks/supplemental.py:177`. |
-| 202 | `function` | `build_state_transition_table` | docstring | Build explicit finite transition rows for graph-world topologies and T-maze actions. |
-| 225 | `function` | `build_ablation_sensitivity_report` | docstring | Join causal-ablation effects to sensitivity and uncertainty source rows. |
-| 271 | `function` | `build_release_attestation` | docstring | Attest release bundle, validation, license, and blocked-scope status. |
-| 352 | `function` | `write_supplemental_artifacts` | docstring | Write all supplemental canonical sheaf artifacts. |
-| 375 | `function` | `validate_supplemental_artifacts` | docstring | Validate supplemental artifacts from row-derived conditions. |
-| 437 | `function` | `release_attestation_consistent_and_current` | docstring | Attestation is internally consistent and refers to the on-disk report. |
+| 202 | `function` | `_transition_key` | docstring | Stable deterministic transition key for row-level duplicate detection. |
+| 207 | `function` | `build_state_transition_table` | docstring | Build explicit finite transition rows for graph-world topologies and T-maze actions. |
+| 239 | `function` | `build_ablation_sensitivity_report` | docstring | Join causal-ablation effects to sensitivity and uncertainty source rows. |
+| 285 | `function` | `build_release_attestation` | docstring | Attest release bundle, validation, license, and blocked-scope status. |
+| 366 | `function` | `write_supplemental_artifacts` | docstring | Write all supplemental canonical sheaf artifacts. |
+| 389 | `function` | `validate_supplemental_artifacts` | docstring | Validate supplemental artifacts from row-derived conditions. |
+| 459 | `function` | `release_attestation_consistent_and_current` | docstring | Attestation is internally consistent and refers to the on-disk report. |
 
 ## `src/roadmap_tracks/toy_sweep.py`
 
@@ -1460,6 +1461,18 @@ Total documented definitions: 891
 | 109 | `function` | `_pipeline_lock` | docstring | Serialize full-chain writers so artifact fixed points are not interleaved. |
 | 126 | `function` | `_release_attestation_current` | docstring | Return true only when the attestation pins the current validation report. |
 | 145 | `function` | `main` | inventory fallback | Inventory fallback for function `main` defined at `scripts/run_full_chain.py:145`. |
+
+## `scripts/run_test_isolation_soak.py`
+
+| line | kind | name | documentation source | summary |
+| ---: | --- | --- | --- | --- |
+| 34 | `function` | `parse_total_line` | docstring | Extract the final chunked-run TOTAL line from process output. |
+| 45 | `function` | `tail_lines` | docstring | Return a bounded diagnostic tail from captured process output. |
+| 52 | `function` | `_consecutive_counts` | inventory fallback | Inventory fallback for function `_consecutive_counts` defined at `scripts/run_test_isolation_soak.py:52`. |
+| 64 | `function` | `build_report` | docstring | Build the durable JSON report from per-run rows. |
+| 83 | `function` | `write_report` | docstring | Write the current transcript so red or interrupted soaks keep evidence. |
+| 91 | `function` | `_run_once` | inventory fallback | Inventory fallback for function `_run_once` defined at `scripts/run_test_isolation_soak.py:91`. |
+| 141 | `function` | `main` | inventory fallback | Inventory fallback for function `main` defined at `scripts/run_test_isolation_soak.py:141`. |
 
 ## `scripts/run_tests_chunked.py`
 

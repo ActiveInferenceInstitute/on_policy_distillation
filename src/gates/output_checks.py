@@ -1102,6 +1102,8 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     checks["state_transition_table_schema"] = (
         transition_table.get("schema") == "template_active_inference.state_transition_table.v1"
         and transition_table.get("all_transitions_deterministic") is True
+        and transition_table.get("all_transition_keys_unique") is True
+        and transition_table.get("duplicate_transition_keys") == []
         and transition_table.get("all_reachable_states_covered") is True
     )
     checks["ablation_sensitivity_report_schema"] = (

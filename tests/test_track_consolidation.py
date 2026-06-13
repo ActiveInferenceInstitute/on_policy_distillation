@@ -148,6 +148,9 @@ def test_canonical_sheaf_artifacts_are_present_and_valid(project_root: Path) -> 
     assert scholarship["all_sources_connected"] is True
     assert proof_dependency["all_theorems_have_dependencies"] is True
     assert transition_table["all_reachable_states_covered"] is True
+    assert transition_table["all_transition_keys_unique"] is True
+    assert transition_table["duplicate_transition_keys"] == []
+    assert transition_table["transition_key_count"] == transition_table["row_count"]
     assert ablation_sensitivity["all_effects_source_backed"] is True
     assert release_attestation["all_attested"] is True
     assert section_status["all_bound_fragments_present"] is True
@@ -316,6 +319,13 @@ def test_canonical_sheaf_negative_controls(project_root: Path) -> None:
         data["all_reachable_states_covered"] = True
 
     _assert_issue("state_transition_table", _break_transition_table, "omits a reachable finite model")
+
+    def _duplicate_transition_key(data: dict) -> None:
+        data["rows"][1]["transition_key"] = data["rows"][0]["transition_key"]
+        data["duplicate_transition_keys"] = []
+        data["all_transition_keys_unique"] = True
+
+    _assert_issue("state_transition_table", _duplicate_transition_key, "duplicate transition keys")
 
     def _break_ablation_sensitivity(data: dict) -> None:
         data["rows"][0]["source_backed"] = False

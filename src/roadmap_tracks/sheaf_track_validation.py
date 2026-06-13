@@ -489,11 +489,19 @@ def _validate_sheaf_track_artifacts(
     )
     if transition_table.get("schema") != "template_active_inference.state_transition_table.v1":
         issues.append("state_transition_table.json schema mismatch")
+    transition_keys = [str(row.get("transition_key") or "") for row in transition_rows]
+    transitions_unique = bool(transition_keys) and all(transition_keys) and len(transition_keys) == len(set(transition_keys))
     if (
         transition_table.get("all_transitions_deterministic") is not True
         or transition_table.get("all_transitions_deterministic") != transitions_deterministic
     ):
         issues.append("state_transition_table.json has nondeterministic or incomplete transitions")
+    if (
+        transition_table.get("all_transition_keys_unique") is not True
+        or transition_table.get("all_transition_keys_unique") != transitions_unique
+        or transition_table.get("duplicate_transition_keys")
+    ):
+        issues.append("state_transition_table.json has duplicate transition keys")
     if (
         transition_table.get("all_reachable_states_covered") is not True
         or transition_table.get("all_reachable_states_covered") != transitions_covered

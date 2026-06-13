@@ -49,6 +49,8 @@ def test_promoted_roadmap_artifacts_are_present_and_valid(project_root: Path) ->
         validate_toy_sweep_artifacts,
     )
 
+    ensure_gate_artifacts(project_root, verify=True)
+
     toy = {
         "sensitivity": project_root / "output" / "data" / "sensitivity_sweep.json",
         "analytical_assumptions": project_root / "output" / "data" / "analytical_assumption_index.json",

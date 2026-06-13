@@ -49,6 +49,13 @@ Thin orchestrators that import from `../src/` and handle I/O only.
   `--shuffle-seed N` shuffles file order deterministically (same seed = same
   order) for isolation soaks; a red shuffled run is a finding to report,
   never a seed to re-roll.
+- `run_test_isolation_soak.py` — run repeated deterministic shuffled
+  `run_tests_chunked.py` passes and write
+  `output/reports/test_isolation_soak.json`. The default is the
+  `AI-TEST-ISOLATION-1` five-run evidence collection contract; a partial run is
+  useful diagnostics but does not set `complete_soak`. The report is rewritten
+  after every executed run so red or interrupted soaks preserve the failing seed
+  and bounded tail.
 
 ## Order matters
 

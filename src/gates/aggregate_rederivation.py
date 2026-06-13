@@ -50,6 +50,7 @@ __all__ = [
 #   ("equals", field, value)     -> row[field] == value
 #   ("positive", field)          -> row[field] is a number > 0
 #   ("fields_equal", a, b)       -> row[a] == row[b] and both non-empty
+#   ("unique", field)            -> every row has a unique non-empty row[field]
 #   ("all", spec, ...)           -> conjunction
 #   ("any", spec, ...)           -> disjunction
 #   ("implies", cond, then)      -> (not cond(row)) or then(row)
@@ -183,6 +184,7 @@ ARTIFACT_AGGREGATE_RULES: dict[str, tuple[tuple[str, Spec], ...]] = {
     ),
     "output/data/state_transition_table.json": (
         ("all_transitions_deterministic", ("true", "deterministic")),
+        ("all_transition_keys_unique", ("unique", "transition_key")),
         ("all_reachable_states_covered", ("true", "reachable")),
     ),
     "output/data/theorem_traceability_matrix.json": (("all_theorems_linked", ("true", "linked")),),
@@ -269,6 +271,9 @@ def rederive_aggregate(payload: dict[str, Any], spec: Spec) -> bool:
         return False
     if not all(isinstance(row, dict) for row in rows):
         return False
+    if spec[0] == "unique":
+        values = [row.get(spec[1]) for row in rows]
+        return all(value not in (None, "") for value in values) and len(values) == len(set(values))
     return all(_eval_spec(spec, row) for row in rows)
 
 

@@ -10,6 +10,7 @@ quickstart layer over the authoritative contract in
 | [`artifacts.md`](artifacts.md) | Understand the `output/` layout, what is regeneratable, deterministic seeds, and the validation pass. |
 | [`rendering.md`](rendering.md) | Render the PDF — the two render paths, exact commands, and common failure modes. |
 | [`standalone-vs-template.md`](standalone-vs-template.md) | Know when the project renders standalone vs. when it needs the sibling template infra. |
+| [`test-isolation-soak-2026-06-13.md`](test-isolation-soak-2026-06-13.md) | Inspect the latest `AI-TEST-ISOLATION-1` diagnostic soak, failing seeds, and same-seed rerun evidence. |
 | [`AGENTS.md`](AGENTS.md) | Get the short agent rules for this directory. |
 
 ## The one command

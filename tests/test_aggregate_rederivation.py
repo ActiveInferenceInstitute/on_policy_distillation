@@ -23,7 +23,7 @@ from gates.aggregate_rederivation import (
 
 def _spec_fields(spec: tuple) -> set[str]:
     kind = spec[0]
-    if kind in {"true", "nonempty", "empty", "positive"}:
+    if kind in {"true", "nonempty", "empty", "positive", "unique"}:
         return {spec[1]}
     if kind == "equals":
         return {spec[1]}
@@ -97,6 +97,10 @@ def test_predicate_mini_language() -> None:
     spec_fe = ("fields_equal", "x", "y")
     assert rederive_aggregate({"rows": [{"x": "v", "y": "v"}]}, spec_fe) is True
     assert rederive_aggregate({"rows": [{"x": "", "y": ""}]}, spec_fe) is False
+    spec_unique = ("unique", "key")
+    assert rederive_aggregate({"rows": [{"key": "a"}, {"key": "b"}]}, spec_unique) is True
+    assert rederive_aggregate({"rows": [{"key": "a"}, {"key": "a"}]}, spec_unique) is False
+    assert rederive_aggregate({"rows": [{"key": "a"}, {"key": ""}]}, spec_unique) is False
 
 
 def _isolated_copy(project_root: Path, tmp_path: Path, rels: list[str]) -> Path:
