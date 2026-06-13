@@ -8,9 +8,21 @@ The manuscript is a **sheaf-composed** multi-track document with configurable se
 
 ## Quick start
 
+The canonical readiness command is the convergent full chain. It regenerates the
+declared analysis artifacts, refreshes manuscript variables and validation
+certificates, validates the outputs, and renders the PDF:
+
 ```bash
 uv sync --directory working/active_inference_on_policy_distillation --extra dev
 cd working/active_inference_on_policy_distillation
+uv run python scripts/run_full_chain.py --render
+```
+
+The individual scripts remain available for debugging or narrow development.
+Their order is declared in `manuscript/config.yaml` and should not be
+hand-reordered:
+
+```bash
 uv run python scripts/compose_manuscript.py
 uv run python scripts/run_analytical_sweep.py
 uv run python scripts/simulate_si_tmaze.py
@@ -26,6 +38,13 @@ uv run python scripts/generate_figures.py
 uv run python scripts/render_animation.py
 uv run python scripts/z_generate_manuscript_variables.py
 uv run python scripts/generate_method_inventory.py
+```
+
+Validation and tests:
+
+```bash
+uv run python scripts/compose_manuscript.py --validate-only --strict
+uv run python scripts/validate_outputs.py
 uv run python -m pytest tests/ --cov=src --cov-fail-under=90
 # On a loaded machine use scripts/run_tests_chunked.py — a single pytest process
 # can be killed under resource pressure (exit 144); chunks survive.

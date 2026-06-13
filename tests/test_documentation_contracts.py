@@ -111,6 +111,21 @@ def test_rendering_reproducibility_reference_is_signposted(project_root: Path) -
         assert phrase in text
 
 
+def test_readiness_docs_signpost_canonical_chain_and_soak_validator(project_root: Path) -> None:
+    project_readme = (project_root / "README.md").read_text(encoding="utf-8")
+    config_guide = (project_root / "docs" / "reference" / "configuration-and-extension.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "scripts/run_full_chain.py --render" in project_readme
+    assert "manuscript/config.yaml" in project_readme
+    assert "run_test_isolation_soak.py --validate-report" in config_guide
+    assert "--require-complete" in config_guide
+    assert "scripts/audit_roadmap_tasks.py" in config_guide
+    assert "`tasks.yaml`" in config_guide
+    assert "taskboard surface" in config_guide
+
+
 def test_public_docs_list_every_registered_current_figure(project_root: Path) -> None:
     registry = load_figure_registry(project_root)
     surfaces = {

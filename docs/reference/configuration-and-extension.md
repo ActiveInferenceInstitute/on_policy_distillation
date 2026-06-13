@@ -19,10 +19,12 @@ the live tree on 2026-06-10; commands are copy-pasteable from the project root.
 | `data/claim_ledger.yaml` | `src/gates/claim_ledger.py` | Typed claims: artifact path + predicate (equals/min/set_equals/approx/re-derivation forms) | **Live** |
 | `domain_profile.yaml` | nothing in `src/` or `scripts/` | Figure-type / artifact-expectation inventory | **Advisory only** — documentation metadata, not code-consumed |
 | `experiment_plan.yaml` | nothing reads the YAML (the `experiment_plan_metrics` validate check is computed from artifact checks, not from this file) | Conditions/metrics narrative | **Advisory only** |
-| `tasks.yaml` | external taskboard tooling only | Task/Gantt metadata | **Advisory only** |
+| `tasks.yaml` | external taskboard tooling; `scripts/audit_roadmap_tasks.py` consistency audit | Task/Gantt metadata and roadmap status alignment | **Advisory only** — audit checks consistency, not publication evidence |
 
-The three advisory files are deliberately retained as human-readable planning
-metadata; treat them as documentation, not as switches. If you need a new
+The advisory files are deliberately retained as human-readable planning
+metadata; treat them as documentation, not as switches. `tasks.yaml` is the
+taskboard surface, while `scripts/audit_roadmap_tasks.py` is the guard that
+keeps active TODO rows and task metadata from drifting. If you need a new
 behavioural knob, put it in `pymdp.yaml` (simulation), `figures.yaml`
 (visualization), or a frozen dataclass config in `src/firstprinciples/`
 (methods) — every methods hyperparameter is a dataclass field, never a buried
@@ -152,6 +154,8 @@ uv run --extra dev python -m pytest tests/test_figures.py --no-cov -q
 | everything / unsure | `uv run python scripts/run_full_chain.py` (canonical convergent order with bounded retry) |
 | full release gate | `uv run python scripts/run_tests_chunked.py` then `uv run python scripts/render_pdf.py` |
 | isolation soak (order coverage) | `uv run python scripts/run_tests_chunked.py --shuffle-seed N` (deterministic; report a red run, never re-roll the seed) |
+| saved isolation-soak report | `uv run python scripts/run_test_isolation_soak.py --validate-report output/reports/test_isolation_soak.json`; add `--require-complete` only for closure evidence |
+| roadmap or taskboard metadata | `uv run python scripts/audit_roadmap_tasks.py` |
 | lint | `uvx ruff check src tests scripts` (project `[tool.ruff]` mirrors the template root gate) |
 
 ## Troubleshooting
