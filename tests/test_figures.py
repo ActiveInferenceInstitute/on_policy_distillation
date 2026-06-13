@@ -19,6 +19,7 @@ from visualizations.figures import (
     figure_opd_taxonomy_landscape,
     figure_scholarship_source_map,
     figure_semantic_gluing_graph,
+    figure_sequential_shift_recovery,
     generate_all_figures,
     run_figure,
 )
@@ -195,6 +196,18 @@ def test_figure_source_map_has_registry_parity_and_data_backing(project_root: Pa
         "test_figures.tmaze_schematic_uses_configured_horizon",
     } <= set(tmaze_row["validation_gates"])
 
+    sequential_row = rows_by_id["sequential_shift_recovery"]
+    assert sequential_row["sources"] == ["output/data/firstprinciples/sequential_shift.json"]
+    assert {
+        "$.train_visitation",
+        "$.student_test_visitation_before",
+        "$.student_test_visitation_after",
+        "$.test_loss_before",
+        "$.test_loss_after",
+        "$.gap_closed",
+    } <= set(sequential_row["source_fields"])
+    assert "validate_outputs.firstprinciples_sequential_shift_schema" in sequential_row["validation_gates"]
+
 
 def test_figure_ising_mi_curve_dimensions(project_root: Path) -> None:
     from analysis import run_analysis
@@ -218,6 +231,7 @@ def test_interpretive_figures_expose_formula_signs_and_caveats(project_root: Pat
     divergence_source = inspect.getsource(figure_distillation_divergence_geometry)
     energy_source = inspect.getsource(figure_energy_decomposition)
     scholarship_source = inspect.getsource(figure_scholarship_source_map)
+    sequential_source = inspect.getsource(figure_sequential_shift_recovery)
 
     assert "Pass@k = 1 - (1 - p)^k" in diversity_source
     assert "$Pass@k = 1-(1-p)^k$" in registry["diversity_tradeoff"].caption
@@ -227,6 +241,10 @@ def test_interpretive_figures_expose_formula_signs_and_caveats(project_root: Pat
     assert "G = risk + ambiguity = -(epistemic + pragmatic)" in registry["energy_decomposition"].caption
     assert "max_display_families = 12" in scholarship_source
     assert "print-condensed" in registry["scholarship_source_map"].caption
+    assert "sequential_shift.json" in sequential_source
+    assert "teacher-forced train" in sequential_source
+    assert "deterministic finite sequential-shift witness" in registry["sequential_shift_recovery"].caption.lower()
+    assert "not an empirical OPD benchmark" in registry["sequential_shift_recovery"].caption
 
 
 def test_dense_figures_disclose_readability_compression(project_root: Path) -> None:

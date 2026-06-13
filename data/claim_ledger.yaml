@@ -1101,6 +1101,30 @@ claims:
   evidence:
     field: ok
     predicate: is_true
+- id: fp_sequential_shift_witness_ok
+  statement: Sequential-shift artifact certifies a finite teacher-forced train
+    distribution, a student-induced test distribution, and an on-policy correction
+    that improves the induced test loss.
+  path: output/data/firstprinciples/sequential_shift.json
+  section: results_si_tmaze
+  tracks:
+  - simulation
+  - visualization
+  evidence:
+    field: ok
+    predicate: is_true
+- id: fp_sequential_shift_correction_improves_loss
+  statement: Sequential-shift artifact re-derives that the corrected test loss is
+    no greater than the pre-correction student-induced test loss.
+  path: output/data/firstprinciples/sequential_shift.json
+  section: results_si_tmaze
+  tracks:
+  - simulation
+  - visualization
+  evidence:
+    field: test_loss_after
+    leq_field: test_loss_before
+    tolerance: 1.0e-09
 - id: fp_variational_em_monotone
   statement: Variational-EM simulator certifies monotone free-energy descent.
   path: output/data/firstprinciples/variational_em_demo.json

@@ -1,8 +1,6 @@
-"""First-principles formalisation of on-policy distillation as active inference.
+"""First-principles formalisation of a finite-model active-inference reading of OPD.
 
-    On-Policy Distillation is Active Inference where the Variational Posterior
-    Generates Its Own Observations and the Generative Model Is Conditioned on
-    Privileged Beliefs.
+    A Finite-Model Active-Inference Reading of On-Policy Distillation.
 
 This package builds that thesis from the ground up as composable, tested
 modules:
@@ -22,6 +20,7 @@ modules:
 * :mod:`firstprinciples.variational_em` - pi-Distill variational-EM fixed point.
 * :mod:`firstprinciples.diversity` - the Pass@1 vs Pass@k mode-collapse tradeoff.
 * :mod:`firstprinciples.adaptive` - entropy-gated adaptive per-token divergence.
+* :mod:`firstprinciples.sequential_shift` - finite sequential train/test shift witness.
 * :mod:`firstprinciples.artifacts` - deterministic artifact emitters.
 """
 
@@ -42,15 +41,14 @@ from . import (
     privilege,
     reward_tilting,
     sdpg,
+    sequential_shift,
     statistics,
     taxonomy,
     variational_em,
 )
 
 THESIS = (
-    "On-Policy Distillation is Active Inference where the Variational Posterior "
-    "Generates Its Own Observations and the Generative Model Is Conditioned on "
-    "Privileged Beliefs"
+    "A Finite-Model Active-Inference Reading of On-Policy Distillation"
 )
 
 __all__ = [
@@ -69,6 +67,7 @@ __all__ = [
     "privilege",
     "reward_tilting",
     "sdpg",
+    "sequential_shift",
     "statistics",
     "taxonomy",
     "variational_em",

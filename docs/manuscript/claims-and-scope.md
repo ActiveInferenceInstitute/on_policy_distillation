@@ -14,7 +14,7 @@ statement is out of scope.
 
 ## (a) What IS claimed
 
-A **constructive, finite correspondence** between on-policy distillation (OPD) and
+A **constructive, finite-model correspondence** between on-policy distillation (OPD) and
 active inference, *exact only under the stated assumptions* (A1–A4 below), on the
 explicitly constructed toy objects:
 
@@ -37,6 +37,12 @@ reading rollouts as active sampling and differential cue reliability as privileg
 information — is explicitly labeled **interpretive**, a correspondence built on the
 first three, not an additional theorem.
 
+The sequential-shift artifact is a separate deterministic witness for the train/test
+visitation mismatch: a four-state, two-action finite model in which teacher-forced
+train loss underestimates student-induced test loss and a deterministic on-policy
+correction reduces that test loss. It is an accounting check for induced
+distribution shift, not an empirical OPD benchmark.
+
 The other genuine contribution is a **discipline**: a sheaf-indexed compose contract
 binds fragment tracks into flat IMRAD sections, every reported number is hydrated from
 a generated artifact, every cross-track claim is machine-checked before render, and the
@@ -50,7 +56,7 @@ The manuscript states these non-claims repeatedly and explicitly:
   models, learned families, production-scale distillation — the correspondence is a
   *structured analogy / family resemblance*, not a proof.
 - **No production-LLM measurements.** All quantitative findings are from the analytical
-  toy, the T-maze rollout, the dynamic simulators, and the classroom artifact. The toy
+  toy, the T-maze rollout, the dynamic simulators, the sequential-shift witness, and the classroom artifact. The toy
   results *demonstrate the correspondence*; they assert nothing about production LLMs.
 - **No biological / Markov-blanket metaphysics.** The Markov-blanket and predictive-coding
   readings are used only as a constrained probabilistic interpretation

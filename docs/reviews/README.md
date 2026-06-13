@@ -8,6 +8,9 @@ DEFERRED / REJECTED, with the carrying file named per row.
 - [`deep-review-2026-06.md`](deep-review-2026-06.md) — disposition of the
   2026-06 external deep review; bulk implemented in Run-5 commit `66fe40b`,
   remainder in the run that authored the ledger.
+- [`critical-review-2026-06.md`](critical-review-2026-06.md) — disposition of
+  the 2026-06 critical-review hardening pass: retitle, finite sequential-shift
+  witness, citation provenance, and deferred public-release requests.
 
 Conventions: a row is LANDED only when a repository file carries the change;
 items blocked on external re-verification (e.g. primary-source table numbers)

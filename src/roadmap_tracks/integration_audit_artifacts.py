@@ -173,6 +173,7 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         "distillation_divergence_geometry": ["output/data/firstprinciples/divergence_demo.json"],
         "exposure_bias_recovery": ["output/data/firstprinciples/exposure_bias_demo.json"],
         "classroom_distillation_signal": ["output/data/firstprinciples/classroom.json"],
+        "sequential_shift_recovery": ["output/data/firstprinciples/sequential_shift.json"],
         "energy_decomposition": ["output/data/firstprinciples/energy_demo.json"],
         "parallel_convergence": ["output/data/firstprinciples/parallel_demo.json"],
         "diversity_tradeoff": ["output/data/firstprinciples/diversity_demo.json"],
@@ -253,6 +254,15 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
             "$.per_step[*].student",
             "$.per_step[*].reverse_kl",
             "$.mean_reverse_kl",
+        ],
+        "sequential_shift_recovery": [
+            "$.train_visitation",
+            "$.student_test_visitation_before",
+            "$.student_test_visitation_after",
+            "$.train_loss",
+            "$.test_loss_before",
+            "$.test_loss_after",
+            "$.gap_closed",
         ],
         "energy_decomposition": [
             "$.vfe_at_prior.complexity",
@@ -347,6 +357,10 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         ],
         "classroom_distillation_signal": [
             "validate_outputs.firstprinciples_classroom_schema",
+            "test_figures.nonblank_png",
+        ],
+        "sequential_shift_recovery": [
+            "validate_outputs.firstprinciples_sequential_shift_schema",
             "test_figures.nonblank_png",
         ],
         "energy_decomposition": [

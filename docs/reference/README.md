@@ -1,7 +1,7 @@
 # Reference Contracts
 
 This directory holds the public reference contracts for the
-"On-Policy Distillation is Active Inference" project.
+"A Finite-Model Active-Inference Reading of On-Policy Distillation" project.
 
 | File | Role |
 | --- | --- |

@@ -303,6 +303,101 @@ def figure_classroom_distillation_signal(project_root: Path) -> Path:
     return out
 
 
+def figure_sequential_shift_recovery(project_root: Path) -> Path:
+    """Render the deterministic finite sequential train/test shift witness."""
+    root = project_root.resolve()
+    style = load_figure_style(root)
+    data_path = root / "output" / "data" / "firstprinciples" / "sequential_shift.json"
+    if not data_path.exists():
+        from firstprinciples import sequential_shift
+
+        data_path.parent.mkdir(parents=True, exist_ok=True)
+        data_path.write_text(
+            json.dumps(sequential_shift.build_payload(), indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+    data = json.loads(data_path.read_text(encoding="utf-8"))
+    state_names = [str(name).replace("_", "\n") for name in data.get("state_names") or []]
+    train = np.array(data.get("train_visitation") or [], dtype=np.float64)
+    test_before = np.array(data.get("student_test_visitation_before") or [], dtype=np.float64)
+    test_after = np.array(data.get("student_test_visitation_after") or [], dtype=np.float64)
+    losses = [
+        float(data.get("train_loss", 0.0)),
+        float(data.get("test_loss_before", data.get("student_induced_test_loss_before", 0.0))),
+        float(data.get("test_loss_after", 0.0)),
+    ]
+    shift_mass = float(data.get("shift_mass", 0.0))
+    gap_closed = float(data.get("gap_closed", 0.0))
+    out = figure_output_path(root, "sequential_shift_recovery")
+    with apply_style(style):
+        fig, axes = plt.subplots(
+            1,
+            2,
+            figsize=(12.6, 5.1),
+            gridspec_kw={"width_ratios": [1.35, 0.9]},
+            constrained_layout=True,
+        )
+        visit_ax, loss_ax = axes
+        x = np.arange(len(state_names))
+        width = 0.25
+        visit_ax.bar(x - width, train, width, label="teacher-forced train", color=style.color("secondary"))
+        visit_ax.bar(x, test_before, width, label="student test before", color=style.color("fail"), alpha=0.88)
+        visit_ax.bar(x + width, test_after, width, label="student test after", color=style.color("pass"), alpha=0.88)
+        visit_ax.set_xticks(x, state_names, fontsize=style.font_size("dense"))
+        visit_ax.set_ylabel("Average visitation mass")
+        visit_ax.set_title("Student rollouts shift the state distribution")
+        visit_ax.set_ylim(0.0, max(0.72, float(max(train.max(), test_before.max(), test_after.max())) * 1.14))
+        style_grid(visit_ax, style)
+        visit_ax.legend(frameon=False, fontsize=style.font_size("legend"))
+        visit_ax.text(
+            0.02,
+            0.94,
+            f"shift mass = {shift_mass:.3f}",
+            transform=visit_ax.transAxes,
+            va="top",
+            fontsize=style.font_size("annotation"),
+            color=style.color("primary"),
+            bbox=dict(boxstyle="round,pad=0.28", facecolor="#f8fafc", edgecolor=style.color("reference")),
+        )
+
+        loss_names = ["train\nloss", "test\nbefore", "test\nafter"]
+        colors = [style.color("secondary"), style.color("fail"), style.color("pass")]
+        bars = loss_ax.bar(np.arange(3), losses, color=colors, alpha=0.9)
+        loss_ax.set_xticks(np.arange(3), loss_names, fontsize=style.font_size("dense"))
+        loss_ax.set_ylabel("Reverse-KL loss (nats)")
+        loss_ax.set_title("On-policy correction reduces test loss")
+        loss_ax.set_ylim(0.0, max(losses) * 1.34)
+        style_grid(loss_ax, style)
+        for bar, value in zip(bars, losses, strict=True):
+            loss_ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                value + max(losses) * 0.035,
+                f"{value:.3f}",
+                ha="center",
+                fontsize=style.font_size("annotation"),
+            )
+        loss_ax.annotate(
+            f"closed {gap_closed:.3f} nats",
+            xy=(2, losses[2]),
+            xytext=(-78, 42),
+            textcoords="offset points",
+            fontsize=style.font_size("annotation"),
+            color=style.color("primary"),
+            arrowprops={"arrowstyle": "->", "color": style.color("primary"), "linewidth": 0.9},
+            bbox=dict(boxstyle="round,pad=0.28", facecolor="#f8fafc", edgecolor=style.color("reference")),
+        )
+        fig.suptitle("Sequential-shift witness: teacher forcing underweights student-induced states")
+        fig.text(
+            0.01,
+            0.01,
+            "Source: output/data/firstprinciples/sequential_shift.json; deterministic finite witness, not an empirical OPD benchmark.",
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
+        )
+        save_styled_figure(fig, out, style)
+    return out
+
+
 def figure_parallel_convergence(project_root: Path) -> Path:
     """Two frameworks, one answer: ML distillation converging to the AIF posterior."""
     root = project_root.resolve()

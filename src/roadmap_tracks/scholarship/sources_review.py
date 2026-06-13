@@ -476,3 +476,80 @@ _RUN5_REVIEW_SOURCES: tuple[dict[str, Any], ...] = (
         "claim_boundary": "external efficiency context only; no production-scale claim is reproduced",
     },
 )
+
+
+# Sources added in response to the 2026-06 critical-review hardening pass.
+# These rows are context/source-boundary rows unless they name a local generated
+# artifact as the evidence surface.
+_CRITICAL_REVIEW_SOURCES: tuple[dict[str, Any], ...] = (
+    {
+        "citation_key": "friston2009rl_active_inference",
+        "source_kind": "primary_article",
+        "source_family": "rl_active_inference_bridge",
+        "method_role": "active_inference_rl_comparison",
+        "tracks": ["formalism", "scholarship"],
+        "artifact": "output/data/firstprinciples/reward_tilting_demo.json",
+        "manuscript_sections": ["methods_analytical", "discussion_outlook"],
+        "claim_boundary": "RL/active-inference comparison context only; local reward tilt supplies the generated evidence",
+    },
+    {
+        "citation_key": "ouyang2022instructgpt",
+        "source_kind": "primary_preprint",
+        "source_family": "rlhf_kl_regularized_preferences",
+        "method_role": "rlhf_instruction_tuning_context",
+        "tracks": ["prose", "scholarship"],
+        "artifact": "output/data/firstprinciples/empirical_benchmark.json",
+        "manuscript_sections": ["discussion_outlook"],
+        "claim_boundary": "RLHF context only; no RLHF experiment is reproduced",
+    },
+    {
+        "citation_key": "zelikman2022star",
+        "source_kind": "primary_preprint",
+        "source_family": "reasoning_self_training",
+        "method_role": "self_generated_reasoning_context",
+        "tracks": ["prose", "scholarship"],
+        "artifact": "output/data/firstprinciples/sequential_shift.json",
+        "manuscript_sections": ["results_si_tmaze", "discussion_outlook"],
+        "claim_boundary": "self-generated reasoning context only; local sequential shift is the toy witness",
+    },
+    {
+        "citation_key": "sharoni2023privileged_erm",
+        "source_kind": "primary_conference",
+        "source_family": "privileged_information",
+        "method_role": "privileged_erm_capacity_limit",
+        "tracks": ["prose", "scholarship"],
+        "artifact": "output/data/firstprinciples/sequential_shift.json",
+        "manuscript_sections": ["intro_motivation", "results_si_tmaze", "discussion_outlook"],
+        "claim_boundary": "privileged-ERM limitation context; no generalization guarantee is claimed",
+    },
+    {
+        "citation_key": "sandve2013reproducible",
+        "source_kind": "primary_article",
+        "source_family": "reproducible_computational_research",
+        "method_role": "reproducibility_rules_context",
+        "tracks": ["prose", "scholarship"],
+        "artifact": "output/data/sheaf_gluing_certificate.json",
+        "manuscript_sections": ["methods_sheaf", "appendix_full_sheaf"],
+        "claim_boundary": "reproducible-research practice context only; local gates provide the evidence",
+    },
+    {
+        "citation_key": "wilkinson2016fair",
+        "source_kind": "primary_article",
+        "source_family": "fair_research_objects",
+        "method_role": "fair_data_stewardship_context",
+        "tracks": ["prose", "scholarship"],
+        "artifact": "output/reports/release_bundle_manifest.json",
+        "manuscript_sections": ["methods_sheaf", "appendix_full_sheaf"],
+        "claim_boundary": "FAIR principles context only; no public archive release is claimed",
+    },
+    {
+        "citation_key": "gxchen2025kl_mode_collapse",
+        "source_kind": "primary_preprint",
+        "source_family": "kl_geometry_caveats",
+        "method_role": "kl_regularized_rl_mode_collapse_caveat",
+        "tracks": ["formalism", "scholarship"],
+        "artifact": "output/data/firstprinciples/divergence_demo.json",
+        "manuscript_sections": ["methods_analytical", "discussion_outlook"],
+        "claim_boundary": "KL-regularized RL diversity caveat only; local divergence values remain toy evidence",
+    },
+)

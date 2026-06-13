@@ -377,3 +377,65 @@ def test_validate_outputs_negative_firstprinciples_classroom_schema(project_root
         assert checks["firstprinciples_classroom_schema"] is False
     finally:
         path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_validate_outputs_negative_firstprinciples_sequential_shift_schema(
+    project_root: Path,
+    tmp_path: Path,
+) -> None:
+    ensure_gate_artifacts_for(project_root, "output/data/firstprinciples/sequential_shift.json")
+    path = project_root / "output" / "data" / "firstprinciples" / "sequential_shift.json"
+    backup = tmp_path / "sequential_shift.json.bak"
+    backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+    try:
+        path.unlink()
+        checks = validate_outputs_selected_strict(project_root, {"firstprinciples_sequential_shift_schema"})
+        assert checks["firstprinciples_sequential_shift_schema"] is False
+
+        payload = json.loads(backup.read_text(encoding="utf-8"))
+        payload["train_visitation"] = [0.5, 0.5, 0.5, 0.5]
+        payload["ok"] = True
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        checks = validate_outputs_selected_strict(project_root, {"firstprinciples_sequential_shift_schema"})
+        assert checks["firstprinciples_sequential_shift_schema"] is False
+
+        payload = json.loads(backup.read_text(encoding="utf-8"))
+        payload["test_loss_after"] = payload["test_loss_before"]
+        payload["on_policy_correction_reduces_test_loss"] = False
+        payload["ok"] = True
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        checks = validate_outputs_selected_strict(project_root, {"firstprinciples_sequential_shift_schema"})
+        assert checks["firstprinciples_sequential_shift_schema"] is False
+    finally:
+        path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+@pytest.mark.timeout(300)
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_validate_outputs_negative_figure_source_map_requires_sequential_shift_source(
+    project_root: Path,
+    tmp_path: Path,
+) -> None:
+    ensure_gate_artifacts_for(project_root, "output/data/figure_source_map.json")
+    path = project_root / "output" / "data" / "figure_source_map.json"
+    backup = tmp_path / "figure_source_map.json.bak"
+    backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+    payload = json.loads(backup.read_text(encoding="utf-8"))
+    row = next(row for row in payload["rows"] if row["figure_id"] == "sequential_shift_recovery")
+    row["sources"] = []
+    row["source_path_status"] = {}
+    row["source_fields"] = []
+    row["source_field_count"] = 0
+    row["validation_gates"] = []
+    row["validation_gate_count"] = 0
+    row["mapped"] = True
+    payload["all_figures_mapped"] = True
+    try:
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        checks = validate_outputs_selected_strict(project_root, {"figure_source_map_schema"})
+        assert checks["figure_source_map_schema"] is False
+    finally:
+        path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")

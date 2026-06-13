@@ -1,9 +1,9 @@
 # Notation & Formalism Supplement
 
-**On-Policy Distillation is Active Inference where the Variational Posterior Generates Its Own Observations and the Generative Model Is Conditioned on Privileged Beliefs.**
+**A Finite-Model Active-Inference Reading of On-Policy Distillation.**
 
 This supplement gives the integrated notation and the formal identities behind
-that title. It is the human-readable companion to the executable
+that scoped title. It is the human-readable companion to the executable
 [`firstprinciples`](../../src/firstprinciples/) package: every definition here
 has a tested implementation, and every implementation cites a definition here.
 All divergences are in **nats**.
@@ -35,8 +35,8 @@ $$
 When the target is a *teacher policy* $\pi_T$ rather than a reward-tilted prior,
 $F$ becomes the **reverse-KL distillation loss** $D_{\mathrm{KL}}(\pi_S \| \pi_T)$.
 The same quadratic-free functional is therefore the active-inference free energy,
-the KL-regularised RL objective, and the on-policy distillation loss. This is the
-content of the title, and it is checked numerically in
+the KL-regularised RL objective, and the on-policy distillation loss inside the
+declared finite objects. This is the scoped content of the title, and it is checked numerically in
 `firstprinciples.reward_tilting.free_energy_against_tilted` (zero at the target)
 and `verify_optimality` (the target beats all perturbations).
 
@@ -147,7 +147,7 @@ diagnosis for passive Bayesian updating. Modelling on-track/off-track as a two-s
 (`firstprinciples.exposure_bias`), the off-policy survival probability decays
 geometrically toward zero while the on-policy student — which *generates its own
 observations* and learns to recover — converges to a positive plateau
-$r/(1-a+r)$. This is the operational meaning of "the variational posterior
+$r/(1-a+r)$. This is the finite operational reading of "the variational posterior
 generates its own observations."
 
 ---
@@ -172,7 +172,7 @@ measurement, not a reproduction of entropy-aware OPD results (@jin2026entropy_op
 
 ## 8. Dynamic distillation simulators (executable)
 
-Four further modules make the *dynamics* of distillation measurable, not just the
+Five further modules make the *dynamics* of distillation measurable, not just the
 static objects above.
 
 **8.1 On-policy GKD vs off-policy (`firstprinciples.gkd`).** The GKD objective is
@@ -213,6 +213,14 @@ This is precision-weighting of the epistemic/pragmatic balance applied
 token-wise; the adaptive objective lies between the all-forward and all-reverse
 extremes (AKL/ToDi family), and is the toy analogue of entropy-aware and hybrid
 OPD design choices (@jin2026entropy_opd; @zhu2026hpd).
+
+**8.5 Sequential shift (`firstprinciples.sequential_shift`).** A four-state,
+two-action finite witness compares teacher-forced train visitation with the
+student-induced test visitation before and after a deterministic on-policy
+correction. The artifact records normalized visitations, teacher/student
+policies, per-state reverse KL, train loss, induced test loss, shift mass, and
+gap closed. It is a distribution-shift accounting check, not an empirical OPD
+benchmark.
 
 ---
 

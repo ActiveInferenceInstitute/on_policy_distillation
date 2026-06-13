@@ -6,9 +6,9 @@
 
 This standalone supplement documents the reproducibility methodology behind the rendered paper. The preceding full-coverage supplement ([@sec:appendix_full_sheaf]) proves that the maximal appendix row can bind all registered fragment families; this section instead explains the operational contract that makes those fragments reproducible: where data are generated, how variables are hydrated, which validators run, and how failed gates block the PDF.
 
-Each manifest row in `manuscript/sheaf/manifest.yaml` binds fragment tracks from `manuscript/sheaf/tracks.yaml`. A track supplies a renderer, compose order, label, and optional flag; the composer flattens the binding set into one Markdown section for PDF and web output. The machinery is generic, but the manuscript it assembles here argues a specific thesis: that on-policy distillation and active inference are the same variational object, so the composer must keep the analytical toy model, the pymdp rollout, and the self-distillation literature mutually consistent about that single correspondence.
+Each manifest row in `manuscript/sheaf/manifest.yaml` binds fragment tracks from `manuscript/sheaf/tracks.yaml`. A track supplies a renderer, compose order, label, and optional flag; the composer flattens the binding set into one Markdown section for PDF and web output. The machinery is generic, but the manuscript it assembles here argues a specific thesis: that on-policy distillation admits a finite-model active-inference reading when the variational objects are declared, so the composer must keep the analytical toy model, the pymdp rollout, the sequential-shift witness, and the self-distillation literature mutually consistent about that scoped correspondence.
 
-The operational claim is auditable binding: analytical, simulation, pymdp, visualization, Lean, GNN, ontology, scholarship, and optional media fragments attach to each IMRAD row under [@eq:coverage_cell] (**P** present, **—** unbound, **M** missing). This is an applied local-to-global consistency and composition-contract use of sheaf language in the spirit of cellular sheaves, sheaf-theoretic contracts, sheaf-signal-processing work, sensor-integration sheaves, semantic sheaving, and applied compositionality references [@curry2014sheaves; @speranzon2018contracts; @robinson2014topological; @robinson2017sensor_sheaf; @phillips2019sheaving; @fong2019applied_category; @rosiak2022sheaf_examples; @cox2026fragmented_risk_sheaf], but instantiated here as a finite manuscript artifact gate. The same gate forces the teacher-student framing to remain coherent end to end: the Bernoulli-Ising free-energy analysis [@friston2006fep; @friston2010fep], the sophisticated-inference T-maze rollout [@parr2022active; @dacosta2020discrete], and the on-policy distillation results [@agarwal2024gkd; @thinkingmachines2025opd] each occupy their own track yet must agree on the variational posterior they describe.
+The operational claim is auditable binding: analytical, simulation, pymdp, visualization, Lean, GNN, ontology, scholarship, and optional media fragments attach to each IMRAD row under [@eq:coverage_cell] (**P** present, **—** unbound, **M** missing). This is an applied local-to-global consistency and composition-contract use of sheaf language in the spirit of cellular sheaves, sheaf-theoretic contracts, sheaf-signal-processing work, sensor-integration sheaves, semantic sheaving, applied compositionality, and reproducible computational research references [@curry2014sheaves; @speranzon2018contracts; @robinson2014topological; @robinson2017sensor_sheaf; @phillips2019sheaving; @fong2019applied_category; @rosiak2022sheaf_examples; @cox2026fragmented_risk_sheaf; @sandve2013reproducible; @wilkinson2016fair], but instantiated here as a finite manuscript artifact gate rather than as a public archive or release claim. The same gate forces the teacher-student framing to remain coherent end to end: the Bernoulli-Ising free-energy analysis [@friston2006fep; @friston2009rl_active_inference; @friston2010fep], the sophisticated-inference T-maze rollout [@parr2022active; @dacosta2020discrete], the sequential-shift witness, and the on-policy distillation context [@agarwal2024gkd; @thinkingmachines2025opd] each occupy their own track yet must agree on the variational posterior they describe.
 
 ## Coverage and figures
 
@@ -29,7 +29,7 @@ Each run emits `output/data/sheaf_coverage_matrix.json` and regenerates coverage
 
 Stored summary flags are themselves never trusted at the final gate. Each generated artifact carries `all_*` aggregate booleans written by its producer; `validate_outputs` re-derives {{rederived_aggregate_rule_count}} of these aggregates from their own row data at read time (`src/gates/aggregate_rederivation.py`) and fails when a stored flag disagrees with its rows — including the vacuous case of a `true` flag over an empty row set. A mutated row under an untouched green summary therefore fails validation no matter what wrote it; the negative-control suite exercises exactly that lying case.
 
-The semantic layer is separate from those structural laws. `output/data/sheaf_gluing_certificate.json` records cross-track symbols, typed claim evidence, artifact sources, and manuscript-variable restrictions; validation fails when the analytical, pymdp, GNN, ontology, Lean, visualization, or manuscript tracks disagree about a shared symbol or measured claim. This is where the correspondence is held honest at the symbol level: the coupling parameter and mutual information of the analytical toy, the cue-validity privileged-information channel of the T-maze, and the two-agent classroom figures (privileged teacher belief entropy {{classroom_teacher_belief_entropy_formatted}} nats versus the on-policy student's {{classroom_student_belief_entropy_formatted}} nats, mean reverse-KL distillation signal {{classroom_mean_reverse_kl_formatted}} nats) must all restrict consistently onto the shared variational-free-energy and reverse-KL symbols. The certificate keeps these numbers bound as a minimal-model demonstration of the teacher-student correspondence, not as claims about production LLMs. [@fig:semantic_gluing_graph] renders this gluing graph: the configured producers, the generated evidence artifacts, and the validation consumers that read each shared symbol.
+The semantic layer is separate from those structural laws. `output/data/sheaf_gluing_certificate.json` records cross-track symbols, typed claim evidence, artifact sources, and manuscript-variable restrictions; validation fails when the analytical, pymdp, GNN, ontology, Lean, visualization, or manuscript tracks disagree about a shared symbol or measured claim. This is where the correspondence is held honest at the symbol level: the coupling parameter and mutual information of the analytical toy, the cue-validity privileged-information channel of the T-maze, the two-agent classroom figures (privileged teacher belief entropy {{classroom_teacher_belief_entropy_formatted}} nats versus the on-policy student's {{classroom_student_belief_entropy_formatted}} nats, mean reverse-KL distillation signal {{classroom_mean_reverse_kl_formatted}} nats), and the sequential-shift witness (train loss {{sequential_train_loss:.3f}} nats, induced test loss {{sequential_test_loss_before:.3f}} nats, corrected test loss {{sequential_test_loss_after:.3f}} nats) must all restrict consistently onto the shared variational-free-energy and reverse-KL symbols. The certificate keeps these numbers bound as a minimal-model demonstration of the teacher-student correspondence, not as claims about production LLMs. [@fig:semantic_gluing_graph] renders this gluing graph: the configured producers, the generated evidence artifacts, and the validation consumers that read each shared symbol.
 
 <!-- sheaf-track:formalism -->
 
@@ -143,7 +143,7 @@ KL, variational-inference, model-compression, sequence-KD, and policy-distillati
 primitives [@kullback1951information; @jordan1999variational; @blei2017variational;
 @bucila2006model_compression; @kim2016sequence_kd; @rusu2016policy_distillation;
 @czarnecki2019distilling_policy], foundational free-energy, predictive-coding,
-Markov-blanket, and active-inference references [@friston2006fep; @friston2010fep;
+Markov-blanket, and active-inference references [@friston2006fep; @friston2009rl_active_inference; @friston2010fep;
 @friston2013life; @kirchhoff2018markov; @rao1999predictive; @buckley2017mathreview;
 @friston2017process; @friston2017curiosity; @friston2018deep_temporal;
 @millidge2021walkthrough; @dacosta2020discrete; @friston2021sophisticated;
@@ -157,15 +157,16 @@ distribution-shift, behavioral-cloning, and distillation lineage
 @sun2017aggrevated; @bengio2015scheduled; @arora2022exposure;
 @rohatgi2025next_token_barrier; @pozzi2025exposure_distill;
 @hinton2015distilling; @stanton2021kd_work; @gu2024minillm; @agarwal2024gkd;
-@yang2024sdft_gap; @ko2024distillm; @ko2025distillm2; @wu2024rethinking_kl_kd],
+@yang2024sdft_gap; @ko2024distillm; @ko2025distillm2; @wu2024rethinking_kl_kd;
+@gxchen2025kl_mode_collapse; @zelikman2022star],
 reinforcement-learning/control-as-inference, MaxEnt-IRL, and
 preference-tilt bridges [@todorov2008duality; @toussaint2009trajectory_inference;
 @ziebart2008maxent_irl; @levine2018rlinference; @abdolmaleki2018mpo;
 @millidge2020active_control; @odonoghue2020rl_prob_inference;
 @millidge2020iterative_amortised; @tschantz2020rl_active_inference;
-@haarnoja2018sac; @ziegler2019humanprefs; @rafailov2023dpo],
+@haarnoja2018sac; @ouyang2022instructgpt; @ziegler2019humanprefs; @rafailov2023dpo],
 privileged-information sources
-[@vapnik2009lupi; @lopezpaz2016unifying; @cai2024privileged_pomdp;
+[@vapnik2009lupi; @lopezpaz2016unifying; @sharoni2023privileged_erm; @cai2024privileged_pomdp;
 @penaloza2026pidistill; @penaloza2026tutorial],
 recent self-distillation and entropy/hybrid OPD references [@zhao2026opsd; @shenfeld2026sdft;
 @hubotter2026sdpo; @liu2026sdpg; @lauyikfung2026sdpgcode; @jin2026entropy_opd;
@@ -174,7 +175,8 @@ empirical reasoning-distillation and speculative-KD context [@qwen2025technical_
 @thinkingmachines2025opd; @deepseek2025r1; @xu2024speculative_kd],
 OPD landscape indexes [@awesomeopd2026;
 @song2026opdsurvey; @zhu2026manyfacesopd; @ramos2026dgrpo; @liu2026oisd],
-implementation and notation anchors [@pymdp2022; @gnn2023; @koudahl2023synthetic],
+implementation, reproducibility, and notation anchors [@pymdp2022; @gnn2023; @koudahl2023synthetic;
+@sandve2013reproducible; @wilkinson2016fair],
 applied sheaf sources [@curry2014sheaves; @speranzon2018contracts;
 @robinson2014topological; @robinson2017sensor_sheaf; @phillips2019sheaving;
 @fong2019applied_category; @rosiak2022sheaf_examples; @cox2026fragmented_risk_sheaf],
@@ -304,7 +306,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | --- | --- | ---: | ---: | ---: | ---: | --- |
 | `prose` | `markdown` | 12 | 12 | 0 | 0 | `complete` |
 | `formalism` | `markdown` | 5 | 5 | 0 | 0 | `complete` |
-| `simulation` | `markdown` | 5 | 5 | 0 | 26 | `complete` |
+| `simulation` | `markdown` | 5 | 5 | 0 | 28 | `complete` |
 | `assumption_index` | `markdown` | 2 | 2 | 0 | 1 | `complete` |
 | `layers` | `layers_report` | 1 | 1 | 0 | 1 | `complete` |
 | `pymdp` | `markdown` | 3 | 3 | 0 | 22 | `complete` |
@@ -323,7 +325,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `uncertainty` | `markdown` | 2 | 2 | 0 | 4 | `complete` |
 | `benchmark` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
 | `manuscript_staleness` | `markdown` | 2 | 2 | 0 | 1 | `complete` |
-| `visualization` | `section_figures` | 11 | 11 | 0 | 11 | `complete` |
+| `visualization` | `section_figures` | 11 | 11 | 0 | 13 | `complete` |
 | `lean` | `markdown` | 2 | 2 | 0 | 8 | `complete` |
 | `model_checking` | `markdown` | 2 | 2 | 0 | 7 | `complete` |
 | `theorem_traceability` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
@@ -348,7 +350,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `coverage_matrix_built` | `sheaf.coverage` | `output/data/sheaf_coverage_matrix.json` | `ok` | 94 present cells |
 | `section_status_matrix_built` | `sheaf.status` | `output/data/sheaf_section_status_matrix.json` | `ok` | 561 section-track cells |
 | `layers_renderer_bound` | `sheaf.layers_report` | `manuscript/19_supplement_reproducibility.md` | `ok` | methods sheaf layer tables |
-| `semantic_artifacts_indexed` | `sheaf.semantic` | `output/data/validation_dependency_graph.json` | `ok` | 111 artifact producer rows |
+| `semantic_artifacts_indexed` | `sheaf.semantic` | `output/data/validation_dependency_graph.json` | `ok` | 113 artifact producer rows |
 | `validation_gates_indexed` | `gates` | `output/data/validation_gate_index.json` | `ok` | 3 gate groups |
 | `manuscript_sections_composed` | `sheaf.compose` | `manuscript/*.md` | `ok` | 16 composed markdown files |
 
@@ -368,7 +370,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `evidence_field_index` | `output/data/evidence_field_index.json` | `generate_sheaf_tracks.py` | validate_outputs, validate_manuscript |
 | `validation_dependency_graph` | `output/data/validation_dependency_graph.json` | `generate_sheaf_tracks.py` | validate_manuscript, validate_outputs |
 
-**Claim rows:** 115 typed evidence claims.
+**Claim rows:** 117 typed evidence claims.
 
 <!-- sheaf-layers:artifact-producers -->
 ## Artifact producer graph
@@ -395,6 +397,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `output/data/firstprinciples/privilege_sweep.json` | `generate_firstprinciples.py` | Yes | results_si_tmaze, appendix_full_sheaf |
 | `output/data/firstprinciples/reward_tilting_demo.json` | `generate_firstprinciples.py` | Yes | methods_analytical, discussion_outlook |
 | `output/data/firstprinciples/sdpg_demo.json` | `generate_firstprinciples.py` | Yes | methods_analytical, discussion_outlook |
+| `output/data/firstprinciples/sequential_shift.json` | `generate_firstprinciples.py` | Yes | results_si_tmaze, discussion_outlook |
 | `output/data/firstprinciples/statistics_demo.json` | `generate_firstprinciples.py` | Yes | results_invariants, appendix_full_sheaf |
 | `output/data/firstprinciples/taxonomy_table.md` | `generate_firstprinciples.py` | Yes | methods_sheaf, appendix_full_sheaf |
 | `output/data/gnn_roundtrip_report.json` | `generate_formal_interop_tracks.py` | Yes | methods_pymdp, appendix_full_sheaf |

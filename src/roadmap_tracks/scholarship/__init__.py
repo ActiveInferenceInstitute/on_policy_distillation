@@ -22,7 +22,7 @@ from .matrix import (
 )
 from .schema import EXPECTED_SCHOLARSHIP_KEYS, SCHOLARSHIP_SCHEMA
 from .sources_base import _BASE_SCHOLARSHIP_SOURCES
-from .sources_review import _REDTEAM_REVIEW_SOURCES, _RUN5_REVIEW_SOURCES
+from .sources_review import _CRITICAL_REVIEW_SOURCES, _REDTEAM_REVIEW_SOURCES, _RUN5_REVIEW_SOURCES
 
 __all__ = [
     "EXPECTED_SCHOLARSHIP_KEYS",

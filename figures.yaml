@@ -427,6 +427,28 @@ figures:
       trajectory, the same active-inference principle of scoring beliefs on visited states
       rather than the teacher's idealized path.
     width: 0.94
+  sequential_shift_recovery:
+    filename: sequential_shift_recovery.png
+    alt: >-
+      Two-panel deterministic finite sequential-shift witness. The left panel compares
+      teacher-forced train visitation, student-induced test visitation before correction,
+      and student-induced test visitation after correction across four finite states.
+      The right panel compares train loss, student-induced test loss before correction,
+      and test loss after the on-policy correction.
+    caption: >-
+      Deterministic finite sequential-shift witness requested by the critical review, not
+      an empirical OPD benchmark. Left: teacher-forced training visitation underweights
+      the student-induced `student_drift` state, creating shift mass
+      {{sequential_shift_mass:.3f}} between the teacher-forced train distribution and the
+      student's pre-correction test distribution. Right: evaluating the pre-correction
+      student on teacher-forced states gives train loss {{sequential_train_loss:.3f}} nats,
+      which underestimates its own induced test loss {{sequential_test_loss_before:.3f}}
+      nats; the deterministic on-policy correction reduces the test loss to
+      {{sequential_test_loss_after:.3f}} nats, closing {{sequential_gap_closed:.3f}} nats.
+      All probabilities are normalized finite rows from
+      `output/data/firstprinciples/sequential_shift.json`; the panel is a toy witness for
+      train/test distribution-shift accounting, not local evidence about production LLMs.
+    width: 0.94
   multi_track_architecture:
     filename: multi_track_architecture.png
     alt: >-
@@ -598,6 +620,7 @@ section_figures:
     - id: si_obs_action_trace
     - id: si_tmaze_actions
     - id: classroom_distillation_signal
+    - id: sequential_shift_recovery
     - id: si_tmaze_model_matrices
       labeled: false
     - id: privilege_dose_response

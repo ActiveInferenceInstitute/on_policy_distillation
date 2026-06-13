@@ -33,6 +33,7 @@ from .figures_firstprinciples import (
     figure_privilege_dose_response,
     figure_exposure_bias_recovery,
     figure_parallel_convergence,
+    figure_sequential_shift_recovery,
 )
 from .figures_abstract import figure_graphical_abstract
 from .figures_interpretability import (
@@ -77,6 +78,7 @@ __all__ = [
     "figure_policy_posterior_grid",
     "figure_scholarship_source_map",
     "figure_semantic_gluing_graph",
+    "figure_sequential_shift_recovery",
     "figure_sheaf_coverage_heatmap",
     "figure_sheaf_layers_overview",
     "figure_si_belief_entropy_curve",
@@ -101,6 +103,7 @@ FIGURE_GENERATORS: dict[str, Callable[[Path], Path | None]] = {
     "distillation_divergence_geometry": figure_distillation_divergence_geometry,
     "exposure_bias_recovery": figure_exposure_bias_recovery,
     "classroom_distillation_signal": figure_classroom_distillation_signal,
+    "sequential_shift_recovery": figure_sequential_shift_recovery,
     "energy_decomposition": figure_energy_decomposition,
     "parallel_convergence": figure_parallel_convergence,
     "diversity_tradeoff": figure_diversity_tradeoff,

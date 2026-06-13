@@ -205,6 +205,7 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
     ablation_sensitivity_data = _load_json(root / "output" / "reports" / "ablation_sensitivity_report.json")
     release_attestation_data = _load_json(root / "output" / "reports" / "release_attestation.json")
     classroom_data = _load_json(root / "output" / "data" / "firstprinciples" / "classroom.json")
+    sequential_shift_data = _load_json(root / "output" / "data" / "firstprinciples" / "sequential_shift.json")
     energy_data = _load_json(root / "output" / "data" / "firstprinciples" / "energy_demo.json")
     energy_vfe_prior = energy_data.get("vfe_at_prior") or {}
     energy_efe = energy_data.get("efe") or {}
@@ -547,6 +548,15 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
         "classroom_privileged_advantage": bool(classroom_data.get("privileged_advantage", False)),
         "classroom_teacher_goal_reached": str(bool(classroom_data.get("teacher_goal_reached", False))).lower(),
         "classroom_student_goal_reached": str(bool(classroom_data.get("student_goal_reached", False))).lower(),
+        "sequential_shift_state_count": int(sequential_shift_data.get("state_count", 0) or 0),
+        "sequential_shift_action_count": int(sequential_shift_data.get("action_count", 0) or 0),
+        "sequential_shift_horizon": int(sequential_shift_data.get("horizon", 0) or 0),
+        "sequential_shift_mass": float(sequential_shift_data.get("shift_mass", 0.0)),
+        "sequential_train_loss": float(sequential_shift_data.get("train_loss", 0.0)),
+        "sequential_test_loss_before": float(sequential_shift_data.get("test_loss_before", 0.0)),
+        "sequential_test_loss_after": float(sequential_shift_data.get("test_loss_after", 0.0)),
+        "sequential_gap_closed": float(sequential_shift_data.get("gap_closed", 0.0)),
+        "sequential_shift_ok": bool(sequential_shift_data.get("ok", False)),
         "proof_dependency_edge_count": proof_dependency_data.get("edge_count", 0),
         "proof_dependency_all_resolved": bool(proof_dependency_data.get("all_edges_resolved", False)),
         "state_transition_row_count": state_transition_data.get("row_count", 0),
