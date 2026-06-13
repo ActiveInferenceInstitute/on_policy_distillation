@@ -486,26 +486,58 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
     }
 
 
+_FIGURE_IMAGE_SUFFIXES = {".png", ".gif"}
+_DECLARED_NONREGISTRY_IMAGE_PATHS = {"output/figures/si_belief_trajectory.gif"}
+
+
+def _actual_figure_image_paths(root: Path) -> set[str]:
+    figures_dir = root / "output" / "figures"
+    if not figures_dir.is_dir():
+        return set()
+    return {
+        path.relative_to(root).as_posix()
+        for path in figures_dir.iterdir()
+        if path.is_file() and path.suffix.lower() in _FIGURE_IMAGE_SUFFIXES
+    }
+
+
+def _expected_figure_image_paths(root: Path) -> set[str]:
+    from visualizations.figure_registry import load_figure_registry
+
+    registry_paths = {f"output/figures/{spec.filename}" for spec in load_figure_registry(root).values()}
+    return registry_paths | _DECLARED_NONREGISTRY_IMAGE_PATHS
+
+
 def build_figure_hash_manifest(project_root: Path) -> dict[str, Any]:
-    """Build the figure_hash_manifest.v1 payload: sha256 and size for every PNG/GIF under output/figures/."""
+    """Build the figure_hash_manifest.v1 payload for declared figure/animation images."""
     root = project_root.resolve()
+    expected_paths = _expected_figure_image_paths(root)
+    actual_paths = _actual_figure_image_paths(root)
+    unexpected = sorted(actual_paths - expected_paths)
     rows = []
-    for path in sorted((root / "output" / "figures").glob("*")):
-        if path.suffix.lower() not in {".png", ".gif"}:
-            continue
+    for rel in sorted(expected_paths):
+        path = root / rel
+        exists = path.is_file()
         rows.append(
             {
-                "path": path.relative_to(root).as_posix(),
-                "sha256": _sha256(path),
-                "size_bytes": path.stat().st_size,
-                "fresh": True,
+                "path": rel,
+                "exists": exists,
+                "sha256": _sha256(path) if exists else "",
+                "size_bytes": path.stat().st_size if exists else 0,
+                "fresh": exists,
             }
         )
+    all_expected_present = bool(rows) and all(row["exists"] and row["sha256"] for row in rows)
     return {
         "schema": "template_active_inference.figure_hash_manifest.v1",
         "rows": rows,
         "figure_count": len(rows),
-        "all_hashes_present": bool(rows) and all(row["sha256"] for row in rows),
+        "declared_nonregistry_image_paths": sorted(_DECLARED_NONREGISTRY_IMAGE_PATHS),
+        "unexpected_image_paths": unexpected,
+        "unexpected_image_count": len(unexpected),
+        "all_expected_images_present": all_expected_present,
+        "no_unexpected_image_artifacts": not unexpected,
+        "all_hashes_present": all_expected_present and not unexpected,
     }
 
 
@@ -577,6 +609,10 @@ def build_visualization_quality_audit(project_root: Path) -> dict[str, Any]:
     """Build a verifier-facing audit over figure readability, provenance, and caption scope."""
     root = project_root.resolve()
     source_map = build_figure_source_map(root)
+    registry_outputs = {str(row.get("output") or "") for row in source_map.get("rows") or []}
+    expected_images = _expected_figure_image_paths(root)
+    actual_images = _actual_figure_image_paths(root)
+    unexpected_images = sorted(actual_images - expected_images)
     rows = []
     for row in source_map.get("rows") or []:
         figure_id = str(row.get("figure_id") or "")
@@ -633,12 +669,16 @@ def build_visualization_quality_audit(project_root: Path) -> dict[str, Any]:
         "schema": "template_active_inference.visualization_quality_audit.v1",
         "rows": rows,
         "figure_count": len(rows),
+        "declared_nonregistry_image_paths": sorted(expected_images - registry_outputs),
+        "unexpected_image_paths": unexpected_images,
+        "unexpected_image_count": len(unexpected_images),
         "all_figures_readable": bool(rows) and all(row["readable"] for row in rows),
         "all_figures_nonblank": bool(rows) and all(row["nonblank"] for row in rows),
         "all_figures_source_bound": bool(rows) and all(row["source_bound"] for row in rows),
         "all_scope_guards_present": bool(rows) and all(row["scope_guard_present"] for row in rows),
         "all_caption_overclaims_free": bool(rows) and all(row["caption_overclaim_free"] for row in rows),
-        "all_rows_ok": bool(rows) and all(row["ok"] for row in rows),
+        "no_unexpected_image_artifacts": not unexpected_images,
+        "all_rows_ok": bool(rows) and not unexpected_images and all(row["ok"] for row in rows),
     }
 
 
@@ -734,18 +774,26 @@ def _figure_source_rows_complete(project_root: Path, payload: dict[str, Any]) ->
 
 def _figure_hash_rows_complete(project_root: Path, payload: dict[str, Any]) -> bool:
     root = project_root.resolve()
-    from visualizations.figure_registry import load_figure_registry
-
-    registry_paths = {f"output/figures/{spec.filename}" for spec in load_figure_registry(root).values()}
+    expected_paths = _expected_figure_image_paths(root)
+    unexpected_paths = sorted(_actual_figure_image_paths(root) - expected_paths)
     rows = payload.get("rows") or []
     row_paths = {str(row.get("path", "")) for row in rows}
-    if not rows or not registry_paths.issubset(row_paths):
+    if (
+        not rows
+        or row_paths != expected_paths
+        or unexpected_paths
+        or payload.get("unexpected_image_paths") not in ([], None)
+        or int(payload.get("unexpected_image_count", 0) or 0) != 0
+        or payload.get("no_unexpected_image_artifacts") is not True
+        or payload.get("all_expected_images_present") is not True
+    ):
         return False
     for row in rows:
         path = root / str(row.get("path", ""))
         digest = str(row.get("sha256", ""))
         if not (
             path.is_file()
+            and row.get("exists") is True
             and len(digest) == 64
             and digest == _sha256(path)
             and int(row.get("size_bytes", 0) or 0) == path.stat().st_size

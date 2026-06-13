@@ -81,6 +81,23 @@ def test_validate_outputs_negative_unreadable_visible_figure_fails(project_root:
 
 @pytest.mark.artifact_slow
 @pytest.mark.mutates_artifacts
+def test_validate_outputs_negative_unregistered_visible_figure_fails(project_root: Path) -> None:
+    ensure_gate_artifacts_for(project_root, "output/reports/figure_hash_manifest.json")
+    extra = project_root / "output" / "figures" / "unregistered_but_readable.png"
+    try:
+        from PIL import Image
+
+        Image.new("RGB", (24, 24), "white").save(extra)
+        integrity = validate_outputs_selected_strict(project_root, {"figure_output_integrity"})
+        manifest = validate_outputs_selected_strict(project_root, {"figure_hash_manifest_schema"})
+        assert integrity["figure_output_integrity"] is False
+        assert manifest["figure_hash_manifest_schema"] is False
+    finally:
+        extra.unlink(missing_ok=True)
+
+
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_validate_outputs_negative_si_invariants_fail(project_root: Path, tmp_path: Path) -> None:
     path = project_root / "output" / "reports" / "si_invariants.json"
     if not path.is_file():

@@ -675,7 +675,8 @@ claims:
     equals: true
 - id: visualization_quality_audit_complete
   statement: Visualization quality audit verifies readability, source binding,
-    scope guardrails, and caption overclaim controls for all registered figures.
+    scope guardrails, caption overclaim controls, and absence of unregistered
+    image artifacts for all registered figures.
   path: output/reports/visualization_quality_audit.json
   section: methods_sheaf
   tracks:

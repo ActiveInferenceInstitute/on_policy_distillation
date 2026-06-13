@@ -257,6 +257,9 @@ def _visualization_quality_audit_ok(payload: dict) -> bool:
         and payload.get("all_figures_source_bound") is True
         and payload.get("all_scope_guards_present") is True
         and payload.get("all_caption_overclaims_free") is True
+        and payload.get("no_unexpected_image_artifacts") is True
+        and int(payload.get("unexpected_image_count", 0) or 0) == 0
+        and payload.get("unexpected_image_paths") == []
         and payload.get("all_rows_ok") is True
         and all(
             row.get("readable") is True
@@ -283,6 +286,17 @@ def _figure_output_integrity_ok(root: Path) -> bool:
         if path.is_file() and path.name.startswith(".") and path.suffix.lower() in _FIGURE_IMAGE_SUFFIXES
     ]
     if hidden_images:
+        return False
+    from visualizations.figure_registry import load_figure_registry
+
+    expected = {f"output/figures/{spec.filename}" for spec in load_figure_registry(root).values()}
+    expected.add("output/figures/si_belief_trajectory.gif")
+    visible_images = {
+        path.relative_to(root).as_posix()
+        for path in figures_dir.iterdir()
+        if path.is_file() and not path.name.startswith(".") and path.suffix.lower() in _FIGURE_IMAGE_SUFFIXES
+    }
+    if visible_images - expected:
         return False
     pngs = sorted(figures_dir.glob("*.png"))
     if not pngs:

@@ -72,12 +72,14 @@ complete. Captions reinforce this by naming their source inline — e.g.
 
 A companion **hash manifest** (`build_figure_hash_manifest()` →
 `output/reports/figure_hash_manifest.json`, schema
-`template_active_inference.figure_hash_manifest.v1`) records verified per-figure hashes;
-`_figure_hash_manifest_ok()` fails if hashes are not verified. The generated
+`template_active_inference.figure_hash_manifest.v1`) records verified hashes for declared
+image artifacts: every `figures.yaml` PNG plus the explicit animation GIF. It also records
+unexpected image files under `output/figures/`; `_figure_hash_manifest_ok()` fails if
+hashes are not verified or if an undeclared image appears. The generated
 `visualization_quality_audit.json` adds a third row-level guard over readable image
-bytes, nonblank pixels, source binding, caption scope terms, and overclaim phrases.
-Together the source-map, hash, and quality-audit gates bind each figure to its inputs,
-content fingerprint, and claim boundary.
+bytes, nonblank pixels, source binding, caption scope terms, overclaim phrases, and
+unexpected-image absence. Together the source-map, hash, and quality-audit gates bind each
+figure to its inputs, content fingerprint, and claim boundary.
 
 ## Caption discipline
 
@@ -113,8 +115,8 @@ The figure-binding gates run before the PDF can render and fail closed:
 | Gate (in `src/gates/output_checks.py`) | Binds | Fails when |
 | --- | --- | --- |
 | `figure_source_map_schema` | each figure → its source data paths | schema wrong, not all figures mapped, or a source row incomplete/missing |
-| `figure_hash_manifest_schema` | each figure → a verified content hash | schema wrong or hashes unverified |
-| `visualization_quality_audit_schema` | each figure → readable pixels, source binding, and caption scope | any row is unreadable, blank, unbound, missing a required scope guard, or overclaiming |
+| `figure_hash_manifest_schema` | each declared image → a verified content hash, no undeclared image artifacts | schema wrong, hashes unverified, or stray images present |
+| `visualization_quality_audit_schema` | each figure → readable pixels, source binding, caption scope, and no unexpected images | any row is unreadable, blank, unbound, missing a required scope guard, overclaiming, or an undeclared image exists |
 
 These sit alongside the manuscript token gates (unresolved/malformed tokens) and the
 integration audit, which also emits `manuscript_token_provenance.json` and the

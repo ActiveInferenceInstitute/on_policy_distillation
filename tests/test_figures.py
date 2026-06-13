@@ -239,9 +239,27 @@ def test_figure_source_map_has_registry_parity_and_data_backing(project_root: Pa
     assert quality["all_figures_source_bound"] is True
     assert quality["all_scope_guards_present"] is True
     assert quality["all_caption_overclaims_free"] is True
+    assert quality["no_unexpected_image_artifacts"] is True
+    assert quality["unexpected_image_paths"] == []
     assert quality_rows["sequential_shift_sensitivity"]["scope_guard_required"] is True
     assert quality_rows["sequential_shift_sensitivity"]["scope_guard_present"] is True
     assert quality_rows["sequential_shift_sensitivity"]["caption_overclaim_free"] is True
+
+
+def test_visualization_quality_audit_rejects_unregistered_image(project_root: Path) -> None:
+    from PIL import Image
+    from roadmap_tracks.integration_audit_artifacts import build_visualization_quality_audit
+
+    extra = project_root / "output" / "figures" / "unregistered_quality_probe.png"
+    try:
+        extra.parent.mkdir(parents=True, exist_ok=True)
+        Image.new("RGB", (24, 24), "white").save(extra)
+        quality = build_visualization_quality_audit(project_root)
+        assert quality["all_rows_ok"] is False
+        assert quality["no_unexpected_image_artifacts"] is False
+        assert "output/figures/unregistered_quality_probe.png" in quality["unexpected_image_paths"]
+    finally:
+        extra.unlink(missing_ok=True)
 
 
 def test_figure_ising_mi_curve_dimensions(project_root: Path) -> None:
