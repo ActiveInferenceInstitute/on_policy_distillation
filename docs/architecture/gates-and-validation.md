@@ -58,10 +58,10 @@ states the threat model precisely:
 fixed family of schema and invariant keys, including (verbatim from the module):
 `si_summary_schema`, `si_tmaze_model_matrices_schema`,
 `pymdp_policy_posterior_grid_schema`, `figure_source_map_schema`,
-`figure_hash_manifest_schema`, the four `firstprinciples_*` schemas,
-`toy_sweep_track_schemas`, `formal_interop_track_schemas`,
-`integration_audit_track_schemas`, `canonical_sheaf_track_schemas`, and
-`aggregate_rederivation`. A gate-index alias table maps index ids whose live
+`figure_hash_manifest_schema`, `visualization_quality_audit_schema`, the
+`firstprinciples_*` schemas, `toy_sweep_track_schemas`,
+`formal_interop_track_schemas`, `integration_audit_track_schemas`,
+`canonical_sheaf_track_schemas`, and `aggregate_rederivation`. A gate-index alias table maps index ids whose live
 check key differs from the row id, and three ids are explicitly *external*
 commands that cannot appear in `checks` (`validate_outputs`,
 `validate_manuscript`, `lake_build`). When reports exist, `validate_outputs` also

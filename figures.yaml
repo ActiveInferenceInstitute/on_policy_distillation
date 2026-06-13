@@ -409,13 +409,13 @@ figures:
   classroom_distillation_signal:
     filename: classroom_distillation_signal.png
     alt: >-
-      Two-panel classroom distillation figure. The left panel plots per-step
+      Two-panel finite toy classroom distillation figure. The left panel plots per-step
       reverse KL, forward KL, and Jensen-Shannon divergence between the privileged
       teacher and on-policy student policies. The right panel is a heatmap of
       teacher probability minus student probability by action and classroom step.
     caption: >-
-      Two-agent classroom distillation signal over {{classroom_step_count}} decision points
-      (3 transitions) between a privileged teacher (cue validity
+      Two-agent finite toy classroom distillation signal over {{classroom_step_count}} decision
+      points (3 transitions) between a privileged teacher (cue validity
       {{classroom_teacher_cue_validity}}) and an on-policy student (cue validity
       {{classroom_student_cue_validity}}). Left: per-step reverse KL, forward KL, and
       Jensen-Shannon divergence between the teacher and student policies (mean reverse KL
@@ -425,7 +425,8 @@ figures:
       step, localizing where the student diverges. The figure operationalizes on-policy
       distillation as a per-step divergence signal evaluated along the student's own
       trajectory, the same active-inference principle of scoring beliefs on visited states
-      rather than the teacher's idealized path.
+      rather than the teacher's idealized path. It is a deterministic toy signal, not an
+      empirical OPD benchmark.
     width: 0.94
   sequential_shift_recovery:
     filename: sequential_shift_recovery.png

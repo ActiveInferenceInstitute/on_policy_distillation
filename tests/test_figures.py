@@ -137,7 +137,11 @@ def test_figure_registry_json_matches_yaml(project_root: Path) -> None:
 
 @pytest.mark.timeout(300)
 def test_figure_source_map_has_registry_parity_and_data_backing(project_root: Path) -> None:
-    from roadmap_tracks.integration_audit import _figure_source_rows_complete, build_figure_source_map
+    from roadmap_tracks.integration_audit import (
+        _figure_source_rows_complete,
+        build_figure_source_map,
+        build_visualization_quality_audit,
+    )
 
     registry = load_figure_registry(project_root)
     payload = build_figure_source_map(project_root)
@@ -224,6 +228,20 @@ def test_figure_source_map_has_registry_parity_and_data_backing(project_root: Pa
     assert "validate_outputs.firstprinciples_sequential_shift_sensitivity_schema" in sequential_sensitivity_row[
         "validation_gates"
     ]
+
+    quality = build_visualization_quality_audit(project_root)
+    quality_rows = {row["figure_id"]: row for row in quality["rows"]}
+    assert quality["schema"] == "template_active_inference.visualization_quality_audit.v1"
+    assert set(quality_rows) == set(registry)
+    assert quality["all_rows_ok"] is True
+    assert quality["all_figures_readable"] is True
+    assert quality["all_figures_nonblank"] is True
+    assert quality["all_figures_source_bound"] is True
+    assert quality["all_scope_guards_present"] is True
+    assert quality["all_caption_overclaims_free"] is True
+    assert quality_rows["sequential_shift_sensitivity"]["scope_guard_required"] is True
+    assert quality_rows["sequential_shift_sensitivity"]["scope_guard_present"] is True
+    assert quality_rows["sequential_shift_sensitivity"]["caption_overclaim_free"] is True
 
 
 def test_figure_ising_mi_curve_dimensions(project_root: Path) -> None:

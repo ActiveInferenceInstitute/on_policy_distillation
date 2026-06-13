@@ -14,6 +14,8 @@ The operational claim is auditable binding: analytical, simulation, pymdp, visua
 
 [@fig:sheaf_layers_overview] summarizes {{sheaf_track_count}} fragment types and their IMRAD bindings. Generated tables below list every track definition and section×track binding at compose time. The bindings span the full argument: the minimal-model demonstrations (analytical and pymdp tracks) and the scholarship track that situates them against the off-policy baseline [@hinton2015distilling], the reverse-KL turn [@gu2024minillm], and the 2026 self-distillation wave [@zhao2026opsd; @shenfeld2026sdft; @liu2026sdpg].
 
+The visualization layer is audited as data, not as decoration. `output/data/figure_source_map.json` binds every registered figure to source artifacts, source fields, and validation gates; `output/reports/figure_hash_manifest.json` records the rendered image bytes; and `output/reports/visualization_quality_audit.json` rechecks readability, nonblank pixels, source binding, and caption scope guardrails. The negative controls mutate rows under green summaries, so a figure with an unreadable image, missing source, or unscoped empirical/production caption cannot remain validated by a stale boolean.
+
 ## Compose commands
 
 ```bash
@@ -314,7 +316,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `provenance` | `markdown` | 2 | 2 | 0 | 12 | `complete` |
 | `replay_matrix` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
 | `counterexample` | `markdown` | 2 | 2 | 0 | 2 | `complete` |
-| `adversarial_audit` | `markdown` | 2 | 2 | 0 | 9 | `complete` |
+| `adversarial_audit` | `markdown` | 2 | 2 | 0 | 10 | `complete` |
 | `evidence_fields` | `markdown` | 2 | 2 | 0 | 1 | `complete` |
 | `release_bundle` | `markdown` | 2 | 2 | 0 | 5 | `complete` |
 | `gate_ergonomics` | `markdown` | 2 | 2 | 0 | 5 | `complete` |
@@ -325,7 +327,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `uncertainty` | `markdown` | 2 | 2 | 0 | 4 | `complete` |
 | `benchmark` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
 | `manuscript_staleness` | `markdown` | 2 | 2 | 0 | 1 | `complete` |
-| `visualization` | `section_figures` | 11 | 11 | 0 | 14 | `complete` |
+| `visualization` | `section_figures` | 11 | 11 | 0 | 15 | `complete` |
 | `lean` | `markdown` | 2 | 2 | 0 | 8 | `complete` |
 | `model_checking` | `markdown` | 2 | 2 | 0 | 7 | `complete` |
 | `theorem_traceability` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
@@ -350,7 +352,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `coverage_matrix_built` | `sheaf.coverage` | `output/data/sheaf_coverage_matrix.json` | `ok` | 94 present cells |
 | `section_status_matrix_built` | `sheaf.status` | `output/data/sheaf_section_status_matrix.json` | `ok` | 561 section-track cells |
 | `layers_renderer_bound` | `sheaf.layers_report` | `manuscript/19_supplement_reproducibility.md` | `ok` | methods sheaf layer tables |
-| `semantic_artifacts_indexed` | `sheaf.semantic` | `output/data/validation_dependency_graph.json` | `ok` | 115 artifact producer rows |
+| `semantic_artifacts_indexed` | `sheaf.semantic` | `output/data/validation_dependency_graph.json` | `ok` | 116 artifact producer rows |
 | `validation_gates_indexed` | `gates` | `output/data/validation_gate_index.json` | `ok` | 3 gate groups |
 | `manuscript_sections_composed` | `sheaf.compose` | `manuscript/*.md` | `ok` | 16 composed markdown files |
 
@@ -370,7 +372,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `evidence_field_index` | `output/data/evidence_field_index.json` | `generate_sheaf_tracks.py` | validate_outputs, validate_manuscript |
 | `validation_dependency_graph` | `output/data/validation_dependency_graph.json` | `generate_sheaf_tracks.py` | validate_manuscript, validate_outputs |
 
-**Claim rows:** 118 typed evidence claims.
+**Claim rows:** 119 typed evidence claims.
 
 <!-- sheaf-layers:artifact-producers -->
 ## Artifact producer graph
@@ -465,6 +467,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `output/reports/si_invariants.json` | `simulate_si_tmaze.py` | Yes | results_si_tmaze |
 | `output/reports/si_tmaze_run_report.json` | `simulate_si_tmaze.py` | Yes | results_si_tmaze |
 | `output/reports/stale_artifact_report.json` | `generate_integration_audit.py` | Yes | methods_sheaf, appendix_full_sheaf |
+| `output/reports/visualization_quality_audit.json` | `generate_integration_audit.py` | Yes | methods_sheaf, appendix_full_sheaf |
 
 **Producer issues:** 0.
 

@@ -138,6 +138,7 @@ def build_release_bundle_manifest(project_root: Path) -> dict[str, Any]:
         "output/figures/sequential_shift_recovery.png",
         "output/figures/sequential_shift_sensitivity.png",
         "output/reports/manuscript_hardcoded_variable_audit.json",
+        "output/reports/visualization_quality_audit.json",
         # Real render-stage deliverable names for THIS paper (the pre-Run-6
         # rows named the template exemplar's PDF/HTML, which this project can
         # never produce, so the rows were permanently vacuously deferred).

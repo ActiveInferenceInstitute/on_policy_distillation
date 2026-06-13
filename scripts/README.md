@@ -20,7 +20,7 @@ Thin orchestrators that import from `../src/` and handle I/O only.
   graph-world invariant, state-space catalog, and causal-ablation artifacts.
 - `generate_formal_interop_tracks.py` — write model-checking, GNN, ontology,
   interop, Lean theorem inventory, and proof-extraction artifacts.
-- `generate_integration_audit.py` — write producer/stale/token/figure/scope/claim/adversarial, diffoscope, license, and release-note audit artifacts.
+- `generate_integration_audit.py` — write producer/stale/token/figure/scope/claim/adversarial, visualization-quality, diffoscope, license, and release-note audit artifacts.
 - `generate_sheaf_tracks.py` — write the canonical semantic certificate,
   dependency graph, evidence-field index, release-bundle manifest, theorem
   traceability matrix, gate index, artifact diffoscope, proof extraction index,
@@ -37,10 +37,11 @@ Thin orchestrators that import from `../src/` and handle I/O only.
 - `run_full_chain.py` — **one-command convergent runner**: executes the canonical
   `analysis.scripts` order from `manuscript/config.yaml`, validates, and — because
   `release_attestation.json` attests the *previous* `validation_report.json` —
-  re-runs the attestation tail and re-validates to a bounded fixed point
-  (`--max-passes`, default 3). Use `--tail-only` after editing manuscript
-  fragments, ledger claims, or tokens; `--render` to also produce the PDF;
-  `--dry-run` to print the plan. Exit 0 only when the final validate is green.
+  re-runs the attestation/figure-hash tail and re-validates to a bounded fixed
+  point (`--max-passes`, default 3). Use `--tail-only` after editing manuscript
+  fragments, ledger claims, tokens, or figure sources; `--render` to also
+  produce the PDF; `--dry-run` to print the plan. Exit 0 only when the final
+  validate is green and the release attestation pins that validation report.
 - `run_tests_chunked.py` — run the test suite as small per-process chunks.
   On a loaded machine a single long pytest process is reliably killed by
   resource pressure (observed exit 144); per-chunk subprocesses survive and

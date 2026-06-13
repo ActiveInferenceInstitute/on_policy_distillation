@@ -19,6 +19,7 @@ SUPPORTED_SELECTED_OUTPUT_CHECKS = {
     "figure_output_integrity",
     "figure_source_map_schema",
     "figure_hash_manifest_schema",
+    "visualization_quality_audit_schema",
     "firstprinciples_empirical_benchmark_schema",
     "firstprinciples_taxonomy_schema",
     "firstprinciples_statistics_schema",
@@ -245,6 +246,33 @@ def _figure_hash_manifest_ok(root: Path, payload: dict) -> bool:
     )
 
 
+def _visualization_quality_audit_ok(payload: dict) -> bool:
+    rows = payload.get("rows") or []
+    return (
+        payload.get("schema") == "template_active_inference.visualization_quality_audit.v1"
+        and bool(rows)
+        and int(payload.get("figure_count", -1) or -1) == len(rows)
+        and payload.get("all_figures_readable") is True
+        and payload.get("all_figures_nonblank") is True
+        and payload.get("all_figures_source_bound") is True
+        and payload.get("all_scope_guards_present") is True
+        and payload.get("all_caption_overclaims_free") is True
+        and payload.get("all_rows_ok") is True
+        and all(
+            row.get("readable") is True
+            and row.get("nonblank") is True
+            and row.get("source_bound") is True
+            and row.get("metadata_complete") is True
+            and row.get("scope_guard_present") is True
+            and row.get("caption_overclaim_free") is True
+            and row.get("ok") is True
+            and int(row.get("image_width_px", 0) or 0) >= 400
+            and int(row.get("image_height_px", 0) or 0) >= 200
+            for row in rows
+        )
+    )
+
+
 def _figure_output_integrity_ok(root: Path) -> bool:
     figures_dir = root / "output" / "figures"
     if not figures_dir.is_dir():
@@ -463,6 +491,10 @@ def _validate_outputs_selected(root: Path, selected: set[str]) -> dict[str, bool
         checks["figure_hash_manifest_schema"] = _figure_hash_manifest_ok(
             root,
             _read_json(root / "output" / "reports" / "figure_hash_manifest.json"),
+        )
+    if "visualization_quality_audit_schema" in selected:
+        checks["visualization_quality_audit_schema"] = _visualization_quality_audit_ok(
+            _read_json(root / "output" / "reports" / "visualization_quality_audit.json"),
         )
     if "figure_output_integrity" in selected:
         checks["figure_output_integrity"] = _figure_output_integrity_ok(root)
@@ -798,6 +830,7 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     render_log = _read_json(root / "output" / "reports" / "sheaf_render_log.json")
     figure_source = _read_json(root / "output" / "data" / "figure_source_map.json")
     figure_hash = _read_json(root / "output" / "reports" / "figure_hash_manifest.json")
+    visualization_quality = _read_json(root / "output" / "reports" / "visualization_quality_audit.json")
     scope = _read_json(root / "output" / "reports" / "scope_boundary_audit.json")
     adversarial = _read_json(root / "output" / "reports" / "adversarial_audit.json")
     assumptions = _read_json(root / "output" / "data" / "analytical_assumption_index.json")
@@ -930,6 +963,7 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     )
     checks["figure_source_map_schema"] = _figure_source_map_ok(root, figure_source)
     checks["figure_hash_manifest_schema"] = _figure_hash_manifest_ok(root, figure_hash)
+    checks["visualization_quality_audit_schema"] = _visualization_quality_audit_ok(visualization_quality)
     checks["figure_output_integrity"] = _figure_output_integrity_ok(root)
     checks["scope_boundary_audit_schema"] = scope.get("scope_boundary_status") == "toy_only_pass"
     checks["adversarial_audit_schema"] = (
@@ -1173,6 +1207,7 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
             "sheaf_render_log_schema",
             "figure_source_map_schema",
             "figure_hash_manifest_schema",
+            "visualization_quality_audit_schema",
             "figure_output_integrity",
             "artifact_diffoscope_schema",
             "proof_extraction_index_schema",

@@ -509,6 +509,139 @@ def build_figure_hash_manifest(project_root: Path) -> dict[str, Any]:
     }
 
 
+_FIGURE_SCOPE_REQUIRED = {
+    "distillation_divergence_geometry",
+    "exposure_bias_recovery",
+    "classroom_distillation_signal",
+    "sequential_shift_recovery",
+    "sequential_shift_sensitivity",
+    "energy_decomposition",
+    "parallel_convergence",
+    "diversity_tradeoff",
+    "privilege_dose_response",
+    "correspondence_map",
+    "opd_taxonomy_landscape",
+    "causal_ablation_heatmap",
+    "scholarship_source_map",
+    "graphical_abstract",
+}
+
+_FIGURE_SCOPE_TERMS = (
+    "deterministic",
+    "finite",
+    "toy",
+    "closed-form",
+    "no sampling",
+    "not an empirical",
+    "not local evidence",
+    "not evidence",
+    "not a benchmark",
+    "not a performance comparison",
+    "not a rhetorical analogy",
+    "not asserting",
+    "no uncertainty intervals",
+    "scope guardrail",
+    "print-condensed",
+)
+
+_FIGURE_FORBIDDEN_OVERCLAIMS = (
+    "production-scale causal effects",
+    "empirical opd benchmark",
+    "production llm optimization",
+    "universal kl law",
+    "universal llm law",
+    "biological mechanism",
+    "field-wide theorem",
+)
+
+_NEGATED_OVERCLAIMS = (
+    "not an empirical opd benchmark",
+    "not local evidence about production llm optimization",
+    "not evidence about production llm optimization",
+    "not a universal kl law",
+    "not a universal llm law",
+    "no biological mechanism",
+    "not a field-wide theorem",
+)
+
+
+def _caption_overclaim_free(text: str) -> bool:
+    lower = " ".join(text.lower().split())
+    for phrase in _FIGURE_FORBIDDEN_OVERCLAIMS:
+        if phrase in lower and not any(negated in lower for negated in _NEGATED_OVERCLAIMS):
+            return False
+    return True
+
+
+def build_visualization_quality_audit(project_root: Path) -> dict[str, Any]:
+    """Build a verifier-facing audit over figure readability, provenance, and caption scope."""
+    root = project_root.resolve()
+    source_map = build_figure_source_map(root)
+    rows = []
+    for row in source_map.get("rows") or []:
+        figure_id = str(row.get("figure_id") or "")
+        output = str(row.get("output") or "")
+        path = root / output
+        readable = False
+        nonblank = False
+        width = 0
+        height = 0
+        if path.is_file():
+            try:
+                from PIL import Image
+
+                with Image.open(path) as img:
+                    img.load()
+                    width, height = img.size
+                    extrema = img.convert("L").getextrema()
+                readable = True
+                nonblank = bool(extrema[0] < extrema[1])
+            except (OSError, ValueError):
+                readable = False
+        text = f"{row.get('caption', '')} {row.get('alt', '')}"
+        lower = text.lower()
+        scope_guard_required = figure_id in _FIGURE_SCOPE_REQUIRED
+        scope_guard_present = (not scope_guard_required) or any(term in lower for term in _FIGURE_SCOPE_TERMS)
+        caption_overclaim_free = _caption_overclaim_free(text)
+        source_bound = (
+            row.get("mapped") is True
+            and row.get("source_paths_exist") is True
+            and bool(row.get("sources"))
+            and bool(row.get("source_fields"))
+            and bool(row.get("validation_gates"))
+        )
+        metadata_complete = row.get("metadata_complete") is True and bool(row.get("caption")) and bool(row.get("alt"))
+        dimensions_ok = readable and nonblank and width >= 400 and height >= 200
+        ok = bool(source_bound and metadata_complete and dimensions_ok and scope_guard_present and caption_overclaim_free)
+        rows.append(
+            {
+                "figure_id": figure_id,
+                "output": output,
+                "readable": readable,
+                "nonblank": nonblank,
+                "image_width_px": width,
+                "image_height_px": height,
+                "source_bound": source_bound,
+                "metadata_complete": metadata_complete,
+                "scope_guard_required": scope_guard_required,
+                "scope_guard_present": scope_guard_present,
+                "caption_overclaim_free": caption_overclaim_free,
+                "ok": ok,
+            }
+        )
+    return {
+        "schema": "template_active_inference.visualization_quality_audit.v1",
+        "rows": rows,
+        "figure_count": len(rows),
+        "all_figures_readable": bool(rows) and all(row["readable"] for row in rows),
+        "all_figures_nonblank": bool(rows) and all(row["nonblank"] for row in rows),
+        "all_figures_source_bound": bool(rows) and all(row["source_bound"] for row in rows),
+        "all_scope_guards_present": bool(rows) and all(row["scope_guard_present"] for row in rows),
+        "all_caption_overclaims_free": bool(rows) and all(row["caption_overclaim_free"] for row in rows),
+        "all_rows_ok": bool(rows) and all(row["ok"] for row in rows),
+    }
+
+
 def _figure_source_rows_complete(project_root: Path, payload: dict[str, Any]) -> bool:
     root = project_root.resolve()
     from visualizations.figure_registry import load_figure_registry

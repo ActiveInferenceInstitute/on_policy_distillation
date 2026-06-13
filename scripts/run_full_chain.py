@@ -23,6 +23,8 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import os
 import subprocess
 import sys
@@ -44,6 +46,10 @@ CONVERGENCE_TAIL = [
     "generate_formal_interop_tracks.py",
     "generate_integration_audit.py",
     "generate_sheaf_tracks.py",
+    # Figure-producing tests may refresh PNG bytes without refreshing the
+    # integration audit hash manifest. Regenerate figures before the final
+    # audit/variable pass so tail-only repairs that legitimate mid-test state.
+    "generate_figures.py",
     "z_generate_manuscript_variables.py",
 ]
 
@@ -117,6 +123,25 @@ def _pipeline_lock(project_root: Path) -> Iterator[None]:
             fcntl.flock(lock, fcntl.LOCK_UN)
 
 
+def _release_attestation_current(project_root: Path) -> bool:
+    """Return true only when the attestation pins the current validation report."""
+    report_path = project_root / "output" / "reports" / "validation_report.json"
+    attestation_path = project_root / "output" / "reports" / "release_attestation.json"
+    if not (report_path.is_file() and attestation_path.is_file()):
+        return False
+    try:
+        attestation = json.loads(attestation_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    rows = attestation.get("rows") or []
+    validation_row = next((row for row in rows if row.get("id") == "validation_report"), {})
+    return (
+        attestation.get("schema") == "template_active_inference.release_attestation.v1"
+        and attestation.get("all_attested") is True
+        and validation_row.get("report_sha256") == hashlib.sha256(report_path.read_bytes()).hexdigest()
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--tail-only", action="store_true", help="skip analysis; run only the convergence tail")
@@ -150,7 +175,7 @@ def main(argv: list[str] | None = None) -> int:
         code = _run(PROJECT_ROOT, VALIDATE)
         print(f"{VALIDATE}: exit {code}")
         passes = 0
-        while code != 0 and passes < args.max_passes:
+        while (code != 0 or not _release_attestation_current(PROJECT_ROOT)) and passes < args.max_passes:
             passes += 1
             print(f"convergence pass {passes}/{args.max_passes}: re-running attestation tail")
             for script in CONVERGENCE_TAIL:
@@ -164,6 +189,9 @@ def main(argv: list[str] | None = None) -> int:
         if code != 0:
             print(f"FAIL: validation still red after {passes} convergence pass(es)")
             return code
+        if not _release_attestation_current(PROJECT_ROOT):
+            print(f"FAIL: release attestation still stale after {passes} convergence pass(es)")
+            return 1
 
         if args.render:
             render_code = _run(PROJECT_ROOT, RENDER)

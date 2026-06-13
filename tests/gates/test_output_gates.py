@@ -287,6 +287,33 @@ def test_validate_outputs_negative_figure_hash_manifest_requires_hashes(
 @pytest.mark.timeout(300)
 @pytest.mark.artifact_slow
 @pytest.mark.mutates_artifacts
+def test_validate_outputs_negative_visualization_quality_audit_rejects_overclaiming_row(
+    project_root: Path,
+    tmp_path: Path,
+) -> None:
+    ensure_gate_artifacts_for(project_root, "output/reports/visualization_quality_audit.json")
+    path = project_root / "output" / "reports" / "visualization_quality_audit.json"
+    backup = tmp_path / "visualization_quality_audit.json.bak"
+    backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+    payload = json.loads(backup.read_text(encoding="utf-8"))
+    row = next(row for row in payload["rows"] if row["figure_id"] == "sequential_shift_sensitivity")
+    row["caption_overclaim_free"] = False
+    row["scope_guard_present"] = False
+    row["ok"] = False
+    payload["all_caption_overclaims_free"] = True
+    payload["all_scope_guards_present"] = True
+    payload["all_rows_ok"] = True
+    try:
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        checks = validate_outputs(project_root, only={"visualization_quality_audit_schema"})
+        assert checks["visualization_quality_audit_schema"] is False
+    finally:
+        path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+@pytest.mark.timeout(300)
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_validate_outputs_negative_firstprinciples_benchmark_and_statistics_contracts(
     project_root: Path,
     tmp_path: Path,

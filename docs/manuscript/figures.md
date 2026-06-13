@@ -73,8 +73,11 @@ complete. Captions reinforce this by naming their source inline — e.g.
 A companion **hash manifest** (`build_figure_hash_manifest()` →
 `output/reports/figure_hash_manifest.json`, schema
 `template_active_inference.figure_hash_manifest.v1`) records verified per-figure hashes;
-`_figure_hash_manifest_ok()` fails if hashes are not verified. Together the source-map and
-hash gates bind each figure both to its inputs and to a content fingerprint.
+`_figure_hash_manifest_ok()` fails if hashes are not verified. The generated
+`visualization_quality_audit.json` adds a third row-level guard over readable image
+bytes, nonblank pixels, source binding, caption scope terms, and overclaim phrases.
+Together the source-map, hash, and quality-audit gates bind each figure to its inputs,
+content fingerprint, and claim boundary.
 
 ## Caption discipline
 
@@ -111,13 +114,15 @@ The figure-binding gates run before the PDF can render and fail closed:
 | --- | --- | --- |
 | `figure_source_map_schema` | each figure → its source data paths | schema wrong, not all figures mapped, or a source row incomplete/missing |
 | `figure_hash_manifest_schema` | each figure → a verified content hash | schema wrong or hashes unverified |
+| `visualization_quality_audit_schema` | each figure → readable pixels, source binding, and caption scope | any row is unreadable, blank, unbound, missing a required scope guard, or overclaiming |
 
 These sit alongside the manuscript token gates (unresolved/malformed tokens) and the
 integration audit, which also emits `manuscript_token_provenance.json` and the
 `manuscript_hardcoded_variable_audit.json` feeding `{{token_provenance_count}}` and
 `{{hardcoded_variable_issue_count}}`. The net effect: a figure cannot enter the PDF
-unless its id is registered, its source data exists, its hash verifies, and every number
-in its caption/alt resolves from a generated artifact.
+unless its id is registered, its source data exists, its hash verifies, its pixels are
+readable/nonblank, its scope language is present where required, and every number in its
+caption/alt resolves from a generated artifact.
 
 ## Registry reference
 

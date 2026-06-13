@@ -77,6 +77,16 @@ def test_firstprinciples_sequential_sensitivity_artifacts_are_load_bearing() -> 
     assert all("validate_outputs" in ARTIFACT_GATES[path] for path in expected)
 
 
+def test_visualization_quality_audit_is_load_bearing() -> None:
+    path = "output/reports/visualization_quality_audit.json"
+
+    assert path in set(REQUIRED_OUTPUTS)
+    assert path in set(REQUIRED_OUTPUT_CHECK_KEYS)
+    assert ARTIFACT_PRODUCERS[path] == "generate_integration_audit.py"
+    assert ARTIFACT_CONSUMERS[path] == ("methods_sheaf", "appendix_full_sheaf")
+    assert "validate_outputs" in ARTIFACT_GATES[path]
+
+
 def test_legacy_exports_match_neutral_contract() -> None:
     assert LEGACY_REQUIRED_OUTPUTS is REQUIRED_OUTPUTS
     assert LEGACY_REQUIRED_OUTPUT_CHECK_KEYS is REQUIRED_OUTPUT_CHECK_KEYS

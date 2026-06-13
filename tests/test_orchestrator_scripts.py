@@ -106,6 +106,7 @@ def test_run_tests_chunked_failure_tail_is_bounded() -> None:
         sys.path.pop(0)
 
 
+import hashlib
 import json
 
 import pytest
@@ -147,3 +148,5 @@ def test_run_full_chain_convergence_loop_actually_executes() -> None:
     # Final state must be green and hash-current again.
     final = json.loads(attestation_path.read_text(encoding="utf-8"))
     assert final["all_attested"] is True
+    validation_row = next(row for row in final["rows"] if row["id"] == "validation_report")
+    assert validation_row["report_sha256"] == hashlib.sha256(report_path.read_bytes()).hexdigest()

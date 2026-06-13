@@ -65,7 +65,7 @@ the validation spine must precede the audits.
 | [`generate_validation_spine.py`](../../scripts/generate_validation_spine.py) | gates / spine | `artifact_provenance.json`, deterministic `replay_matrix.json` / `reproducibility_replay.json`, `counterexample_matrix.json` |
 | [`generate_toy_sweep_tracks.py`](../../scripts/generate_toy_sweep_tracks.py) | roadmap | sensitivity, uncertainty, benchmark, measured policy grid, EFE terms, analytical-observable, graph-world topology trace/invariants, state-space catalog, causal-ablation artifacts |
 | [`generate_formal_interop_tracks.py`](../../scripts/generate_formal_interop_tracks.py) | formal | `model_checking_witnesses.json`, `gnn_roundtrip_report.json`, `gnn_lint_report.json`, ontology alias/profile indices, `interop_roundtrip_report.json`, `lean_theorem_inventory.json`, `proof_extraction_index.json` |
-| [`generate_integration_audit.py`](../../scripts/generate_integration_audit.py) | audit | producer/stale/token/figure/scope/claim/adversarial audits, `artifact_diffoscope.json`, `artifact_license_audit.json`, `release_notes_evidence.json` |
+| [`generate_integration_audit.py`](../../scripts/generate_integration_audit.py) | audit | producer/stale/token/figure/scope/claim/adversarial audits, `visualization_quality_audit.json`, `artifact_diffoscope.json`, `artifact_license_audit.json`, `release_notes_evidence.json` |
 | [`generate_sheaf_tracks.py`](../../scripts/generate_sheaf_tracks.py) | consolidation | the canonical semantic certificate, dependency graph, evidence-field index, release-bundle manifest, theorem-traceability matrix, gate index, diffoscope, proof-extraction index, state-space catalog, causal-ablation matrix, license audit, release-note evidence, track-improvement scope, blocked-scope manifest, section-status, render-log |
 | [`generate_figures.py`](../../scripts/generate_figures.py) | figures | `output/figures/*` (through `figure_io.save_figure_png`), `output/figures/figure_registry.json`, the sheaf coverage heatmap and layers overview PNGs |
 | [`render_animation.py`](../../scripts/render_animation.py) | figures | trace-derived belief-trajectory GIF + `animation_frame_deltas.json` |
@@ -88,11 +88,15 @@ generate_toy_sweep_tracks.py
 generate_formal_interop_tracks.py
 generate_integration_audit.py
 generate_sheaf_tracks.py
+generate_figures.py
 z_generate_manuscript_variables.py
 ```
 
-It then re-runs `validate_outputs.py`. The loop is bounded by `--max-passes`
-(default 3) and exits 0 only when the final validate is green.
+It then re-runs `validate_outputs.py`. `generate_figures.py` is included because
+figure-producing tests and local figure renders can refresh PNG bytes before the
+hash manifest is re-audited. The loop is bounded by `--max-passes` (default 3)
+and exits 0 only when the final validate is green and the release attestation pins
+the current validation report.
 
 ## Rendering and root output parity
 

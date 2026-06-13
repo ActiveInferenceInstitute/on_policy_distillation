@@ -618,6 +618,14 @@ def test_scholarship_matrix_has_row_level_negative_control(project_root: Path) -
     assert thinking_machines["url"] == "https://thinkingmachines.ai/blog/on-policy-distillation/"
     assert thinking_machines["source_locator"] == "Thinking Machines Lab blog post, section 'On-policy distillation'"
     assert thinking_machines["source_heading"] == "On-Policy Distillation"
+    dagger = next(row for row in data["rows"] if row["citation_key"] == "ross2011dagger")
+    assert dagger["artifact"] == "output/data/firstprinciples/sequential_shift_sensitivity.json"
+    assert dagger["manuscript_sections"] == ["intro_motivation", "results_si_tmaze"]
+    assert dagger["method_role"] == "dataset_aggregation_induced_distribution_shift"
+    assert dagger["source_locator"] == "PMLR v15 Ross et al. 2011, Abstract and Sections 2-3"
+    assert dagger["source_heading"] == (
+        "A Reduction of Imitation Learning and Structured Prediction to No-Regret Online Learning"
+    )
     freshness = next(row for row in data["rows"] if row["citation_key"] == "chen2026freshness_opd")
     assert freshness["source_family"] == "opd_stabilization"
     assert freshness["method_role"] == "freshness_aware_long_horizon_opd"

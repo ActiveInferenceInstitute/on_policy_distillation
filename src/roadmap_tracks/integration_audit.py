@@ -28,6 +28,7 @@ from .integration_audit_artifacts import (
     build_manuscript_evidence_tables,
     build_release_notes_evidence,
     build_scope_boundary_audit,
+    build_visualization_quality_audit,
 )
 from .integration_audit_builders import (
     LATE_HYDRATION_PRODUCER,
@@ -82,6 +83,7 @@ __all__ = [
     "build_scope_boundary_audit",
     "build_stale_artifact_report",
     "build_validation_gate_index",
+    "build_visualization_quality_audit",
     "write_integration_audit_artifacts",
     "write_manuscript_staleness_report",
     "validate_integration_audit_artifacts",
@@ -135,6 +137,10 @@ def write_integration_audit_artifacts(project_root: Path) -> dict[str, Path]:
         "figure_hash_manifest": _write_json(
             root / "output" / "reports" / "figure_hash_manifest.json",
             build_figure_hash_manifest(root),
+        ),
+        "visualization_quality": _write_json(
+            root / "output" / "reports" / "visualization_quality_audit.json",
+            build_visualization_quality_audit(root),
         ),
         "scope_boundary": _write_json(
             root / "output" / "reports" / "scope_boundary_audit.json",
@@ -256,6 +262,20 @@ def validate_integration_audit_artifacts(project_root: Path) -> list[str]:
         or figure_hash.get("all_hashes_present") != figure_hash_derived
     ):
         issues.append("figure_hash_manifest.json lacks verified figure hashes")
+    visualization = _load_json(root / "output" / "reports" / "visualization_quality_audit.json")
+    visualization_rows = visualization.get("rows") or []
+    visualization_derived = bool(visualization_rows) and all(row.get("ok") for row in visualization_rows)
+    if (
+        visualization.get("schema") != "template_active_inference.visualization_quality_audit.v1"
+        or visualization.get("all_rows_ok") is not True
+        or visualization.get("all_rows_ok") != visualization_derived
+        or visualization.get("all_figures_readable") is not True
+        or visualization.get("all_figures_nonblank") is not True
+        or visualization.get("all_figures_source_bound") is not True
+        or visualization.get("all_scope_guards_present") is not True
+        or visualization.get("all_caption_overclaims_free") is not True
+    ):
+        issues.append("visualization_quality_audit.json records unreadable, unbound, or overclaiming figures")
     tables = _load_json(root / "output" / "data" / "manuscript_evidence_tables.json")
     tables_derived = bool(tables.get("tables")) and all(
         int(table.get("row_count", 0) or 0) > 0 and table.get("source") for table in tables.get("tables") or []

@@ -673,6 +673,17 @@ claims:
   evidence:
     field: all_hashes_present
     equals: true
+- id: visualization_quality_audit_complete
+  statement: Visualization quality audit verifies readability, source binding,
+    scope guardrails, and caption overclaim controls for all registered figures.
+  path: output/reports/visualization_quality_audit.json
+  section: methods_sheaf
+  tracks:
+  - visualization
+  - adversarial_audit
+  evidence:
+    field: all_rows_ok
+    equals: true
 - id: scope_boundary_toy_only
   statement: Scope boundary audit keeps current claims confined to deterministic toy
     artifacts.

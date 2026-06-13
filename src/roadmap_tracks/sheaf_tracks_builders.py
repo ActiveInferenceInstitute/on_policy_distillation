@@ -183,6 +183,7 @@ def _artifact_bundles(root: Path, rows: list[dict[str, Any]]) -> list[dict[str, 
             "output/data/animation_frame_deltas.json",
             "output/reports/manuscript_hardcoded_variable_audit.json",
             "output/reports/figure_hash_manifest.json",
+            "output/reports/visualization_quality_audit.json",
         ),
     }
     bundles = []
