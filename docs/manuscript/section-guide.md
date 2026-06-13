@@ -156,15 +156,18 @@ into each section.
   the privilege dose-response shows the entropy advantage is strongly nonlinear while
   the reverse-KL signal is the more sensitive, monotone detector above a stated noise
   floor. Four dynamic simulators (GKD, variational-EM, diversity Pass-at-k, adaptive
-  divergence) each move as the correspondence predicts.
+  divergence) plus the sequential-shift sensitivity sweep each move as the
+  correspondence predicts.
 - **Key tokens:** `{{pymdp_planner}}`, `{{si_tmaze_*}}` (steps, entropy, action names,
   cue/reward step, first-action prob), `{{classroom_*}}` (cue validities, entropies,
   `mean_reverse_kl_formatted`, goal-reached flags), `{{privilege_sweep_*}}`
   (level count, baseline gap, top/first-nonzero validity and KL, rank correlation),
   `{{posterior_grid_available_count}}`, `{{posterior_grid_row_count}}`,
-  `{{gkd_*}}`, `{{em_*}}`, `{{diversity_*}}`, `{{adaptive_reverse_fraction:.2f}}`.
+  `{{gkd_*}}`, `{{em_*}}`, `{{diversity_*}}`, `{{adaptive_reverse_fraction:.2f}}`,
+  `{{sequential_sensitivity_*}}`.
 - **Feeding tracks:** prose, pymdp, visualization (`si_belief_entropy_curve`,
   `si_obs_action_trace`, `si_tmaze_actions`, `classroom_distillation_signal`,
+  `sequential_shift_recovery`, `sequential_shift_sensitivity`,
   `si_tmaze_model_matrices` [labeled: false], `privilege_dose_response`,
   `policy_posterior_grid`).
 

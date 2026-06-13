@@ -21,17 +21,23 @@ from .divergences import reverse_kl
 ArrayF = NDArray[np.float64]
 
 SCHEMA = "firstprinciples.sequential_shift.v1"
+SENSITIVITY_SCHEMA = "firstprinciples.sequential_shift_sensitivity.v1"
 STATE_NAMES = ("prompt", "teacher_path", "student_drift", "repair")
 ACTION_NAMES = ("stay_on_task", "shortcut")
+CORRECTION_FRACTIONS = (0.0, 0.25, 0.5, 0.75, 1.0)
 
 __all__ = [
     "ACTION_NAMES",
+    "CORRECTION_FRACTIONS",
     "SCHEMA",
+    "SENSITIVITY_SCHEMA",
     "STATE_NAMES",
     "SequentialShiftProblem",
     "build_payload",
+    "build_sensitivity_payload",
     "induced_transition",
     "validate_payload",
+    "validate_sensitivity_payload",
     "visitation",
 ]
 
@@ -116,6 +122,14 @@ def _per_state_reverse_kl(student_policy: ArrayF, teacher_policy: ArrayF) -> Arr
         [reverse_kl(student_policy[idx], teacher_policy[idx]) for idx in range(student_policy.shape[0])],
         dtype=np.float64,
     )
+
+
+def _mix_policy(before: ArrayF, after: ArrayF, fraction: float) -> ArrayF:
+    if not 0.0 <= fraction <= 1.0:
+        raise ValueError("correction fraction must lie in [0, 1]")
+    policy = (1.0 - fraction) * before + fraction * after
+    _require_row_stochastic(policy, "mixed_policy")
+    return policy
 
 
 def _canonical_problem() -> SequentialShiftProblem:
@@ -221,6 +235,80 @@ def build_payload() -> dict[str, Any]:
     return payload
 
 
+def build_sensitivity_payload(correction_fractions: tuple[float, ...] = CORRECTION_FRACTIONS) -> dict[str, Any]:
+    """Assemble a finite correction-dose sensitivity sweep for the shift witness."""
+    problem = _canonical_problem()
+    train_visitation = visitation(problem.teacher_policy, problem)
+    rows: list[dict[str, Any]] = []
+    for fraction in correction_fractions:
+        policy = _mix_policy(problem.student_policy_before, problem.student_policy_after, float(fraction))
+        test_visitation = visitation(policy, problem)
+        per_state_kl = _per_state_reverse_kl(policy, problem.teacher_policy)
+        train_loss = float(train_visitation @ per_state_kl)
+        test_loss = float(test_visitation @ per_state_kl)
+        shift_mass = float(0.5 * np.abs(test_visitation - train_visitation).sum())
+        rows.append(
+            {
+                "correction_fraction": float(fraction),
+                "train_loss": train_loss,
+                "student_induced_test_loss": test_loss,
+                "test_loss": test_loss,
+                "shift_mass": shift_mass,
+                "train_underestimates_test": bool(train_loss < test_loss),
+                "teacher_path_visitation": float(test_visitation[1]),
+                "student_drift_visitation": float(test_visitation[2]),
+                "repair_visitation": float(test_visitation[3]),
+                "student_policy": policy.tolist(),
+                "student_test_visitation": test_visitation.tolist(),
+                "per_state_reverse_kl": per_state_kl.tolist(),
+                "finite": bool(
+                    np.all(np.isfinite(policy))
+                    and np.all(np.isfinite(test_visitation))
+                    and np.all(np.isfinite(per_state_kl))
+                    and np.isfinite(train_loss)
+                    and np.isfinite(test_loss)
+                    and np.isfinite(shift_mass)
+                ),
+                "normalized": bool(
+                    np.allclose(policy.sum(axis=1), 1.0, atol=1e-9)
+                    and np.isclose(float(test_visitation.sum()), 1.0, atol=1e-9)
+                ),
+            }
+        )
+    baseline_loss = float(rows[0]["test_loss"]) if rows else 0.0
+    final_loss = float(rows[-1]["test_loss"]) if rows else 0.0
+    baseline_shift = float(rows[0]["shift_mass"]) if rows else 0.0
+    final_shift = float(rows[-1]["shift_mass"]) if rows else 0.0
+    losses = [float(row["test_loss"]) for row in rows]
+    shift_masses = [float(row["shift_mass"]) for row in rows]
+    payload: dict[str, Any] = {
+        "schema": SENSITIVITY_SCHEMA,
+        "claim_scope": "deterministic finite correction-dose sensitivity; not an empirical OPD benchmark",
+        "state_names": list(STATE_NAMES),
+        "action_names": list(ACTION_NAMES),
+        "horizon": problem.horizon,
+        "correction_fractions": [float(value) for value in correction_fractions],
+        "rows": rows,
+        "row_count": len(rows),
+        "baseline_test_loss": baseline_loss,
+        "final_test_loss": final_loss,
+        "baseline_shift_mass": baseline_shift,
+        "final_shift_mass": final_shift,
+        "test_loss_reduction": float(baseline_loss - final_loss),
+        "shift_mass_reduction": float(baseline_shift - final_shift),
+        "monotone_test_loss_decrease": all(
+            losses[idx + 1] <= losses[idx] + 1e-12 for idx in range(max(0, len(losses) - 1))
+        ),
+        "monotone_shift_mass_decrease": all(
+            shift_masses[idx + 1] <= shift_masses[idx] + 1e-12 for idx in range(max(0, len(shift_masses) - 1))
+        ),
+        "all_probabilities_normalized": bool(rows) and all(row["normalized"] for row in rows),
+        "all_losses_finite": bool(rows) and all(row["finite"] for row in rows),
+    }
+    payload["ok"] = not validate_sensitivity_payload(payload)
+    return payload
+
+
 def validate_payload(payload: dict[str, Any]) -> list[str]:
     """Return validation issues for a sequential-shift payload."""
     issues: list[str] = []
@@ -272,6 +360,95 @@ def validate_payload(payload: dict[str, Any]) -> list[str]:
         issues.append("underestimate flag must be true")
     if payload.get("on_policy_correction_reduces_test_loss") is not True:
         issues.append("correction flag must be true")
+    if payload.get("ok") is not True and "ok" in payload:
+        issues.append("ok flag must be true")
+    return issues
+
+
+def validate_sensitivity_payload(payload: dict[str, Any]) -> list[str]:
+    """Return validation issues for a sequential-shift correction-dose sweep."""
+    issues: list[str] = []
+    if payload.get("schema") != SENSITIVITY_SCHEMA:
+        issues.append("schema mismatch")
+    if payload.get("state_names") != list(STATE_NAMES):
+        issues.append("state names mismatch")
+    if payload.get("action_names") != list(ACTION_NAMES):
+        issues.append("action names mismatch")
+    rows = payload.get("rows") or []
+    if not rows:
+        issues.append("rows must be non-empty")
+    if int(payload.get("row_count", -1) or -1) != len(rows):
+        issues.append("row_count must equal rows length")
+    fractions = [float(row.get("correction_fraction", float("nan"))) for row in rows]
+    if fractions != sorted(fractions) or not np.all(np.isfinite(fractions)):
+        issues.append("correction fractions must be finite and sorted")
+    if fractions and (not np.isclose(fractions[0], 0.0) or not np.isclose(fractions[-1], 1.0)):
+        issues.append("correction fractions must include 0 and 1 endpoints")
+    losses: list[float] = []
+    shift_masses: list[float] = []
+    for idx, row in enumerate(rows):
+        for key in ("student_test_visitation",):
+            try:
+                _require_vector_stochastic(np.asarray(row.get(key), dtype=np.float64), f"rows[{idx}].{key}")
+            except (TypeError, ValueError) as exc:
+                issues.append(str(exc))
+        for key in ("student_policy",):
+            try:
+                _require_row_stochastic(np.asarray(row.get(key), dtype=np.float64), f"rows[{idx}].{key}")
+            except (TypeError, ValueError) as exc:
+                issues.append(str(exc))
+        for key in (
+            "train_loss",
+            "student_induced_test_loss",
+            "test_loss",
+            "shift_mass",
+            "teacher_path_visitation",
+            "student_drift_visitation",
+            "repair_visitation",
+            "per_state_reverse_kl",
+        ):
+            values = np.asarray(row.get(key), dtype=np.float64)
+            if not np.all(np.isfinite(values)):
+                issues.append(f"rows[{idx}].{key} must be finite")
+        if not np.isclose(float(row.get("student_induced_test_loss", float("nan"))), float(row.get("test_loss", float("nan")))):
+            issues.append(f"rows[{idx}].student_induced_test_loss must equal test_loss")
+        if row.get("finite") is not True:
+            issues.append(f"rows[{idx}].finite must be true")
+        if row.get("normalized") is not True:
+            issues.append(f"rows[{idx}].normalized must be true")
+        losses.append(float(row.get("test_loss", float("nan"))))
+        shift_masses.append(float(row.get("shift_mass", float("nan"))))
+    if losses and not all(losses[idx + 1] <= losses[idx] + 1e-12 for idx in range(len(losses) - 1)):
+        issues.append("test loss must decrease monotonically with correction fraction")
+    if shift_masses and not all(
+        shift_masses[idx + 1] <= shift_masses[idx] + 1e-12 for idx in range(len(shift_masses) - 1)
+    ):
+        issues.append("shift mass must decrease monotonically with correction fraction")
+    if losses and not losses[-1] < losses[0]:
+        issues.append("final correction must reduce baseline test loss")
+    if shift_masses and not shift_masses[-1] < shift_masses[0]:
+        issues.append("final correction must reduce baseline shift mass")
+    if rows and rows[0].get("train_underestimates_test") is not True:
+        issues.append("baseline row must preserve the train-underestimates-test witness")
+    expected_summary = {
+        "baseline_test_loss": losses[0] if losses else float("nan"),
+        "final_test_loss": losses[-1] if losses else float("nan"),
+        "baseline_shift_mass": shift_masses[0] if shift_masses else float("nan"),
+        "final_shift_mass": shift_masses[-1] if shift_masses else float("nan"),
+        "test_loss_reduction": (losses[0] - losses[-1]) if losses else float("nan"),
+        "shift_mass_reduction": (shift_masses[0] - shift_masses[-1]) if shift_masses else float("nan"),
+    }
+    for key, expected in expected_summary.items():
+        if not np.isclose(float(payload.get(key, float("nan"))), expected, atol=1e-9):
+            issues.append(f"{key} summary mismatch")
+    if payload.get("monotone_test_loss_decrease") is not True:
+        issues.append("monotone_test_loss_decrease flag must be true")
+    if payload.get("monotone_shift_mass_decrease") is not True:
+        issues.append("monotone_shift_mass_decrease flag must be true")
+    if payload.get("all_probabilities_normalized") is not True:
+        issues.append("all_probabilities_normalized flag must be true")
+    if payload.get("all_losses_finite") is not True:
+        issues.append("all_losses_finite flag must be true")
     if payload.get("ok") is not True and "ok" in payload:
         issues.append("ok flag must be true")
     return issues

@@ -25,6 +25,7 @@ SUPPORTED_SELECTED_OUTPUT_CHECKS = {
     "firstprinciples_privilege_sweep_schema",
     "firstprinciples_classroom_schema",
     "firstprinciples_sequential_shift_schema",
+    "firstprinciples_sequential_shift_sensitivity_schema",
     "firstprinciples_benchmark_table_present",
     "toy_sweep_track_schemas",
     "formal_interop_track_schemas",
@@ -145,6 +146,12 @@ def _firstprinciples_sequential_shift_ok(payload: dict) -> bool:
     from firstprinciples.sequential_shift import validate_payload
 
     return bool(payload) and not validate_payload(payload)
+
+
+def _firstprinciples_sequential_shift_sensitivity_ok(payload: dict) -> bool:
+    from firstprinciples.sequential_shift import validate_sensitivity_payload
+
+    return bool(payload) and not validate_sensitivity_payload(payload)
 
 
 def _pymdp_logging_expected(root: Path) -> bool:
@@ -489,6 +496,12 @@ def _validate_outputs_selected(root: Path, selected: set[str]) -> dict[str, bool
         checks["firstprinciples_sequential_shift_schema"] = _firstprinciples_sequential_shift_ok(
             _read_json(root / "output" / "data" / "firstprinciples" / "sequential_shift.json")
         )
+    if "firstprinciples_sequential_shift_sensitivity_schema" in selected:
+        checks["firstprinciples_sequential_shift_sensitivity_schema"] = (
+            _firstprinciples_sequential_shift_sensitivity_ok(
+                _read_json(root / "output" / "data" / "firstprinciples" / "sequential_shift_sensitivity.json")
+            )
+        )
 
     if "firstprinciples_benchmark_table_present" in selected:
         fp_benchmark_table_path = root / "output" / "data" / "firstprinciples" / "benchmark_table.md"
@@ -806,6 +819,9 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     fp_exposure = _read_json(root / "output" / "data" / "firstprinciples" / "exposure_bias_demo.json")
     fp_classroom = _read_json(root / "output" / "data" / "firstprinciples" / "classroom.json")
     fp_sequential_shift = _read_json(root / "output" / "data" / "firstprinciples" / "sequential_shift.json")
+    fp_sequential_sensitivity = _read_json(
+        root / "output" / "data" / "firstprinciples" / "sequential_shift_sensitivity.json"
+    )
     fp_taxonomy = _read_json(root / "output" / "data" / "firstprinciples" / "opd_taxonomy.json")
     fp_statistics = _read_json(root / "output" / "data" / "firstprinciples" / "statistics_demo.json")
     fp_empirical = _read_json(root / "output" / "data" / "firstprinciples" / "empirical_benchmark.json")
@@ -999,6 +1015,9 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     )
     checks["firstprinciples_classroom_schema"] = _firstprinciples_classroom_ok(fp_classroom)
     checks["firstprinciples_sequential_shift_schema"] = _firstprinciples_sequential_shift_ok(fp_sequential_shift)
+    checks["firstprinciples_sequential_shift_sensitivity_schema"] = (
+        _firstprinciples_sequential_shift_sensitivity_ok(fp_sequential_sensitivity)
+    )
     checks["firstprinciples_taxonomy_schema"] = _firstprinciples_taxonomy_ok(fp_taxonomy)
     checks["firstprinciples_empirical_benchmark_schema"] = _firstprinciples_empirical_benchmark_ok(fp_empirical)
     fp_permutation = fp_statistics.get("paired_permutation") or {}
@@ -1165,6 +1184,7 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
             "firstprinciples_empirical_benchmark_schema",
             "firstprinciples_statistics_schema",
             "firstprinciples_privilege_sweep_schema",
+            "firstprinciples_sequential_shift_sensitivity_schema",
             "firstprinciples_benchmark_table_present",
             "proof_dependency_graph_schema",
             "state_transition_table_schema",

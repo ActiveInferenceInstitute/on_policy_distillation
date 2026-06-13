@@ -398,6 +398,115 @@ def figure_sequential_shift_recovery(project_root: Path) -> Path:
     return out
 
 
+def figure_sequential_shift_sensitivity(project_root: Path) -> Path:
+    """Render the finite correction-dose sensitivity sweep for sequential shift."""
+    root = project_root.resolve()
+    style = load_figure_style(root)
+    data_path = root / "output" / "data" / "firstprinciples" / "sequential_shift_sensitivity.json"
+    if not data_path.exists():
+        from firstprinciples import sequential_shift
+
+        data_path.parent.mkdir(parents=True, exist_ok=True)
+        data_path.write_text(
+            json.dumps(sequential_shift.build_sensitivity_payload(), indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+    data = json.loads(data_path.read_text(encoding="utf-8"))
+    rows = data.get("rows") or []
+    fractions = np.array([float(row.get("correction_fraction", 0.0)) for row in rows], dtype=np.float64)
+    train_losses = np.array([float(row.get("train_loss", 0.0)) for row in rows], dtype=np.float64)
+    test_losses = np.array([float(row.get("test_loss", 0.0)) for row in rows], dtype=np.float64)
+    shift_masses = np.array([float(row.get("shift_mass", 0.0)) for row in rows], dtype=np.float64)
+    drift_visits = np.array([float(row.get("student_drift_visitation", 0.0)) for row in rows], dtype=np.float64)
+    reduction = float(data.get("test_loss_reduction", 0.0))
+    shift_reduction = float(data.get("shift_mass_reduction", 0.0))
+    out = figure_output_path(root, "sequential_shift_sensitivity")
+    with apply_style(style):
+        fig, axes = plt.subplots(
+            1,
+            2,
+            figsize=(12.2, 4.9),
+            gridspec_kw={"width_ratios": [1.0, 1.0]},
+            constrained_layout=True,
+        )
+        loss_ax, shift_ax = axes
+        loss_ax.plot(
+            fractions,
+            test_losses,
+            marker="o",
+            linewidth=2.2,
+            color=style.color("fail"),
+            label="student-induced test loss",
+        )
+        loss_ax.plot(
+            fractions,
+            train_losses,
+            marker="s",
+            linewidth=1.8,
+            color=style.color("secondary"),
+            label="teacher-forced train estimate",
+        )
+        loss_ax.set_xlabel("Correction fraction")
+        loss_ax.set_ylabel("Reverse-KL loss (nats)")
+        loss_ax.set_title("Correction dose lowers induced test loss")
+        loss_ax.set_ylim(0.0, max(float(test_losses.max()), float(train_losses.max())) * 1.20)
+        style_grid(loss_ax, style)
+        loss_ax.legend(frameon=False, fontsize=style.font_size("legend"))
+        loss_ax.annotate(
+            f"test loss reduced\n{reduction:.3f} nats",
+            xy=(fractions[-1], test_losses[-1]),
+            xytext=(-92, 34),
+            textcoords="offset points",
+            fontsize=style.font_size("annotation"),
+            color=style.color("primary"),
+            arrowprops={"arrowstyle": "->", "color": style.color("primary"), "linewidth": 0.9},
+            bbox=dict(boxstyle="round,pad=0.28", facecolor="#f8fafc", edgecolor=style.color("reference")),
+        )
+
+        shift_ax.plot(
+            fractions,
+            shift_masses,
+            marker="o",
+            linewidth=2.2,
+            color=style.color("accent"),
+            label="train/test shift mass",
+        )
+        shift_ax.plot(
+            fractions,
+            drift_visits,
+            marker="^",
+            linewidth=1.8,
+            color=style.color("pass"),
+            label="student_drift visitation",
+        )
+        shift_ax.set_xlabel("Correction fraction")
+        shift_ax.set_ylabel("Probability mass")
+        shift_ax.set_title("Correction dose reduces the drift state")
+        shift_ax.set_ylim(0.0, max(float(shift_masses.max()), float(drift_visits.max())) * 1.22)
+        style_grid(shift_ax, style)
+        shift_ax.legend(frameon=False, fontsize=style.font_size("legend"))
+        shift_ax.annotate(
+            f"shift mass reduced\n{shift_reduction:.3f}",
+            xy=(fractions[-1], shift_masses[-1]),
+            xytext=(-90, 42),
+            textcoords="offset points",
+            fontsize=style.font_size("annotation"),
+            color=style.color("primary"),
+            arrowprops={"arrowstyle": "->", "color": style.color("primary"), "linewidth": 0.9},
+            bbox=dict(boxstyle="round,pad=0.28", facecolor="#f8fafc", edgecolor=style.color("reference")),
+        )
+        fig.suptitle("Sequential-shift sensitivity: finite correction-dose sweep")
+        fig.text(
+            0.01,
+            0.01,
+            "Source: output/data/firstprinciples/sequential_shift_sensitivity.json; deterministic finite sweep, not an empirical OPD benchmark.",
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
+        )
+        save_styled_figure(fig, out, style)
+    return out
+
+
 def figure_parallel_convergence(project_root: Path) -> Path:
     """Two frameworks, one answer: ML distillation converging to the AIF posterior."""
     root = project_root.resolve()

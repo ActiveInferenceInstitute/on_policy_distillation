@@ -7,8 +7,9 @@ Executable support for the paper's OPD/Active-Inference correspondence.
 - `divergences.py`, `reward_tilting.py`, `energy.py` - divergence geometry,
   reward-tilted targets, and VFE/EFE decompositions.
 - `exposure_bias.py`, `gkd.py`, `variational_em.py`, `diversity.py`,
-  `adaptive.py`, `parallel.py`, `sdpg.py` - deterministic minimal models of
-  on-policy distillation mechanisms.
+  `adaptive.py`, `parallel.py`, `sdpg.py`, `sequential_shift.py` -
+  deterministic minimal models of on-policy distillation mechanisms, including
+  finite train/test visitation shift and correction-dose sensitivity.
 - `classroom.py`, `privilege.py`, `statistics.py` - two-agent pymdp classroom
   evidence and derived uncertainty summaries.
 - `artifacts.py` - writes the canonical JSON/Markdown artifacts consumed by

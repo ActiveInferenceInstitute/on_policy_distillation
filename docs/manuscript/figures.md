@@ -66,6 +66,8 @@ when the schema matches, `all_figures_mapped is True`, and every row's source ro
 complete. Captions reinforce this by naming their source inline — e.g.
 `distillation_divergence_geometry` cites
 `output/data/firstprinciples/divergence_demo.json`,
+`sequential_shift_sensitivity` cites
+`output/data/firstprinciples/sequential_shift_sensitivity.json`,
 `policy_posterior_grid` cites `output/data/pymdp_policy_posterior_grid.json`.
 
 A companion **hash manifest** (`build_figure_hash_manifest()` →

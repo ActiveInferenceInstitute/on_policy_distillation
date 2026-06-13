@@ -11,6 +11,10 @@ DEFERRED / REJECTED, with the carrying file named per row.
 - [`critical-review-2026-06.md`](critical-review-2026-06.md) — disposition of
   the 2026-06 critical-review hardening pass: retitle, finite sequential-shift
   witness, citation provenance, and deferred public-release requests.
+- [`redteam-scholarship-visualization-2026-06.md`](redteam-scholarship-visualization-2026-06.md)
+  — disposition of the RedTeam scholarship/visualization hardening pass:
+  sequential-shift sensitivity, figure-source binding, and distribution-shift
+  scholarship context.
 
 Conventions: a row is LANDED only when a repository file carries the change;
 items blocked on external re-verification (e.g. primary-source table numbers)

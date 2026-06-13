@@ -45,6 +45,7 @@ EXPECTED_SCHOLARSHIP_KEYS: tuple[str, ...] = (
     "czarnecki2019distilling_policy",
     "ross2010efficient_imitation",
     "ross2011dagger",
+    "shimodaira2000covariate_shift",
     "sun2017aggrevated",
     "pomerleau1989alvinn",
     "bengio2015scheduled",

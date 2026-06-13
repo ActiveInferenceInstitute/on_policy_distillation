@@ -20,6 +20,7 @@ from visualizations.figures import (
     figure_scholarship_source_map,
     figure_semantic_gluing_graph,
     figure_sequential_shift_recovery,
+    figure_sequential_shift_sensitivity,
     generate_all_figures,
     run_figure,
 )
@@ -208,6 +209,22 @@ def test_figure_source_map_has_registry_parity_and_data_backing(project_root: Pa
     } <= set(sequential_row["source_fields"])
     assert "validate_outputs.firstprinciples_sequential_shift_schema" in sequential_row["validation_gates"]
 
+    sequential_sensitivity_row = rows_by_id["sequential_shift_sensitivity"]
+    assert sequential_sensitivity_row["sources"] == [
+        "output/data/firstprinciples/sequential_shift_sensitivity.json"
+    ]
+    assert {
+        "$.rows[*].correction_fraction",
+        "$.rows[*].test_loss",
+        "$.rows[*].shift_mass",
+        "$.rows[*].student_drift_visitation",
+        "$.monotone_test_loss_decrease",
+        "$.monotone_shift_mass_decrease",
+    } <= set(sequential_sensitivity_row["source_fields"])
+    assert "validate_outputs.firstprinciples_sequential_shift_sensitivity_schema" in sequential_sensitivity_row[
+        "validation_gates"
+    ]
+
 
 def test_figure_ising_mi_curve_dimensions(project_root: Path) -> None:
     from analysis import run_analysis
@@ -232,6 +249,7 @@ def test_interpretive_figures_expose_formula_signs_and_caveats(project_root: Pat
     energy_source = inspect.getsource(figure_energy_decomposition)
     scholarship_source = inspect.getsource(figure_scholarship_source_map)
     sequential_source = inspect.getsource(figure_sequential_shift_recovery)
+    sequential_sensitivity_source = inspect.getsource(figure_sequential_shift_sensitivity)
 
     assert "Pass@k = 1 - (1 - p)^k" in diversity_source
     assert "$Pass@k = 1-(1-p)^k$" in registry["diversity_tradeoff"].caption
@@ -245,6 +263,12 @@ def test_interpretive_figures_expose_formula_signs_and_caveats(project_root: Pat
     assert "teacher-forced train" in sequential_source
     assert "deterministic finite sequential-shift witness" in registry["sequential_shift_recovery"].caption.lower()
     assert "not an empirical OPD benchmark" in registry["sequential_shift_recovery"].caption
+    assert "sequential_shift_sensitivity.json" in sequential_sensitivity_source
+    assert "Correction fraction" in sequential_sensitivity_source
+    assert "deterministic finite correction-dose sensitivity sweep" in registry[
+        "sequential_shift_sensitivity"
+    ].caption.lower()
+    assert "not an empirical OPD benchmark" in registry["sequential_shift_sensitivity"].caption
 
 
 def test_dense_figures_disclose_readability_compression(project_root: Path) -> None:

@@ -40,7 +40,9 @@ first three, not an additional theorem.
 The sequential-shift artifact is a separate deterministic witness for the train/test
 visitation mismatch: a four-state, two-action finite model in which teacher-forced
 train loss underestimates student-induced test loss and a deterministic on-policy
-correction reduces that test loss. It is an accounting check for induced
+correction reduces that test loss. Its correction-dose sensitivity sweep varies finite
+policy mixtures and requires induced test loss and shift mass to decrease monotonically.
+It is an accounting check for induced
 distribution shift, not an empirical OPD benchmark.
 
 The other genuine contribution is a **discipline**: a sheaf-indexed compose contract

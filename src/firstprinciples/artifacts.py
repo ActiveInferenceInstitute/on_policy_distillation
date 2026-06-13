@@ -178,6 +178,11 @@ def write_all(root: Path) -> dict[str, Path]:
         "empirical_benchmark.json": write_json(root, "empirical_benchmark.json", empirical.build_payload()),
         "parallel_demo.json": write_json(root, "parallel_demo.json", parallel.build_payload()),
         "sequential_shift.json": write_json(root, "sequential_shift.json", sequential_shift.build_payload()),
+        "sequential_shift_sensitivity.json": write_json(
+            root,
+            "sequential_shift_sensitivity.json",
+            sequential_shift.build_sensitivity_payload(),
+        ),
     }
     paths.update(write_markdown_tables(root))
     return paths

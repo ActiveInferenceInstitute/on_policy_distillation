@@ -177,6 +177,8 @@ def _artifact_bundles(root: Path, rows: list[dict[str, Any]]) -> list[dict[str, 
             "output/figures/distillation_divergence_geometry.png",
             "output/figures/exposure_bias_recovery.png",
             "output/figures/classroom_distillation_signal.png",
+            "output/figures/sequential_shift_recovery.png",
+            "output/figures/sequential_shift_sensitivity.png",
             "output/figures/si_belief_trajectory.gif",
             "output/data/animation_frame_deltas.json",
             "output/reports/manuscript_hardcoded_variable_audit.json",
@@ -727,5 +729,3 @@ def build_blocked_scope_manifest(project_root: Path) -> dict[str, Any]:
             for row in rows
         ),
     }
-
-

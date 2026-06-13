@@ -22,6 +22,7 @@ def test_write_all_emits_validated_artifacts(tmp_path: Path) -> None:
         "exposure_bias_demo.json",
         "sdpg_demo.json",
         "sequential_shift.json",
+        "sequential_shift_sensitivity.json",
         "correspondence_table.md",
         "taxonomy_table.md",
     }

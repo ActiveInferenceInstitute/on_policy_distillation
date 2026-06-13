@@ -174,6 +174,7 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         "exposure_bias_recovery": ["output/data/firstprinciples/exposure_bias_demo.json"],
         "classroom_distillation_signal": ["output/data/firstprinciples/classroom.json"],
         "sequential_shift_recovery": ["output/data/firstprinciples/sequential_shift.json"],
+        "sequential_shift_sensitivity": ["output/data/firstprinciples/sequential_shift_sensitivity.json"],
         "energy_decomposition": ["output/data/firstprinciples/energy_demo.json"],
         "parallel_convergence": ["output/data/firstprinciples/parallel_demo.json"],
         "diversity_tradeoff": ["output/data/firstprinciples/diversity_demo.json"],
@@ -263,6 +264,15 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
             "$.test_loss_before",
             "$.test_loss_after",
             "$.gap_closed",
+        ],
+        "sequential_shift_sensitivity": [
+            "$.rows[*].correction_fraction",
+            "$.rows[*].train_loss",
+            "$.rows[*].test_loss",
+            "$.rows[*].shift_mass",
+            "$.rows[*].student_drift_visitation",
+            "$.monotone_test_loss_decrease",
+            "$.monotone_shift_mass_decrease",
         ],
         "energy_decomposition": [
             "$.vfe_at_prior.complexity",
@@ -361,6 +371,10 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         ],
         "sequential_shift_recovery": [
             "validate_outputs.firstprinciples_sequential_shift_schema",
+            "test_figures.nonblank_png",
+        ],
+        "sequential_shift_sensitivity": [
+            "validate_outputs.firstprinciples_sequential_shift_sensitivity_schema",
             "test_figures.nonblank_png",
         ],
         "energy_decomposition": [
@@ -556,6 +570,25 @@ def _figure_source_rows_complete(project_root: Path, payload: dict[str, Any]) ->
                 "validate_outputs.si_summary_schema",
                 "validate_outputs.si_tmaze_model_matrices_schema",
                 "test_figures.tmaze_schematic_uses_configured_horizon",
+            }
+            if not (
+                required_sources.issubset(set(sources))
+                and required_fields.issubset(set(row.get("source_fields") or []))
+                and required_gates.issubset(set(gates))
+            ):
+                return False
+        if row.get("figure_id") == "sequential_shift_sensitivity":
+            required_sources = {"output/data/firstprinciples/sequential_shift_sensitivity.json"}
+            required_fields = {
+                "$.rows[*].correction_fraction",
+                "$.rows[*].test_loss",
+                "$.rows[*].shift_mass",
+                "$.monotone_test_loss_decrease",
+                "$.monotone_shift_mass_decrease",
+            }
+            required_gates = {
+                "validate_outputs.firstprinciples_sequential_shift_sensitivity_schema",
+                "test_figures.nonblank_png",
             }
             if not (
                 required_sources.issubset(set(sources))

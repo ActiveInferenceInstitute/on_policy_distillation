@@ -388,6 +388,16 @@ _BASE_SCHOLARSHIP_SOURCES: tuple[dict[str, Any], ...] = (
         "claim_boundary": "sequential prediction lineage only; toy curves are generated locally",
     },
     {
+        "citation_key": "shimodaira2000covariate_shift",
+        "source_kind": "primary_article",
+        "source_family": "distribution_shift",
+        "method_role": "covariate_shift_weighted_test_risk",
+        "tracks": ["prose", "scholarship", "visualization"],
+        "artifact": "output/data/firstprinciples/sequential_shift_sensitivity.json",
+        "manuscript_sections": ["results_si_tmaze", "methods_sheaf"],
+        "claim_boundary": "covariate-shift risk-weighting context only; local correction-dose rows are finite toy artifacts",
+    },
+    {
         "citation_key": "bengio2015scheduled",
         "source_kind": "primary_conference",
         "source_family": "sequence_exposure_bias",

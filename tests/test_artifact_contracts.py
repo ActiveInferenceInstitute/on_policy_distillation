@@ -61,6 +61,22 @@ def test_firstprinciples_benchmark_statistics_artifacts_are_load_bearing() -> No
     assert all("validate_outputs" in ARTIFACT_GATES[path] for path in expected)
 
 
+def test_firstprinciples_sequential_sensitivity_artifacts_are_load_bearing() -> None:
+    expected = {
+        "output/data/firstprinciples/sequential_shift_sensitivity.json",
+        "output/figures/sequential_shift_sensitivity.png",
+    }
+
+    assert expected <= set(REQUIRED_OUTPUTS)
+    assert "output/data/firstprinciples/sequential_shift_sensitivity.json" in set(REQUIRED_OUTPUT_CHECK_KEYS)
+    assert ARTIFACT_PRODUCERS["output/data/firstprinciples/sequential_shift_sensitivity.json"] == (
+        "generate_firstprinciples.py"
+    )
+    assert ARTIFACT_PRODUCERS["output/figures/sequential_shift_sensitivity.png"] == "generate_figures.py"
+    assert all(ARTIFACT_CONSUMERS[path] for path in expected)
+    assert all("validate_outputs" in ARTIFACT_GATES[path] for path in expected)
+
+
 def test_legacy_exports_match_neutral_contract() -> None:
     assert LEGACY_REQUIRED_OUTPUTS is REQUIRED_OUTPUTS
     assert LEGACY_REQUIRED_OUTPUT_CHECK_KEYS is REQUIRED_OUTPUT_CHECK_KEYS

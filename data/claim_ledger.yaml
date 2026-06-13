@@ -1125,6 +1125,17 @@ claims:
     field: test_loss_after
     leq_field: test_loss_before
     tolerance: 1.0e-09
+- id: fp_sequential_shift_sensitivity_monotone
+  statement: Sequential-shift sensitivity artifact certifies that finite correction
+    fractions reduce student-induced test loss and train/test shift mass monotonically.
+  path: output/data/firstprinciples/sequential_shift_sensitivity.json
+  section: results_si_tmaze
+  tracks:
+  - simulation
+  - visualization
+  evidence:
+    field: ok
+    predicate: is_true
 - id: fp_variational_em_monotone
   statement: Variational-EM simulator certifies monotone free-energy descent.
   path: output/data/firstprinciples/variational_em_demo.json

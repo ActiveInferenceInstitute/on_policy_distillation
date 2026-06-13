@@ -449,6 +449,27 @@ figures:
       `output/data/firstprinciples/sequential_shift.json`; the panel is a toy witness for
       train/test distribution-shift accounting, not local evidence about production LLMs.
     width: 0.94
+  sequential_shift_sensitivity:
+    filename: sequential_shift_sensitivity.png
+    alt: >-
+      Two-panel deterministic correction-dose sensitivity sweep for the finite sequential
+      shift artifact. The left panel plots teacher-forced train estimates and
+      student-induced test loss across correction fractions. The right panel plots
+      train/test shift mass and student-drift visitation across the same fractions.
+    caption: >-
+      Deterministic finite correction-dose sensitivity sweep for the sequential-shift
+      witness, not an empirical OPD benchmark. The sweep mixes the pre-correction and
+      corrected student policies over {{sequential_sensitivity_row_count}} finite
+      correction fractions, recomputes student-induced visitation at each fraction, and
+      requires all policy and visitation rows to remain normalized. Student-induced test
+      loss decreases from {{sequential_sensitivity_baseline_loss:.3f}} to
+      {{sequential_sensitivity_final_loss:.3f}} nats, while train/test shift mass
+      decreases from {{sequential_sensitivity_baseline_shift:.3f}} to
+      {{sequential_sensitivity_final_shift:.3f}}. Source:
+      `output/data/firstprinciples/sequential_shift_sensitivity.json`; this is a
+      sensitivity guard for the toy witness, not local evidence about production LLM
+      optimization.
+    width: 0.94
   multi_track_architecture:
     filename: multi_track_architecture.png
     alt: >-
@@ -621,6 +642,7 @@ section_figures:
     - id: si_tmaze_actions
     - id: classroom_distillation_signal
     - id: sequential_shift_recovery
+    - id: sequential_shift_sensitivity
     - id: si_tmaze_model_matrices
       labeled: false
     - id: privilege_dose_response

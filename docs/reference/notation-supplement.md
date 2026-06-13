@@ -219,8 +219,10 @@ two-action finite witness compares teacher-forced train visitation with the
 student-induced test visitation before and after a deterministic on-policy
 correction. The artifact records normalized visitations, teacher/student
 policies, per-state reverse KL, train loss, induced test loss, shift mass, and
-gap closed. It is a distribution-shift accounting check, not an empirical OPD
-benchmark.
+gap closed. The companion sensitivity artifact varies the correction fraction
+over finite policy mixtures and records train loss, student-induced test loss,
+shift mass, drift-state visitation, monotonicity flags, and normalized-row flags.
+It is a distribution-shift accounting check, not an empirical OPD benchmark.
 
 ---
 

@@ -135,6 +135,8 @@ def build_release_bundle_manifest(project_root: Path) -> dict[str, Any]:
         "output/figures/distillation_divergence_geometry.png",
         "output/figures/exposure_bias_recovery.png",
         "output/figures/classroom_distillation_signal.png",
+        "output/figures/sequential_shift_recovery.png",
+        "output/figures/sequential_shift_sensitivity.png",
         "output/reports/manuscript_hardcoded_variable_audit.json",
         # Real render-stage deliverable names for THIS paper (the pre-Run-6
         # rows named the template exemplar's PDF/HTML, which this project can

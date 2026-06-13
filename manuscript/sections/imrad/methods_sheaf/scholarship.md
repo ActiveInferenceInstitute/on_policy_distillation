@@ -19,7 +19,7 @@ Markov-blanket, and active-inference references [@friston2006fep; @friston2009rl
 @parr2020markov_blankets_thermo], the sequential
 distribution-shift, behavioral-cloning, and distillation lineage
 [@pomerleau1989alvinn; @ross2010efficient_imitation; @ross2011dagger;
-@sun2017aggrevated; @bengio2015scheduled; @arora2022exposure;
+@shimodaira2000covariate_shift; @sun2017aggrevated; @bengio2015scheduled; @arora2022exposure;
 @rohatgi2025next_token_barrier; @pozzi2025exposure_distill;
 @hinton2015distilling; @stanton2021kd_work; @gu2024minillm; @agarwal2024gkd;
 @yang2024sdft_gap; @ko2024distillm; @ko2025distillm2; @wu2024rethinking_kl_kd;

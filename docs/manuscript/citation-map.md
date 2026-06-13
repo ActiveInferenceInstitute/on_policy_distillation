@@ -150,6 +150,7 @@ training is needed (Introduction and the T-maze epistemic reading).
 | `pomerleau1989alvinn` | ALVINN; behavioral cloning and compounding error. |
 | `ross2010efficient_imitation` | Efficient imitation reductions. |
 | `ross2011dagger` | DAgger; the canonical induced-distribution / interactive-imitation result. |
+| `shimodaira2000covariate_shift` | Covariate-shift risk weighting; context for train/test visitation mismatch. |
 | `sun2017aggrevated` | AggreVaTeD; differentiable interactive imitation. |
 | `bengio2015scheduled` | Scheduled sampling; teacher-forcing mismatch repair. |
 | `ranzato2016sequence` | Sequence-level training objectives. |
