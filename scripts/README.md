@@ -55,7 +55,11 @@ Thin orchestrators that import from `../src/` and handle I/O only.
   `AI-TEST-ISOLATION-1` five-run evidence collection contract; a partial run is
   useful diagnostics but does not set `complete_soak`. The report is rewritten
   after every executed run so red or interrupted soaks preserve the failing seed
-  and bounded tail.
+  and bounded tail. Use `--validate-report PATH` to validate an existing
+  transcript, and add `--require-complete` only when checking closure evidence.
+- `audit_roadmap_tasks.py` — check that `TODO.md` future-work rows and
+  `tasks.yaml` taskboard metadata agree on active status, progress,
+  proof-artifact notes, and blocked/deferred semantics.
 
 ## Order matters
 

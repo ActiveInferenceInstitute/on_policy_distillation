@@ -52,6 +52,17 @@ def _validation_failures_within_fixed_point(validation: dict[str, Any]) -> bool:
     return failed <= VALIDATION_FIXED_POINT_CHECKS
 
 
+def _validation_check_ids(validation: dict[str, Any]) -> list[str]:
+    """Return stable validation check ids from the report's output/manuscript maps."""
+    check_ids: list[str] = []
+    for section in ("outputs", "manuscript"):
+        checks = validation.get(section) or {}
+        if not isinstance(checks, dict):
+            continue
+        check_ids.extend(f"{section}.{key}" for key in sorted(checks))
+    return check_ids
+
+
 def _write_json(path: Path, payload: dict[str, Any]) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -112,6 +123,7 @@ def build_proof_dependency_graph(project_root: Path) -> dict[str, Any]:
                 "statement_symbol_count": len(symbols),
                 "statement_symbols": symbols,
                 "witness_count": len(witnesses),
+                "model_witnesses": witnesses,
                 "linked": bool(source and statement and symbols and trace_row.get("linked") is True),
             }
         )
@@ -121,7 +133,39 @@ def build_proof_dependency_graph(project_root: Path) -> dict[str, Any]:
             edges.append({"source": theorem, "target": symbol, "kind": "theorem_to_definition"})
         for witness in witnesses:
             edges.append({"source": theorem, "target": witness, "kind": "theorem_to_model_witness"})
+    for edge in edges:
+        edge["edge_key"] = "::".join(str(edge.get(field) or "") for field in ("source", "target", "kind"))
     edge_types = sorted({edge["kind"] for edge in edges})
+    edge_key_counts: dict[str, int] = defaultdict(int)
+    for edge in edges:
+        edge_key_counts[str(edge["edge_key"])] += 1
+    duplicate_edge_keys = sorted(key for key, count in edge_key_counts.items() if count > 1)
+    theorem_ids = {str(row.get("theorem") or "") for row in rows}
+    known_targets = {
+        str(row.get("source") or "")
+        for row in rows
+        if row.get("source")
+    } | {
+        f"lean_tactic:{row.get('leading_tactic')}"
+        for row in rows
+        if row.get("leading_tactic")
+    }
+    for row in rows:
+        known_targets.update(str(symbol) for symbol in row.get("statement_symbols") or [] if symbol)
+        known_targets.update(str(witness) for witness in row.get("model_witnesses") or [] if witness)
+    orphan_edge_targets = sorted(
+        {
+            str(edge.get("edge_key") or "")
+            for edge in edges
+            if edge.get("source") not in theorem_ids or edge.get("target") not in known_targets
+        }
+    )
+    required_edge_types = [
+        "theorem_to_source",
+        "theorem_to_tactic",
+        "theorem_to_definition",
+        "theorem_to_model_witness",
+    ]
     return {
         "schema": "template_active_inference.proof_dependency_graph.v1",
         "rows": rows,
@@ -129,13 +173,14 @@ def build_proof_dependency_graph(project_root: Path) -> dict[str, Any]:
         "theorem_count": len(rows),
         "edge_count": len(edges),
         "edge_types": edge_types,
-        "required_edge_types": [
-            "theorem_to_source",
-            "theorem_to_tactic",
-            "theorem_to_definition",
-            "theorem_to_model_witness",
-        ],
+        "edge_key_count": len(edge_key_counts),
+        "duplicate_edge_keys": duplicate_edge_keys,
+        "orphan_edge_targets": orphan_edge_targets,
+        "required_edge_types": required_edge_types,
         "all_theorems_have_dependencies": bool(rows) and all(row["linked"] for row in rows),
+        "all_edge_keys_unique": bool(edges) and not duplicate_edge_keys,
+        "all_required_edge_types_present": bool(edges) and set(required_edge_types).issubset(set(edge_types)),
+        "all_edge_targets_resolved": bool(edges) and not orphan_edge_targets,
         "all_edges_resolved": bool(edges) and all(edge["source"] and edge["target"] and edge["kind"] for edge in edges),
     }
 
@@ -204,6 +249,11 @@ def _transition_key(row: dict[str, Any]) -> str:
     return "::".join(str(row.get(field) or "") for field in ("model", "state", "action"))
 
 
+def _state_key(model: str, state: str) -> str:
+    """Stable state key scoped by finite toy model id."""
+    return f"{model}::{state}"
+
+
 def build_state_transition_table(project_root: Path) -> dict[str, Any]:
     """Build explicit finite transition rows for graph-world topologies and T-maze actions."""
     root = project_root.resolve()
@@ -211,6 +261,9 @@ def build_state_transition_table(project_root: Path) -> dict[str, Any]:
     rows = _graph_world_transition_rows(root) + _tmaze_transition_rows()
     for row in rows:
         row["transition_key"] = _transition_key(row)
+        row["state_key"] = _state_key(str(row.get("model") or ""), str(row.get("state") or ""))
+        row["next_state_key"] = _state_key(str(row.get("model") or ""), str(row.get("next_state") or ""))
+        row["terminal_self_transition"] = bool(row.get("state") and row.get("state") == row.get("next_state"))
     transition_key_counts: dict[str, int] = defaultdict(int)
     for row in rows:
         transition_key_counts[str(row["transition_key"])] += 1
@@ -221,6 +274,19 @@ def build_state_transition_table(project_root: Path) -> dict[str, Any]:
         for row in catalog.get("rows") or []
         if str(row.get("model") or "").startswith(("graph_world_", "si_tmaze"))
     }
+    reachable_state_keys = {
+        str(row.get("state_key") or "")
+        for row in rows
+        if row.get("reachable") and row.get("state_key")
+    } | {
+        str(row.get("next_state_key") or "")
+        for row in rows
+        if row.get("reachable") and row.get("next_state_key")
+    }
+    outgoing_state_keys = {str(row.get("state_key") or "") for row in rows if row.get("state_key")}
+    missing_outgoing_state_keys = sorted(reachable_state_keys - outgoing_state_keys)
+    terminal_models = {str(row.get("model") or "") for row in rows if row.get("terminal_self_transition")}
+    models_without_terminal_self_transition = sorted(set(models_with_rows) - terminal_models)
     return {
         "schema": "template_active_inference.state_transition_table.v1",
         "rows": rows,
@@ -230,9 +296,16 @@ def build_state_transition_table(project_root: Path) -> dict[str, Any]:
         "covered_models": sorted(models_with_rows),
         "transition_key_count": len(transition_key_counts),
         "duplicate_transition_keys": duplicate_transition_keys,
+        "reachable_state_key_count": len(reachable_state_keys),
+        "missing_outgoing_state_keys": missing_outgoing_state_keys,
+        "terminal_self_transition_models": sorted(terminal_models),
+        "models_without_terminal_self_transition": models_without_terminal_self_transition,
         "all_transitions_deterministic": bool(rows) and all(row["deterministic"] for row in rows),
         "all_transition_keys_unique": bool(rows) and not duplicate_transition_keys,
         "all_reachable_states_covered": bool(required_models) and required_models.issubset(models_with_rows),
+        "all_reachable_states_have_outgoing": bool(reachable_state_keys) and not missing_outgoing_state_keys,
+        "all_terminal_states_have_self_transition": bool(models_with_rows)
+        and not models_without_terminal_self_transition,
     }
 
 
@@ -251,8 +324,10 @@ def build_ablation_sensitivity_report(project_root: Path) -> dict[str, Any]:
         key = (str(row.get("topology") or ""), float(row.get("lambda", 0.0) or 0.0))
         linked = sensitivity_by_key.get(key, [])
         mi_values = [float(item.get("mi", 0.0) or 0.0) for item in linked]
+        source_join_key = f"{key[0]}::{key[1]:.6g}"
         rows.append(
             {
+                "source_join_key": source_join_key,
                 "topology": key[0],
                 "lambda": key[1],
                 "perturbation": row.get("perturbation", ""),
@@ -268,10 +343,21 @@ def build_ablation_sensitivity_report(project_root: Path) -> dict[str, Any]:
             }
         )
     max_abs_effect = max((abs(row["effect"]) for row in rows), default=0.0)
+    source_row_count_agreement = len(rows) == len(ablation.get("rows") or [])
+    joined = bool(rows) and all(
+        row.get("source_join_key")
+        and row.get("source_backed")
+        and int(row.get("sensitivity_row_count", 0) or 0) > 0
+        and int(row.get("uncertainty_row_count", 0) or 0) == len(uncertainty_rows)
+        for row in rows
+    )
     return {
         "schema": "template_active_inference.ablation_sensitivity_report.v1",
         "rows": rows,
         "row_count": len(rows),
+        "ablation_source_row_count": len(ablation.get("rows") or []),
+        "sensitivity_source_join_key_count": len(sensitivity_by_key),
+        "source_row_count_agreement": source_row_count_agreement,
         "max_abs_effect": max_abs_effect,
         "source_artifacts": [
             "output/data/causal_ablation_matrix.json",
@@ -279,6 +365,7 @@ def build_ablation_sensitivity_report(project_root: Path) -> dict[str, Any]:
             "output/data/uncertainty_summary.json",
         ],
         "all_effects_source_backed": bool(rows) and all(row["source_backed"] for row in rows),
+        "all_ablation_rows_joined": joined,
     }
 
 
@@ -293,6 +380,7 @@ def build_release_attestation(project_root: Path) -> dict[str, Any]:
     license_audit = _load_json(root / "output" / "reports" / "artifact_license_audit.json")
     blocked = _load_json(root / "output" / "reports" / "blocked_scope_manifest.json")
     semantic = _load_json(semantic_path)
+    validation_check_ids = _validation_check_ids(validation)
     # Deferred ONLY before the first-ever validate run. The previous mtime
     # heuristic (report older than bundle => deferred) made the row
     # permanently deferred in normal chain order; binding is by CONTENT and
@@ -314,6 +402,10 @@ def build_release_attestation(project_root: Path) -> dict[str, Any]:
                 and _validation_failures_within_fixed_point(validation)
             ),
             "deferred_until_validation": validation_deferred,
+            "validation_all_passed": validation.get("all_passed") is True,
+            "validation_failed_checks": list(validation.get("failed_checks") or []),
+            "validation_check_count": len(validation_check_ids),
+            "attested_validation_check_ids": validation_check_ids,
             "report_sha256": (
                 hashlib.sha256(validation_path.read_bytes()).hexdigest() if validation_path.is_file() else ""
             ),
@@ -352,6 +444,9 @@ def build_release_attestation(project_root: Path) -> dict[str, Any]:
         "schema": "template_active_inference.release_attestation.v1",
         "rows": rows,
         "row_count": len(rows),
+        "attested_source_ids": [str(row.get("id") or "") for row in rows],
+        "attested_source_count": len(rows),
+        "attested_validation_check_count": len(validation_check_ids),
         "bundle_hash": release.get("bundle_hash", ""),
         "attestation_hash": hashlib.sha256(json.dumps(rows, sort_keys=True).encode("utf-8")).hexdigest(),
         # Strict: a deferred validation report is NOT attested evidence. The
@@ -399,6 +494,31 @@ def validate_supplemental_artifacts(project_root: Path) -> list[str]:
     proof_edges_ok = bool(proof_edges) and all(
         edge.get("source") and edge.get("target") and edge.get("kind") for edge in proof_edges
     )
+    proof_edge_keys = [str(edge.get("edge_key") or "") for edge in proof_edges]
+    proof_edges_unique = bool(proof_edge_keys) and all(proof_edge_keys) and len(proof_edge_keys) == len(set(proof_edge_keys))
+    proof_edge_types = {str(edge.get("kind") or "") for edge in proof_edges}
+    proof_required_edge_types = set(proof.get("required_edge_types") or [])
+    proof_required_types_present = bool(proof_edges) and proof_required_edge_types.issubset(proof_edge_types)
+    theorem_ids = {str(row.get("theorem") or "") for row in proof_rows}
+    known_targets = {
+        str(row.get("source") or "")
+        for row in proof_rows
+        if row.get("source")
+    } | {
+        f"lean_tactic:{row.get('leading_tactic')}"
+        for row in proof_rows
+        if row.get("leading_tactic")
+    }
+    for row in proof_rows:
+        known_targets.update(str(symbol) for symbol in row.get("statement_symbols") or [] if symbol)
+        known_targets.update(str(witness) for witness in row.get("model_witnesses") or [] if witness)
+    orphan_edge_targets = sorted(
+        {
+            str(edge.get("edge_key") or "")
+            for edge in proof_edges
+            if edge.get("source") not in theorem_ids or edge.get("target") not in known_targets
+        }
+    )
     if (
         proof.get("all_theorems_have_dependencies") is not True
         or proof.get("all_theorems_have_dependencies") != proof_rows_ok
@@ -406,6 +526,23 @@ def validate_supplemental_artifacts(project_root: Path) -> list[str]:
         issues.append("proof_dependency_graph.json has unlinked theorem dependencies")
     if proof.get("all_edges_resolved") is not True or proof.get("all_edges_resolved") != proof_edges_ok:
         issues.append("proof_dependency_graph.json has unresolved edges")
+    if (
+        proof.get("all_edge_keys_unique") is not True
+        or proof.get("all_edge_keys_unique") != proof_edges_unique
+        or proof.get("duplicate_edge_keys")
+    ):
+        issues.append("proof_dependency_graph.json has duplicate dependency edges")
+    if (
+        proof.get("all_required_edge_types_present") is not True
+        or proof.get("all_required_edge_types_present") != proof_required_types_present
+    ):
+        issues.append("proof_dependency_graph.json lacks required theorem edge types")
+    if (
+        proof.get("all_edge_targets_resolved") is not True
+        or proof.get("all_edge_targets_resolved") != (not orphan_edge_targets)
+        or proof.get("orphan_edge_targets")
+    ):
+        issues.append("proof_dependency_graph.json has orphan theorem dependency targets")
 
     transitions = _load_json(root / SUPPLEMENTAL_ARTIFACTS["state_transition_table"])
     if transitions.get("schema") != "template_active_inference.state_transition_table.v1":
@@ -417,6 +554,20 @@ def validate_supplemental_artifacts(project_root: Path) -> list[str]:
     keys = [str(row.get("transition_key") or "") for row in transition_rows]
     unique_keys = bool(keys) and all(keys) and len(keys) == len(set(keys))
     covered = set(transitions.get("required_models") or []).issubset(set(transitions.get("covered_models") or []))
+    reachable_state_keys = {
+        str(row.get("state_key") or "")
+        for row in transition_rows
+        if row.get("reachable") and row.get("state_key")
+    } | {
+        str(row.get("next_state_key") or "")
+        for row in transition_rows
+        if row.get("reachable") and row.get("next_state_key")
+    }
+    outgoing_state_keys = {str(row.get("state_key") or "") for row in transition_rows if row.get("state_key")}
+    missing_outgoing_state_keys = sorted(reachable_state_keys - outgoing_state_keys)
+    models_with_rows = {str(row.get("model") or "") for row in transition_rows if row.get("model")}
+    terminal_models = {str(row.get("model") or "") for row in transition_rows if row.get("terminal_self_transition")}
+    missing_terminal_models = sorted(models_with_rows - terminal_models)
     if (
         transitions.get("all_transitions_deterministic") is not True
         or transitions.get("all_transitions_deterministic") != deterministic
@@ -433,17 +584,44 @@ def validate_supplemental_artifacts(project_root: Path) -> list[str]:
         or transitions.get("all_reachable_states_covered") != covered
     ):
         issues.append("state_transition_table.json omits a reachable finite model")
+    if (
+        transitions.get("all_reachable_states_have_outgoing") is not True
+        or transitions.get("all_reachable_states_have_outgoing") != (bool(reachable_state_keys) and not missing_outgoing_state_keys)
+        or transitions.get("missing_outgoing_state_keys")
+    ):
+        issues.append("state_transition_table.json omits outgoing transitions for a reachable toy state")
+    if (
+        transitions.get("all_terminal_states_have_self_transition") is not True
+        or transitions.get("all_terminal_states_have_self_transition") != (bool(models_with_rows) and not missing_terminal_models)
+        or transitions.get("models_without_terminal_self_transition")
+    ):
+        issues.append("state_transition_table.json omits terminal self-transition coverage")
 
     ablation = _load_json(root / SUPPLEMENTAL_ARTIFACTS["ablation_sensitivity_report"])
     if ablation.get("schema") != "template_active_inference.ablation_sensitivity_report.v1":
         issues.append("ablation_sensitivity_report.json schema mismatch")
     ablation_rows = ablation.get("rows") or []
     ablation_backed = bool(ablation_rows) and all(row.get("source_backed") for row in ablation_rows)
+    ablation_joined = bool(ablation_rows) and all(
+        row.get("source_join_key")
+        and row.get("source_backed")
+        and int(row.get("sensitivity_row_count", 0) or 0) > 0
+        and int(row.get("uncertainty_row_count", 0) or 0) > 0
+        for row in ablation_rows
+    )
+    ablation_row_count_agreement = ablation.get("row_count") == ablation.get("ablation_source_row_count")
     if (
         ablation.get("all_effects_source_backed") is not True
         or ablation.get("all_effects_source_backed") != ablation_backed
     ):
         issues.append("ablation_sensitivity_report.json has unsupported ablation effects")
+    if (
+        ablation.get("all_ablation_rows_joined") is not True
+        or ablation.get("all_ablation_rows_joined") != ablation_joined
+        or ablation.get("source_row_count_agreement") is not True
+        or not ablation_row_count_agreement
+    ):
+        issues.append("ablation_sensitivity_report.json has stale source joins or row counts")
 
     attestation = _load_json(root / SUPPLEMENTAL_ARTIFACTS["release_attestation"])
     if attestation.get("schema") != "template_active_inference.release_attestation.v1":
@@ -454,7 +632,17 @@ def validate_supplemental_artifacts(project_root: Path) -> list[str]:
     attested = bool(attestation_rows) and all(row.get("passed") for row in attestation_rows)
     if attestation.get("all_attested") != attested:
         issues.append("release_attestation.json claims a failed gate passed")
+    if attestation.get("attested_source_count") != len(attestation_rows):
+        issues.append("release_attestation.json attested source count is stale")
+    validation_row = next((row for row in attestation_rows if row.get("id") == "validation_report"), {})
+    validation_check_ids = validation_row.get("attested_validation_check_ids") or []
+    if (
+        validation_row
+        and attestation.get("attested_validation_check_count") != len(validation_check_ids)
+    ):
+        issues.append("release_attestation.json validation check count is stale")
     return issues
+
 
 def release_attestation_consistent_and_current(root: Path, release_attestation: dict[str, Any]) -> bool:
     """Attestation is internally consistent and refers to the on-disk report.

@@ -192,6 +192,16 @@ ARTIFACT_AGGREGATE_RULES: dict[str, tuple[tuple[str, Spec], ...]] = {
     "output/data/validation_gate_index.json": (("all_indexed", ("true", "indexed")),),
     "output/reports/ablation_sensitivity_report.json": (
         ("all_effects_source_backed", ("true", "source_backed")),
+        (
+            "all_ablation_rows_joined",
+            (
+                "all",
+                ("nonempty", "source_join_key"),
+                ("true", "source_backed"),
+                ("positive", "sensitivity_row_count"),
+                ("positive", "uncertainty_row_count"),
+            ),
+        ),
     ),
     "output/reports/adversarial_audit.json": (
         # writer (sheaf_tracks_builders.py): expected_failure and known_bad_should_fail

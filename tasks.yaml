@@ -36,13 +36,13 @@ tasks:
   status: in_progress
   start: '2026-06-06'
   end: '2026-06-16'
-  progress: 45
+  progress: 60
   milestone: false
   deps:
   - opsd-1
   tags:
   - theory
-  notes: 'Inspected after opsd-4/opsd-8 on 2026-06-09. Existing surface includes
+  notes: 'Reassessed on 2026-06-13 after verifier-first hardening. Existing surface includes
     `src/firstprinciples/sdpg.py`, `artifacts.sdpg_demo()`,
     `output/data/firstprinciples/sdpg_demo.json`, taxonomy row `SDPG`, notation
     supplement section 5, manuscript discussion/method bindings, and fast-lane
@@ -50,8 +50,8 @@ tasks:
     `test_sdpg_signal_density_is_dense`, and `test_sdpg_demo_all_modes_present`.
     Leave in_progress: next useful work is a typed SDPG-specific claim/gate or
     negative control that proves the privileged-context objective cannot drift
-    from `sdpg_demo.json`; do not close while full coverage is still blocked by
-    opsd-8.'
+    from `sdpg_demo.json`; do not promote broader production-LLM claims from this
+    toy artifact.'
 - id: opsd-4
   title: Two-agent pymdp classroom (teacher vs student)
   status: done
@@ -78,16 +78,23 @@ tasks:
     opsd-8.'
 - id: opsd-5
   title: Deepen canonical tracks (provenance, sensitivity, ...)
-  status: todo
-  start: '2026-06-18'
+  status: in_progress
+  start: '2026-06-13'
   end: '2026-07-01'
-  progress: 0
+  progress: 45
   milestone: false
   deps:
   - opsd-3
   tags:
   - tracks
-  notes: ''
+  notes: 'Verifier-first tranche started on 2026-06-13. Deepen stable canonical
+    surfaces rather than adding `_vN` siblings: `proof_dependency_graph` now needs
+    unique edges, required edge-type coverage, and orphan-target checks;
+    `state_transition_table` needs outgoing coverage for every reachable toy
+    state plus terminal self-transitions; `ablation_sensitivity_report` needs
+    explicit source join keys and source row-count agreement; `release_attestation`
+    needs attested validation check ids/counts while keeping idle-host soak evidence
+    outside release blocking.'
 - id: opsd-6
   title: Manuscript hydration + typed claim evidence
   status: todo
@@ -118,26 +125,52 @@ tasks:
   status: in_progress
   start: '2026-06-06'
   end: '2026-06-16'
-  progress: 75
+  progress: 85
   milestone: false
   deps:
   - opsd-4
   tags:
   - tests
-  notes: 'Advanced on 2026-06-09 after opsd-4 closed and classroom-focused gates
-    passed, but not closed because the full coverage gate still exposes the documented
-    order/load-sensitive artifact-isolation cluster. Full attempt:
-    `uv run --extra dev python -m pytest tests/ --cov=src --cov-fail-under=90`
-    ran 22:42 and exited 2 after SIGINT to the agent-started pytest; observed summary
-    was 378 passed, 1 skipped, 7 failed, 81 warnings. Failures:
-    `test_promoted_roadmap_artifacts_are_written_and_valid` reported
-    `artifact_diffoscope.json records artifact drift` and `canonical semantic
-    restrictions failed: artifact_diffoscope_equal`; semantic certificate/manuscript
-    checks reported `cert["ok"] is False` / `semantic_sheaf_gluing is False`;
-    `test_validate_manuscript_strict_coverage` reported `claim_ledger_valid`
-    false; `test_validate_outputs_gate_checks` timed out in provenance/semantic
-    fixed-point refresh. Keep in_progress until provenance/diffoscope/semantic
-    artifacts are made order-independent and the full coverage command is green.'
+  notes: 'Updated on 2026-06-13. Diagnostic five-run local soak with seeds 61300-61304
+    produced red rows for 61300, 61301, and 61302, then green rows for 61303 and
+    61304; failing chunk groups and a full same-seed 61300 rerun were later green
+    after gate-surface refresh hardening. Keep in_progress until a fresh idle-host
+    transcript has five consecutive green rows and `complete_soak: true`. The
+    validator work lives in opsd-9; a red shuffled run remains evidence to report
+    with exact seed and failure tail, not a seed to re-roll.'
+- id: opsd-9
+  title: Soak report validator and completion gate
+  status: done
+  start: '2026-06-13'
+  end: '2026-06-13'
+  progress: 100
+  milestone: false
+  deps:
+  - opsd-8
+  tags:
+  - tests
+  notes: 'Implemented machine validation for `output/reports/test_isolation_soak.json`:
+    consecutive seed sequence, failed chunk ids, parsed failed test names,
+    diagnostics_complete, true `complete_soak`, malformed totals, and
+    `--require-complete` semantics. This closes the report-validator task only;
+    it does not close AI-TEST-ISOLATION-1 without a fresh complete idle-host soak.'
+- id: opsd-10
+  title: Roadmap/task consistency audit
+  status: done
+  start: '2026-06-13'
+  end: '2026-06-13'
+  progress: 100
+  milestone: false
+  deps:
+  - opsd-5
+  - opsd-8
+  tags:
+  - docs
+  - tests
+  notes: 'Added a lightweight audit tying active TODO rows to `tasks.yaml` status,
+    progress, proof-artifact notes, and blocked/deferred semantics. The audit keeps
+    `AI-TEST-ISOLATION-1` open until `complete_soak: true` and requires explicit
+    task rows for the soak-report validator and canonical-track deepening work.'
 - id: opsd-m1
   title: OPSD≡AIF preprint
   status: todo

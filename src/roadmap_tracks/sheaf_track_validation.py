@@ -466,6 +466,31 @@ def _validate_sheaf_track_artifacts(
     proof_dependency_edges_ok = bool(proof_dependency_edges) and all(
         edge.get("source") and edge.get("target") and edge.get("kind") for edge in proof_dependency_edges
     )
+    proof_edge_keys = [str(edge.get("edge_key") or "") for edge in proof_dependency_edges]
+    proof_edges_unique = bool(proof_edge_keys) and all(proof_edge_keys) and len(proof_edge_keys) == len(set(proof_edge_keys))
+    proof_edge_types = {str(edge.get("kind") or "") for edge in proof_dependency_edges}
+    proof_required_edge_types = set(proof_dependency.get("required_edge_types") or [])
+    proof_required_types_present = bool(proof_dependency_edges) and proof_required_edge_types.issubset(proof_edge_types)
+    theorem_ids = {str(row.get("theorem") or "") for row in proof_dependency_rows}
+    known_targets = {
+        str(row.get("source") or "")
+        for row in proof_dependency_rows
+        if row.get("source")
+    } | {
+        f"lean_tactic:{row.get('leading_tactic')}"
+        for row in proof_dependency_rows
+        if row.get("leading_tactic")
+    }
+    for row in proof_dependency_rows:
+        known_targets.update(str(symbol) for symbol in row.get("statement_symbols") or [] if symbol)
+        known_targets.update(str(witness) for witness in row.get("model_witnesses") or [] if witness)
+    orphan_edge_targets = sorted(
+        {
+            str(edge.get("edge_key") or "")
+            for edge in proof_dependency_edges
+            if edge.get("source") not in theorem_ids or edge.get("target") not in known_targets
+        }
+    )
     if proof_dependency.get("schema") != "template_active_inference.proof_dependency_graph.v1":
         issues.append("proof_dependency_graph.json schema mismatch")
     if (
@@ -478,6 +503,23 @@ def _validate_sheaf_track_artifacts(
         or proof_dependency.get("all_edges_resolved") != proof_dependency_edges_ok
     ):
         issues.append("proof_dependency_graph.json has unresolved edges")
+    if (
+        proof_dependency.get("all_edge_keys_unique") is not True
+        or proof_dependency.get("all_edge_keys_unique") != proof_edges_unique
+        or proof_dependency.get("duplicate_edge_keys")
+    ):
+        issues.append("proof_dependency_graph.json has duplicate dependency edges")
+    if (
+        proof_dependency.get("all_required_edge_types_present") is not True
+        or proof_dependency.get("all_required_edge_types_present") != proof_required_types_present
+    ):
+        issues.append("proof_dependency_graph.json lacks required theorem edge types")
+    if (
+        proof_dependency.get("all_edge_targets_resolved") is not True
+        or proof_dependency.get("all_edge_targets_resolved") != (not orphan_edge_targets)
+        or proof_dependency.get("orphan_edge_targets")
+    ):
+        issues.append("proof_dependency_graph.json has orphan theorem dependency targets")
 
     transition_table = _payload(root, payloads, "state_transition_table")
     transition_rows = transition_table.get("rows") or []
@@ -487,6 +529,20 @@ def _validate_sheaf_track_artifacts(
     transitions_covered = set(transition_table.get("required_models") or []).issubset(
         set(transition_table.get("covered_models") or [])
     )
+    reachable_state_keys = {
+        str(row.get("state_key") or "")
+        for row in transition_rows
+        if row.get("reachable") and row.get("state_key")
+    } | {
+        str(row.get("next_state_key") or "")
+        for row in transition_rows
+        if row.get("reachable") and row.get("next_state_key")
+    }
+    outgoing_state_keys = {str(row.get("state_key") or "") for row in transition_rows if row.get("state_key")}
+    missing_outgoing_state_keys = sorted(reachable_state_keys - outgoing_state_keys)
+    models_with_rows = {str(row.get("model") or "") for row in transition_rows if row.get("model")}
+    terminal_models = {str(row.get("model") or "") for row in transition_rows if row.get("terminal_self_transition")}
+    missing_terminal_models = sorted(models_with_rows - terminal_models)
     if transition_table.get("schema") != "template_active_inference.state_transition_table.v1":
         issues.append("state_transition_table.json schema mismatch")
     transition_keys = [str(row.get("transition_key") or "") for row in transition_rows]
@@ -507,11 +563,37 @@ def _validate_sheaf_track_artifacts(
         or transition_table.get("all_reachable_states_covered") != transitions_covered
     ):
         issues.append("state_transition_table.json omits a reachable finite model")
+    if (
+        transition_table.get("all_reachable_states_have_outgoing") is not True
+        or transition_table.get("all_reachable_states_have_outgoing") != (
+            bool(reachable_state_keys) and not missing_outgoing_state_keys
+        )
+        or transition_table.get("missing_outgoing_state_keys")
+    ):
+        issues.append("state_transition_table.json omits outgoing transitions for a reachable toy state")
+    if (
+        transition_table.get("all_terminal_states_have_self_transition") is not True
+        or transition_table.get("all_terminal_states_have_self_transition") != (
+            bool(models_with_rows) and not missing_terminal_models
+        )
+        or transition_table.get("models_without_terminal_self_transition")
+    ):
+        issues.append("state_transition_table.json omits terminal self-transition coverage")
 
     ablation_sensitivity = _payload(root, payloads, "ablation_sensitivity_report")
     ablation_sensitivity_rows = ablation_sensitivity.get("rows") or []
     ablation_sensitivity_backed = bool(ablation_sensitivity_rows) and all(
         row.get("source_backed") for row in ablation_sensitivity_rows
+    )
+    ablation_joined = bool(ablation_sensitivity_rows) and all(
+        row.get("source_join_key")
+        and row.get("source_backed")
+        and int(row.get("sensitivity_row_count", 0) or 0) > 0
+        and int(row.get("uncertainty_row_count", 0) or 0) > 0
+        for row in ablation_sensitivity_rows
+    )
+    ablation_row_count_agreement = ablation_sensitivity.get("row_count") == ablation_sensitivity.get(
+        "ablation_source_row_count"
     )
     if ablation_sensitivity.get("schema") != "template_active_inference.ablation_sensitivity_report.v1":
         issues.append("ablation_sensitivity_report.json schema mismatch")
@@ -520,6 +602,13 @@ def _validate_sheaf_track_artifacts(
         or ablation_sensitivity.get("all_effects_source_backed") != ablation_sensitivity_backed
     ):
         issues.append("ablation_sensitivity_report.json has unsupported ablation effects")
+    if (
+        ablation_sensitivity.get("all_ablation_rows_joined") is not True
+        or ablation_sensitivity.get("all_ablation_rows_joined") != ablation_joined
+        or ablation_sensitivity.get("source_row_count_agreement") is not True
+        or not ablation_row_count_agreement
+    ):
+        issues.append("ablation_sensitivity_report.json has stale source joins or row counts")
 
     release_attestation = _payload(root, payloads, "release_attestation")
     release_attestation_rows = release_attestation.get("rows") or []
@@ -534,6 +623,12 @@ def _validate_sheaf_track_artifacts(
     # mid-convergence an honestly-false flag is the expected state, not a lie.
     if release_attestation.get("all_attested") != release_attested:
         issues.append("release_attestation.json claims a failed gate passed")
+    if release_attestation.get("attested_source_count") != len(release_attestation_rows):
+        issues.append("release_attestation.json attested source count is stale")
+    validation_row = next((row for row in release_attestation_rows if row.get("id") == "validation_report"), {})
+    validation_check_ids = validation_row.get("attested_validation_check_ids") or []
+    if validation_row and release_attestation.get("attested_validation_check_count") != len(validation_check_ids):
+        issues.append("release_attestation.json validation check count is stale")
 
     if payloads is None:
         from .scholarship import validate_scholarship_source_matrix

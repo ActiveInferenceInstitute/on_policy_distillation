@@ -98,6 +98,36 @@ test-isolation work):
 The same seed always yields the same file order, so a red shuffled run is
 exactly reproducible. Report a red seed — never re-roll to a passing one.
 
+## Isolation soak reports
+
+[`../../scripts/run_test_isolation_soak.py`](../../scripts/run_test_isolation_soak.py)
+wraps the chunked runner for `AI-TEST-ISOLATION-1` and writes an incremental
+JSON transcript after every run:
+
+```bash
+.venv/bin/python scripts/run_test_isolation_soak.py \
+  --runs 5 \
+  --required-runs 5 \
+  --seed-base 61300 \
+  --output output/reports/test_isolation_soak.json
+```
+
+A diagnostic soak may stop red or partial; it is still useful if it preserves
+the seed, failed chunk ids, failed test names, and bounded failure tail. A
+completion soak is stricter: validate the saved report with
+`--validate-report --require-complete`, which requires consecutive seeds,
+complete diagnostics for red rows, and `complete_soak: true`.
+
+```bash
+.venv/bin/python scripts/run_test_isolation_soak.py \
+  --validate-report output/reports/test_isolation_soak.json \
+  --require-complete
+```
+
+The same-seed policy applies to both layers. If a shuffled soak is red, rerun
+the exact seed or exact failing chunk group to diagnose it; do not change seeds
+to search for a green transcript.
+
 ## See also
 
 - [`conventions.md`](conventions.md) — code conventions and the writer/validator boundary.

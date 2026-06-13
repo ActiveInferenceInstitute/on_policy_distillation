@@ -62,3 +62,25 @@ Result: `532 passed, 0 failed, 1 skipped across 11 chunks`.
 
 `AI-TEST-ISOLATION-1` remains open until a fresh five-consecutive-run idle-host
 soak writes `complete_soak: true`.
+
+## Report Validator
+
+The soak collector now has a validation-only mode for saved transcripts:
+
+```bash
+uv run python scripts/run_test_isolation_soak.py \
+  --validate-report output/reports/test_isolation_soak.json
+```
+
+Use `--require-complete` only for closure evidence:
+
+```bash
+uv run python scripts/run_test_isolation_soak.py \
+  --validate-report output/reports/test_isolation_soak.json \
+  --require-complete
+```
+
+The validator rejects false `complete_soak`, malformed TOTAL lines, missing or
+non-consecutive seeds, and red rows without parsed failed chunk/test diagnostics.
+This makes the diagnostic/completion distinction explicit: the 2026-06-13 report
+is useful failure evidence, but it is not closure evidence.

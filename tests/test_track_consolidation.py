@@ -147,12 +147,26 @@ def test_canonical_sheaf_artifacts_are_present_and_valid(project_root: Path) -> 
     assert release_notes["all_notes_source_backed"] is True
     assert scholarship["all_sources_connected"] is True
     assert proof_dependency["all_theorems_have_dependencies"] is True
+    assert proof_dependency["all_edge_keys_unique"] is True
+    assert proof_dependency["all_required_edge_types_present"] is True
+    assert proof_dependency["all_edge_targets_resolved"] is True
+    assert proof_dependency["duplicate_edge_keys"] == []
+    assert proof_dependency["orphan_edge_targets"] == []
     assert transition_table["all_reachable_states_covered"] is True
+    assert transition_table["all_reachable_states_have_outgoing"] is True
+    assert transition_table["all_terminal_states_have_self_transition"] is True
+    assert transition_table["missing_outgoing_state_keys"] == []
+    assert transition_table["models_without_terminal_self_transition"] == []
     assert transition_table["all_transition_keys_unique"] is True
     assert transition_table["duplicate_transition_keys"] == []
     assert transition_table["transition_key_count"] == transition_table["row_count"]
     assert ablation_sensitivity["all_effects_source_backed"] is True
+    assert ablation_sensitivity["all_ablation_rows_joined"] is True
+    assert ablation_sensitivity["source_row_count_agreement"] is True
+    assert ablation_sensitivity["row_count"] == ablation_sensitivity["ablation_source_row_count"]
     assert release_attestation["all_attested"] is True
+    assert release_attestation["attested_source_count"] == release_attestation["row_count"]
+    assert release_attestation["attested_validation_check_count"] > 0
     assert section_status["all_bound_fragments_present"] is True
     assert section_status["all_sections_have_status"] is True
     assert section_status["cell_count"] == section_status["section_count"] * section_status["track_count"]
@@ -314,6 +328,21 @@ def test_canonical_sheaf_negative_controls(project_root: Path) -> None:
 
     _assert_issue("proof_dependency_graph", _break_proof_dependency, "unlinked theorem dependencies")
 
+    def _duplicate_proof_edge(data: dict) -> None:
+        data["edges"][1]["edge_key"] = data["edges"][0]["edge_key"]
+        data["duplicate_edge_keys"] = []
+        data["all_edge_keys_unique"] = True
+
+    _assert_issue("proof_dependency_graph", _duplicate_proof_edge, "duplicate dependency edges")
+
+    def _orphan_proof_edge(data: dict) -> None:
+        data["edges"][0]["target"] = "missing:model:witness"
+        data["edges"][0]["edge_key"] = f"{data['edges'][0]['source']}::missing:model:witness::{data['edges'][0]['kind']}"
+        data["orphan_edge_targets"] = []
+        data["all_edge_targets_resolved"] = True
+
+    _assert_issue("proof_dependency_graph", _orphan_proof_edge, "orphan theorem dependency targets")
+
     def _break_transition_table(data: dict) -> None:
         data["covered_models"] = data["covered_models"][:-1]
         data["all_reachable_states_covered"] = True
@@ -327,17 +356,44 @@ def test_canonical_sheaf_negative_controls(project_root: Path) -> None:
 
     _assert_issue("state_transition_table", _duplicate_transition_key, "duplicate transition keys")
 
+    def _break_transition_outgoing_coverage(data: dict) -> None:
+        data["rows"][0]["next_state_key"] = "si_tmaze::uncovered"
+        data["missing_outgoing_state_keys"] = []
+        data["all_reachable_states_have_outgoing"] = True
+
+    _assert_issue("state_transition_table", _break_transition_outgoing_coverage, "omits outgoing transitions")
+
+    def _break_terminal_self_transition(data: dict) -> None:
+        for row in data["rows"]:
+            row["terminal_self_transition"] = False
+        data["models_without_terminal_self_transition"] = []
+        data["all_terminal_states_have_self_transition"] = True
+
+    _assert_issue("state_transition_table", _break_terminal_self_transition, "omits terminal self-transition")
+
     def _break_ablation_sensitivity(data: dict) -> None:
         data["rows"][0]["source_backed"] = False
         data["all_effects_source_backed"] = True
 
     _assert_issue("ablation_sensitivity_report", _break_ablation_sensitivity, "unsupported ablation effects")
 
+    def _break_ablation_join(data: dict) -> None:
+        data["rows"][0]["source_join_key"] = ""
+        data["all_ablation_rows_joined"] = True
+        data["source_row_count_agreement"] = True
+
+    _assert_issue("ablation_sensitivity_report", _break_ablation_join, "stale source joins")
+
     def _break_release_attestation(data: dict) -> None:
         data["rows"][1]["passed"] = False
         data["all_attested"] = True
 
     _assert_issue("release_attestation", _break_release_attestation, "failed gate passed")
+
+    def _break_release_attestation_count(data: dict) -> None:
+        data["attested_source_count"] += 1
+
+    _assert_issue("release_attestation", _break_release_attestation_count, "attested source count")
 
     def _break_section_status(data: dict) -> None:
         data["missing_required_count"] = 1

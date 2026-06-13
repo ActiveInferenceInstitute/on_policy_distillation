@@ -1098,6 +1098,11 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
         proof_dependency.get("schema") == "template_active_inference.proof_dependency_graph.v1"
         and proof_dependency.get("all_theorems_have_dependencies") is True
         and proof_dependency.get("all_edges_resolved") is True
+        and proof_dependency.get("all_edge_keys_unique") is True
+        and proof_dependency.get("duplicate_edge_keys") == []
+        and proof_dependency.get("all_required_edge_types_present") is True
+        and proof_dependency.get("all_edge_targets_resolved") is True
+        and proof_dependency.get("orphan_edge_targets") == []
     )
     checks["state_transition_table_schema"] = (
         transition_table.get("schema") == "template_active_inference.state_transition_table.v1"
@@ -1105,10 +1110,17 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
         and transition_table.get("all_transition_keys_unique") is True
         and transition_table.get("duplicate_transition_keys") == []
         and transition_table.get("all_reachable_states_covered") is True
+        and transition_table.get("all_reachable_states_have_outgoing") is True
+        and transition_table.get("missing_outgoing_state_keys") == []
+        and transition_table.get("all_terminal_states_have_self_transition") is True
+        and transition_table.get("models_without_terminal_self_transition") == []
     )
     checks["ablation_sensitivity_report_schema"] = (
         ablation_sensitivity.get("schema") == "template_active_inference.ablation_sensitivity_report.v1"
         and ablation_sensitivity.get("all_effects_source_backed") is True
+        and ablation_sensitivity.get("all_ablation_rows_joined") is True
+        and ablation_sensitivity.get("source_row_count_agreement") is True
+        and ablation_sensitivity.get("row_count") == ablation_sensitivity.get("ablation_source_row_count")
     )
     _attest_rows = {str(row.get("id")): row for row in release_attestation.get("rows") or []}
     _validation_row = _attest_rows.get("validation_report") or {}
@@ -1127,6 +1139,8 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     checks["release_attestation_schema"] = (
         release_attestation.get("schema") == "template_active_inference.release_attestation.v1"
         and release_attestation.get("all_attested") is True
+        and release_attestation.get("attested_source_count") == len(_attest_rows)
+        and release_attestation.get("attested_validation_check_count", 0) > 0
         and _attestation_current
     )
     from visualizations.animation import validate_animation_frame_deltas

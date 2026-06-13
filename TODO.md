@@ -20,7 +20,7 @@ artifacts, and a blocked empirical boundary. Live proofs belong in the registry,
 project docs, generated certificates, `output/data/track_improvement_scope.json`,
 and output reports rather than repeated here as completed TODO work.
 
-## Status & what's needed from here (2026-06-11, after Run 12 + follow-up)
+## Status & what's needed from here (2026-06-13, after verifier-first hardening)
 
 **The project is mature and green — nothing here is blocking.** Full suite
 validation is `validate_outputs` ALL TRUE after the Run-12 fixed-point tail;
@@ -40,11 +40,13 @@ What remains is **optional future deepening or externally-gated**, in priority o
 2. **Additive deepening (doable in a future session, medium value, under the promotion rule):**
    - Live canonical artifacts now include `proof_dependency_graph`,
      `state_transition_table`, `ablation_sensitivity_report`, and
-     `release_attestation`; future work should deepen those same stable surfaces
-     rather than creating versioned siblings.
+     `release_attestation`; the current verifier-first tranche deepens those
+     same stable surfaces with edge, transition, join, and attestation checks.
+     Future work should continue deepening these IDs rather than creating
+     versioned siblings.
    - Remaining optional work is mostly venue- or release-process polish.
 3. **Environment-gated maintenance:** `AI-TEST-ISOLATION-1` — the durable soak
-   runner now writes `output/reports/test_isolation_soak.json` incrementally
+   runner now writes and validates `output/reports/test_isolation_soak.json`
    from repeated deterministic shuffled chunked runs. A local diagnostic
    five-run soak on 2026-06-13 exposed order-sensitive stale-artifact failures
    under seeds 61300, 61301, and 61302; the reported failing chunk groups and a
@@ -76,9 +78,13 @@ implementation begins.
 
 | ID | Area | Remaining improvement | Proving artifact | Gate or predicate | Negative control |
 | --- | --- | --- | --- | --- | --- |
-| `AI-TEST-ISOLATION-1` | Test infra | Complete the 5-consecutive-run idle-host soak. `run_test_isolation_soak.py` now records repeated deterministic shuffled chunked runs incrementally in `output/reports/test_isolation_soak.json`; the 2026-06-13 diagnostic soak exposed stale-artifact order failures that were hardened, but a fresh idle-host completion transcript is still needed. | `output/reports/test_isolation_soak.json` | five green consecutive runs with fixed or reported shuffle seeds and `complete_soak: true` | Red shuffled run is reported with its seed and tail, not re-rolled |
+| `AI-TEST-ISOLATION-1` | Test infra | Complete the 5-consecutive-run idle-host soak. `run_test_isolation_soak.py` records repeated deterministic shuffled chunked runs incrementally, and `--validate-report --require-complete` verifies seed continuity, failed chunk ids, failed tests, diagnostic completeness, and `complete_soak`. The 2026-06-13 diagnostic soak exposed stale-artifact order failures that were hardened, but a fresh idle-host completion transcript is still needed. | `output/reports/test_isolation_soak.json` | five green consecutive runs with fixed or reported shuffle seeds and `complete_soak: true` | Red shuffled run is reported with its seed and tail, not re-rolled |
 | `REVIEW-FIGURE-RELOCATION-1` | Visualization | At venue-submission time, decide whether dense dashboard figures should move to the supplement with simplified main-text replacements. Deliberately deferred because the current paper is an auditable artifact paper. | `figures.yaml` `section_figures` | compose and figure-source gates stay green | Figure lacks source artifact |
 | `TMAZE-MATRIX-TABLE-1` | Visualization | At venue-submission time, convert `si_tmaze_model_matrices` into a generated table or move it fully to the supplement. Do not hand-typeset values; bind them to the matrix artifact. | generated table binding + matrix artifact | compose and figure gates stay green | Typeset values diverge from matrix artifact |
+
+`tasks.yaml` is the taskboard metadata surface. `scripts/audit_roadmap_tasks.py`
+keeps the open TODO rows, task status/progress, and blocked/deferred semantics in
+agreement without making completed proof claims active roadmap work again.
 
 ## Completed hardening removed from active scope
 
@@ -109,10 +115,10 @@ the promotion rule intact.
 
 | Canonical id | Purpose | Artifact | Manuscript binding | Gate | Negative control |
 | --- | --- | --- | --- | --- | --- |
-| `proof_dependency_graph` | Expand extracted Lean proof dependencies into theorem-to-definition edges | `output/data/proof_dependency_graph.json` | `methods_lean/proof_dependency_graph.md` | proof dependency validator plus `lake build` | Theorem dependency edge is dropped |
-| `state_transition_table` | Emit explicit finite transition tables for every toy topology and T-maze action | `output/data/state_transition_table.json` | `results_invariants/state_transition_table.md` | transition-table validator | Transition table omits a reachable state |
-| `ablation_sensitivity_report` | Summarize causal-ablation effects against sensitivity and uncertainty rows | `output/reports/ablation_sensitivity_report.json` | `results_invariants/ablation_sensitivity_report.md` | ablation-sensitivity validator | Ablation effect is reported without source row |
-| `release_attestation` | Generate a compact attestation over validation report, bundle hash, license audit, and blocked scope | `output/reports/release_attestation.json` | `discussion_outlook/release_attestation.md` | release-attestation validator | Attestation claims a failed gate passed |
+| `proof_dependency_graph` | Expand extracted Lean proof dependencies into theorem-to-definition and witness edges | `output/data/proof_dependency_graph.json` | `methods_lean/proof_dependency_graph.md` | proof dependency validator plus `lake build`; requires unique edges, required edge types, and no orphan targets | Theorem dependency edge is dropped, duplicated, or pointed at an orphan target |
+| `state_transition_table` | Emit explicit finite transition tables for every toy topology and T-maze action | `output/data/state_transition_table.json` | `results_invariants/state_transition_table.md` | transition-table validator; requires unique transition keys, outgoing coverage for every reachable state, and terminal self-transition coverage | Transition table omits a reachable state, duplicate key, outgoing transition, or terminal self-transition |
+| `ablation_sensitivity_report` | Summarize causal-ablation effects against sensitivity and uncertainty rows | `output/reports/ablation_sensitivity_report.json` | `results_invariants/ablation_sensitivity_report.md` | ablation-sensitivity validator; requires explicit source join keys and source row-count agreement | Ablation effect is reported without source row or join key |
+| `release_attestation` | Generate a compact attestation over validation report, bundle hash, license audit, and blocked scope | `output/reports/release_attestation.json` | `discussion_outlook/release_attestation.md` | release-attestation validator; requires attested source counts and validation check ids/counts to match the current report | Attestation claims a failed gate passed or reports stale attestation counts |
 
 ## Future sheaf tracks
 
@@ -152,7 +158,8 @@ restrictions, gates, and negative controls.
 ## Known residual: idle-host isolation soak
 
 Historical full-suite artifact-isolation races have been narrowed by symmetric
-gate-cache eviction, file-chunk isolation, and deterministic shuffle support.
+gate-cache eviction, file-chunk isolation, deterministic shuffle support, and
+machine validation for persisted soak reports.
 The remaining evidence task is a five-run idle-host soak. A loaded-host chunked
 run on 2026-06-11 produced one red chunk followed by two exact chunk reruns that
 passed. A diagnostic five-run local soak on 2026-06-13 recorded red seeds

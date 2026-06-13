@@ -76,6 +76,38 @@ checks `invariants_all_pass`, `simulation_invariants_all_pass`,
 after hydration), and `full_sheaf_appendix_tracks` (the full-coverage appendix
 contains every `sheaf-track:{id}` marker bound in the manifest).
 
+## Canonical supplemental artifact validators
+
+The canonical supplemental artifacts keep stable IDs and deepen their validation
+rules in place:
+
+- `proof_dependency_graph.json` must have linked theorem rows, resolved edges,
+  unique edge keys, all required edge types, and no orphan theorem/model-witness
+  targets. Negative controls live in
+  `tests/test_track_consolidation.py` by dropping links, duplicating edges, and
+  pointing an edge at an orphan target.
+- `state_transition_table.json` must have deterministic transitions, unique
+  transition keys, coverage for every required finite toy model, outgoing
+  transitions for every reachable state key, and terminal self-transition
+  coverage. Negative controls mutate missing models, duplicate keys, missing
+  outgoing coverage, and terminal self-transition coverage.
+- `ablation_sensitivity_report.json` must keep every effect source-backed, bind
+  each row by an explicit source join key, and agree with the causal-ablation
+  source row count. Negative controls remove source backing and join keys.
+- `release_attestation.json` must agree with its row pass/fail state, pin the
+  current validation-report hash, and expose attested source counts plus
+  validation check ids/counts. Negative controls flip a failed gate to passed or
+  stale the attested counts.
+
+The idle-host isolation soak is intentionally not a release blocker. Its
+diagnostic/completion contract is enforced by
+`scripts/run_test_isolation_soak.py --validate-report`; closure requires
+`--require-complete` and `complete_soak: true`.
+
+`scripts/audit_roadmap_tasks.py` is a lightweight project-management gate, not a
+publication claim gate. It fails when active `TODO.md` rows and `tasks.yaml`
+disagree on status, progress, proof-artifact notes, or blocked/deferred state.
+
 ## Invariant checks
 
 Invariants are split by track and registry-backed:
