@@ -35,7 +35,7 @@ privileged-information sources
 @penaloza2026pidistill; @penaloza2026tutorial],
 recent self-distillation and entropy/hybrid OPD references [@zhao2026opsd; @shenfeld2026sdft;
 @hubotter2026sdpo; @liu2026sdpg; @lauyikfung2026sdpgcode; @jin2026entropy_opd;
-@zhu2026hpd; @oh2026vopd; @xing2026tropd; @jang2026veto; @ye2025blackbox_opd],
+@zhu2026hpd; @liu2026pwopsd; @oh2026vopd; @xing2026tropd; @jang2026veto; @ye2025blackbox_opd],
 empirical reasoning-distillation and speculative-KD context [@qwen2025technical_report;
 @thinkingmachines2025opd; @deepseek2025r1; @xu2024speculative_kd],
 OPD landscape indexes [@awesomeopd2026;

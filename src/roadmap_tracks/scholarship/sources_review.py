@@ -328,6 +328,18 @@ _REDTEAM_REVIEW_SOURCES: tuple[dict[str, Any], ...] = (
         "claim_boundary": "freshness-aware asynchronous OPD context only; no f-OPD benchmark is reproduced",
     },
     {
+        "citation_key": "liu2026pwopsd",
+        "source_kind": "primary_preprint",
+        "source_family": "opd_teacher_reliability",
+        "method_role": "position_weighted_teacher_token_reliability",
+        "tracks": ["prose", "scholarship"],
+        "artifact": "output/data/firstprinciples/opd_taxonomy.json",
+        "manuscript_sections": ["methods_analytical", "discussion_outlook"],
+        "source_locator": "arXiv:2605.21606v1, Abstract and Sections 3-4",
+        "source_heading": "When Are Teacher Tokens Reliable? Position-Weighted On-Policy Self-Distillation for Reasoning",
+        "claim_boundary": "teacher-token reliability context only; no PW-OPSD benchmark or diagnostic is reproduced",
+    },
+    {
         "citation_key": "ke2019f_divergence_imitation",
         "source_kind": "primary_preprint",
         "source_family": "kl_geometry_caveats",

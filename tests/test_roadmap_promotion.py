@@ -592,6 +592,7 @@ def test_scholarship_matrix_has_row_level_negative_control(project_root: Path) -
         "luo2026demystifying_opd",
         "han2026adaptive_teacher_exposure",
         "chen2026freshness_opd",
+        "liu2026pwopsd",
         "ke2019f_divergence_imitation",
         "hernandezlobato2016blackbox_alpha",
         "shrivastava2021mi_kd",
@@ -634,10 +635,20 @@ def test_scholarship_matrix_has_row_level_negative_control(project_root: Path) -
     assert freshness["doi"] == "10.48550/arXiv.2605.17862"
     assert freshness["url"] == "https://arxiv.org/abs/2605.17862"
     assert freshness["arxiv_id"] == "2605.17862"
+    pw_opsd = next(row for row in data["rows"] if row["citation_key"] == "liu2026pwopsd")
+    assert pw_opsd["source_family"] == "opd_teacher_reliability"
+    assert pw_opsd["method_role"] == "position_weighted_teacher_token_reliability"
+    assert pw_opsd["source_locator"] == "arXiv:2605.21606v1, Abstract and Sections 3-4"
+    assert pw_opsd["source_heading"] == (
+        "When Are Teacher Tokens Reliable? Position-Weighted On-Policy Self-Distillation for Reasoning"
+    )
+    assert pw_opsd["doi"] == "10.48550/arXiv.2605.21606"
+    assert pw_opsd["url"] == "https://arxiv.org/abs/2605.21606"
+    assert pw_opsd["arxiv_id"] == "2605.21606"
 
     missing_new_source = json.loads(json.dumps(data))
     missing_new_source["rows"] = [
-        row for row in missing_new_source["rows"] if row["citation_key"] != "chen2026freshness_opd"
+        row for row in missing_new_source["rows"] if row["citation_key"] != "liu2026pwopsd"
     ]
     missing_new_source["observed_sources"] = sorted(row["citation_key"] for row in missing_new_source["rows"])
     missing_new_source["source_count"] = len(missing_new_source["rows"])

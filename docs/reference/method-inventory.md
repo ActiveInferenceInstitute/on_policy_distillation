@@ -322,13 +322,13 @@ Total documented definitions: 891
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
 | 34 | `class` | `Method` | docstring | One on-policy distillation method with its structural attributes. |
-| 291 | `function` | `methods` | inventory fallback | Inventory fallback for function `methods` defined at `src/firstprinciples/taxonomy.py:291`. |
-| 295 | `function` | `on_policy_methods` | inventory fallback | Inventory fallback for function `on_policy_methods` defined at `src/firstprinciples/taxonomy.py:295`. |
-| 299 | `function` | `privileged_info_methods` | inventory fallback | Inventory fallback for function `privileged_info_methods` defined at `src/firstprinciples/taxonomy.py:299`. |
-| 303 | `function` | `loss_share_total` | docstring | Total of the loss-family shares (should be ~1.0). |
-| 308 | `function` | `as_records` | inventory fallback | Inventory fallback for function `as_records` defined at `src/firstprinciples/taxonomy.py:308`. |
-| 312 | `function` | `markdown_table` | inventory fallback | Inventory fallback for function `markdown_table` defined at `src/firstprinciples/taxonomy.py:312`. |
-| 323 | `function` | `build_payload` | docstring | Build the canonical `firstprinciples.opd_taxonomy` artifact payload. |
+| 303 | `function` | `methods` | inventory fallback | Inventory fallback for function `methods` defined at `src/firstprinciples/taxonomy.py:303`. |
+| 307 | `function` | `on_policy_methods` | inventory fallback | Inventory fallback for function `on_policy_methods` defined at `src/firstprinciples/taxonomy.py:307`. |
+| 311 | `function` | `privileged_info_methods` | inventory fallback | Inventory fallback for function `privileged_info_methods` defined at `src/firstprinciples/taxonomy.py:311`. |
+| 315 | `function` | `loss_share_total` | docstring | Total of the loss-family shares (should be ~1.0). |
+| 320 | `function` | `as_records` | inventory fallback | Inventory fallback for function `as_records` defined at `src/firstprinciples/taxonomy.py:320`. |
+| 324 | `function` | `markdown_table` | inventory fallback | Inventory fallback for function `markdown_table` defined at `src/firstprinciples/taxonomy.py:324`. |
+| 335 | `function` | `build_payload` | docstring | Build the canonical `firstprinciples.opd_taxonomy` artifact payload. |
 
 ## `src/firstprinciples/variational_em.py`
 

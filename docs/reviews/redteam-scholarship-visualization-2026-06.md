@@ -11,6 +11,7 @@
 | Figure quality gates checked source maps and hashes but not a single generated row-level readability/scope audit | **LANDED** | `output/reports/visualization_quality_audit.json` now records readable/nonblank pixels, source binding, caption scope guardrails, overclaim checks, and unexpected-image absence for every registered figure. |
 | Stray ignored images under `output/figures` could be hashed without source-map or caption binding | **LANDED** | `figure_hash_manifest.v1`, `figure_output_integrity`, and `visualization_quality_audit.v1` now reject undeclared visible image artifacts; only registry PNGs plus the explicit animation GIF are declared. |
 | Caption/prose could overread the new sensitivity sweep as empirical OPD evidence | **LANDED** | Manuscript and caption text state deterministic finite correction-dose sweep, toy-only scope, and no production-LLM benchmark claim. |
+| Teacher-token reliability scholarship lagged the newest OPD reliability pressure case | **LANDED** | `liu2026pwopsd` is added as a primary-preprint scholarship row and OPD taxonomy method; it is cited only as external teacher-token reliability context, not as reproduced evidence. |
 
 ## Boundary
 

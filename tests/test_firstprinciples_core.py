@@ -232,9 +232,15 @@ def test_taxonomy_structure() -> None:
         "EDGE-OPD",
         "SOD",
         "OPSDL",
+        "PW-OPSD",
         "ViCuR",
         "VA-OPD",
         "DistiLLM-2",
     } <= acronyms
+    pw_opsd = next(m for m in taxonomy.METHODS if m.acronym == "PW-OPSD")
+    assert pw_opsd.on_policy and pw_opsd.privileged_info
+    assert pw_opsd.bibkey == "liu2026pwopsd"
+    assert pw_opsd.signal_source == "position_weighted_reliability"
+    assert "position_weighted_reliability" in taxonomy.SIGNAL_SOURCES
     # Hinton KD is the off-policy baseline.
     assert taxonomy.METHODS[0].on_policy is False
