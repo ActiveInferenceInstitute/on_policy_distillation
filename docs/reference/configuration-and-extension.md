@@ -102,9 +102,13 @@ A figure that misses one of these surfaces cascades ~10 test failures
    `tests/test_figures.py::test_figure_generators_match_registry` requires this
    dict and `figures.yaml` to match exactly.
 3. **`figures.yaml` entry** — filename, self-contained `alt`, quantitative
-   `caption` using `{{token}}` hydration (no hand-typed numbers; check any new
-   format spec against `_TOKEN_RE` in `src/manuscript/hydrate.py` — a spec the
-   regex does not match is silently left unsubstituted), and `width`.
+   `caption` using `{{token}}` hydration for ordinary evidence figures (no
+   hand-typed numbers; check any new format spec against `_TOKEN_RE` in
+   `src/manuscript/hydrate.py` — a spec the regex does not match is silently
+   left unsubstituted), and `width`. The `graphical_abstract` cover is the
+   deliberate exception: it is a quantitative-free overview schematic, so nats,
+   cue values, losses, counts, and metric badges belong in the body figures and
+   tables instead.
 4. **Section binding** — add the id under `figures.yaml` `section_figures.<section>`.
    The section must bind the `visualization` track in
    `manuscript/sheaf/manifest.yaml` (a one-line placeholder fragment under

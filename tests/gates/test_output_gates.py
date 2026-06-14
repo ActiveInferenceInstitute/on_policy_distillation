@@ -367,9 +367,11 @@ def test_validate_outputs_negative_visualization_quality_audit_rejects_cover_wor
     payload = json.loads(backup.read_text(encoding="utf-8"))
     row = next(row for row in payload["rows"] if row["figure_id"] == "graphical_abstract")
     row["claim_wording_ok"] = False
+    row["cover_quantitative_free"] = False
     row["accessibility_ok"] = False
     row["ok"] = False
     payload["all_claim_wording_ok"] = True
+    payload["all_cover_quantitative_free"] = True
     payload["all_accessibility_metadata_ok"] = True
     payload["all_rows_ok"] = True
     try:

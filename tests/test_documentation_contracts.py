@@ -150,6 +150,9 @@ def test_figure_docs_signpost_cover_scope_and_accessibility_audit(project_root: 
         "palette_contrast_report",
         "font_role_report",
         "cover wording",
+        "cover quantitative-free status",
+        "quantitative-free overview schematic",
+        "body figures and tables",
         "font-role floors",
     ):
         assert phrase in combined

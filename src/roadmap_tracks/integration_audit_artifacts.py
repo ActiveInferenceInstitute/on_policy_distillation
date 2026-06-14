@@ -213,7 +213,6 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         "scholarship_source_map": ["output/data/scholarship_source_matrix.json", "manuscript/references.bib"],
         "graphical_abstract": [
             "manuscript/sheaf/tracks.yaml",
-            "output/data/manuscript_variables.json",
             "output/data/firstprinciples/classroom.json",
             "output/data/firstprinciples/energy_demo.json",
             "output/data/firstprinciples/sequential_shift.json",
@@ -344,15 +343,11 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         "causal_ablation_heatmap": ["$.rows[*].topology", "$.rows[*].perturbation", "$.rows[*].effect"],
         "scholarship_source_map": ["$.rows[*].citation_key", "$.rows[*].method_role", "$.rows[*].artifact"],
         "graphical_abstract": [
-            "$.proof_extraction_theorem_count",
-            "$.sheaf_laws_verified",
-            "$.figure_source_coverage_count",
-            "$.mean_reverse_kl",
-            "$.vfe_at_prior",
-            "$.test_loss_before",
-            "$.test_loss_after",
-            "$.gap_closed",
-            "$.shift_mass",
+            "manuscript/sheaf/tracks.yaml:track_registry",
+            "output/data/firstprinciples/classroom.json:schema",
+            "output/data/firstprinciples/energy_demo.json:schema",
+            "output/data/firstprinciples/sequential_shift.json:schema",
+            "output/data/validation_dependency_graph.json:producer_consumer_spine",
         ],
     }
     validation_gates = {
@@ -631,6 +626,43 @@ def _figure_claim_wording_ok(figure_id: str, text: str) -> bool:
     return all(term in lower for term in required_cover_terms) and "universal identity" in lower
 
 
+_COVER_FORBIDDEN_QUANT_PHRASES = (
+    "nats",
+    "cue observed",
+    "teacher cue",
+    "policy entropy drop",
+    "mean reverse kl",
+    "test loss",
+    "train loss",
+    "gap nats",
+    "rmse",
+    "gpu-hours",
+    "aime",
+)
+
+_COVER_FORBIDDEN_COUNT_BADGES = (
+    "tracks",
+    "claim rows",
+    "lean proofs",
+    "source-bound figures",
+)
+
+
+def _cover_quantitative_free(figure_id: str, text: str) -> bool:
+    """Reject metric-dashboard language only on the graphical abstract."""
+    if figure_id != "graphical_abstract":
+        return True
+    lower = " ".join(text.lower().split())
+    if any(phrase in lower for phrase in _COVER_FORBIDDEN_QUANT_PHRASES):
+        return False
+    if re.search(r"\b\d+\.\d+\b", lower):
+        return False
+    for badge in _COVER_FORBIDDEN_COUNT_BADGES:
+        if re.search(rf"\b\d+\s+{re.escape(badge)}\b", lower):
+            return False
+    return True
+
+
 def build_visualization_quality_audit(project_root: Path) -> dict[str, Any]:
     """Build a verifier-facing audit over figure readability, provenance, and caption scope."""
     root = project_root.resolve()
@@ -675,6 +707,7 @@ def build_visualization_quality_audit(project_root: Path) -> dict[str, Any]:
         scope_guard_present = (not scope_guard_required) or any(term in lower for term in _FIGURE_SCOPE_TERMS)
         caption_overclaim_free = _caption_overclaim_free(text)
         claim_wording_ok = _figure_claim_wording_ok(figure_id, text)
+        cover_quantitative_free = _cover_quantitative_free(figure_id, text)
         source_bound = (
             row.get("mapped") is True
             and row.get("source_paths_exist") is True
@@ -692,6 +725,7 @@ def build_visualization_quality_audit(project_root: Path) -> dict[str, Any]:
             and scope_guard_present
             and caption_overclaim_free
             and claim_wording_ok
+            and cover_quantitative_free
             and accessibility_ok
         )
         rows.append(
@@ -708,6 +742,7 @@ def build_visualization_quality_audit(project_root: Path) -> dict[str, Any]:
                 "scope_guard_present": scope_guard_present,
                 "caption_overclaim_free": caption_overclaim_free,
                 "claim_wording_ok": claim_wording_ok,
+                "cover_quantitative_free": cover_quantitative_free,
                 "accessibility_ok": accessibility_ok,
                 "ok": ok,
             }
@@ -729,6 +764,7 @@ def build_visualization_quality_audit(project_root: Path) -> dict[str, Any]:
         "all_scope_guards_present": bool(rows) and all(row["scope_guard_present"] for row in rows),
         "all_caption_overclaims_free": bool(rows) and all(row["caption_overclaim_free"] for row in rows),
         "all_claim_wording_ok": bool(rows) and all(row["claim_wording_ok"] for row in rows),
+        "all_cover_quantitative_free": bool(rows) and all(row["cover_quantitative_free"] for row in rows),
         "all_accessibility_metadata_ok": bool(rows) and all(row["accessibility_ok"] for row in rows),
         "no_unexpected_image_artifacts": not unexpected_images,
         "all_rows_ok": bool(rows)

@@ -398,6 +398,7 @@ def _visualization_quality_audit_ok(payload: dict) -> bool:
         and payload.get("all_scope_guards_present") is True
         and payload.get("all_caption_overclaims_free") is True
         and payload.get("all_claim_wording_ok") is True
+        and payload.get("all_cover_quantitative_free") is True
         and payload.get("all_accessibility_metadata_ok") is True
         and payload.get("palette_contrast_ok") is True
         and payload.get("font_roles_ok") is True
@@ -429,6 +430,7 @@ def _visualization_quality_audit_ok(payload: dict) -> bool:
             and row.get("scope_guard_present") is True
             and row.get("caption_overclaim_free") is True
             and row.get("claim_wording_ok") is True
+            and row.get("cover_quantitative_free") is True
             and row.get("accessibility_ok") is True
             and row.get("ok") is True
             and int(row.get("image_width_px", 0) or 0) >= 400

@@ -229,6 +229,16 @@ def test_figure_source_map_has_registry_parity_and_data_backing(project_root: Pa
         "validation_gates"
     ]
 
+    cover_row = rows_by_id["graphical_abstract"]
+    assert "output/data/manuscript_variables.json" not in cover_row["sources"]
+    assert {
+        "manuscript/sheaf/tracks.yaml:track_registry",
+        "output/data/firstprinciples/classroom.json:schema",
+        "output/data/firstprinciples/energy_demo.json:schema",
+        "output/data/firstprinciples/sequential_shift.json:schema",
+        "output/data/validation_dependency_graph.json:producer_consumer_spine",
+    } <= set(cover_row["source_fields"])
+
     quality = build_visualization_quality_audit(project_root)
     quality_rows = {row["figure_id"]: row for row in quality["rows"]}
     assert quality["schema"] == "template_active_inference.visualization_quality_audit.v1"
@@ -240,6 +250,7 @@ def test_figure_source_map_has_registry_parity_and_data_backing(project_root: Pa
     assert quality["all_scope_guards_present"] is True
     assert quality["all_caption_overclaims_free"] is True
     assert quality["all_claim_wording_ok"] is True
+    assert quality["all_cover_quantitative_free"] is True
     assert quality["all_accessibility_metadata_ok"] is True
     assert quality["palette_contrast_ok"] is True
     assert quality["font_roles_ok"] is True
@@ -251,6 +262,7 @@ def test_figure_source_map_has_registry_parity_and_data_backing(project_root: Pa
     assert quality_rows["sequential_shift_sensitivity"]["scope_guard_present"] is True
     assert quality_rows["sequential_shift_sensitivity"]["caption_overclaim_free"] is True
     assert quality_rows["graphical_abstract"]["claim_wording_ok"] is True
+    assert quality_rows["graphical_abstract"]["cover_quantitative_free"] is True
     assert quality_rows["graphical_abstract"]["accessibility_ok"] is True
 
 
@@ -352,7 +364,11 @@ def test_figure_registry_rejects_formal_and_causal_overclaim_phrases(project_roo
 
 
 def test_visualization_claim_wording_guard_rejects_cover_equality() -> None:
-    from roadmap_tracks.integration_audit_artifacts import _caption_overclaim_free, _figure_claim_wording_ok
+    from roadmap_tracks.integration_audit_artifacts import (
+        _caption_overclaim_free,
+        _cover_quantitative_free,
+        _figure_claim_wording_ok,
+    )
 
     assert not _caption_overclaim_free("OPD = Active Inference")
     assert not _figure_claim_wording_ok("graphical_abstract", "OPD = Active Inference")
@@ -360,6 +376,13 @@ def test_visualization_claim_wording_guard_rejects_cover_equality() -> None:
         "graphical_abstract",
         "Finite-model reading with a correspondence rather than a universal identity.",
     )
+    assert not _cover_quantitative_free("graphical_abstract", "test loss 0.41 nats")
+    assert not _cover_quantitative_free("graphical_abstract", "42 gates and teacher cue")
+    assert _cover_quantitative_free(
+        "graphical_abstract",
+        "Finite-model reading schematic; quantitative evidence appears in body figures.",
+    )
+    assert _cover_quantitative_free("sequential_shift_recovery", "test loss 0.41 nats")
 
 
 def test_figure_sheaf_layers_overview_dimensions(project_root: Path) -> None:
@@ -411,14 +434,29 @@ def test_graphical_abstract_represents_artifact_validation_spine(project_root: P
     source = (project_root / "src" / "visualizations" / "figures_abstract.py").read_text(encoding="utf-8")
     registry = load_figure_registry(project_root)
     metadata = registry["graphical_abstract"].alt + "\n" + registry["graphical_abstract"].caption
-    assert "Lean + gates" in source
-    assert "Sequential shift" in source
-    assert "finite correspondence object" in source
+    assert "Validation spine" in source
+    assert "sequential shift witness" in source
+    assert "finite active-inference reading" in source
     assert "correspondence, not universal identity" in source
-    assert "proof_extraction_theorem_count" in source
+    assert "body figures and tables" in metadata
+    assert "manuscript_variables" not in source
+    assert "proof_extraction_theorem_count" not in source
+    assert "_json_or_empty" not in source
     combined = source + "\n" + metadata
     for forbidden in ("Empirical", "Qwen", "AIME", "GPU-hours"):
         assert forbidden not in combined
+    for metric in (
+        " nats",
+        "cue observed",
+        "teacher cue",
+        "policy entropy drop",
+        "mean reverse KL",
+        "test loss",
+        "train loss",
+        "RMSE",
+        "gap nats",
+    ):
+        assert metric not in combined
     for stale in ("OPD = Active Inference", "= free energy", "universal identity."):
         assert stale not in source
 

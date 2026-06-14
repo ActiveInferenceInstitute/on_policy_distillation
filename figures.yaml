@@ -608,21 +608,23 @@ figures:
     alt: >-
       Near-square cover-page technical schematic for the finite-model active-inference
       reading of on-policy distillation. A dark title band states the scoped title, a
-      central finite correspondence object connects the reverse-KL target to a finite VFE
-      term under the declared rollout measure, and four evidence rails report the
-      analytical oracle, pymdp/classroom rollout witness, finite energy bridge, and
-      Lean/sheaf validation gates. A fifth lower rail reports the deterministic
-      sequential-shift toy witness.
+      central finite active-inference reading loop connects a teacher policy, student
+      rollout, realized trajectory, and validation gate. Surrounding conceptual regions
+      identify the declared finite model, teacher/student rollout situation,
+      sequential-shift correction setting, and source-bound validation spine. The cover
+      carries no metric values; detailed quantitative evidence lives in the body
+      figures and tables.
     caption: >-
       Near-square graphical abstract for the toy/artifact exemplar. The central technical
       schematic reads on-policy distillation through a declared finite active-inference
-      correspondence object: a reverse-KL target is related to a finite VFE term under the
-      student rollout measure, with the image explicitly scoped as a correspondence rather
-      than a universal identity. The surrounding evidence rails pull live quantities from
-      the analytical oracle, pymdp/classroom rollout artifacts, first-principles energy
+      correspondence object: a teacher policy is related to a student rollout under the
+      declared rollout measure, with the image explicitly scoped as a correspondence
+      rather than a universal identity. The surrounding conceptual regions point to the
+      analytical oracle, pymdp/classroom rollout artifacts, first-principles energy
       decomposition, deterministic finite sequential-shift witness, and Lean/sheaf
-      validation gates, so the cover image is source-bound repository evidence rather than
-      narrative decoration.
+      validation gates without printing configurable or output-derived metric values.
+      Detailed quantitative evidence remains in the registered body figures and tables,
+      so the cover image is source-bound orientation rather than narrative decoration.
     width: 0.96
 
 section_figures:

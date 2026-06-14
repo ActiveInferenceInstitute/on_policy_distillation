@@ -48,9 +48,12 @@ statistical claim.
 The cover image is a generated technical schematic, not a hand-edited design asset.
 `graphical_abstract` must keep the manuscript title framing: finite-model
 active-inference reading/correspondence, never the obsolete equality slogan
-`OPD = Active Inference`. Its source-bound rails summarize the analytical oracle,
+`OPD = Active Inference`. It is an overview-level orientation graphic, not a metric
+dashboard: no nats, cue values, losses, counts, or output-derived badges belong on the
+cover. Its source-bound conceptual regions summarize the analytical oracle,
 pymdp/classroom rollout witness, energy decomposition, sequential-shift witness, and
-Lean/sheaf validation gates.
+Lean/sheaf validation gates, while detailed quantitative evidence remains in the body
+figures and tables.
 
 ## Where figures land
 
@@ -87,10 +90,11 @@ unexpected image files under `output/figures/`; `_figure_hash_manifest_ok()` fai
 hashes are not verified or if an undeclared image appears. The generated
 `visualization_quality_audit.json` adds a third row-level guard over readable image
 bytes, nonblank pixels, source binding, caption scope terms, overclaim phrases,
-cover-claim wording, contrast-safe palette pairs (`palette_contrast_report`), font-role
-minimums (`font_role_report`), and unexpected-image absence. Together the source-map,
-hash, and quality-audit gates bind each figure to its inputs, content fingerprint,
-accessibility contract, and claim boundary.
+cover-claim wording, cover quantitative-free status, contrast-safe palette pairs
+(`palette_contrast_report`), font-role minimums (`font_role_report`), and
+unexpected-image absence. Together the source-map, hash, and quality-audit gates bind
+each figure to its inputs, content fingerprint, accessibility contract, and claim
+boundary.
 
 ## Caption discipline
 
@@ -127,15 +131,16 @@ The figure-binding gates run before the PDF can render and fail closed:
 | --- | --- | --- |
 | `figure_source_map_schema` | each figure → its source data paths | schema wrong, not all figures mapped, or a source row incomplete/missing |
 | `figure_hash_manifest_schema` | each declared image → a verified content hash, no undeclared image artifacts | schema wrong, hashes unverified, or stray images present |
-| `visualization_quality_audit_schema` | each figure → readable pixels, source binding, caption scope, cover wording, contrast/font accessibility, and no unexpected images | any row is unreadable, blank, unbound, missing a required scope guard, overclaiming, inaccessible by declared style tokens, or an undeclared image exists |
+| `visualization_quality_audit_schema` | each figure → readable pixels, source binding, caption scope, cover wording, cover quantitative-free status, contrast/font accessibility, and no unexpected images | any row is unreadable, blank, unbound, missing a required scope guard, overclaiming, metric-dashboard cover language appears, inaccessible by declared style tokens, or an undeclared image exists |
 
 These sit alongside the manuscript token gates (unresolved/malformed tokens) and the
 integration audit, which also emits `manuscript_token_provenance.json` and the
 `manuscript_hardcoded_variable_audit.json` feeding `{{token_provenance_count}}` and
 `{{hardcoded_variable_issue_count}}`. The net effect: a figure cannot enter the PDF
 unless its id is registered, its source data exists, its hash verifies, its pixels are
-readable/nonblank, its scope language is present where required, and every number in its
-caption/alt resolves from a generated artifact.
+readable/nonblank, its scope language is present where required, cover-specific metric
+language stays out of the graphical abstract, and every number in ordinary evidence
+captions/alts resolves from a generated artifact.
 
 ## Registry reference
 

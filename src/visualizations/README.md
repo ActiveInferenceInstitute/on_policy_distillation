@@ -21,11 +21,14 @@ only for failure/risk.
 
 The cover generator (`figures_abstract.py`) is a source-bound technical schematic. It must
 state the finite-model active-inference reading/correspondence and must not reintroduce
-the obsolete equality slogan `OPD = Active Inference`.
+the obsolete equality slogan `OPD = Active Inference`. It is also intentionally
+quantitative-free: no nats, cue values, losses, counts, or metric badges belong on the
+cover. Detailed quantitative evidence belongs in the registered body figures and tables.
 
 `output/reports/visualization_quality_audit.json` records readable/nonblank pixels,
-source binding, caption scope, cover wording, `palette_contrast_report`, and
-`font_role_report`; `validate_outputs.visualization_quality_audit_schema` fails if any of
-those row-level checks drift.
+source binding, caption scope, cover wording, cover quantitative-free status,
+`palette_contrast_report`, and `font_role_report`;
+`validate_outputs.visualization_quality_audit_schema` fails if any of those row-level
+checks drift.
 
 Entry point: `scripts/generate_figures.py` → `generate_all_figures()`.

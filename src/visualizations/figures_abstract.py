@@ -1,11 +1,9 @@
-"""Cover-page graphical abstract figure assembled from generated evidence artifacts."""
+"""Cover-page graphical abstract figure assembled as a source-bound schematic."""
 
 from __future__ import annotations
 
-import json
 import textwrap
 from pathlib import Path
-from typing import Any
 
 import matplotlib
 
@@ -18,44 +16,12 @@ from .figure_registry import figure_output_path
 from .figure_style import apply_style, load_figure_style
 
 
-def _json_or_empty(path: Path) -> dict[str, Any]:
-    if not path.is_file():
-        return {}
-    data = json.loads(path.read_text(encoding="utf-8"))
-    return data if isinstance(data, dict) else {}
-
-
 def figure_graphical_abstract(project_root: Path) -> Path:
-    """Render the cover-page graphical abstract from generated evidence artifacts."""
+    """Render the cover-page graphical abstract as a quantitative-free schematic."""
     root = project_root.resolve()
     style = load_figure_style(root)
-    from manuscript.sheaf.counts import structural_counts
-
-    counts = structural_counts(root)
-    variables = _json_or_empty(root / "output" / "data" / "manuscript_variables.json")
-    fp = root / "output" / "data" / "firstprinciples"
-    energy_d = _json_or_empty(fp / "energy_demo.json")
-    classroom_d = _json_or_empty(fp / "classroom.json")
-    sequential_d = _json_or_empty(fp / "sequential_shift.json")
-    vfe_d = energy_d.get("vfe_at_prior") or {}
-    efe_d = energy_d.get("efe") or {}
-
-    def _f(value: object, fmt: str = ".2f") -> str:
-        try:
-            return format(float(value), fmt)  # type: ignore[arg-type]
-        except (TypeError, ValueError):
-            return "--"
-
-    def _i(value: object) -> str:
-        try:
-            return str(int(value))  # type: ignore[arg-type]
-        except (TypeError, ValueError):
-            return "--"
 
     out = figure_output_path(root, "graphical_abstract")
-
-    def _v(name: str) -> object:
-        return variables.get(name, counts.get(name))
 
     background = style.color("cover_bg")
     ink = style.color("primary")
@@ -102,13 +68,13 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         ax.text(
             0.56,
             8.80,
-            "declared finite objects, toy witnesses, and fail-closed publication gates",
+            "overview schematic for declared objects, rollout situations, and validation gates",
             fontsize=style.font_size("small"),
             color="#eff6ff",
             va="center",
         )
 
-        def evidence_card(
+        def concept_panel(
             x: float,
             y: float,
             width: float,
@@ -117,7 +83,6 @@ def figure_graphical_abstract(project_root: Path) -> Path:
             eyebrow: str,
             lines: list[str],
             color: str,
-            metric: tuple[str, str] | None = None,
         ) -> None:
             ax.add_patch(
                 FancyBboxPatch(
@@ -139,106 +104,84 @@ def figure_graphical_abstract(project_root: Path) -> Path:
                 color=muted,
                 fontweight="bold",
             )
-            ax.text(x + 0.18, y + height - 0.76, title, fontsize=style.font_size("label"), fontweight="bold", color=color)
+            ax.text(
+                x + 0.18,
+                y + height - 0.76,
+                title,
+                fontsize=style.font_size("label"),
+                fontweight="bold",
+                color=color,
+            )
             text_top = y + height - 1.08
-            for line_idx, line in enumerate(lines):
-                ax.text(
-                    x + 0.20,
-                    text_top - line_idx * 0.35,
-                    textwrap.fill(line, width=30),
-                    fontsize=style.font_size("dense"),
-                    color=ink,
-                    va="top",
-                )
-            if metric is not None:
-                ax.add_patch(
-                    FancyBboxPatch(
-                        (x + width - 1.48, y + 0.14),
-                        1.24,
-                        0.66,
-                        boxstyle="round,pad=0.04,rounding_size=0.07",
-                        linewidth=0,
-                        facecolor=color,
-                        alpha=0.97,
+            cursor_y = text_top
+            for line in lines:
+                for wrapped in textwrap.wrap(line, width=34):
+                    ax.text(
+                        x + 0.20,
+                        cursor_y,
+                        wrapped,
+                        fontsize=style.font_size("dense"),
+                        color=ink,
+                        va="top",
                     )
-                )
-                ax.text(
-                    x + width - 0.86,
-                    y + 0.55,
-                    metric[0],
-                    fontsize=style.font_size("label"),
-                    fontweight="bold",
-                    color="white",
-                    ha="center",
-                )
-                ax.text(
-                    x + width - 0.86,
-                    y + 0.27,
-                    metric[1],
-                    fontsize=style.font_size("dense"),
-                    color="white",
-                    ha="center",
-                )
+                    cursor_y -= 0.24
+                cursor_y -= 0.08
 
-        evidence_card(
+        concept_panel(
             0.46,
             5.78,
             3.72,
             2.18,
-            "Analytical oracle",
-            "finite closed form",
+            "Declared model",
+            "finite objects",
             [
-                "declared Bernoulli-Ising variational object",
-                f"I(lambda) max {_f(_v('ising_mi_saturation'), '.3f')} nats",
-                f"MI recompute RMSE {_f(_v('sweep_rmse_mi'), '.1e')}",
+                "explicit finite objects",
+                "declared posterior family",
+                "toy-only scope boundary",
             ],
             analytical,
-            (_f(_v("free_energy_mean_field_gap_max"), ".2f"), "gap nats"),
         )
-        evidence_card(
+        concept_panel(
             0.46,
             0.86,
             3.72,
             2.05,
-            "Rollout witness",
-            "pymdp + classroom",
+            "Rollout situation",
+            "teacher and student",
             [
-                f"cue observed at step {_i(_v('si_tmaze_cue_observed_step'))}",
-                f"policy entropy drop {_f(_v('si_tmaze_policy_entropy_drop_after_cue'), '.3f')} nats",
-                f"mean reverse KL {_f(classroom_d.get('mean_reverse_kl'), '.2f')}",
+                "contextual teacher signal",
+                "student visits its own states",
+                "no production or biology claim",
             ],
             student,
-            (_f(_v("classroom_teacher_cue_validity"), ".2f"), "teacher cue"),
         )
-        evidence_card(
+        concept_panel(
             5.82,
             5.78,
             3.72,
             2.18,
-            "Finite energy bridge",
-            "VFE and EFE",
+            "Finite reading",
+            "VFE and EFE roles",
             [
-                "reverse KL read as a VFE term",
-                f"prior VFE {_f(vfe_d.get('vfe_complexity_accuracy'), '.2f')} nats",
-                f"risk + ambiguity {_f(efe_d.get('efe_risk_ambiguity'), '.2f')}",
+                "reverse KL as finite VFE",
+                "EFE for policy selection",
+                "artifact-backed boundary",
             ],
             energy,
-            (_f(efe_d.get("efe_risk_ambiguity"), ".2f"), "EFE nats"),
         )
-        evidence_card(
+        concept_panel(
             5.82,
             0.86,
             3.72,
             2.05,
-            "Lean + gates",
-            "fail closed",
+            "Validation spine",
+            "source bound",
             [
-                f"{_i(_v('sheaf_track_count'))} tracks; {_i(_v('claim_evidence_audit_count'))} claim rows",
-                f"{_i(_v('proof_extraction_theorem_count'))} Lean proofs",
-                f"{_i(_v('figure_source_coverage_count'))} source-bound figures",
+                "claim ledger plus source map",
+                "figure registry plus PDF gates",
+                "fails closed on drift",
             ],
             validation,
-            (_i(_v("validation_gate_index_count")), "gates"),
         )
 
         def node(x: float, y: float, label: str, body: str, color: str) -> None:
@@ -273,7 +216,7 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         ax.text(
             center_x,
             5.32,
-            "finite correspondence object",
+            "finite active-inference reading",
             fontsize=style.font_size("annotation"),
             fontweight="bold",
             color=ink,
@@ -283,8 +226,8 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         ax.text(
             center_x,
             4.94,
-            "reverse KL target",
-            fontsize=style.font_size("title") * 0.92,
+            "teacher policy -> student rollout",
+            fontsize=style.font_size("annotation") * 1.06,
             fontweight="bold",
             color=analytical,
             ha="center",
@@ -293,20 +236,36 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         ax.text(
             center_x,
             4.58,
-            "read as finite VFE",
-            fontsize=style.font_size("annotation") * 1.12,
+            "reverse KL read through finite VFE",
+            fontsize=style.font_size("annotation") * 0.96,
             fontweight="bold",
             color=energy,
             ha="center",
             zorder=3,
         )
-        ax.text(center_x, 4.08, "under the declared rollout measure", fontsize=style.font_size("small"), color=muted, ha="center", zorder=3)
-        ax.text(center_x, 3.78, "correspondence, not universal identity", fontsize=style.font_size("dense"), color=ink, ha="center", zorder=3)
+        ax.text(
+            center_x,
+            4.08,
+            "under the declared rollout measure",
+            fontsize=style.font_size("small"),
+            color=muted,
+            ha="center",
+            zorder=3,
+        )
+        ax.text(
+            center_x,
+            3.78,
+            "correspondence, not universal identity",
+            fontsize=style.font_size("dense"),
+            color=ink,
+            ha="center",
+            zorder=3,
+        )
         ax.add_patch(
             FancyBboxPatch(
-                (3.42, 3.26),
-                3.16,
-                0.34,
+                (3.24, 3.18),
+                3.52,
+                0.50,
                 boxstyle="round,pad=0.035,rounding_size=0.06",
                 linewidth=0.9,
                 edgecolor=teacher,
@@ -316,11 +275,8 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         )
         ax.text(
             center_x,
-            3.43,
-            "Sequential shift: loss "
-            f"{_f(sequential_d.get('test_loss_before'), '.2f')} -> "
-            f"{_f(sequential_d.get('test_loss_after'), '.2f')}; "
-            f"gap {_f(sequential_d.get('gap_closed'), '.2f')}",
+            3.48,
+            "sequential shift witness",
             fontsize=style.font_size("dense"),
             color=teacher,
             fontweight="bold",
@@ -328,21 +284,31 @@ def figure_graphical_abstract(project_root: Path) -> Path:
             va="center",
             zorder=4,
         )
+        ax.text(
+            center_x,
+            3.29,
+            "train path -> correction loop",
+            fontsize=style.font_size("dense") * 0.92,
+            color=teacher,
+            ha="center",
+            va="center",
+            zorder=4,
+        )
 
         loop_nodes = [
             (5.00, 6.64, "T", "teacher model", teacher),
-            (6.72, 4.50, "S", "student", student),
+            (7.28, 4.50, "S", "student", student),
             (5.00, 2.46, "R", "own rollouts", analytical),
-            (3.28, 4.50, "G", "gates", validation),
+            (2.72, 4.50, "G", "gates", validation),
         ]
         for x, y, label, body, color in loop_nodes:
             node(x, y, label, body, color)
 
         arrow_specs = [
-            ((5.38, 6.45), (6.42, 4.88), -0.10, teacher),
-            ((6.42, 4.12), (5.38, 2.68), -0.10, student),
-            ((4.62, 2.68), (3.58, 4.12), -0.10, analytical),
-            ((3.58, 4.88), (4.62, 6.45), -0.10, validation),
+            ((5.38, 6.45), (6.98, 4.88), -0.10, teacher),
+            ((6.98, 4.12), (5.38, 2.68), -0.10, student),
+            ((4.62, 2.68), (3.02, 4.12), -0.10, analytical),
+            ((3.02, 4.88), (4.62, 6.45), -0.10, validation),
         ]
         for start, end, rad, color in arrow_specs:
             ax.add_patch(
