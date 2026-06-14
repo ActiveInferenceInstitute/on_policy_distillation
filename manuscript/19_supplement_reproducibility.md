@@ -4,7 +4,7 @@
 
 ## Compose contract
 
-This standalone supplement documents the reproducibility methodology behind the rendered paper. The preceding full-coverage supplement ([@sec:appendix_full_sheaf]) proves that the maximal appendix row can bind all registered fragment families; this section instead explains the operational contract that makes those fragments reproducible: where data are generated, how variables are hydrated, which validators run, and how failed gates block the PDF.
+This standalone supplement documents the reproducibility methodology behind the rendered paper. The preceding full-coverage supplement ([@sec:appendix_full_sheaf]) checks that the maximal appendix row can bind all registered fragment families; this section instead explains the operational contract that makes those fragments reproducible: where data are generated, how variables are hydrated, which validators run, and how failed gates block the PDF.
 
 Each manifest row in `manuscript/sheaf/manifest.yaml` binds fragment tracks from `manuscript/sheaf/tracks.yaml`. A track supplies a renderer, compose order, label, and optional flag; the composer flattens the binding set into one Markdown section for PDF and web output. The machinery is generic, but the manuscript it assembles here argues a specific thesis: that on-policy distillation admits a finite-model active-inference reading when the variational objects are declared, so the composer must keep the analytical toy model, the pymdp rollout, the sequential-shift witness and sensitivity sweep, and the self-distillation literature mutually consistent about that scoped correspondence.
 
@@ -15,6 +15,8 @@ The operational claim is auditable binding: analytical, simulation, pymdp, visua
 [@fig:sheaf_layers_overview] summarizes {{sheaf_track_count}} fragment types and their IMRAD bindings. Generated tables below list every track definition and section×track binding at compose time. The bindings span the full argument: the minimal-model demonstrations (analytical and pymdp tracks) and the scholarship track that situates them against the off-policy baseline [@hinton2015distilling], the reverse-KL turn [@gu2024minillm], and the 2026 self-distillation wave [@zhao2026opsd; @shenfeld2026sdft; @liu2026sdpg].
 
 The visualization layer is audited as data, not as decoration. `output/data/figure_source_map.json` binds every registered figure to source artifacts, source fields, and validation gates; `output/reports/figure_hash_manifest.json` records the declared rendered image bytes; and `output/reports/visualization_quality_audit.json` rechecks readability, nonblank pixels, source binding, caption scope guardrails, and absence of unregistered image artifacts. The negative controls mutate rows under green summaries and add stray image files, so a figure with an unreadable image, missing source, unscoped empirical/production caption, or stale unregistered PNG cannot remain validated by a stale boolean.
+
+The statistical layer follows the same rule. `output/data/firstprinciples/statistics_demo.json` is accepted only when its matched teacher/student entropy series, paired deltas, summaries, effect size, and seeded permutation metadata rederive from `output/data/firstprinciples/classroom.json` at validation time. This makes the classroom inferential paragraph a source-bound toy summary rather than a free-floating significance claim.
 
 ## Compose commands
 

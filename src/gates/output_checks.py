@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 from gates.artifact_manifest import REQUIRED_OUTPUTS
@@ -60,6 +61,61 @@ def _as_int(value: object, default: int = 0) -> int:
         return int(value)
     except (TypeError, ValueError):
         return default
+
+
+def _close_float(value: object, expected: float, *, atol: float = 1e-9) -> bool:
+    try:
+        observed = float(value)
+    except (TypeError, ValueError):
+        return False
+    return bool(math.isfinite(observed) and abs(observed - expected) <= atol)
+
+
+def _finite_series(value: object, *, allow_negative: bool = False) -> list[float] | None:
+    if not isinstance(value, list) or not value:
+        return None
+    series: list[float] = []
+    for item in value:
+        try:
+            number = float(item)
+        except (TypeError, ValueError):
+            return None
+        if not math.isfinite(number) or (number < 0.0 and not allow_negative):
+            return None
+        series.append(number)
+    return series
+
+
+def _summary_matches_series(summary: object, series: list[float]) -> bool:
+    if not isinstance(summary, dict):
+        return False
+    n = len(series)
+    mean = sum(series) / n
+    variance = sum((value - mean) ** 2 for value in series) / (n - 1) if n > 1 else 0.0
+    expected = {
+        "n": n,
+        "mean": mean,
+        "std": math.sqrt(variance),
+        "minimum": min(series),
+        "maximum": max(series),
+    }
+    return all(_close_float(summary.get(key), value) for key, value in expected.items())
+
+
+def _cohens_d_student_minus_teacher(student: list[float], teacher: list[float]) -> float | None:
+    if len(student) < 2 or len(teacher) < 2:
+        return None
+    student_mean = sum(student) / len(student)
+    teacher_mean = sum(teacher) / len(teacher)
+    student_var = sum((value - student_mean) ** 2 for value in student) / (len(student) - 1)
+    teacher_var = sum((value - teacher_mean) ** 2 for value in teacher) / (len(teacher) - 1)
+    pooled_var = ((len(student) - 1) * student_var + (len(teacher) - 1) * teacher_var) / (
+        len(student) + len(teacher) - 2
+    )
+    pooled_sd = math.sqrt(pooled_var)
+    if pooled_sd == 0.0:
+        return 0.0
+    return (student_mean - teacher_mean) / pooled_sd
 
 
 _QWEN_SOURCE_LOCATOR = "Qwen3 Technical Report, Table 21"
@@ -153,6 +209,88 @@ def _firstprinciples_sequential_shift_sensitivity_ok(payload: dict) -> bool:
     from firstprinciples.sequential_shift import validate_sensitivity_payload
 
     return bool(payload) and not validate_sensitivity_payload(payload)
+
+
+def _firstprinciples_statistics_ok(root: Path, payload: dict) -> bool:
+    """Validate the classroom statistics artifact against its measured source rows."""
+    from firstprinciples.classroom import validate_classroom_payload
+
+    teacher = _finite_series(payload.get("teacher_entropy"))
+    student = _finite_series(payload.get("student_entropy"))
+    differences = _finite_series(payload.get("paired_difference"), allow_negative=True)
+    if teacher is None or student is None or differences is None:
+        return False
+    if len(teacher) != len(student) or len(teacher) != len(differences):
+        return False
+    sample_size = len(differences)
+    expected_differences = [s - t for s, t in zip(student, teacher, strict=True)]
+    if _as_int(payload.get("sample_size"), -1) != sample_size:
+        return False
+    if any(not math.isfinite(value) for value in differences):
+        return False
+    if any(abs(value - expected) > 1e-9 for value, expected in zip(differences, expected_differences, strict=True)):
+        return False
+    if not _summary_matches_series(payload.get("teacher_summary"), teacher):
+        return False
+    if not _summary_matches_series(payload.get("student_summary"), student):
+        return False
+
+    classroom = _read_json(root / "output" / "data" / "firstprinciples" / "classroom.json")
+    classroom_teacher = _finite_series(classroom.get("teacher_belief_entropies"))
+    classroom_student = _finite_series(classroom.get("student_belief_entropies"))
+    per_step = classroom.get("per_step") or []
+    if not validate_classroom_payload(classroom) or classroom_teacher != teacher or classroom_student != student:
+        return False
+    if _as_int(classroom.get("decision_count"), -1) != sample_size or len(per_step) != sample_size:
+        return False
+    for row, expected_teacher, expected_student in zip(per_step, teacher, student, strict=True):
+        if not isinstance(row, dict):
+            return False
+        if not _close_float(row.get("teacher_belief_entropy"), expected_teacher):
+            return False
+        if not _close_float(row.get("student_belief_entropy"), expected_student):
+            return False
+
+    ci = payload.get("advantage_bootstrap_ci") or {}
+    permutation = payload.get("paired_permutation") or {}
+    sign = payload.get("paired_sign_test") or {}
+    diff_mean = sum(differences) / sample_size
+    positive = sum(1 for value in differences if value > 0.0)
+    negative = sum(1 for value in differences if value < 0.0)
+    cohens_d = _cohens_d_student_minus_teacher(student, teacher)
+    if cohens_d is None:
+        return False
+    claim_scope = str(payload.get("claim_scope") or "").lower()
+    sample_unit = str(payload.get("sample_unit") or "").lower()
+    effect_size = str(payload.get("effect_size") or "").lower()
+    paired_test = str(payload.get("paired_test") or "").lower()
+    return bool(
+        payload.get("schema") == "firstprinciples.statistics_demo.v1"
+        and payload.get("ok") is True
+        and "toy-classroom" in claim_scope
+        and "not a production-scale" in claim_scope
+        and "classroom" in sample_unit
+        and "student minus teacher" in effect_size
+        and "student-minus-teacher" in paired_test
+        and payload.get("effect_size_reference") == "cohen1988power"
+        and _as_int(ci.get("n"), -1) == sample_size
+        and _as_int(ci.get("n_boot"), 0) > 0
+        and 0.0 < _as_float(ci.get("alpha"), -1.0) < 1.0
+        and _close_float(ci.get("point"), diff_mean)
+        and math.isfinite(_as_float(ci.get("ci_low"), math.inf))
+        and math.isfinite(_as_float(ci.get("ci_high"), math.inf))
+        and _as_float(ci.get("ci_low"), math.inf) <= _as_float(ci.get("ci_high"), -math.inf)
+        and _as_int(permutation.get("n"), -1) == sample_size
+        and _as_int(permutation.get("n_perm"), 0) > 0
+        and _close_float(permutation.get("mean_difference"), diff_mean)
+        and 0.0 <= _as_float(permutation.get("p_value"), -1.0) <= 1.0
+        and _close_float(sign.get("positive"), float(positive))
+        and _close_float(sign.get("negative"), float(negative))
+        and _close_float(sign.get("n"), float(positive + negative))
+        and _as_float(sign.get("p_value"), -1.0) <= 1.0
+        and _as_float(sign.get("p_value"), -1.0) >= 0.0
+        and _close_float(payload.get("cohens_d_student_minus_teacher"), cohens_d)
+    )
 
 
 def _pymdp_logging_expected(root: Path) -> bool:
@@ -523,15 +661,7 @@ def _validate_outputs_selected(root: Path, selected: set[str]) -> dict[str, bool
 
     if "firstprinciples_statistics_schema" in selected:
         fp_statistics = _read_json(root / "output" / "data" / "firstprinciples" / "statistics_demo.json")
-        fp_permutation = fp_statistics.get("paired_permutation") or {}
-        checks["firstprinciples_statistics_schema"] = (
-            fp_statistics.get("schema") == "firstprinciples.statistics_demo.v1"
-            and _as_int(fp_statistics.get("sample_size"), 0) > 0
-            and _as_int(fp_permutation.get("n_perm"), 0) > 0
-            and fp_statistics.get("effect_size_reference") == "cohen1988power"
-            and bool(fp_statistics.get("effect_size"))
-            and bool(fp_statistics.get("claim_scope"))
-        )
+        checks["firstprinciples_statistics_schema"] = _firstprinciples_statistics_ok(root, fp_statistics)
 
     if "firstprinciples_classroom_schema" in selected:
         checks["firstprinciples_classroom_schema"] = _firstprinciples_classroom_ok(
@@ -1068,15 +1198,7 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     )
     checks["firstprinciples_taxonomy_schema"] = _firstprinciples_taxonomy_ok(fp_taxonomy)
     checks["firstprinciples_empirical_benchmark_schema"] = _firstprinciples_empirical_benchmark_ok(fp_empirical)
-    fp_permutation = fp_statistics.get("paired_permutation") or {}
-    checks["firstprinciples_statistics_schema"] = (
-        fp_statistics.get("schema") == "firstprinciples.statistics_demo.v1"
-        and _as_int(fp_statistics.get("sample_size"), 0) > 0
-        and _as_int(fp_permutation.get("n_perm"), 0) > 0
-        and fp_statistics.get("effect_size_reference") == "cohen1988power"
-        and bool(fp_statistics.get("effect_size"))
-        and bool(fp_statistics.get("claim_scope"))
-    )
+    checks["firstprinciples_statistics_schema"] = _firstprinciples_statistics_ok(root, fp_statistics)
     fp_privilege = _read_json(root / "output" / "data" / "firstprinciples" / "privilege_sweep.json")
     checks["firstprinciples_privilege_sweep_schema"] = (
         fp_privilege.get("schema") == "firstprinciples.privilege_sweep.v1"

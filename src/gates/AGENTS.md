@@ -38,9 +38,10 @@ When reports exist, also checks:
 | `invariants_all_pass` | Top-level `all_pass` in `output/reports/invariants.json` |
 | `simulation_invariants_all_pass` | All values in merged `simulation` block when present |
 | `si_invariants_all_pass` | Top-level `all_pass` in `output/reports/si_invariants.json` |
+| `firstprinciples_statistics_schema` | `statistics_demo.json` must rederive its entropy series, paired deltas, summaries, effect size, and permutation metadata from `firstprinciples/classroom.json` |
 | `experiment_plan_metrics` | Analytical invariants pass, SI summary present, and when SI summary exists `si_invariants.json` must exist with `all_pass` |
 
-Negative controls: `test_validate_outputs_negative_missing_sweep`, `test_validate_outputs_negative_missing_sheaf_matrix`, `test_validate_outputs_negative_missing_si_invariants_report`, `test_validate_outputs_negative_si_invariants_fail`, `test_validate_outputs_negative_analytical_invariants_fail`.
+Negative controls: `test_validate_outputs_negative_missing_sweep`, `test_validate_outputs_negative_missing_sheaf_matrix`, `test_validate_outputs_negative_missing_si_invariants_report`, `test_validate_outputs_negative_si_invariants_fail`, `test_validate_outputs_negative_analytical_invariants_fail`, `test_validate_outputs_negative_firstprinciples_benchmark_and_statistics_contracts`.
 
 ## Lean gate (`build_lean`)
 

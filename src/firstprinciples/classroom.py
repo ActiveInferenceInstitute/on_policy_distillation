@@ -9,11 +9,11 @@ sees an uninformative cue (``cue_validity`` near 0.5): it must generate its own
 observations (the on-policy rollout) and infer against the teacher.
 
 The per-decision *distillation signal* is the reverse KL between the student's
-and the teacher's first-action distributions — exactly the variational free
-energy the student would descend to absorb the teacher's privileged belief into
-its own policy. The cue is a scoped Markov-blanket-style boundary; the rollout is the
-posterior generating its own observations; the reverse KL is the loss. The
-whole construction is the title, instantiated and measured.
+and the teacher's first-action distributions — the variational-free-energy term
+for this declared finite target. The cue is a scoped Markov-blanket-style
+boundary; the rollout is the posterior generating its own observations; the
+reverse KL is the local loss. The construction measures the title's reading
+inside this toy classroom rather than turning it into a production-scale claim.
 
 The metric helpers are pure (testable without pymdp); :func:`run_classroom`
 drives two real sophisticated-inference rollouts and requires pymdp.

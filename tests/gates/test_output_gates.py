@@ -389,6 +389,20 @@ def test_validate_outputs_negative_firstprinciples_benchmark_and_statistics_cont
         assert checks["firstprinciples_statistics_schema"] is False
 
         statistics_path.write_text(statistics_backup.read_text(encoding="utf-8"), encoding="utf-8")
+        statistics = json.loads(statistics_backup.read_text(encoding="utf-8"))
+        statistics["paired_difference"][0] = statistics["paired_difference"][0] + 0.125
+        statistics_path.write_text(json.dumps(statistics, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        checks = validate_outputs(project_root, only={"firstprinciples_statistics_schema"})
+        assert checks["firstprinciples_statistics_schema"] is False
+
+        statistics_path.write_text(statistics_backup.read_text(encoding="utf-8"), encoding="utf-8")
+        statistics = json.loads(statistics_backup.read_text(encoding="utf-8"))
+        statistics["teacher_entropy"][0] = statistics["teacher_entropy"][0] + 0.125
+        statistics_path.write_text(json.dumps(statistics, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        checks = validate_outputs(project_root, only={"firstprinciples_statistics_schema"})
+        assert checks["firstprinciples_statistics_schema"] is False
+
+        statistics_path.write_text(statistics_backup.read_text(encoding="utf-8"), encoding="utf-8")
         table_path.write_text("| metric | value |\n| --- | --- |\n| stale | missing sources |\n", encoding="utf-8")
         checks = validate_outputs(project_root, only={"firstprinciples_benchmark_table_present"})
         assert checks["firstprinciples_benchmark_table_present"] is False
