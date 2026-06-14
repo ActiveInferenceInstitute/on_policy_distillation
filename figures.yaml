@@ -10,11 +10,21 @@ palette:
   primary: "#111827"
   secondary: "#2563eb"
   accent: "#0f766e"
+  analytical: "#2563eb"
+  student: "#0f766e"
+  teacher: "#b45309"
+  energy: "#6d28d9"
+  validation: "#166534"
+  warning: "#b45309"
   grid: "#d4d4d8"
   muted: "#64748b"
   reference: "#52525b"
   pass: "#0f766e"
   fail: "#b91c1c"
+  paper: "#ffffff"
+  cover_bg: "#eef6ff"
+  cover_panel: "#ffffff"
+  panel_edge: "#cbd5e1"
   proved: "#dcfce7"
   sorry: "#fee2e2"
   panel_bg: "#f8fafc"
@@ -596,21 +606,23 @@ figures:
   graphical_abstract:
     filename: graphical_abstract.png
     alt: >-
-      Near-square cover-page graphical abstract for the Active Inference multi-track
-      exemplar. A central correspondence loop links the privileged teacher generative
-      model, student posterior, student-generated rollouts, and gate-checked publication
-      object. Four large evidence quadrants report the analytical oracle, on-policy rollout
-      diagnostics, variational/expected-free-energy accounting, and Lean/sheaf validation
-      discipline.
+      Near-square cover-page technical schematic for the finite-model active-inference
+      reading of on-policy distillation. A dark title band states the scoped title, a
+      central finite correspondence object connects the reverse-KL target to a finite VFE
+      term under the declared rollout measure, and four evidence rails report the
+      analytical oracle, pymdp/classroom rollout witness, finite energy bridge, and
+      Lean/sheaf validation gates. A fifth lower rail reports the deterministic
+      sequential-shift toy witness.
     caption: >-
-      Near-square graphical abstract for the toy/artifact exemplar. The central evidence
-      wheel reads the active-inference / on-policy-distillation correspondence as a
-      privileged teacher generative model, a student posterior, student-generated
-      observations, and a validated publication object. The four surrounding quadrants pull
-      live quantities from the analytical oracle, pymdp/classroom rollout artifacts, the
-      first-principles energy decomposition, and Lean/sheaf validation gates, so the cover
-      image is generated from repository artifacts rather than drawn as narrative
-      decoration.
+      Near-square graphical abstract for the toy/artifact exemplar. The central technical
+      schematic reads on-policy distillation through a declared finite active-inference
+      correspondence object: a reverse-KL target is related to a finite VFE term under the
+      student rollout measure, with the image explicitly scoped as a correspondence rather
+      than a universal identity. The surrounding evidence rails pull live quantities from
+      the analytical oracle, pymdp/classroom rollout artifacts, first-principles energy
+      decomposition, deterministic finite sequential-shift witness, and Lean/sheaf
+      validation gates, so the cover image is source-bound repository evidence rather than
+      narrative decoration.
     width: 0.96
 
 section_figures:

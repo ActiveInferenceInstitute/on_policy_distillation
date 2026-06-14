@@ -239,11 +239,19 @@ def test_figure_source_map_has_registry_parity_and_data_backing(project_root: Pa
     assert quality["all_figures_source_bound"] is True
     assert quality["all_scope_guards_present"] is True
     assert quality["all_caption_overclaims_free"] is True
+    assert quality["all_claim_wording_ok"] is True
+    assert quality["all_accessibility_metadata_ok"] is True
+    assert quality["palette_contrast_ok"] is True
+    assert quality["font_roles_ok"] is True
+    assert quality["palette_contrast_report"]
+    assert quality["font_role_report"]
     assert quality["no_unexpected_image_artifacts"] is True
     assert quality["unexpected_image_paths"] == []
     assert quality_rows["sequential_shift_sensitivity"]["scope_guard_required"] is True
     assert quality_rows["sequential_shift_sensitivity"]["scope_guard_present"] is True
     assert quality_rows["sequential_shift_sensitivity"]["caption_overclaim_free"] is True
+    assert quality_rows["graphical_abstract"]["claim_wording_ok"] is True
+    assert quality_rows["graphical_abstract"]["accessibility_ok"] is True
 
 
 def test_visualization_quality_audit_rejects_unregistered_image(project_root: Path) -> None:
@@ -337,8 +345,21 @@ def test_figure_registry_rejects_formal_and_causal_overclaim_phrases(project_roo
         "theory underwriting on-policy distillation here is not merely stated but compiled",
         "grounding the active-inference claims in measured causal dependence rather than correlation",
         "production-scale causal effects",
+        "OPD = Active Inference",
+        "On-Policy Distillation is Active Inference",
     ):
         assert forbidden not in text
+
+
+def test_visualization_claim_wording_guard_rejects_cover_equality() -> None:
+    from roadmap_tracks.integration_audit_artifacts import _caption_overclaim_free, _figure_claim_wording_ok
+
+    assert not _caption_overclaim_free("OPD = Active Inference")
+    assert not _figure_claim_wording_ok("graphical_abstract", "OPD = Active Inference")
+    assert _figure_claim_wording_ok(
+        "graphical_abstract",
+        "Finite-model reading with a correspondence rather than a universal identity.",
+    )
 
 
 def test_figure_sheaf_layers_overview_dimensions(project_root: Path) -> None:
@@ -391,10 +412,15 @@ def test_graphical_abstract_represents_artifact_validation_spine(project_root: P
     registry = load_figure_registry(project_root)
     metadata = registry["graphical_abstract"].alt + "\n" + registry["graphical_abstract"].caption
     assert "Lean + gates" in source
+    assert "Sequential shift" in source
+    assert "finite correspondence object" in source
+    assert "correspondence, not universal identity" in source
     assert "proof_extraction_theorem_count" in source
     combined = source + "\n" + metadata
     for forbidden in ("Empirical", "Qwen", "AIME", "GPU-hours"):
         assert forbidden not in combined
+    for stale in ("OPD = Active Inference", "= free energy", "universal identity."):
+        assert stale not in source
 
 
 def test_tmaze_schematic_uses_configured_horizon(project_root: Path) -> None:

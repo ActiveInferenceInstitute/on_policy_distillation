@@ -386,6 +386,8 @@ def _figure_hash_manifest_ok(root: Path, payload: dict) -> bool:
 
 def _visualization_quality_audit_ok(payload: dict) -> bool:
     rows = payload.get("rows") or []
+    contrast_rows = (payload.get("palette_contrast_report") or {}).values()
+    font_rows = (payload.get("font_role_report") or {}).values()
     return (
         payload.get("schema") == "template_active_inference.visualization_quality_audit.v1"
         and bool(rows)
@@ -395,6 +397,26 @@ def _visualization_quality_audit_ok(payload: dict) -> bool:
         and payload.get("all_figures_source_bound") is True
         and payload.get("all_scope_guards_present") is True
         and payload.get("all_caption_overclaims_free") is True
+        and payload.get("all_claim_wording_ok") is True
+        and payload.get("all_accessibility_metadata_ok") is True
+        and payload.get("palette_contrast_ok") is True
+        and payload.get("font_roles_ok") is True
+        and bool(payload.get("palette_contrast_report"))
+        and bool(payload.get("font_role_report"))
+        and all(
+            row.get("passes_aa") is True
+            and "ratio" in row
+            and "minimum_ratio" in row
+            and float(row["ratio"]) >= float(row["minimum_ratio"])
+            for row in contrast_rows
+        )
+        and all(
+            row.get("meets_minimum") is True
+            and "size_pt" in row
+            and "minimum_pt" in row
+            and float(row["size_pt"]) >= float(row["minimum_pt"])
+            for row in font_rows
+        )
         and payload.get("no_unexpected_image_artifacts") is True
         and int(payload.get("unexpected_image_count", 0) or 0) == 0
         and payload.get("unexpected_image_paths") == []
@@ -406,6 +428,8 @@ def _visualization_quality_audit_ok(payload: dict) -> bool:
             and row.get("metadata_complete") is True
             and row.get("scope_guard_present") is True
             and row.get("caption_overclaim_free") is True
+            and row.get("claim_wording_ok") is True
+            and row.get("accessibility_ok") is True
             and row.get("ok") is True
             and int(row.get("image_width_px", 0) or 0) >= 400
             and int(row.get("image_height_px", 0) or 0) >= 200

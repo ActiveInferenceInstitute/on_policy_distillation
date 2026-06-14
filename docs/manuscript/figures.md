@@ -18,8 +18,10 @@ the stale second registry `manuscript/refs/labels.yaml` is intentionally absent)
 top-level structure is:
 
 - **style block** — `dpi`, `transparent: false`, `font_scale`, `grid`, and a named
-  `palette` (pass/fail/proved/sorry colors, etc.), loaded by
-  `src/visualizations/figure_style.py`.
+  `palette`, loaded by `src/visualizations/figure_style.py`. Semantic roles keep
+  encodings stable across figures: neutral ink/backgrounds, blue for analytical
+  structure, teal for student/on-policy signals, amber for teacher/privilege/context,
+  purple for finite energy terms, green for validation, and red only for failure/risk.
 - **`figures:`** — one entry per registry figure id. Each entry carries `filename`,
   `alt` (verbose accessibility description), `caption` (the numbered figure caption), and
   `width` (fractional page width).
@@ -42,6 +44,13 @@ Figures are **deterministic**: no sampling, fixed inputs. Captions say so explic
 (e.g. "Both curves are deterministic closed forms, so no uncertainty intervals apply"),
 which is itself a scope guardrail — a deterministic figure cannot carry an implied
 statistical claim.
+
+The cover image is a generated technical schematic, not a hand-edited design asset.
+`graphical_abstract` must keep the manuscript title framing: finite-model
+active-inference reading/correspondence, never the obsolete equality slogan
+`OPD = Active Inference`. Its source-bound rails summarize the analytical oracle,
+pymdp/classroom rollout witness, energy decomposition, sequential-shift witness, and
+Lean/sheaf validation gates.
 
 ## Where figures land
 
@@ -77,9 +86,11 @@ image artifacts: every `figures.yaml` PNG plus the explicit animation GIF. It al
 unexpected image files under `output/figures/`; `_figure_hash_manifest_ok()` fails if
 hashes are not verified or if an undeclared image appears. The generated
 `visualization_quality_audit.json` adds a third row-level guard over readable image
-bytes, nonblank pixels, source binding, caption scope terms, overclaim phrases, and
-unexpected-image absence. Together the source-map, hash, and quality-audit gates bind each
-figure to its inputs, content fingerprint, and claim boundary.
+bytes, nonblank pixels, source binding, caption scope terms, overclaim phrases,
+cover-claim wording, contrast-safe palette pairs (`palette_contrast_report`), font-role
+minimums (`font_role_report`), and unexpected-image absence. Together the source-map,
+hash, and quality-audit gates bind each figure to its inputs, content fingerprint,
+accessibility contract, and claim boundary.
 
 ## Caption discipline
 
@@ -116,7 +127,7 @@ The figure-binding gates run before the PDF can render and fail closed:
 | --- | --- | --- |
 | `figure_source_map_schema` | each figure → its source data paths | schema wrong, not all figures mapped, or a source row incomplete/missing |
 | `figure_hash_manifest_schema` | each declared image → a verified content hash, no undeclared image artifacts | schema wrong, hashes unverified, or stray images present |
-| `visualization_quality_audit_schema` | each figure → readable pixels, source binding, caption scope, and no unexpected images | any row is unreadable, blank, unbound, missing a required scope guard, overclaiming, or an undeclared image exists |
+| `visualization_quality_audit_schema` | each figure → readable pixels, source binding, caption scope, cover wording, contrast/font accessibility, and no unexpected images | any row is unreadable, blank, unbound, missing a required scope guard, overclaiming, inaccessible by declared style tokens, or an undeclared image exists |
 
 These sit alongside the manuscript token gates (unresolved/malformed tokens) and the
 integration audit, which also emits `manuscript_token_provenance.json` and the

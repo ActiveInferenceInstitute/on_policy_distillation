@@ -138,6 +138,23 @@ def test_public_docs_list_every_registered_current_figure(project_root: Path) ->
             assert figure_id in text, f"{surface} does not mention registered figure {figure_id}"
 
 
+def test_figure_docs_signpost_cover_scope_and_accessibility_audit(project_root: Path) -> None:
+    figure_docs = (project_root / "docs" / "manuscript" / "figures.md").read_text(encoding="utf-8")
+    viz_readme = (project_root / "src" / "visualizations" / "README.md").read_text(encoding="utf-8")
+    root_readme = (project_root / "README.md").read_text(encoding="utf-8")
+    combined = "\n".join([figure_docs, viz_readme, root_readme])
+
+    for phrase in (
+        "finite-model active-inference reading/correspondence",
+        "OPD = Active Inference",
+        "palette_contrast_report",
+        "font_role_report",
+        "cover wording",
+        "font-role floors",
+    ):
+        assert phrase in combined
+
+
 def test_public_docs_pin_canonical_si_artifacts_without_legacy_modes(project_root: Path) -> None:
     surfaces = [
         (project_root / "README.md").read_text(encoding="utf-8"),

@@ -216,6 +216,7 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
             "output/data/manuscript_variables.json",
             "output/data/firstprinciples/classroom.json",
             "output/data/firstprinciples/energy_demo.json",
+            "output/data/firstprinciples/sequential_shift.json",
             "output/data/validation_dependency_graph.json",
         ],
     }
@@ -346,8 +347,12 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
             "$.proof_extraction_theorem_count",
             "$.sheaf_laws_verified",
             "$.figure_source_coverage_count",
-            "$.teacher_mean_belief_entropy",
+            "$.mean_reverse_kl",
             "$.vfe_at_prior",
+            "$.test_loss_before",
+            "$.test_loss_after",
+            "$.gap_closed",
+            "$.shift_mass",
         ],
     }
     validation_gates = {
@@ -430,7 +435,8 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         "scholarship_source_map": ["validate_outputs.scholarship_source_matrix_schema", "test_figures.nonblank_png"],
         "graphical_abstract": [
             "validate_outputs.figure_source_map_schema",
-            "test_graphical_abstract_is_cover_quality_wide_png",
+            "test_figures.graphical_abstract_is_cover_quality_near_square_png",
+            "test_figures.graphical_abstract_represents_artifact_validation_spine",
         ],
     }
     registry = load_figure_registry(root)
@@ -577,9 +583,13 @@ _FIGURE_SCOPE_TERMS = (
 )
 
 _FIGURE_FORBIDDEN_OVERCLAIMS = (
+    "opd = active inference",
+    "opd is active inference",
+    "on-policy distillation is active inference",
     "production-scale causal effects",
     "empirical opd benchmark",
     "production llm optimization",
+    "production-scale proof",
     "universal kl law",
     "universal llm law",
     "biological mechanism",
@@ -590,6 +600,7 @@ _NEGATED_OVERCLAIMS = (
     "not an empirical opd benchmark",
     "not local evidence about production llm optimization",
     "not evidence about production llm optimization",
+    "not a production-scale proof",
     "not a universal kl law",
     "not a universal llm law",
     "no biological mechanism",
@@ -605,9 +616,33 @@ def _caption_overclaim_free(text: str) -> bool:
     return True
 
 
+def _figure_claim_wording_ok(figure_id: str, text: str) -> bool:
+    lower = " ".join(text.lower().split())
+    obsolete_cover_phrases = (
+        "opd = active inference",
+        "opd is active inference",
+        "on-policy distillation is active inference",
+    )
+    if any(phrase in lower for phrase in obsolete_cover_phrases):
+        return False
+    if figure_id != "graphical_abstract":
+        return True
+    required_cover_terms = ("finite", "reading", "correspondence")
+    return all(term in lower for term in required_cover_terms) and "universal identity" in lower
+
+
 def build_visualization_quality_audit(project_root: Path) -> dict[str, Any]:
     """Build a verifier-facing audit over figure readability, provenance, and caption scope."""
     root = project_root.resolve()
+    from visualizations.figure_style import load_figure_style
+
+    style = load_figure_style(root)
+    palette_contrast_report = style.palette_contrast_report()
+    font_role_report = style.font_role_report()
+    palette_contrast_ok = bool(palette_contrast_report) and all(
+        row.get("passes_aa") is True for row in palette_contrast_report.values()
+    )
+    font_roles_ok = bool(font_role_report) and all(row.get("meets_minimum") is True for row in font_role_report.values())
     source_map = build_figure_source_map(root)
     registry_outputs = {str(row.get("output") or "") for row in source_map.get("rows") or []}
     expected_images = _expected_figure_image_paths(root)
@@ -639,6 +674,7 @@ def build_visualization_quality_audit(project_root: Path) -> dict[str, Any]:
         scope_guard_required = figure_id in _FIGURE_SCOPE_REQUIRED
         scope_guard_present = (not scope_guard_required) or any(term in lower for term in _FIGURE_SCOPE_TERMS)
         caption_overclaim_free = _caption_overclaim_free(text)
+        claim_wording_ok = _figure_claim_wording_ok(figure_id, text)
         source_bound = (
             row.get("mapped") is True
             and row.get("source_paths_exist") is True
@@ -648,7 +684,16 @@ def build_visualization_quality_audit(project_root: Path) -> dict[str, Any]:
         )
         metadata_complete = row.get("metadata_complete") is True and bool(row.get("caption")) and bool(row.get("alt"))
         dimensions_ok = readable and nonblank and width >= 400 and height >= 200
-        ok = bool(source_bound and metadata_complete and dimensions_ok and scope_guard_present and caption_overclaim_free)
+        accessibility_ok = bool(metadata_complete and dimensions_ok and claim_wording_ok)
+        ok = bool(
+            source_bound
+            and metadata_complete
+            and dimensions_ok
+            and scope_guard_present
+            and caption_overclaim_free
+            and claim_wording_ok
+            and accessibility_ok
+        )
         rows.append(
             {
                 "figure_id": figure_id,
@@ -662,6 +707,8 @@ def build_visualization_quality_audit(project_root: Path) -> dict[str, Any]:
                 "scope_guard_required": scope_guard_required,
                 "scope_guard_present": scope_guard_present,
                 "caption_overclaim_free": caption_overclaim_free,
+                "claim_wording_ok": claim_wording_ok,
+                "accessibility_ok": accessibility_ok,
                 "ok": ok,
             }
         )
@@ -669,6 +716,10 @@ def build_visualization_quality_audit(project_root: Path) -> dict[str, Any]:
         "schema": "template_active_inference.visualization_quality_audit.v1",
         "rows": rows,
         "figure_count": len(rows),
+        "palette_contrast_report": palette_contrast_report,
+        "font_role_report": font_role_report,
+        "palette_contrast_ok": palette_contrast_ok,
+        "font_roles_ok": font_roles_ok,
         "declared_nonregistry_image_paths": sorted(expected_images - registry_outputs),
         "unexpected_image_paths": unexpected_images,
         "unexpected_image_count": len(unexpected_images),
@@ -677,8 +728,14 @@ def build_visualization_quality_audit(project_root: Path) -> dict[str, Any]:
         "all_figures_source_bound": bool(rows) and all(row["source_bound"] for row in rows),
         "all_scope_guards_present": bool(rows) and all(row["scope_guard_present"] for row in rows),
         "all_caption_overclaims_free": bool(rows) and all(row["caption_overclaim_free"] for row in rows),
+        "all_claim_wording_ok": bool(rows) and all(row["claim_wording_ok"] for row in rows),
+        "all_accessibility_metadata_ok": bool(rows) and all(row["accessibility_ok"] for row in rows),
         "no_unexpected_image_artifacts": not unexpected_images,
-        "all_rows_ok": bool(rows) and not unexpected_images and all(row["ok"] for row in rows),
+        "all_rows_ok": bool(rows)
+        and palette_contrast_ok
+        and font_roles_ok
+        and not unexpected_images
+        and all(row["ok"] for row in rows),
     }
 
 

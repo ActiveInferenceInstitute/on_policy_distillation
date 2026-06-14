@@ -34,6 +34,29 @@ def test_figure_style_named_font_roles_are_readable() -> None:
     assert style.font_size("source") >= 10.0
     assert style.font_size("table") >= 10.0
     assert style.font_size("dense") >= 9.5
+    report = style.font_role_report()
+    assert report["dense"]["meets_minimum"] is True
+    assert report["table"]["meets_minimum"] is True
+
+
+def test_figure_style_palette_contrast_pairs_are_accessible() -> None:
+    root = Path(__file__).resolve().parents[1]
+    style = load_figure_style(root)
+    report = style.palette_contrast_report()
+    assert report
+    assert all(row["passes_aa"] is True for row in report.values())
+    assert report["primary_on_paper"]["ratio"] >= 7.0
+    assert report["muted_on_paper"]["ratio"] >= 4.5
+    for role in ("analytical", "teacher", "student", "energy", "validation"):
+        assert style.color(role).startswith("#")
+
+
+def test_figure_style_rejects_low_contrast_palette_pair() -> None:
+    from visualizations.figure_style import FigureStyleConfig
+
+    style = FigureStyleConfig(palette={"primary": "#ffffff", "paper": "#ffffff"})
+    report = style.palette_contrast_report()
+    assert report["primary_on_paper"]["passes_aa"] is False
 
 
 def test_visualization_modules_do_not_reintroduce_tiny_literal_fonts() -> None:

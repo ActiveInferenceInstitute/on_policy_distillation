@@ -11,7 +11,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.patches import Circle, FancyArrowPatch, FancyBboxPatch, Polygon, Rectangle
+from matplotlib.patches import Circle, FancyArrowPatch, FancyBboxPatch, Rectangle
 
 from .figure_io import save_figure_png
 from .figure_registry import figure_output_path
@@ -36,6 +36,7 @@ def figure_graphical_abstract(project_root: Path) -> Path:
     fp = root / "output" / "data" / "firstprinciples"
     energy_d = _json_or_empty(fp / "energy_demo.json")
     classroom_d = _json_or_empty(fp / "classroom.json")
+    sequential_d = _json_or_empty(fp / "sequential_shift.json")
     vfe_d = energy_d.get("vfe_at_prior") or {}
     efe_d = energy_d.get("efe") or {}
 
@@ -56,7 +57,17 @@ def figure_graphical_abstract(project_root: Path) -> Path:
     def _v(name: str) -> object:
         return variables.get(name, counts.get(name))
 
-    background = "#eaf2ff"
+    background = style.color("cover_bg")
+    ink = style.color("primary")
+    muted = style.color("muted")
+    paper = style.color("cover_panel")
+    panel_edge = style.color("panel_edge")
+    analytical = style.color("analytical")
+    teacher = style.color("teacher")
+    student = style.color("student")
+    energy = style.color("energy")
+    validation = style.color("validation")
+
     with apply_style(style):
         fig = plt.figure(figsize=(10.5, 10.5), facecolor=background)
         ax = fig.add_axes((0.0, 0.0, 1.0, 1.0))
@@ -66,27 +77,34 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         ax.set_facecolor(background)
 
         ax.add_patch(Rectangle((0, 0), 10.0, 10.0, facecolor=background, edgecolor="none"))
-        ax.add_patch(Polygon([(0, 0), (10, 0), (10, 2.3), (0, 1.55)], closed=True, color="#ccfbf1", alpha=0.76))
-        ax.add_patch(Polygon([(0, 8.15), (10, 8.52), (10, 10), (0, 10)], closed=True, color="#0f172a", alpha=0.985))
-        ax.add_patch(Polygon([(0, 1.55), (3.35, 2.2), (4.35, 10), (0, 10)], closed=True, color="#fff7ed", alpha=0.58))
-        ax.add_patch(Polygon([(6.25, 0), (10, 0), (10, 6.15), (7.8, 5.72)], closed=True, color="#eef2ff", alpha=0.80))
-        ax.add_patch(Polygon([(2.8, 3.8), (10, 3.25), (10, 8.52), (4.3, 8.12)], closed=True, color="#dbeafe", alpha=0.47))
+        ax.add_patch(Rectangle((0, 8.72), 10.0, 1.28, facecolor=ink, edgecolor="none"))
+        ax.add_patch(Rectangle((0, 8.58), 10.0, 0.14, facecolor=analytical, edgecolor="none"))
+        ax.add_patch(Rectangle((0, 0), 10.0, 0.36, facecolor="#dbeafe", edgecolor="none", alpha=0.82))
 
         ax.text(
-            0.48,
-            9.42,
-            "OPD = Active Inference",
-            fontsize=31,
+            0.52,
+            9.58,
+            "A Finite-Model Active-Inference Reading",
+            fontsize=style.font_size("hero") * 0.78,
             fontweight="bold",
             color="white",
             va="center",
         )
         ax.text(
-            0.50,
-            8.96,
-            "student rollouts make reverse KL a free-energy objective",
-            fontsize=15.5,
+            0.54,
+            9.12,
+            "of On-Policy Distillation",
+            fontsize=style.font_size("title") * 1.18,
+            fontweight="bold",
             color="#dbeafe",
+            va="center",
+        )
+        ax.text(
+            0.56,
+            8.80,
+            "declared finite objects, toy witnesses, and fail-closed publication gates",
+            fontsize=style.font_size("small"),
+            color="#eff6ff",
             va="center",
         )
 
@@ -103,169 +121,252 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         ) -> None:
             ax.add_patch(
                 FancyBboxPatch(
-                    (x + 0.05, y - 0.06),
-                    width,
-                    height,
-                    boxstyle="round,pad=0.06,rounding_size=0.10",
-                    linewidth=0,
-                    facecolor="#0f172a",
-                    alpha=0.16,
-                )
-            )
-            ax.add_patch(
-                FancyBboxPatch(
                     (x, y),
                     width,
                     height,
-                    boxstyle="round,pad=0.06,rounding_size=0.10",
-                    linewidth=1.55,
-                    edgecolor=color,
-                    facecolor="#fffefe",
+                    boxstyle="round,pad=0.05,rounding_size=0.08",
+                    linewidth=1.05,
+                    edgecolor=panel_edge,
+                    facecolor=paper,
                 )
             )
-            ax.add_patch(Rectangle((x, y + height - 0.16), width, 0.16, facecolor=color, edgecolor="none"))
-            ax.text(x + 0.20, y + height - 0.46, eyebrow.upper(), fontsize=style.font_size("dense"), color="#64748b", fontweight="bold")
-            ax.text(x + 0.20, y + height - 0.82, title, fontsize=16.2, fontweight="bold", color=color)
-            text_top = y + height - 1.12
+            ax.add_patch(Rectangle((x, y + height - 0.13), width, 0.13, facecolor=color, edgecolor="none"))
+            ax.text(
+                x + 0.18,
+                y + height - 0.40,
+                eyebrow.upper(),
+                fontsize=style.font_size("dense"),
+                color=muted,
+                fontweight="bold",
+            )
+            ax.text(x + 0.18, y + height - 0.76, title, fontsize=style.font_size("label"), fontweight="bold", color=color)
+            text_top = y + height - 1.08
             for line_idx, line in enumerate(lines):
                 ax.text(
                     x + 0.20,
                     text_top - line_idx * 0.35,
-                    textwrap.fill(line, width=28),
-                    fontsize=10.9,
-                    color=style.color("primary"),
+                    textwrap.fill(line, width=30),
+                    fontsize=style.font_size("dense"),
+                    color=ink,
                     va="top",
                 )
             if metric is not None:
                 ax.add_patch(
                     FancyBboxPatch(
-                        (x + width - 1.35, y + 0.12),
-                        1.13,
-                        0.62,
-                        boxstyle="round,pad=0.04,rounding_size=0.09",
+                        (x + width - 1.48, y + 0.14),
+                        1.24,
+                        0.66,
+                        boxstyle="round,pad=0.04,rounding_size=0.07",
                         linewidth=0,
                         facecolor=color,
-                        alpha=0.94,
+                        alpha=0.97,
                     )
                 )
-                ax.text(x + width - 0.785, y + 0.52, metric[0], fontsize=14.6, fontweight="bold", color="white", ha="center")
-                ax.text(x + width - 0.785, y + 0.25, metric[1], fontsize=style.font_size("dense"), color="#f8fafc", ha="center")
+                ax.text(
+                    x + width - 0.86,
+                    y + 0.55,
+                    metric[0],
+                    fontsize=style.font_size("label"),
+                    fontweight="bold",
+                    color="white",
+                    ha="center",
+                )
+                ax.text(
+                    x + width - 0.86,
+                    y + 0.27,
+                    metric[1],
+                    fontsize=style.font_size("dense"),
+                    color="white",
+                    ha="center",
+                )
 
         evidence_card(
-            0.45,
-            5.85,
-            3.65,
-            2.25,
+            0.46,
+            5.78,
+            3.72,
+            2.18,
             "Analytical oracle",
-            "closed form",
+            "finite closed form",
             [
-                "F_target: 0 nats",
-                f"I(lambda) max: {_f(_v('ising_mi_saturation'), '.3f')} nats",
-                f"sweep RMSE: {_f(_v('sweep_rmse_mi'), '.1e')}",
+                "declared Bernoulli-Ising variational object",
+                f"I(lambda) max {_f(_v('ising_mi_saturation'), '.3f')} nats",
+                f"MI recompute RMSE {_f(_v('sweep_rmse_mi'), '.1e')}",
             ],
-            style.color("secondary"),
-            ("0", "target F"),
+            analytical,
+            (_f(_v("free_energy_mean_field_gap_max"), ".2f"), "gap nats"),
         )
         evidence_card(
-            0.45,
-            1.05,
-            3.65,
-            2.35,
-            "Student rollouts",
+            0.46,
+            0.86,
+            3.72,
+            2.05,
+            "Rollout witness",
             "pymdp + classroom",
             [
-                f"cue observed: step {_i(_v('si_tmaze_cue_observed_step'))}",
-                f"entropy drop: {_f(_v('si_tmaze_policy_entropy_drop_after_cue'), '.3f')} nats",
-                f"teacher/student H: {_f(_v('classroom_teacher_belief_entropy'), '.3f')} / {_f(_v('classroom_student_belief_entropy'), '.3f')}",
+                f"cue observed at step {_i(_v('si_tmaze_cue_observed_step'))}",
+                f"policy entropy drop {_f(_v('si_tmaze_policy_entropy_drop_after_cue'), '.3f')} nats",
+                f"mean reverse KL {_f(classroom_d.get('mean_reverse_kl'), '.2f')}",
             ],
-            style.color("accent"),
-            (_f(classroom_d.get("mean_reverse_kl"), ".2f"), "mean RKL"),
+            student,
+            (_f(_v("classroom_teacher_cue_validity"), ".2f"), "teacher cue"),
         )
         evidence_card(
-            5.90,
-            5.85,
-            3.65,
-            2.25,
-            "Energy bridge",
-            "VFE / EFE",
+            5.82,
+            5.78,
+            3.72,
+            2.18,
+            "Finite energy bridge",
+            "VFE and EFE",
             [
-                "reverse KL is VFE",
-                f"prior VFE: {_f(vfe_d.get('vfe_complexity_accuracy'), '.2f')} nats",
-                f"risk + ambiguity: {_f(efe_d.get('efe_risk_ambiguity'), '.2f')}",
+                "reverse KL read as a VFE term",
+                f"prior VFE {_f(vfe_d.get('vfe_complexity_accuracy'), '.2f')} nats",
+                f"risk + ambiguity {_f(efe_d.get('efe_risk_ambiguity'), '.2f')}",
             ],
-            "#7c3aed",
+            energy,
             (_f(efe_d.get("efe_risk_ambiguity"), ".2f"), "EFE nats"),
         )
         evidence_card(
-            5.90,
-            1.05,
-            3.65,
-            2.35,
+            5.82,
+            0.86,
+            3.72,
+            2.05,
             "Lean + gates",
             "fail closed",
             [
-                f"{_i(_v('sheaf_track_count'))} tracks; {_i(_v('coverage_bound'))} bound cells",
-                f"{_i(_v('sheaf_laws_verified'))}/{_i(_v('sheaf_law_count'))} laws; {_i(_v('counterexample_count'))} controls",
-                f"{_i(_v('token_provenance_count'))} tokens; {_i(_v('hardcoded_variable_issue_count'))} issues",
+                f"{_i(_v('sheaf_track_count'))} tracks; {_i(_v('claim_evidence_audit_count'))} claim rows",
+                f"{_i(_v('proof_extraction_theorem_count'))} Lean proofs",
+                f"{_i(_v('figure_source_coverage_count'))} source-bound figures",
             ],
-            style.color("pass"),
-            (_i(_v("proof_extraction_theorem_count")), "Lean proofs"),
+            validation,
+            (_i(_v("validation_gate_index_count")), "gates"),
         )
 
-        center = (5.0, 4.72)
-        ax.add_patch(Circle(center, 1.38, facecolor="#ffffff", edgecolor="#0f172a", linewidth=2.0, alpha=0.96, zorder=3))
-        ax.add_patch(Circle(center, 1.10, facecolor="#0f172a", edgecolor="#93c5fd", linewidth=1.25, alpha=0.985, zorder=4))
-        ax.text(5.0, 5.05, "correspondence", fontsize=11.8, fontweight="bold", color="#bfdbfe", ha="center", zorder=5)
-        ax.text(5.0, 4.73, "reverse KL", fontsize=18.5, fontweight="bold", color="white", ha="center", zorder=5)
-        ax.text(5.0, 4.39, "= free energy", fontsize=14.8, fontweight="bold", color="white", ha="center", zorder=5)
-        ax.text(5.0, 4.05, "active sampling loop", fontsize=style.font_size("small"), color="#dbeafe", ha="center", zorder=5)
+        def node(x: float, y: float, label: str, body: str, color: str) -> None:
+            ax.add_patch(Circle((x, y), 0.43, facecolor=paper, edgecolor=color, linewidth=1.7, zorder=5))
+            ax.add_patch(Circle((x, y), 0.24, facecolor=color, edgecolor=paper, linewidth=0.8, zorder=6))
+            ax.text(
+                x,
+                y + 0.02,
+                label,
+                fontsize=style.font_size("dense"),
+                fontweight="bold",
+                color="white",
+                ha="center",
+                va="center",
+                zorder=7,
+            )
+            ax.text(x, y - 0.65, body, fontsize=style.font_size("dense"), color=ink, ha="center", zorder=7)
+
+        center_x = 5.0
+        ax.add_patch(
+            FancyBboxPatch(
+                (3.08, 3.15),
+                3.84,
+                2.52,
+                boxstyle="round,pad=0.08,rounding_size=0.10",
+                linewidth=1.4,
+                edgecolor=ink,
+                facecolor=paper,
+                zorder=2,
+            )
+        )
+        ax.text(
+            center_x,
+            5.32,
+            "finite correspondence object",
+            fontsize=style.font_size("annotation"),
+            fontweight="bold",
+            color=ink,
+            ha="center",
+            zorder=3,
+        )
+        ax.text(
+            center_x,
+            4.94,
+            "reverse KL target",
+            fontsize=style.font_size("title") * 0.92,
+            fontweight="bold",
+            color=analytical,
+            ha="center",
+            zorder=3,
+        )
+        ax.text(
+            center_x,
+            4.58,
+            "read as finite VFE",
+            fontsize=style.font_size("annotation") * 1.12,
+            fontweight="bold",
+            color=energy,
+            ha="center",
+            zorder=3,
+        )
+        ax.text(center_x, 4.08, "under the declared rollout measure", fontsize=style.font_size("small"), color=muted, ha="center", zorder=3)
+        ax.text(center_x, 3.78, "correspondence, not universal identity", fontsize=style.font_size("dense"), color=ink, ha="center", zorder=3)
+        ax.add_patch(
+            FancyBboxPatch(
+                (3.42, 3.26),
+                3.16,
+                0.34,
+                boxstyle="round,pad=0.035,rounding_size=0.06",
+                linewidth=0.9,
+                edgecolor=teacher,
+                facecolor="#fff7ed",
+                zorder=3,
+            )
+        )
+        ax.text(
+            center_x,
+            3.43,
+            "Sequential shift: loss "
+            f"{_f(sequential_d.get('test_loss_before'), '.2f')} -> "
+            f"{_f(sequential_d.get('test_loss_after'), '.2f')}; "
+            f"gap {_f(sequential_d.get('gap_closed'), '.2f')}",
+            fontsize=style.font_size("dense"),
+            color=teacher,
+            fontweight="bold",
+            ha="center",
+            va="center",
+            zorder=4,
+        )
 
         loop_nodes = [
-            (5.0, 6.30, "teacher", "p(o,s)", "#f59e0b"),
-            (6.55, 4.72, "student", "q(s)", style.color("secondary")),
-            (5.0, 3.12, "rollouts", "o ~ q", style.color("accent")),
-            (3.45, 4.72, "gates", "PDF", style.color("pass")),
+            (5.00, 6.64, "T", "teacher model", teacher),
+            (6.72, 4.50, "S", "student", student),
+            (5.00, 2.46, "R", "own rollouts", analytical),
+            (3.28, 4.50, "G", "gates", validation),
         ]
-        for idx, (x, y, title, body, color) in enumerate(loop_nodes):
-            ax.add_patch(Circle((x, y), 0.47, facecolor="#ffffff", edgecolor=color, linewidth=2.0, zorder=6))
-            ax.add_patch(Circle((x, y), 0.28, facecolor=color, edgecolor="white", linewidth=0.8, zorder=7))
-            ax.text(x, y + 0.02, str(idx + 1), fontsize=12.8, fontweight="bold", color="white", ha="center", va="center", zorder=8)
-            if title == "teacher":
-                title_y = y + 0.64
-                body_y = y + 0.39
-            else:
-                title_y = y - 0.67
-                body_y = y - 0.92
-            ax.text(x, title_y, title, fontsize=10.2, fontweight="bold", color=color, ha="center", zorder=8)
-            ax.text(x, body_y, body, fontsize=style.font_size("dense"), color="#334155", ha="center", zorder=8)
+        for x, y, label, body, color in loop_nodes:
+            node(x, y, label, body, color)
 
-        for start, end, rad in [
-            ((5.45, 6.18), (6.38, 5.15), -0.18),
-            ((6.38, 4.30), (5.45, 3.25), -0.18),
-            ((4.55, 3.25), (3.62, 4.30), -0.18),
-            ((3.62, 5.15), (4.55, 6.18), -0.18),
-        ]:
+        arrow_specs = [
+            ((5.38, 6.45), (6.42, 4.88), -0.10, teacher),
+            ((6.42, 4.12), (5.38, 2.68), -0.10, student),
+            ((4.62, 2.68), (3.58, 4.12), -0.10, analytical),
+            ((3.58, 4.88), (4.62, 6.45), -0.10, validation),
+        ]
+        for start, end, rad, color in arrow_specs:
             ax.add_patch(
                 FancyArrowPatch(
                     start,
                     end,
                     arrowstyle="-|>",
-                    mutation_scale=15,
+                    mutation_scale=16,
                     linewidth=1.7,
-                    color="#475569",
-                    alpha=0.72,
+                    color=color,
+                    alpha=0.82,
                     connectionstyle=f"arc3,rad={rad}",
-                    zorder=5,
+                    zorder=4,
                 )
             )
 
         ax.text(
-            9.52,
-            0.36,
-            "generated from repository artifacts; toy scope only",
+            9.55,
+            0.16,
+            "generated from repository artifacts; deterministic toy scope only",
             fontsize=style.font_size("source"),
-            color="#334155",
+            color=ink,
             ha="right",
+            va="center",
         )
         save_figure_png(
             fig,
