@@ -2,7 +2,7 @@
 
 Generated documentation coverage for every Python `def` and `class` under `src/` and `scripts/`. Entries marked `inventory fallback` have no inline docstring yet, but remain documented here by path, line, kind, and qualified name.
 
-Total documented definitions: 914
+Total documented definitions: 923
 
 ## `src/analytical/bernoulli_toy.py`
 
@@ -432,15 +432,15 @@ Total documented definitions: 914
 | 367 | `function` | `_figure_source_map_ok` | inventory fallback | Inventory fallback for function `_figure_source_map_ok` defined at `src/gates/output_checks.py:367`. |
 | 377 | `function` | `_figure_hash_manifest_ok` | inventory fallback | Inventory fallback for function `_figure_hash_manifest_ok` defined at `src/gates/output_checks.py:377`. |
 | 387 | `function` | `_visualization_quality_audit_ok` | inventory fallback | Inventory fallback for function `_visualization_quality_audit_ok` defined at `src/gates/output_checks.py:387`. |
-| 417 | `function` | `_figure_output_integrity_ok` | inventory fallback | Inventory fallback for function `_figure_output_integrity_ok` defined at `src/gates/output_checks.py:417`. |
-| 459 | `function` | `_proof_extraction_ok` | inventory fallback | Inventory fallback for function `_proof_extraction_ok` defined at `src/gates/output_checks.py:459`. |
-| 479 | `function` | `_ontology_profile_ok` | inventory fallback | Inventory fallback for function `_ontology_profile_ok` defined at `src/gates/output_checks.py:479`. |
-| 508 | `function` | `_cross_track_symbol_table_ok` | inventory fallback | Inventory fallback for function `_cross_track_symbol_table_ok` defined at `src/gates/output_checks.py:508`. |
-| 548 | `function` | `_firstprinciples_classroom_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_classroom_ok` defined at `src/gates/output_checks.py:548`. |
-| 554 | `function` | `_validate_outputs_selected` | inventory fallback | Inventory fallback for function `_validate_outputs_selected` defined at `src/gates/output_checks.py:554`. |
-| 722 | `function` | `validate_outputs_selected_strict` | docstring | Validate selected output keys without falling back to the full gate. |
-| 741 | `function` | `validate_outputs` | inventory fallback | Inventory fallback for function `validate_outputs` defined at `src/gates/output_checks.py:741`. |
-| 752 | `function` | `_validate_outputs_full` | inventory fallback | Inventory fallback for function `_validate_outputs_full` defined at `src/gates/output_checks.py:752`. |
+| 441 | `function` | `_figure_output_integrity_ok` | inventory fallback | Inventory fallback for function `_figure_output_integrity_ok` defined at `src/gates/output_checks.py:441`. |
+| 483 | `function` | `_proof_extraction_ok` | inventory fallback | Inventory fallback for function `_proof_extraction_ok` defined at `src/gates/output_checks.py:483`. |
+| 503 | `function` | `_ontology_profile_ok` | inventory fallback | Inventory fallback for function `_ontology_profile_ok` defined at `src/gates/output_checks.py:503`. |
+| 532 | `function` | `_cross_track_symbol_table_ok` | inventory fallback | Inventory fallback for function `_cross_track_symbol_table_ok` defined at `src/gates/output_checks.py:532`. |
+| 572 | `function` | `_firstprinciples_classroom_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_classroom_ok` defined at `src/gates/output_checks.py:572`. |
+| 578 | `function` | `_validate_outputs_selected` | inventory fallback | Inventory fallback for function `_validate_outputs_selected` defined at `src/gates/output_checks.py:578`. |
+| 746 | `function` | `validate_outputs_selected_strict` | docstring | Validate selected output keys without falling back to the full gate. |
+| 765 | `function` | `validate_outputs` | inventory fallback | Inventory fallback for function `validate_outputs` defined at `src/gates/output_checks.py:765`. |
+| 776 | `function` | `_validate_outputs_full` | inventory fallback | Inventory fallback for function `_validate_outputs_full` defined at `src/gates/output_checks.py:776`. |
 
 ## `src/gnn/concordance.py`
 
@@ -818,17 +818,18 @@ Total documented definitions: 914
 | 96 | `function` | `build_release_notes_evidence` | docstring | Build the release_notes_evidence.v1 payload: three source-backed release notes (validation report, bundle sources, semantic certificate), deferring rows whose source artifact does not exist yet. |
 | 142 | `function` | `build_figure_source_map` | docstring | Build the figure_source_map.v1 payload: per-registry-figure sources, source fields, validation gates, caption/alt tokens, and image dimensions. |
 | 149 | `function` | `build_figure_source_map._image_dimensions` | inventory fallback | Inventory fallback for function `build_figure_source_map._image_dimensions` defined at `src/roadmap_tracks/integration_audit_artifacts.py:149`. |
-| 493 | `function` | `_actual_figure_image_paths` | inventory fallback | Inventory fallback for function `_actual_figure_image_paths` defined at `src/roadmap_tracks/integration_audit_artifacts.py:493`. |
-| 504 | `function` | `_expected_figure_image_paths` | inventory fallback | Inventory fallback for function `_expected_figure_image_paths` defined at `src/roadmap_tracks/integration_audit_artifacts.py:504`. |
-| 511 | `function` | `build_figure_hash_manifest` | docstring | Build the figure_hash_manifest.v1 payload for declared figure/animation images. |
-| 600 | `function` | `_caption_overclaim_free` | inventory fallback | Inventory fallback for function `_caption_overclaim_free` defined at `src/roadmap_tracks/integration_audit_artifacts.py:600`. |
-| 608 | `function` | `build_visualization_quality_audit` | docstring | Build a verifier-facing audit over figure readability, provenance, and caption scope. |
-| 685 | `function` | `_figure_source_rows_complete` | inventory fallback | Inventory fallback for function `_figure_source_rows_complete` defined at `src/roadmap_tracks/integration_audit_artifacts.py:685`. |
-| 775 | `function` | `_figure_hash_rows_complete` | inventory fallback | Inventory fallback for function `_figure_hash_rows_complete` defined at `src/roadmap_tracks/integration_audit_artifacts.py:775`. |
-| 806 | `function` | `build_scope_boundary_audit` | docstring | Build the scope_boundary_audit.v1 payload scanning numbered manuscript sections for empirical-biological claims outside the allowed future-work files. |
-| 840 | `function` | `build_manuscript_evidence_tables` | docstring | Build the manuscript_evidence_tables.v1 payload: an id/row_count/source index over twenty evidence artifacts. |
-| 973 | `function` | `build_adversarial_audit` | docstring | Return a copy of the canonical adversarial audit from roadmap_tracks.sheaf_tracks. |
-| 980 | `function` | `build_integration_semantic_snapshot` | docstring | Build the integration_semantic_snapshot.v1 payload: ~30 boolean restrictions over the saved artifacts plus structural/semantic/artifact/manuscript section rollups. |
+| 499 | `function` | `_actual_figure_image_paths` | inventory fallback | Inventory fallback for function `_actual_figure_image_paths` defined at `src/roadmap_tracks/integration_audit_artifacts.py:499`. |
+| 510 | `function` | `_expected_figure_image_paths` | inventory fallback | Inventory fallback for function `_expected_figure_image_paths` defined at `src/roadmap_tracks/integration_audit_artifacts.py:510`. |
+| 517 | `function` | `build_figure_hash_manifest` | docstring | Build the figure_hash_manifest.v1 payload for declared figure/animation images. |
+| 611 | `function` | `_caption_overclaim_free` | inventory fallback | Inventory fallback for function `_caption_overclaim_free` defined at `src/roadmap_tracks/integration_audit_artifacts.py:611`. |
+| 619 | `function` | `_figure_claim_wording_ok` | inventory fallback | Inventory fallback for function `_figure_claim_wording_ok` defined at `src/roadmap_tracks/integration_audit_artifacts.py:619`. |
+| 634 | `function` | `build_visualization_quality_audit` | docstring | Build a verifier-facing audit over figure readability, provenance, and caption scope. |
+| 742 | `function` | `_figure_source_rows_complete` | inventory fallback | Inventory fallback for function `_figure_source_rows_complete` defined at `src/roadmap_tracks/integration_audit_artifacts.py:742`. |
+| 832 | `function` | `_figure_hash_rows_complete` | inventory fallback | Inventory fallback for function `_figure_hash_rows_complete` defined at `src/roadmap_tracks/integration_audit_artifacts.py:832`. |
+| 863 | `function` | `build_scope_boundary_audit` | docstring | Build the scope_boundary_audit.v1 payload scanning numbered manuscript sections for empirical-biological claims outside the allowed future-work files. |
+| 897 | `function` | `build_manuscript_evidence_tables` | docstring | Build the manuscript_evidence_tables.v1 payload: an id/row_count/source index over twenty evidence artifacts. |
+| 1030 | `function` | `build_adversarial_audit` | docstring | Return a copy of the canonical adversarial audit from roadmap_tracks.sheaf_tracks. |
+| 1037 | `function` | `build_integration_semantic_snapshot` | docstring | Build the integration_semantic_snapshot.v1 payload: ~30 boolean restrictions over the saved artifacts plus structural/semantic/artifact/manuscript section rollups. |
 
 ## `src/roadmap_tracks/integration_audit_builders.py`
 
@@ -1237,15 +1238,22 @@ Total documented definitions: 914
 
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
-| 53 | `class` | `FigureStyleConfig` | inventory fallback | Inventory fallback for class `FigureStyleConfig` defined at `src/visualizations/figure_style.py:53`. |
-| 60 | `function` | `FigureStyleConfig.color` | inventory fallback | Inventory fallback for function `FigureStyleConfig.color` defined at `src/visualizations/figure_style.py:60`. |
-| 64 | `function` | `FigureStyleConfig.base_font_size` | inventory fallback | Inventory fallback for function `FigureStyleConfig.base_font_size` defined at `src/visualizations/figure_style.py:64`. |
-| 67 | `function` | `FigureStyleConfig.font_size` | docstring | Return a named figure font size in points. |
-| 78 | `function` | `FigureStyleConfig.rc_params` | inventory fallback | Inventory fallback for function `FigureStyleConfig.rc_params` defined at `src/visualizations/figure_style.py:78`. |
-| 96 | `function` | `active_style` | inventory fallback | Inventory fallback for function `active_style` defined at `src/visualizations/figure_style.py:96`. |
-| 100 | `function` | `load_figure_style` | inventory fallback | Inventory fallback for function `load_figure_style` defined at `src/visualizations/figure_style.py:100`. |
-| 109 | `function` | `_load_figure_style_cached` | inventory fallback | Inventory fallback for function `_load_figure_style_cached` defined at `src/visualizations/figure_style.py:109`. |
-| 124 | `function` | `apply_style` | inventory fallback | Inventory fallback for function `apply_style` defined at `src/visualizations/figure_style.py:124`. |
+| 75 | `function` | `_hex_rgb` | inventory fallback | Inventory fallback for function `_hex_rgb` defined at `src/visualizations/figure_style.py:75`. |
+| 82 | `function` | `_linear_channel` | inventory fallback | Inventory fallback for function `_linear_channel` defined at `src/visualizations/figure_style.py:82`. |
+| 86 | `function` | `relative_luminance` | docstring | Return WCAG relative luminance for a hex color. |
+| 92 | `function` | `contrast_ratio` | docstring | Return WCAG contrast ratio for two hex colors. |
+| 102 | `class` | `FigureStyleConfig` | inventory fallback | Inventory fallback for class `FigureStyleConfig` defined at `src/visualizations/figure_style.py:102`. |
+| 109 | `function` | `FigureStyleConfig.color` | inventory fallback | Inventory fallback for function `FigureStyleConfig.color` defined at `src/visualizations/figure_style.py:109`. |
+| 112 | `function` | `FigureStyleConfig.contrast_ratio` | inventory fallback | Inventory fallback for function `FigureStyleConfig.contrast_ratio` defined at `src/visualizations/figure_style.py:112`. |
+| 116 | `function` | `FigureStyleConfig.base_font_size` | inventory fallback | Inventory fallback for function `FigureStyleConfig.base_font_size` defined at `src/visualizations/figure_style.py:116`. |
+| 119 | `function` | `FigureStyleConfig.font_size` | docstring | Return a named figure font size in points. |
+| 130 | `function` | `FigureStyleConfig.font_role_report` | docstring | Return font role sizes and minimum checks for generated visualization audits. |
+| 142 | `function` | `FigureStyleConfig.palette_contrast_report` | docstring | Return WCAG contrast checks for the palette pairs used as text roles. |
+| 156 | `function` | `FigureStyleConfig.rc_params` | inventory fallback | Inventory fallback for function `FigureStyleConfig.rc_params` defined at `src/visualizations/figure_style.py:156`. |
+| 174 | `function` | `active_style` | inventory fallback | Inventory fallback for function `active_style` defined at `src/visualizations/figure_style.py:174`. |
+| 178 | `function` | `load_figure_style` | inventory fallback | Inventory fallback for function `load_figure_style` defined at `src/visualizations/figure_style.py:178`. |
+| 187 | `function` | `_load_figure_style_cached` | inventory fallback | Inventory fallback for function `_load_figure_style_cached` defined at `src/visualizations/figure_style.py:187`. |
+| 202 | `function` | `apply_style` | inventory fallback | Inventory fallback for function `apply_style` defined at `src/visualizations/figure_style.py:202`. |
 
 ## `src/visualizations/figures.py`
 
@@ -1260,10 +1268,11 @@ Total documented definitions: 914
 | ---: | --- | --- | --- | --- |
 | 21 | `function` | `_json_or_empty` | inventory fallback | Inventory fallback for function `_json_or_empty` defined at `src/visualizations/figures_abstract.py:21`. |
 | 28 | `function` | `figure_graphical_abstract` | docstring | Render the cover-page graphical abstract from generated evidence artifacts. |
-| 42 | `function` | `figure_graphical_abstract._f` | inventory fallback | Inventory fallback for function `figure_graphical_abstract._f` defined at `src/visualizations/figures_abstract.py:42`. |
-| 48 | `function` | `figure_graphical_abstract._i` | inventory fallback | Inventory fallback for function `figure_graphical_abstract._i` defined at `src/visualizations/figures_abstract.py:48`. |
-| 56 | `function` | `figure_graphical_abstract._v` | inventory fallback | Inventory fallback for function `figure_graphical_abstract._v` defined at `src/visualizations/figures_abstract.py:56`. |
-| 93 | `function` | `figure_graphical_abstract.evidence_card` | inventory fallback | Inventory fallback for function `figure_graphical_abstract.evidence_card` defined at `src/visualizations/figures_abstract.py:93`. |
+| 43 | `function` | `figure_graphical_abstract._f` | inventory fallback | Inventory fallback for function `figure_graphical_abstract._f` defined at `src/visualizations/figures_abstract.py:43`. |
+| 49 | `function` | `figure_graphical_abstract._i` | inventory fallback | Inventory fallback for function `figure_graphical_abstract._i` defined at `src/visualizations/figures_abstract.py:49`. |
+| 57 | `function` | `figure_graphical_abstract._v` | inventory fallback | Inventory fallback for function `figure_graphical_abstract._v` defined at `src/visualizations/figures_abstract.py:57`. |
+| 111 | `function` | `figure_graphical_abstract.evidence_card` | inventory fallback | Inventory fallback for function `figure_graphical_abstract.evidence_card` defined at `src/visualizations/figures_abstract.py:111`. |
+| 244 | `function` | `figure_graphical_abstract.node` | inventory fallback | Inventory fallback for function `figure_graphical_abstract.node` defined at `src/visualizations/figures_abstract.py:244`. |
 
 ## `src/visualizations/figures_analytical.py`
 
