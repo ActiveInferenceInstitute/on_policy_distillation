@@ -1092,6 +1092,69 @@ claims:
   evidence:
     field: reverse_kl
     predicate: positive
+- id: fp_sdpg_modes_complete
+  statement: SDPG artifact binds the privileged-context self-distillation objective
+    to the four declared KL modes.
+  path: output/data/firstprinciples/sdpg_demo.json
+  section: methods_analytical
+  tracks:
+  - analytical
+  - scholarship
+  evidence:
+    field: mode_keys
+    set_equals:
+    - fkl
+    - rkl
+    - ufkl
+    - urkl
+- id: fp_sdpg_dense_privileged_signal
+  statement: SDPG artifact certifies that privileged-context self-distillation
+    supplies a dense per-token signal rather than a scalar-only reward signal.
+  path: output/data/firstprinciples/sdpg_demo.json
+  section: methods_analytical
+  tracks:
+  - analytical
+  - scholarship
+  evidence:
+    field: dense_privileged_signal
+    predicate: is_true
+- id: fp_sdpg_self_distillation_kl_positive
+  statement: SDPG artifact records positive self-distillation KL terms for every
+    declared mode row.
+  path: output/data/firstprinciples/sdpg_demo.json
+  section: methods_analytical
+  tracks:
+  - analytical
+  - scholarship
+  evidence:
+    field: mode_rows
+    all:
+      field: self_distillation_kl
+      predicate: positive
+- id: fp_sdpg_reference_anchor_kl_positive
+  statement: SDPG artifact records a positive frozen-reference KL anchor for every
+    declared mode row.
+  path: output/data/firstprinciples/sdpg_demo.json
+  section: methods_analytical
+  tracks:
+  - analytical
+  - scholarship
+  evidence:
+    field: mode_rows
+    all:
+      field: reference_kl
+      predicate: positive
+- id: fp_sdpg_objective_terms_complete
+  statement: SDPG artifact exposes the clipped policy, self-distillation, reference
+    anchor, raw KL, and total objective terms needed by the manuscript reading.
+  path: output/data/firstprinciples/sdpg_demo.json
+  section: methods_analytical
+  tracks:
+  - analytical
+  - scholarship
+  evidence:
+    field: ok
+    predicate: is_true
 - id: fp_statistics_from_classroom
   statement: Inferential statistics artifact is internally consistent, with
     sample size, interval, effect-size, and permutation-test metadata derived

@@ -322,7 +322,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `gate_ergonomics` | `markdown` | 2 | 2 | 0 | 5 | `complete` |
 | `artifact_diffoscope` | `markdown` | 2 | 2 | 0 | 1 | `complete` |
 | `artifact_license` | `markdown` | 2 | 2 | 0 | 1 | `complete` |
-| `scholarship` | `markdown` | 3 | 3 | 0 | 7 | `complete` |
+| `scholarship` | `markdown` | 3 | 3 | 0 | 12 | `complete` |
 | `sensitivity` | `markdown` | 2 | 2 | 0 | 10 | `complete` |
 | `uncertainty` | `markdown` | 2 | 2 | 0 | 4 | `complete` |
 | `benchmark` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
@@ -372,7 +372,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `evidence_field_index` | `output/data/evidence_field_index.json` | `generate_sheaf_tracks.py` | validate_outputs, validate_manuscript |
 | `validation_dependency_graph` | `output/data/validation_dependency_graph.json` | `generate_sheaf_tracks.py` | validate_manuscript, validate_outputs |
 
-**Claim rows:** 119 typed evidence claims.
+**Claim rows:** 124 typed evidence claims.
 
 <!-- sheaf-layers:artifact-producers -->
 ## Artifact producer graph

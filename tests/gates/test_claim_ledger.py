@@ -374,6 +374,119 @@ def test_rederivation_evidence_forms_bite(tmp_path: Path) -> None:
     assert any("cross_artifact" in issue for issue in issues)
 
 
+def test_sdpg_claim_evidence_rejects_malformed_artifact(tmp_path: Path) -> None:
+    """SDPG claim predicates fail on missing modes, sparse signal, or broken KL rows."""
+    from firstprinciples import artifacts
+    from gates.claim_ledger import typed_claim_evidence_issues
+
+    data_dir = tmp_path / "output" / "data" / "firstprinciples"
+    data_dir.mkdir(parents=True)
+    artifact_path = data_dir / "sdpg_demo.json"
+    honest = artifacts.sdpg_demo()
+    artifact_path.write_text(json.dumps(honest), encoding="utf-8")
+    ledger = tmp_path / "claim_ledger.yaml"
+    ledger.write_text(
+        "\n".join(
+            [
+                "claims:",
+                "  - id: sdpg_modes",
+                "    statement: SDPG modes complete",
+                "    path: output/data/firstprinciples/sdpg_demo.json",
+                "    tracks: [analytical]",
+                "    evidence:",
+                "      field: mode_keys",
+                "      set_equals: [fkl, rkl, ufkl, urkl]",
+                "  - id: sdpg_dense_signal",
+                "    statement: SDPG dense signal",
+                "    path: output/data/firstprinciples/sdpg_demo.json",
+                "    tracks: [analytical]",
+                "    evidence:",
+                "      field: dense_privileged_signal",
+                "      predicate: is_true",
+                "  - id: sdpg_self_distillation_positive",
+                "    statement: SDPG self-distillation KL positive",
+                "    path: output/data/firstprinciples/sdpg_demo.json",
+                "    tracks: [analytical]",
+                "    evidence:",
+                "      field: mode_rows",
+                "      all:",
+                "        field: self_distillation_kl",
+                "        predicate: positive",
+                "  - id: sdpg_reference_anchor_positive",
+                "    statement: SDPG reference anchor KL positive",
+                "    path: output/data/firstprinciples/sdpg_demo.json",
+                "    tracks: [analytical]",
+                "    evidence:",
+                "      field: mode_rows",
+                "      all:",
+                "        field: reference_kl",
+                "        predicate: positive",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert typed_claim_evidence_issues(tmp_path, ledger_path=ledger) == []
+
+    doctored = json.loads(json.dumps(honest))
+    doctored["mode_keys"] = ["fkl", "rkl", "ufkl"]
+    artifact_path.write_text(json.dumps(doctored), encoding="utf-8")
+    assert any("sdpg_modes" in issue for issue in typed_claim_evidence_issues(tmp_path, ledger_path=ledger))
+
+    doctored = json.loads(json.dumps(honest))
+    doctored["dense_privileged_signal"] = False
+    artifact_path.write_text(json.dumps(doctored), encoding="utf-8")
+    assert any("sdpg_dense_signal" in issue for issue in typed_claim_evidence_issues(tmp_path, ledger_path=ledger))
+
+    doctored = json.loads(json.dumps(honest))
+    doctored["mode_rows"][0]["self_distillation_kl"] = 0.0
+    artifact_path.write_text(json.dumps(doctored), encoding="utf-8")
+    assert any(
+        "sdpg_self_distillation_positive" in issue
+        for issue in typed_claim_evidence_issues(tmp_path, ledger_path=ledger)
+    )
+
+    doctored = json.loads(json.dumps(honest))
+    doctored["mode_rows"][0]["reference_kl"] = 0.0
+    artifact_path.write_text(json.dumps(doctored), encoding="utf-8")
+    assert any(
+        "sdpg_reference_anchor_positive" in issue
+        for issue in typed_claim_evidence_issues(tmp_path, ledger_path=ledger)
+    )
+
+
+def test_sdpg_missing_claim_evidence_fails_claim_audit(tmp_path: Path) -> None:
+    from roadmap_tracks.integration_audit_builders import build_claim_evidence_audit
+
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "claim_ledger.yaml").write_text(
+        "\n".join(
+            [
+                "claims:",
+                "  - id: fp_sdpg_modes_complete",
+                "    statement: SDPG modes complete",
+                "    path: output/data/firstprinciples/sdpg_demo.json",
+                "    tracks: [analytical]",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    audit = build_claim_evidence_audit(tmp_path)
+    assert audit["all_claims_typed"] is False
+    assert audit["rows"] == [
+        {
+            "id": "fp_sdpg_modes_complete",
+            "path": "output/data/firstprinciples/sdpg_demo.json",
+            "has_evidence": False,
+            "has_tracks": True,
+        }
+    ]
+
+
 def test_claim_ledger_private_predicates_and_lookup_edges() -> None:
     from gates.claim_ledger import _lookup_field, _numbers_equal, _predicate_holds, _set_equals
 

@@ -33,25 +33,27 @@ tasks:
   notes: ''
 - id: opsd-3
   title: SDPG privileged-context self-distillation objective
-  status: in_progress
+  status: done
   start: '2026-06-06'
-  end: '2026-06-16'
-  progress: 60
+  end: '2026-06-14'
+  progress: 100
   milestone: false
   deps:
   - opsd-1
   tags:
   - theory
-  notes: 'Reassessed on 2026-06-13 after verifier-first hardening. Existing surface includes
+  notes: 'Closed on 2026-06-14 with SDPG-specific typed claim evidence. Existing surface includes
     `src/firstprinciples/sdpg.py`, `artifacts.sdpg_demo()`,
     `output/data/firstprinciples/sdpg_demo.json`, taxonomy row `SDPG`, notation
     supplement section 5, manuscript discussion/method bindings, and fast-lane
     tests `test_sdpg_config_validation`, `test_sdpg_loss_terms_and_modes`,
     `test_sdpg_signal_density_is_dense`, and `test_sdpg_demo_all_modes_present`.
-    Leave in_progress: next useful work is a typed SDPG-specific claim/gate or
-    negative control that proves the privileged-context objective cannot drift
-    from `sdpg_demo.json`; do not promote broader production-LLM claims from this
-    toy artifact.'
+    The artifact now exposes explicit mode keys, mode-row loss terms, dense-signal
+    status, finite/positive KL checks, and an `ok` predicate consumed by
+    `data/claim_ledger.yaml`; negative controls reject missing modes, sparse
+    privileged signals, broken self-distillation KL, broken reference-anchor KL,
+    and missing SDPG claim evidence. This closes the finite toy objective gate
+    only; it does not promote broader production-LLM claims from this artifact.'
 - id: opsd-4
   title: Two-agent pymdp classroom (teacher vs student)
   status: done
@@ -125,19 +127,22 @@ tasks:
   status: in_progress
   start: '2026-06-06'
   end: '2026-06-16'
-  progress: 85
+  progress: 90
   milestone: false
   deps:
   - opsd-4
   tags:
   - tests
-  notes: 'Updated on 2026-06-13. Diagnostic five-run local soak with seeds 61300-61304
+  notes: 'Updated on 2026-06-14. Diagnostic five-run local soak with seeds 61300-61304
     produced red rows for 61300, 61301, and 61302, then green rows for 61303 and
     61304; failing chunk groups and a full same-seed 61300 rerun were later green
-    after gate-surface refresh hardening. Keep in_progress until a fresh idle-host
-    transcript has five consecutive green rows and `complete_soak: true`. The
-    validator work lives in opsd-9; a red shuffled run remains evidence to report
-    with exact seed and failure tail, not a seed to re-roll.'
+    after gate-surface refresh hardening. A fresh loaded-host 2026-06-14 soak
+    recorded green seeds 61300, 61301, and 61302, then red SIGTERM-style rows for
+    seed 61303 chunk 8 and seed 61304 chunk 4 (`EXIT -15`, no pytest failures,
+    `complete_soak: false`). Keep in_progress until a fresh idle-host transcript
+    has five consecutive green rows and `complete_soak: true`. The validator work
+    lives in opsd-9; a red shuffled run remains evidence to report with exact
+    seed and failure tail, not a seed to re-roll.'
 - id: opsd-9
   title: Soak report validator and completion gate
   status: done

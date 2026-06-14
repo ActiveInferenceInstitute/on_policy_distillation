@@ -50,9 +50,12 @@ What remains is **optional future deepening or externally-gated**, in priority o
    from repeated deterministic shuffled chunked runs. A local diagnostic
    five-run soak on 2026-06-13 exposed order-sensitive stale-artifact failures
    under seeds 61300, 61301, and 61302; the reported failing chunk groups and a
-   full same-seed 61300 rerun now pass after gate-surface refresh hardening. The
-   remaining closure item is a fresh 5-consecutive-run idle-host transcript with
-   `complete_soak: true`.
+   full same-seed 61300 rerun now pass after gate-surface refresh hardening. A
+   loaded-host 2026-06-14 five-run transcript then produced green seeds 61300,
+   61301, and 61302, followed by SIGTERM-style red rows at seed 61303 chunk 8
+   and seed 61304 chunk 4 (`EXIT -15`, no pytest failures, `complete_soak: false`).
+   The remaining closure item is still a fresh 5-consecutive-run
+   idle-host transcript with `complete_soak: true`.
 4. **Intentionally blocked (do NOT build without the unblock artifacts + gates):** all
    rows under "Blocked scope" — empirical/biological, private data, network-dependent,
    LLM-generated evidence, non-toy claims.
@@ -78,7 +81,7 @@ implementation begins.
 
 | ID | Area | Remaining improvement | Proving artifact | Gate or predicate | Negative control |
 | --- | --- | --- | --- | --- | --- |
-| `AI-TEST-ISOLATION-1` | Test infra | Complete the 5-consecutive-run idle-host soak. `run_test_isolation_soak.py` records repeated deterministic shuffled chunked runs incrementally, and `--validate-report --require-complete` verifies seed continuity, failed chunk ids, failed tests, diagnostic completeness, and `complete_soak`. The 2026-06-13 diagnostic soak exposed stale-artifact order failures that were hardened, but a fresh idle-host completion transcript is still needed. | `output/reports/test_isolation_soak.json` | five green consecutive runs with fixed or reported shuffle seeds and `complete_soak: true` | Red shuffled run is reported with its seed and tail, not re-rolled |
+| `AI-TEST-ISOLATION-1` | Test infra | Complete the 5-consecutive-run idle-host soak. `run_test_isolation_soak.py` records repeated deterministic shuffled chunked runs incrementally, and `--validate-report --require-complete` verifies seed continuity, failed chunk ids, failed tests, diagnostic completeness, and `complete_soak`. The 2026-06-13 diagnostic soak exposed stale-artifact order failures that were hardened; the 2026-06-14 loaded-host transcript then failed only through SIGTERM-style chunk exits at seeds 61303 and 61304 with no pytest failures. A fresh idle-host completion transcript is still needed. | `output/reports/test_isolation_soak.json` | five green consecutive runs with fixed or reported shuffle seeds and `complete_soak: true` | Red shuffled run is reported with its seed and tail, not re-rolled |
 | `REVIEW-FIGURE-RELOCATION-1` | Visualization | At venue-submission time, decide whether dense dashboard figures should move to the supplement with simplified main-text replacements. Deliberately deferred because the current paper is an auditable artifact paper. | `figures.yaml` `section_figures` | compose and figure-source gates stay green | Figure lacks source artifact |
 | `TMAZE-MATRIX-TABLE-1` | Visualization | At venue-submission time, convert `si_tmaze_model_matrices` into a generated table or move it fully to the supplement. Do not hand-typeset values; bind them to the matrix artifact. | generated table binding + matrix artifact | compose and figure gates stay green | Typeset values diverge from matrix artifact |
 
@@ -164,10 +167,13 @@ The remaining evidence task is a five-run idle-host soak. A loaded-host chunked
 run on 2026-06-11 produced one red chunk followed by two exact chunk reruns that
 passed. A diagnostic five-run local soak on 2026-06-13 recorded red seeds
 61300, 61301, and 61302, then green seeds 61303 and 61304; the failing chunk
-groups and a full same-seed 61300 rerun now pass after refresh hardening. Treat
-any future red shuffled run as evidence to report with the seed and emitted
-failure tail.
+groups and a full same-seed 61300 rerun now pass after refresh hardening. A
+loaded-host five-run soak on 2026-06-14 recorded green seeds 61300, 61301, and
+61302, then red rows for seed 61303 chunk 8 and seed 61304 chunk 4; both were
+`EXIT -15` with no pytest failures in the emitted tail, so `complete_soak`
+remains false. Treat any future red shuffled run as evidence to report with the
+seed and emitted failure tail.
 
 | ID | Area | Improvement | Proving artifact | Gate or predicate | Negative control |
 | --- | --- | --- | --- | --- | --- |
-| `AI-TEST-ISOLATION-1` | Test infra | **PARTIAL:** chain-A stale-trust race closed; `run_tests_chunked.py --shuffle-seed N` provides deterministic file-order coverage; failure tails are emitted for red chunks; `run_test_isolation_soak.py` writes an incremental repeated-run report; the 2026-06-13 red diagnostic chunks and full same-seed 61300 rerun are now green after refresh hardening. Remaining: the 5-consecutive-run idle-host soak with `complete_soak: true` | `output/reports/test_isolation_soak.json` | chunked equivalent green across 5 consecutive idle-host runs | shuffled chunk order (`--shuffle-seed`) is reported with exact seed and tail if red |
+| `AI-TEST-ISOLATION-1` | Test infra | **PARTIAL:** chain-A stale-trust race closed; `run_tests_chunked.py --shuffle-seed N` provides deterministic file-order coverage; failure tails are emitted for red chunks; `run_test_isolation_soak.py` writes an incremental repeated-run report; the 2026-06-13 red diagnostic chunks and full same-seed 61300 rerun are now green after refresh hardening; the 2026-06-14 loaded-host five-run transcript preserved new SIGTERM-style red rows at seeds 61303 and 61304. Remaining: the 5-consecutive-run idle-host soak with `complete_soak: true` | `output/reports/test_isolation_soak.json` | chunked equivalent green across 5 consecutive idle-host runs | shuffled chunk order (`--shuffle-seed`) is reported with exact seed and tail if red |

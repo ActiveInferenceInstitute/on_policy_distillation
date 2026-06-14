@@ -51,6 +51,15 @@ _TEACHER = np.array([0.80, 0.15, 0.04, 0.01], dtype=np.float64)
 _STUDENT = np.array([0.55, 0.25, 0.15, 0.05], dtype=np.float64)
 _REFERENCE = np.array([0.25, 0.25, 0.25, 0.25], dtype=np.float64)
 _REWARD = np.array([2.0, 0.5, -0.5, -2.0], dtype=np.float64)
+_SDPG_MODES = ("fkl", "rkl", "ufkl", "urkl")
+_SDPG_LOSS_TERMS = (
+    "clip_term",
+    "distill_term",
+    "ref_kl_term",
+    "self_distillation_kl",
+    "reference_kl",
+    "total",
+)
 
 
 def _dir(root: Path) -> Path:
@@ -119,15 +128,44 @@ def sdpg_demo() -> dict[str, Any]:
     reference = sdpg.softmax(np.array([0.0, 0.0, 0.0, 0.0]))
     modes = {
         mode: sdpg.sdpg_loss(student, teacher, reference, advantage=1.0, config=sdpg.SDPGConfig(kl_mode=mode))
-        for mode in ("fkl", "rkl", "ufkl", "urkl")
+        for mode in _SDPG_MODES
     }
+    mode_rows = [{"mode": mode, **modes[mode]} for mode in _SDPG_MODES]
+    signal_density = sdpg.signal_density(student, teacher)
+    all_loss_terms_present = all(all(term in row for term in _SDPG_LOSS_TERMS) for row in mode_rows)
+    all_loss_terms_finite = all(
+        bool(np.isfinite(float(row[term]))) for row in mode_rows for term in _SDPG_LOSS_TERMS
+    )
+    all_self_distillation_kl_positive = all(row["self_distillation_kl"] > 0.0 for row in mode_rows)
+    all_reference_kl_positive = all(row["reference_kl"] > 0.0 for row in mode_rows)
+    dense_privileged_signal = (
+        signal_density["denser_than_scalar"] is True
+        and signal_density["density_ratio"] > signal_density["scalar_reward_components"]
+    )
+    ok = (
+        set(modes) == set(_SDPG_MODES)
+        and all_loss_terms_present
+        and all_loss_terms_finite
+        and all_self_distillation_kl_positive
+        and all_reference_kl_positive
+        and dense_privileged_signal
+    )
     return {
         "schema": "firstprinciples.sdpg_demo.v1",
         "teacher": teacher.tolist(),
         "student": student.tolist(),
         "reference": reference.tolist(),
+        "mode_keys": list(_SDPG_MODES),
         "modes": modes,
-        "signal_density": sdpg.signal_density(student, teacher),
+        "mode_rows": mode_rows,
+        "required_loss_terms": list(_SDPG_LOSS_TERMS),
+        "signal_density": signal_density,
+        "all_loss_terms_present": all_loss_terms_present,
+        "all_loss_terms_finite": all_loss_terms_finite,
+        "all_self_distillation_kl_positive": all_self_distillation_kl_positive,
+        "all_reference_kl_positive": all_reference_kl_positive,
+        "dense_privileged_signal": dense_privileged_signal,
+        "ok": ok,
     }
 
 

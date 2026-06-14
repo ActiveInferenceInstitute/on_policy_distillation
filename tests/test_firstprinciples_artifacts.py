@@ -72,7 +72,27 @@ def test_exposure_bias_demo_collapses_off_policy() -> None:
 def test_sdpg_demo_all_modes_present() -> None:
     demo = artifacts.sdpg_demo()
     assert set(demo["modes"]) == {"fkl", "rkl", "ufkl", "urkl"}
+    assert demo["mode_keys"] == ["fkl", "rkl", "ufkl", "urkl"]
+    assert {row["mode"] for row in demo["mode_rows"]} == {"fkl", "rkl", "ufkl", "urkl"}
+    assert demo["required_loss_terms"] == [
+        "clip_term",
+        "distill_term",
+        "ref_kl_term",
+        "self_distillation_kl",
+        "reference_kl",
+        "total",
+    ]
     assert demo["signal_density"]["denser_than_scalar"] is True
+    assert demo["dense_privileged_signal"] is True
+    assert demo["all_loss_terms_present"] is True
+    assert demo["all_loss_terms_finite"] is True
+    assert demo["all_self_distillation_kl_positive"] is True
+    assert demo["all_reference_kl_positive"] is True
+    assert demo["ok"] is True
+    for row in demo["mode_rows"]:
+        assert set(demo["required_loss_terms"]) < set(row)
+        assert row["self_distillation_kl"] > 0.0
+        assert row["reference_kl"] > 0.0
 
 
 def test_markdown_tables_written(tmp_path: Path) -> None:
