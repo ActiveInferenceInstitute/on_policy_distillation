@@ -50,7 +50,7 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         ax.text(
             0.52,
             9.58,
-            "A Finite-Model Active-Inference Reading",
+            "On-Policy Distillation as Active Inference",
             fontsize=style.font_size("hero") * 0.78,
             fontweight="bold",
             color="white",
@@ -59,7 +59,7 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         ax.text(
             0.54,
             9.12,
-            "of On-Policy Distillation",
+            "in Finite Variational Models",
             fontsize=style.font_size("title") * 1.18,
             fontweight="bold",
             color="#dbeafe",
@@ -68,7 +68,7 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         ax.text(
             0.56,
             8.80,
-            "overview schematic for declared objects, rollout situations, and validation gates",
+            "reverse-KL free energy, student-induced sampling, deterministic toy witnesses",
             fontsize=style.font_size("small"),
             color="#eff6ff",
             va="center",
@@ -132,11 +132,11 @@ def figure_graphical_abstract(project_root: Path) -> Path:
             5.78,
             3.72,
             2.18,
-            "Declared model",
-            "finite objects",
+            "Finite variational model",
+            "declared object",
             [
-                "explicit finite objects",
-                "declared posterior family",
+                "declared states and policies",
+                "teacher as generative model",
                 "toy-only scope boundary",
             ],
             analytical,
@@ -146,12 +146,12 @@ def figure_graphical_abstract(project_root: Path) -> Path:
             0.86,
             3.72,
             2.05,
-            "Rollout situation",
-            "teacher and student",
+            "Student-induced sampling",
+            "trajectory",
             [
-                "contextual teacher signal",
                 "student visits its own states",
-                "no production or biology claim",
+                "observations are sampled there",
+                "no production-scale claim",
             ],
             student,
         )
@@ -160,11 +160,11 @@ def figure_graphical_abstract(project_root: Path) -> Path:
             5.78,
             3.72,
             2.18,
-            "Finite reading",
+            "VFE / EFE split",
             "VFE and EFE roles",
             [
-                "reverse KL as finite VFE",
-                "EFE for policy selection",
+                "reverse KL appears in VFE update",
+                "EFE marks action selection only",
                 "artifact-backed boundary",
             ],
             energy,
@@ -216,7 +216,7 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         ax.text(
             center_x,
             5.32,
-            "finite active-inference reading",
+            "finite variational-model reading",
             fontsize=style.font_size("annotation"),
             fontweight="bold",
             color=ink,
@@ -226,7 +226,7 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         ax.text(
             center_x,
             4.94,
-            "teacher policy -> student rollout",
+            "teacher / generative model -> student posterior",
             fontsize=style.font_size("annotation") * 1.06,
             fontweight="bold",
             color=analytical,
@@ -236,7 +236,7 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         ax.text(
             center_x,
             4.58,
-            "reverse KL read through finite VFE",
+            "student-induced observations close the loop",
             fontsize=style.font_size("annotation") * 0.96,
             fontweight="bold",
             color=energy,
@@ -246,7 +246,7 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         ax.text(
             center_x,
             4.08,
-            "under the declared rollout measure",
+            "reverse-KL loss as VFE up to evidence constant",
             fontsize=style.font_size("small"),
             color=muted,
             ha="center",
@@ -276,7 +276,7 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         ax.text(
             center_x,
             3.48,
-            "sequential shift witness",
+            "EFE: planning-side action selection",
             fontsize=style.font_size("dense"),
             color=teacher,
             fontweight="bold",
@@ -287,7 +287,7 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         ax.text(
             center_x,
             3.29,
-            "train path -> correction loop",
+            "not part of the reverse-KL update claim",
             fontsize=style.font_size("dense") * 0.92,
             color=teacher,
             ha="center",
@@ -296,10 +296,10 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         )
 
         loop_nodes = [
-            (5.00, 6.64, "T", "teacher model", teacher),
-            (7.28, 4.50, "S", "student", student),
-            (5.00, 2.46, "R", "own rollouts", analytical),
-            (2.72, 4.50, "G", "gates", validation),
+            (5.00, 6.64, "G", "teacher / generative", teacher),
+            (7.28, 4.50, "Q", "student posterior", student),
+            (5.00, 2.46, "O", "student observations", analytical),
+            (2.72, 4.50, "F", "reverse-KL / VFE", energy),
         ]
         for x, y, label, body, color in loop_nodes:
             node(x, y, label, body, color)
@@ -328,7 +328,7 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         ax.text(
             9.55,
             0.16,
-            "generated from repository artifacts; deterministic toy scope only",
+            "generated from repository artifacts; quantitative evidence stays in body figures and tables",
             fontsize=style.font_size("source"),
             color=ink,
             ha="right",

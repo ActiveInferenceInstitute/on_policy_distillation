@@ -3,8 +3,9 @@
 This reference answers the three questions a reader actually has when working on
 this project: **which knob changes what** (and which module consumes it), **how
 to add a new track or figure** without tripping the integration gates, and
-**what to run after editing X**. Everything documented here was verified against
-the live tree on 2026-06-10; commands are copy-pasteable from the project root.
+**what to run after editing X**. The commands are copy-pasteable from the
+project root and are kept current by the documentation and output validation
+gates.
 
 ## Configuration map: every knob and its consumer
 
@@ -105,10 +106,16 @@ A figure that misses one of these surfaces cascades ~10 test failures
    `caption` using `{{token}}` hydration for ordinary evidence figures (no
    hand-typed numbers; check any new format spec against `_TOKEN_RE` in
    `src/manuscript/hydrate.py` — a spec the regex does not match is silently
-   left unsubstituted), and `width`. The `graphical_abstract` cover is the
-   deliberate exception: it is a quantitative-free overview schematic, so nats,
-   cue values, losses, counts, and metric badges belong in the body figures and
-   tables instead.
+   left unsubstituted), `width`, and a `claims:` caption-claim contract. Each
+   claim declares `id`, `claim_type`, required `caption_terms`, `sources`,
+   `source_fields`, `scope`, and `display_transform`. Use `local_deterministic`
+   for generated toy/result evidence, `schematic` for the cover and early
+   orientation figures such as `graphical_abstract`, `opd_reader_map`, and
+   `opd_situational_awareness`, and `external_context` only for
+   scholarship/taxonomy context. The `graphical_abstract` cover is the deliberate
+   exception to ordinary quantitative captions: it is a quantitative-free
+   overview schematic, so nats, cue values, losses, counts, and metric badges
+   belong in the body figures and tables instead.
 4. **Section binding** — add the id under `figures.yaml` `section_figures.<section>`.
    The section must bind the `visualization` track in
    `manuscript/sheaf/manifest.yaml` (a one-line placeholder fragment under
@@ -117,7 +124,12 @@ A figure that misses one of these surfaces cascades ~10 test failures
 5. **Source map** — add entries to all three dicts in
    `src/roadmap_tracks/integration_audit_artifacts.py`: figure → source
    artifacts, figure → source fields (`$.jsonpath` form), and figure →
-   validation gates (gate ids must name real checks/tests).
+   validation gates (gate ids must name real checks/tests). `source_fields` must
+   cover every claim-level source field declared in `figures.yaml`; the generated
+   `caption_claims_ok` and top-level `all_caption_claims_ok` flags are the
+   machine-readable proof that caption text, alt text, source fields, scope, and
+   compact-display disclosures agree. If the pixels show a subset, aggregate, or
+   label-key condensation, declare that `display_transform` instead of `full`.
 6. **Prose** — reference the figure as `[@fig:<id>]` from the relevant
    `prose.md` fragment, and add any new `{{tokens}}` to
    `src/manuscript/variables.py`.
@@ -156,7 +168,7 @@ uv run --extra dev python -m pytest tests/test_figures.py --no-cov -q
 | any generated-artifact producer | `uv run python scripts/run_full_chain.py --tail-only` after tail-only edits, or `uv run python scripts/run_full_chain.py` when producer dependencies changed |
 | manuscript fragments / manifest / figures.yaml | `uv run python scripts/compose_manuscript.py && uv run python scripts/z_generate_manuscript_variables.py` |
 | everything / unsure | `uv run python scripts/run_full_chain.py` (canonical convergent order with bounded retry) |
-| full release gate | `uv run python scripts/run_tests_chunked.py` then `uv run python scripts/render_pdf.py` |
+| full release gate | `uv run python scripts/run_tests_chunked.py` then `uv run python scripts/run_full_chain.py --render` and `uv run python scripts/validate_outputs.py` |
 | isolation soak (order coverage) | `uv run python scripts/run_tests_chunked.py --shuffle-seed N` (deterministic; report a red run, never re-roll the seed) |
 | saved isolation-soak report | `uv run python scripts/run_test_isolation_soak.py --validate-report output/reports/test_isolation_soak.json`; add `--require-complete` only for closure evidence |
 | roadmap or taskboard metadata | `uv run python scripts/audit_roadmap_tasks.py` |

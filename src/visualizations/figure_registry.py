@@ -17,12 +17,35 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
+class FigureClaim:
+    claim_id: str
+    claim_type: str
+    caption_terms: tuple[str, ...]
+    sources: tuple[str, ...]
+    source_fields: tuple[str, ...]
+    scope: str
+    display_transform: str = "full"
+
+    def as_payload(self) -> dict[str, Any]:
+        return {
+            "id": self.claim_id,
+            "claim_type": self.claim_type,
+            "caption_terms": list(self.caption_terms),
+            "sources": list(self.sources),
+            "source_fields": list(self.source_fields),
+            "scope": self.scope,
+            "display_transform": self.display_transform,
+        }
+
+
+@dataclass(frozen=True)
 class FigureSpec:
     figure_id: str
     filename: str
     alt: str
     caption: str
     width: float = 0.9
+    claims: tuple[FigureClaim, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -60,12 +83,30 @@ def load_figure_registry(project_root: Path) -> dict[str, FigureSpec]:
             logger.warning("figures.yaml entry %s is not a mapping; skipped", figure_id)
             continue
         fid = str(figure_id)
+        raw_claims = entry.get("claims") or ()
+        claims: list[FigureClaim] = []
+        if isinstance(raw_claims, list):
+            for raw_claim in raw_claims:
+                if not isinstance(raw_claim, dict):
+                    continue
+                claims.append(
+                    FigureClaim(
+                        claim_id=str(raw_claim.get("id", "")),
+                        claim_type=str(raw_claim.get("claim_type", "")),
+                        caption_terms=tuple(str(term) for term in raw_claim.get("caption_terms", ()) or ()),
+                        sources=tuple(str(source) for source in raw_claim.get("sources", ()) or ()),
+                        source_fields=tuple(str(field) for field in raw_claim.get("source_fields", ()) or ()),
+                        scope=str(raw_claim.get("scope", "")),
+                        display_transform=str(raw_claim.get("display_transform", "full")),
+                    )
+                )
         registry[fid] = FigureSpec(
             figure_id=fid,
             filename=str(entry.get("filename", f"{fid}.png")),
             alt=str(entry.get("alt", fid)),
             caption=str(entry.get("caption", "")),
             width=float(entry.get("width", 0.9)),
+            claims=tuple(claims),
         )
     if not registry:
         raise ValueError("figures.yaml must declare at least one figure entry")
@@ -175,6 +216,10 @@ def build_figure_registry_payload(project_root: Path) -> dict[str, dict[str, obj
             "alt": spec.alt,
             "caption": spec.caption,
             "width": spec.width,
+            "claims": [
+                claim.as_payload()
+                for claim in spec.claims
+            ],
             "generated_by": f"visualizations.figures::{figure_id}",
         }
     return payload

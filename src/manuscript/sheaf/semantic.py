@@ -805,15 +805,6 @@ def write_semantic_gluing_certificate(
         write_supplemental_artifacts(root)
     payload = _with_proof_obligations(root, build_semantic_gluing_certificate(root))
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    if output_path is None:
-        _refresh_hydrated_manuscript(root)
-        from manuscript.sheaf.status import write_sheaf_status_outputs
-        from roadmap_tracks.supplemental import write_supplemental_artifacts
-
-        write_sheaf_status_outputs(root)
-        write_supplemental_artifacts(root)
-        payload = _with_proof_obligations(root, build_semantic_gluing_certificate(root))
-        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return path
 
 
@@ -858,14 +849,6 @@ def write_semantic_gluing_outputs(project_root: Path, *, refresh_hydration: bool
         json.dumps(build_validation_dependency_graph(root), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    certificate_path.write_text(
-        json.dumps(_with_proof_obligations(root, build_semantic_gluing_certificate(root)), indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-    if refresh_hydration:
-        _refresh_hydrated_manuscript(root)
-    status_paths = write_sheaf_status_outputs(root)
-    write_supplemental_artifacts(root)
     certificate_path.write_text(
         json.dumps(_with_proof_obligations(root, build_semantic_gluing_certificate(root)), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",

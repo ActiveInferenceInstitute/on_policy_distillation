@@ -8,6 +8,8 @@ defined here, so existing imports continue to resolve unchanged.
 
 from __future__ import annotations
 
+import csv
+import json
 import re
 from pathlib import Path
 from typing import Any
@@ -218,6 +220,21 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
             "output/data/firstprinciples/sequential_shift.json",
             "output/data/validation_dependency_graph.json",
         ],
+        "opd_reader_map": [
+            "output/data/firstprinciples/correspondence_map.json",
+            "output/data/firstprinciples/exposure_bias_demo.json",
+            "output/data/firstprinciples/sequential_shift.json",
+            "output/data/validation_dependency_graph.json",
+        ],
+        "opd_situational_awareness": [
+            "output/data/firstprinciples/correspondence_map.json",
+            "output/data/firstprinciples/sequential_shift.json",
+            "output/data/firstprinciples/classroom.json",
+            "output/data/firstprinciples/energy_demo.json",
+            "output/data/firstprinciples/opd_taxonomy.json",
+            "output/data/validation_dependency_graph.json",
+            "output/data/manuscript_variables.json",
+        ],
     }
     source_fields = {
         "ising_mi_curve": [
@@ -314,7 +331,7 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
             "$.privileged_info_count",
         ],
         "sheaf_layers_overview": ["$.tracks", "$.layers", "$.bound_cell_count", "$.validated_cell_count"],
-        "sheaf_coverage_heatmap": ["$.rows", "$.track_ids", "$.section_ids", "$.status_matrix"],
+        "sheaf_coverage_heatmap": ["$.tracks", "$.sections"],
         "invariant_dashboard": ["$.invariants", "$.simulation", "$.all_pass"],
         "tmaze_schematic": [
             "pymdp.yaml:planning_horizon",
@@ -343,11 +360,26 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         "causal_ablation_heatmap": ["$.rows[*].topology", "$.rows[*].perturbation", "$.rows[*].effect"],
         "scholarship_source_map": ["$.rows[*].citation_key", "$.rows[*].method_role", "$.rows[*].artifact"],
         "graphical_abstract": [
-            "manuscript/sheaf/tracks.yaml:track_registry",
+            "manuscript/sheaf/tracks.yaml:tracks",
             "output/data/firstprinciples/classroom.json:schema",
             "output/data/firstprinciples/energy_demo.json:schema",
             "output/data/firstprinciples/sequential_shift.json:schema",
             "output/data/validation_dependency_graph.json:producer_consumer_spine",
+        ],
+        "opd_reader_map": [
+            "$.rows",
+            "$.curves.off_policy",
+            "$.student_test_visitation_after",
+            "output/data/validation_dependency_graph.json:$.edges",
+        ],
+        "opd_situational_awareness": [
+            "output/data/firstprinciples/correspondence_map.json:$.rows",
+            "output/data/firstprinciples/sequential_shift.json:$.schema",
+            "output/data/firstprinciples/classroom.json:$.schema",
+            "output/data/firstprinciples/energy_demo.json:$.schema",
+            "output/data/firstprinciples/opd_taxonomy.json:$.methods",
+            "output/data/validation_dependency_graph.json:$.edges",
+            "output/data/manuscript_variables.json:$.sheaf_track_count",
         ],
     }
     validation_gates = {
@@ -433,6 +465,16 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
             "test_figures.graphical_abstract_is_cover_quality_near_square_png",
             "test_figures.graphical_abstract_represents_artifact_validation_spine",
         ],
+        "opd_reader_map": [
+            "validate_outputs.figure_source_map_schema",
+            "test_figures.opd_reader_map_is_intro_bound_and_source_backed",
+            "test_figures.nonblank_png",
+        ],
+        "opd_situational_awareness": [
+            "validate_outputs.figure_source_map_schema",
+            "test_figures.opd_situational_awareness_is_intro_bound_and_source_backed",
+            "test_figures.nonblank_png",
+        ],
     }
     registry = load_figure_registry(root)
     rows = []
@@ -445,6 +487,21 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         caption_tokens = sorted(set(token_re.findall(spec.caption)))
         alt_tokens = sorted(set(token_re.findall(spec.alt)))
         dimensions = _image_dimensions(output_rel)
+        caption_claims = _figure_caption_claim_payloads(spec)
+        text = f"{spec.caption} {spec.alt}"
+        caption_claims_source_bound = _caption_claims_source_bound(caption_claims, row_sources, row_fields)
+        caption_claim_fields_resolved = _caption_claim_fields_resolved(caption_claims, row_sources, root)
+        caption_claim_terms_present = _caption_claim_terms_present(text, caption_claims)
+        caption_claim_scope_ok = _caption_claim_scope_ok(figure_id, caption_claims)
+        caption_claim_display_transform_ok = _caption_claim_display_transform_ok(text, caption_claims)
+        caption_claims_ok = bool(
+            caption_claims
+            and caption_claims_source_bound
+            and caption_claim_fields_resolved
+            and caption_claim_terms_present
+            and caption_claim_scope_ok
+            and caption_claim_display_transform_ok
+        )
         metadata_complete = bool(spec.caption.strip()) and bool(spec.alt.strip()) and spec.width > 0
         rows.append(
             {
@@ -454,6 +511,14 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
                 "generator": f"visualizations.figures::{figure_id}",
                 "caption": spec.caption,
                 "alt": spec.alt,
+                "caption_claims": caption_claims,
+                "caption_claim_count": len(caption_claims),
+                "caption_claims_source_bound": caption_claims_source_bound,
+                "caption_claim_fields_resolved": caption_claim_fields_resolved,
+                "caption_claim_terms_present": caption_claim_terms_present,
+                "caption_claim_scope_ok": caption_claim_scope_ok,
+                "caption_claim_display_transform_ok": caption_claim_display_transform_ok,
+                "caption_claims_ok": caption_claims_ok,
                 "caption_token_count": len(caption_tokens),
                 "alt_token_count": len(alt_tokens),
                 "variable_tokens": sorted(set(caption_tokens + alt_tokens)),
@@ -473,6 +538,7 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
                 "mapped": bool(row_sources)
                 and bool(row_fields)
                 and bool(row_gates)
+                and caption_claims_ok
                 and bool(row_sources)
                 and all(source_exists.values()),
             }
@@ -484,6 +550,7 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         "registry_figure_ids": sorted(registry),
         "all_figures_mapped": all(row["mapped"] for row in rows),
         "all_figure_metadata_complete": all(row["metadata_complete"] for row in rows),
+        "all_caption_claims_ok": bool(rows) and all(row["caption_claims_ok"] for row in rows),
     }
 
 
@@ -557,6 +624,8 @@ _FIGURE_SCOPE_REQUIRED = {
     "causal_ablation_heatmap",
     "scholarship_source_map",
     "graphical_abstract",
+    "opd_reader_map",
+    "opd_situational_awareness",
 }
 
 _FIGURE_SCOPE_TERMS = (
@@ -663,6 +732,360 @@ def _cover_quantitative_free(figure_id: str, text: str) -> bool:
     return True
 
 
+_ALLOWED_CAPTION_CLAIM_TYPES = {"local_deterministic", "external_context", "schematic"}
+_EXTERNAL_CONTEXT_FIGURES = {"opd_taxonomy_landscape", "scholarship_source_map"}
+_SCHEMATIC_CLAIM_FIGURES = {"graphical_abstract", "opd_reader_map", "opd_situational_awareness"}
+_ALLOWED_DISPLAY_TRANSFORMS = {
+    "full",
+    "schematic",
+    "matrix_overview",
+    "aggregate",
+    "compacted",
+    "compacted_subset",
+    "compacted_aggregate",
+    "compacted_label_key",
+}
+_COMPRESSED_DISPLAY_TRANSFORMS = _ALLOWED_DISPLAY_TRANSFORMS - {"full"}
+_COMPRESSED_TEXT_TERMS = (
+    "print-condensed",
+    "compacted",
+    "aggregated",
+    "aggregate",
+    "subset",
+    "omitted",
+    "right-side label key",
+    "+n counts",
+    "collapsed",
+)
+
+
+# `{{token}}` spans render to substituted *values* (usually numbers) after
+# hydration, so the token name never appears in the published caption. Strip those
+# spans before term-matching so a `caption_term` must occur in the authored prose,
+# not merely inside a token name (e.g. the term "sweep_max_residual" matching
+# `{{sweep_max_residual:.1e}}`). This is the verifier the contract claims: terms are
+# validated against the hydrated caption, not the raw template.
+_CAPTION_TOKEN_SPAN = re.compile(r"\{\{[^{}]*\}\}")
+
+# Anti-overclaim: a compressed/aggregated figure must not assert it shows the
+# complete row set. Match a completeness quantifier and a display verb adjacent to
+# "row(s)" in either order ("all rows are displayed" / "displays every row"), plus
+# negated-omission completeness ("no rows are omitted"). A denylist is inherently
+# incomplete, so a compressed transform must ALSO positively disclose its compaction
+# (see _REQUIRES_DISCLOSURE below) — the two together close the enumerable gap.
+# A display verb anywhere in the caption, plus a non-negated completeness phrase
+# (below), is what marks a compressed figure as overclaiming it shows every row.
+# Decoupling the two (rather than a windowed adjacency) catches cross-sentence and
+# far-split phrasings while a verb-less "each row maps to a family" stays legal.
+_DISPLAY_VERB = re.compile(
+    r"\b(shows?|displays?|draws?|renders?|plots?|visualizes?|graphs?|includes?|contains?"
+    r"|displayed|drawn|rendered|plotted|visualized|graphed|shown|appears?|visible)\b"
+)
+# The row unit is the figure's per-record vocabulary. "rows" is the canonical word,
+# but the same overclaim is honest-sounding with synonyms ("all entries are shown",
+# "no record is omitted", "each line of the ledger appears") — the claim-ledger figure
+# literally renders "claims". Match the whole family so a synonym can't evade the gate.
+_ROW_UNIT = r"(?:rows?|entr(?:y|ies)|records?|lines?|claims?|items?)"
+# Negated-completeness overclaim: "no rows are omitted".
+_NO_ROWS_OMITTED_PATTERNS = (
+    re.compile(rf"\bno\b.{{0,30}}\b{_ROW_UNIT}\b.{{0,30}}\b(omitted|dropped|hidden|excluded|left\s+out)\b"),
+    re.compile(rf"\b(omitted|dropped|hidden|excluded)\b.{{0,20}}\bno\b.{{0,20}}\b{_ROW_UNIT}\b"),
+)
+# Transforms that actively drop/aggregate rows must affirmatively disclose it; a
+# schematic or matrix-overview is not a row-truncation and is exempt.
+_REQUIRES_DISCLOSURE = {"compacted", "compacted_subset", "compacted_aggregate", "compacted_label_key", "aggregate"}
+
+# A non-negated "(all|every|each) … UNIT" phrase is a completeness assertion that a
+# compressed figure must not make, at ANY distance (catches cross-sentence/far-split
+# overclaims). Loose intervening-word fillers cover "all 51 rows" and adjective forms
+# ("every single record"); the whole _ROW_UNIT family (rows/entries/records/lines/
+# claims/items) is matched so a synonym cannot evade. "full row" is intentionally NOT a
+# quantifier — real disclosures say "the full row-level contract remains in …".
+_ROWS_COMPLETENESS_PHRASE = re.compile(
+    rf"\b(all|every|each)\b(?:\s+[\w-]+){{0,3}}\s+{_ROW_UNIT}\b"
+    # "(the) entire/complete/full/whole set|collection|list of [...] UNIT" — requires the
+    # "… of" frame, so the honest "the full row-level contract remains in …" does NOT match.
+    rf"|\b(?:the\s+)?(?:entire|complete|full|whole)\s+(?:set|collection|list)\s+of\s+(?:[\w-]+\s+){{0,2}}{_ROW_UNIT}\b"
+)
+_COMPLETENESS_NEGATION = re.compile(r"\b(not|no|only|fewer|without|aside\s+from|rather\s+than)\b")
+# Several synonyms ("records", "claims", "lines") are also verbs. When the matched unit
+# is immediately followed by a determiner that opens a direct object ("each edge records
+# A declared link", "the model claims A result") it is a verb, not the row noun — skip
+# it. The completeness assertion ("all rows ARE shown") never puts a determiner-object
+# right after the unit, so this guard removes the verb collisions without weakening the
+# overclaim detection. Pairs with the gate's global display-verb requirement, which is
+# what catches cross-sentence "All rows. Displayed." phrasings.
+_UNIT_AS_VERB = re.compile(
+    r"^\s+(?:a|an|the|its|their|his|her|our|your|my|some|any|this|that|these|those|each|every|no)\b"
+)
+
+
+def _asserts_complete_rows(lower: str) -> bool:
+    # A negation only defuses the overclaim when it governs the SAME clause as the
+    # completeness phrase ("not all rows are shown" is honest disclosure). A fixed
+    # character window let an unrelated negation in a neighbouring clause ("aside from
+    # styling, all rows are shown") suppress a real overclaim, so scope the lookback to
+    # the clause: back to the previous sentence/clause boundary, not a raw char count.
+    for match in _ROWS_COMPLETENESS_PHRASE.finditer(lower):
+        clause_start = max((lower.rfind(sep, 0, match.start()) for sep in ".;,:"), default=-1) + 1
+        if _COMPLETENESS_NEGATION.search(lower[clause_start : match.start()]):
+            continue
+        if _UNIT_AS_VERB.match(lower[match.end() :]):  # synonym used as a verb, not the unit noun
+            continue
+        return True
+    return False
+
+
+def _normalize_claim_text(text: str) -> str:
+    without_tokens = _CAPTION_TOKEN_SPAN.sub(" ", text)
+    return " ".join(without_tokens.lower().replace("–", "-").replace("—", "-").split())
+
+
+def _term_in_text(term: str, lower: str) -> bool:
+    """Word-boundary containment so an opposite-sense substring cannot satisfy a term
+    (e.g. "aggregate" must not match inside "disaggregate")."""
+    return re.search(rf"(?<!\w){re.escape(term.lower())}(?!\w)", lower) is not None
+
+
+def _figure_caption_claim_payloads(spec: Any) -> list[dict[str, Any]]:
+    claims = []
+    for claim in getattr(spec, "claims", ()) or ():
+        claims.append(
+            {
+                "id": str(getattr(claim, "claim_id", "")),
+                "claim_type": str(getattr(claim, "claim_type", "")),
+                "caption_terms": [str(term) for term in getattr(claim, "caption_terms", ())],
+                "sources": [str(source) for source in getattr(claim, "sources", ())],
+                "source_fields": [str(field) for field in getattr(claim, "source_fields", ())],
+                "scope": str(getattr(claim, "scope", "")),
+                "display_transform": str(getattr(claim, "display_transform", "full")),
+            }
+        )
+    return claims
+
+
+def _caption_claims_source_bound(
+    caption_claims: list[dict[str, Any]],
+    row_sources: list[str],
+    row_fields: list[str],
+) -> bool:
+    source_set = set(row_sources)
+    field_set = set(row_fields)
+    if not caption_claims:
+        return False
+    for claim in caption_claims:
+        claim_sources = set(claim.get("sources") or [])
+        claim_fields = set(claim.get("source_fields") or [])
+        if not (
+            claim.get("id")
+            and claim_sources
+            and claim_fields
+            and claim_sources <= source_set
+            and claim_fields <= field_set
+        ):
+            return False
+    return True
+
+
+def _load_structured_artifact(path: Path) -> Any:
+    if not path.is_file():
+        return None
+    try:
+        if path.suffix == ".json":
+            return json.loads(path.read_text(encoding="utf-8"))
+        if path.suffix in (".yaml", ".yml"):
+            import yaml
+
+            return yaml.safe_load(path.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001 — a malformed artifact is an unresolved field, not a crash
+        return None
+    return None
+
+
+def _nonempty_node(node: Any) -> bool:
+    """A resolved node carries content iff it is not None and not an empty
+    container/string. ``0`` and ``False`` are legitimate resolved values and are kept;
+    only ``None``/``[]``/``{}``/``""`` count as "key present but empty" — a stale or
+    zeroed artifact whose key exists but holds nothing the figure could have drawn."""
+    return node is not None and node != [] and node != {} and node != ""
+
+
+def _jsonpath_present(obj: Any, path: str) -> bool:
+    """Return True iff a `$.a.b[*].c` / `$.a[0].b` JSONPath resolves to ≥1 *non-empty*
+    node. A key that exists but holds ``[]``/``{}``/``None``/``""`` is rejected: the
+    generators raise on empty source rows, so the verifier must too (else a zeroed
+    stale artifact resolves a claim the figure could not honestly depict)."""
+    parts = re.findall(r"\[\*\]|\[\d+\]|[^.\[\]]+", path[1:].lstrip("."))
+    if not parts:
+        return False  # a bare "$" selects the document root and binds nothing
+    nodes = [obj]
+    for part in parts:
+        nxt: list[Any] = []
+        if part == "[*]":
+            for node in nodes:
+                if isinstance(node, list):
+                    nxt.extend(node)
+        elif part.startswith("[") and part.endswith("]"):
+            index = int(part[1:-1])
+            for node in nodes:
+                if isinstance(node, list) and -len(node) <= index < len(node):
+                    nxt.append(node[index])
+        else:
+            for node in nodes:
+                if isinstance(node, dict) and part in node:
+                    nxt.append(node[part])
+                elif isinstance(node, list):
+                    nxt.extend(item[part] for item in node if isinstance(item, dict) and part in item)
+        nodes = nxt
+        if not nodes:
+            return False
+    return any(_nonempty_node(node) for node in nodes)
+
+
+def _nested_key_present(obj: Any, dotted: str) -> bool:
+    node = obj
+    for part in dotted.split("."):
+        if isinstance(node, dict) and part in node:
+            node = node[part]
+        else:
+            return False
+    return True
+
+
+def _source_field_resolves(field: str, row_sources: list[str], root: Path) -> bool:
+    """Resolve a caption-claim ``source_field`` against the figure's artifacts.
+
+    The contract previously only checked that a field string was *declared* on the
+    row; a row could cite ``$.totally_made_up`` and pass. This binds the declared
+    field to artifact *content* across the claim grammar: bare ``$.jsonpath``
+    (against the row's structured sources), ``relpath:column`` (CSV header),
+    ``relpath:$.jsonpath`` / ``relpath:dotted.key`` (file-scoped), globs, and plain
+    paths. A field that resolves to no node is rejected.
+    """
+    field = str(field)
+    if field.startswith("$"):
+        if field.strip().rstrip(".") == "$":
+            return False  # a bare "$" / "$." selects the whole document and binds nothing
+        return any(
+            (obj := _load_structured_artifact(root / source)) is not None and _jsonpath_present(obj, field)
+            for source in row_sources
+        )
+    if ":" in field:
+        rel, selector = field.split(":", 1)
+        # The reference may name the artifact by a bare filename (e.g.
+        # "parameter_sweep.csv:col") while the row source is a full path
+        # ("output/data/parameter_sweep.csv"); resolve against the row sources by
+        # basename, falling back to the literal repo-relative path.
+        candidates = [s for s in row_sources if Path(s).name == Path(rel).name or s.endswith(rel)]
+        candidates.append(rel)
+        for candidate in candidates:
+            path = root / candidate
+            if path.suffix == ".csv":
+                if not path.is_file():
+                    continue
+                with path.open(encoding="utf-8", newline="") as handle:
+                    header = next(csv.reader(handle), [])
+                if selector in header:
+                    return True
+                continue
+            obj = _load_structured_artifact(path)
+            if obj is None:
+                continue
+            if selector.startswith("$") and _jsonpath_present(obj, selector):
+                return True
+            if not selector.startswith("$") and _nested_key_present(obj, selector):
+                return True
+        return False
+    if "*" in field:
+        matches = [path for path in root.glob(field) if path.is_file()]
+        if not matches:
+            return False
+        if not row_sources:
+            return True
+        # Bind the glob to a declared source: a matched file must live under one of
+        # the row's sources, not merely exist somewhere in the repo.
+        rels = {path.relative_to(root).as_posix() for path in matches}
+        return any(rel == src or rel.startswith(f"{src.rstrip('/')}/") for rel in rels for src in row_sources)
+    return (root / field).is_file()
+
+
+def _caption_claim_fields_resolved(caption_claims: list[dict[str, Any]], row_sources: list[str], root: Path) -> bool:
+    if not caption_claims:
+        return False
+    for claim in caption_claims:
+        fields = claim.get("source_fields") or []
+        # Resolve a field against the claim's OWN declared sources, not the row-wide
+        # source set — otherwise a claim could cite source A for "$.metric" while the
+        # value actually lives in a sibling source B, masking a stale claim.
+        claim_sources = [str(source) for source in (claim.get("sources") or [])] or list(row_sources)
+        if not fields or not all(_source_field_resolves(str(field), claim_sources, root) for field in fields):
+            return False
+    return True
+
+
+def _caption_claim_terms_present(text: str, caption_claims: list[dict[str, Any]]) -> bool:
+    lower = _normalize_claim_text(text)
+    if not caption_claims:
+        return False
+    for claim in caption_claims:
+        terms = [str(term) for term in claim.get("caption_terms") or []]
+        # Word-boundary match so a term is not satisfied by an opposite-sense
+        # substring (e.g. "measured" inside "unmeasured", "finite" inside "infinite").
+        if not terms or not all(_term_in_text(term, lower) for term in terms):
+            return False
+    return True
+
+
+def _caption_claim_scope_ok(figure_id: str, caption_claims: list[dict[str, Any]]) -> bool:
+    if not caption_claims:
+        return False
+    claim_ids = [str(claim.get("id") or "") for claim in caption_claims]
+    if not all(claim_ids) or len(set(claim_ids)) != len(claim_ids):
+        return False  # empty or duplicate claim ids must not pass silently
+    if figure_id and not all(cid.startswith(f"{figure_id}_") for cid in claim_ids):
+        return False  # a claim id must name its figure (convention: {figure_id}_caption_claim)
+    for claim in caption_claims:
+        claim_type = str(claim.get("claim_type") or "")
+        display_transform = str(claim.get("display_transform") or "")
+        scope = str(claim.get("scope") or "").strip()
+        if (
+            claim_type not in _ALLOWED_CAPTION_CLAIM_TYPES
+            or display_transform not in _ALLOWED_DISPLAY_TRANSFORMS
+            or not scope
+        ):
+            return False
+        if claim_type == "external_context" and figure_id not in _EXTERNAL_CONTEXT_FIGURES:
+            return False
+        if figure_id in _EXTERNAL_CONTEXT_FIGURES and claim_type != "external_context":
+            return False
+        if claim_type == "schematic" and figure_id not in _SCHEMATIC_CLAIM_FIGURES:
+            return False
+        if figure_id in _SCHEMATIC_CLAIM_FIGURES and claim_type != "schematic":
+            return False
+    return True
+
+
+def _caption_claim_display_transform_ok(text: str, caption_claims: list[dict[str, Any]]) -> bool:
+    if not caption_claims:
+        return False
+    lower = _normalize_claim_text(text)
+    transforms = {str(claim.get("display_transform") or "") for claim in caption_claims}
+    discloses_compression = any(_term_in_text(term, lower) for term in _COMPRESSED_TEXT_TERMS)
+    if discloses_compression and not (transforms & _COMPRESSED_DISPLAY_TRANSFORMS):
+        return False
+    if (transforms & _COMPRESSED_DISPLAY_TRANSFORMS) and (
+        (_asserts_complete_rows(lower) and _DISPLAY_VERB.search(lower) is not None)
+        or any(pattern.search(lower) for pattern in _NO_ROWS_OMITTED_PATTERNS)
+    ):
+        return False
+    # Positive disclosure: a row-dropping/aggregating transform must affirmatively
+    # say so. This is the allowlist half — it cannot be evaded by avoiding the
+    # (necessarily incomplete) overclaim denylist above.
+    if (transforms & _REQUIRES_DISCLOSURE) and not discloses_compression:
+        return False
+    return True
+
+
 def build_visualization_quality_audit(project_root: Path) -> dict[str, Any]:
     """Build a verifier-facing audit over figure readability, provenance, and caption scope."""
     root = project_root.resolve()
@@ -715,11 +1138,21 @@ def build_visualization_quality_audit(project_root: Path) -> dict[str, Any]:
             and bool(row.get("source_fields"))
             and bool(row.get("validation_gates"))
         )
+        caption_claims_ok = bool(
+            row.get("caption_claim_count", 0)
+            and row.get("caption_claims_source_bound") is True
+            and row.get("caption_claim_fields_resolved") is True
+            and row.get("caption_claim_terms_present") is True
+            and row.get("caption_claim_scope_ok") is True
+            and row.get("caption_claim_display_transform_ok") is True
+            and row.get("caption_claims_ok") is True
+        )
         metadata_complete = row.get("metadata_complete") is True and bool(row.get("caption")) and bool(row.get("alt"))
         dimensions_ok = readable and nonblank and width >= 400 and height >= 200
         accessibility_ok = bool(metadata_complete and dimensions_ok and claim_wording_ok)
         ok = bool(
             source_bound
+            and caption_claims_ok
             and metadata_complete
             and dimensions_ok
             and scope_guard_present
@@ -737,6 +1170,14 @@ def build_visualization_quality_audit(project_root: Path) -> dict[str, Any]:
                 "image_width_px": width,
                 "image_height_px": height,
                 "source_bound": source_bound,
+                "caption_claims": row.get("caption_claims") or [],
+                "caption_claim_count": int(row.get("caption_claim_count", 0) or 0),
+                "caption_claims_source_bound": row.get("caption_claims_source_bound") is True,
+                "caption_claim_fields_resolved": row.get("caption_claim_fields_resolved") is True,
+                "caption_claim_terms_present": row.get("caption_claim_terms_present") is True,
+                "caption_claim_scope_ok": row.get("caption_claim_scope_ok") is True,
+                "caption_claim_display_transform_ok": row.get("caption_claim_display_transform_ok") is True,
+                "caption_claims_ok": caption_claims_ok,
                 "metadata_complete": metadata_complete,
                 "scope_guard_required": scope_guard_required,
                 "scope_guard_present": scope_guard_present,
@@ -761,6 +1202,7 @@ def build_visualization_quality_audit(project_root: Path) -> dict[str, Any]:
         "all_figures_readable": bool(rows) and all(row["readable"] for row in rows),
         "all_figures_nonblank": bool(rows) and all(row["nonblank"] for row in rows),
         "all_figures_source_bound": bool(rows) and all(row["source_bound"] for row in rows),
+        "all_caption_claims_ok": bool(rows) and all(row["caption_claims_ok"] for row in rows),
         "all_scope_guards_present": bool(rows) and all(row["scope_guard_present"] for row in rows),
         "all_caption_overclaims_free": bool(rows) and all(row["caption_overclaim_free"] for row in rows),
         "all_claim_wording_ok": bool(rows) and all(row["claim_wording_ok"] for row in rows),
@@ -779,7 +1221,8 @@ def _figure_source_rows_complete(project_root: Path, payload: dict[str, Any]) ->
     root = project_root.resolve()
     from visualizations.figure_registry import load_figure_registry
 
-    registry_ids = set(load_figure_registry(root))
+    registry = load_figure_registry(root)
+    registry_ids = set(registry)
     rows = payload.get("rows") or []
     row_ids = {str(row.get("figure_id", "")) for row in rows}
     if (
@@ -787,13 +1230,29 @@ def _figure_source_rows_complete(project_root: Path, payload: dict[str, Any]) ->
         or row_ids != registry_ids
         or int(payload.get("figure_count", 0) or 0) != len(registry_ids)
         or payload.get("all_figure_metadata_complete") is not True
+        or payload.get("all_caption_claims_ok") is not True
     ):
         return False
     for row in rows:
         output = str(row.get("output", ""))
         sources = row.get("sources") or []
+        source_fields = row.get("source_fields") or []
         source_status = row.get("source_path_status") or {}
         gates = row.get("validation_gates") or []
+        # Registry is authoritative for caption text and claim payloads: a forged
+        # figure_source_map.json cannot rewrite the prose to satisfy the term check
+        # or swap in a benign claim — the stored values must equal the registry's.
+        spec = registry.get(str(row.get("figure_id", "")))
+        if spec is None:
+            return False
+        caption_claims = _figure_caption_claim_payloads(spec)
+        if (
+            (row.get("caption_claims") or []) != caption_claims
+            or str(row.get("caption", "")) != spec.caption
+            or str(row.get("alt", "")) != spec.alt
+        ):
+            return False
+        row_text = f"{spec.caption}\n{spec.alt}"
         if not (
             row.get("mapped") is True
             and row.get("metadata_complete") is True
@@ -806,10 +1265,23 @@ def _figure_source_rows_complete(project_root: Path, payload: dict[str, Any]) ->
             and int(row.get("image_height_px", 0) or 0) > 0
             and float(row.get("width", 0.0) or 0.0) > 0
             and sources
-            and row.get("source_fields")
-            and int(row.get("source_field_count", 0) or 0) == len(row.get("source_fields") or [])
+            and source_fields
+            and int(row.get("source_field_count", 0) or 0) == len(source_fields)
             and gates
             and int(row.get("validation_gate_count", 0) or 0) == len(gates)
+            and caption_claims
+            and int(row.get("caption_claim_count", 0) or 0) == len(caption_claims)
+            and row.get("caption_claims_source_bound") is True
+            and row.get("caption_claim_fields_resolved") is True
+            and row.get("caption_claim_terms_present") is True
+            and row.get("caption_claim_scope_ok") is True
+            and row.get("caption_claim_display_transform_ok") is True
+            and row.get("caption_claims_ok") is True
+            and _caption_claims_source_bound(caption_claims, sources, source_fields)
+            and _caption_claim_fields_resolved(caption_claims, sources, root)
+            and _caption_claim_terms_present(row_text, caption_claims)
+            and _caption_claim_scope_ok(str(row.get("figure_id", "")), caption_claims)
+            and _caption_claim_display_transform_ok(row_text, caption_claims)
         ):
             return False
         if set(source_status) != set(sources):
@@ -865,6 +1337,88 @@ def _figure_source_rows_complete(project_root: Path, payload: dict[str, Any]) ->
     return True
 
 
+def _rederive_image_facts(path: Path) -> tuple[bool, bool, int, int]:
+    """Re-open a figure PNG and recompute (readable, nonblank, width, height).
+
+    Mirrors ``build_visualization_quality_audit``'s image probe so the read-time gate
+    can re-derive image facts from disk instead of trusting the stored audit booleans.
+    A blank or deleted PNG returns falsy facts regardless of what the JSON claims."""
+    if not path.is_file():
+        return (False, False, 0, 0)
+    try:
+        from PIL import Image
+
+        with Image.open(path) as img:
+            img.load()
+            width, height = img.size
+            extrema = img.convert("L").getextrema()
+        return (True, bool(extrema[0] < extrema[1]), int(width), int(height))
+    except (OSError, ValueError):
+        return (False, False, 0, 0)
+
+
+def _visualization_quality_caption_claims_rederived(project_root: Path, payload: dict[str, Any]) -> bool:
+    """Re-derive the visualization audit's caption-claim AND image booleans from source.
+
+    The audit gate otherwise trusts the stored row booleans; a fully self-consistent
+    forged audit could flip every caption-claim boolean green over a bad claim, or claim
+    a blank/missing PNG is readable and nonblank. This rebuilds the authoritative figure
+    sources/fields and the registry claim payloads, re-runs the claim helpers, re-opens
+    each PNG, and requires the stored row booleans to agree and be True. The single
+    source of truth is the registry, the source-map builder, and the image files on
+    disk — not the on-disk audit JSON.
+    """
+    root = project_root.resolve()
+    from visualizations.figure_registry import load_figure_registry
+
+    registry = load_figure_registry(root)
+    rows = payload.get("rows") or []
+    if not rows or {str(row.get("figure_id", "")) for row in rows} != set(registry):
+        return False
+    if payload.get("all_caption_claims_ok") is not True:
+        return False
+    fsm_by_id = {str(row.get("figure_id", "")): row for row in build_figure_source_map(root).get("rows") or []}
+    for row in rows:
+        fid = str(row.get("figure_id", ""))
+        spec = registry.get(fid)
+        fsm = fsm_by_id.get(fid)
+        if spec is None or fsm is None:
+            return False
+        caption_claims = _figure_caption_claim_payloads(spec)
+        if not caption_claims or int(row.get("caption_claim_count", 0) or 0) != len(caption_claims):
+            return False
+        sources = fsm.get("sources") or []
+        source_fields = fsm.get("source_fields") or []
+        text = f"{spec.caption}\n{spec.alt}"
+        derived = {
+            "caption_claims_source_bound": _caption_claims_source_bound(caption_claims, sources, source_fields),
+            "caption_claim_fields_resolved": _caption_claim_fields_resolved(caption_claims, sources, root),
+            "caption_claim_terms_present": _caption_claim_terms_present(text, caption_claims),
+            "caption_claim_scope_ok": _caption_claim_scope_ok(fid, caption_claims),
+            "caption_claim_display_transform_ok": _caption_claim_display_transform_ok(text, caption_claims),
+        }
+        for key, value in derived.items():
+            if value is not True or row.get(key) is not True:
+                return False
+        if row.get("caption_claims_ok") is not True:
+            return False
+        # Re-derive image facts from the PNG on disk and require the stored booleans to
+        # agree — a blank or deleted image cannot pass on stored values alone, and this
+        # holds even when only `visualization_quality_audit_schema` is selected (the
+        # sibling figure-integrity gate that incidentally re-opens files is not run).
+        readable, nonblank, width, height = _rederive_image_facts(root / str(row.get("output", "")))
+        if not (readable and nonblank and width >= 400 and height >= 200):
+            return False
+        if (
+            row.get("readable") is not True
+            or row.get("nonblank") is not True
+            or int(row.get("image_width_px", 0) or 0) != width
+            or int(row.get("image_height_px", 0) or 0) != height
+        ):
+            return False
+    return True
+
+
 def _figure_hash_rows_complete(project_root: Path, payload: dict[str, Any]) -> bool:
     root = project_root.resolve()
     expected_paths = _expected_figure_image_paths(root)
@@ -896,16 +1450,77 @@ def _figure_hash_rows_complete(project_root: Path, payload: dict[str, Any]) -> b
     return True
 
 
+_SCOPE_FORBIDDEN_PATTERNS: dict[str, re.Pattern[str]] = {
+    "equality_slogan": re.compile(r"\bopd\s*=\s*active inference\b"),
+    "universal_theorem": re.compile(
+        r"\b(proves?|establishes?|certif(?:y|ies)|demonstrates?)\s+(a\s+)?"
+        r"(universal|general)\s+theorem\b|\b(universal|general)\s+theorem\b"
+    ),
+    "production_llm_result": re.compile(
+        r"\b(qwen|thinking machines|production[- ](?:llms?|language models?|opd)|llms?)\b"
+        r"[^.\n;:]{0,120}\b(reproduce[sd]?|measure[sd]?|benchmark(?:ed)?|validate[sd]?|confirm(?:ed)?)\b|"
+        r"\b(reproduce[sd]?|measure[sd]?|benchmark(?:ed)?|validate[sd]?|confirm(?:ed)?)\b"
+        r"[^.\n;:]{0,120}\b(qwen|thinking machines|production[- ](?:llms?|language models?|opd)|llms?)\b"
+    ),
+    "biological_markov_blanket": re.compile(
+        r"\b(markov blanket|blanket)\b[^.\n;:]{0,120}\b(biological|cortical|physical)\b|"
+        r"\b(biological|cortical|physical)\b[^.\n;:]{0,120}\b(markov blanket|blanket|boundary)\b"
+    ),
+    "empirical_biological": re.compile(r"\b(empirical biological|biological data)\b"),
+}
+
+_SCOPE_NEGATION_TERMS = (
+    "not ",
+    "no ",
+    "never ",
+    "rather than",
+    "external context",
+    "not reproduced",
+    "not a",
+    "not an",
+    "without claiming",
+    "does not",
+    "do not",
+    "outside",
+    "future",
+    "blocked",
+    "scope",
+    "limited",
+    "toy",
+    "finite",
+)
+
+
+def _scope_forbidden_hits(text: str) -> list[dict[str, Any]]:
+    """Return scoped-overclaim hits by line, preserving negated guardrail mentions."""
+    hits: list[dict[str, Any]] = []
+    for line_no, line in enumerate(text.splitlines(), start=1):
+        lowered = line.lower()
+        for rule, pattern in _SCOPE_FORBIDDEN_PATTERNS.items():
+            if pattern.search(lowered):
+                hits.append(
+                    {
+                        "line": line_no,
+                        "rule": rule,
+                        "negated": any(term in lowered for term in _SCOPE_NEGATION_TERMS),
+                        "excerpt": line.strip()[:240],
+                    }
+                )
+    return hits
+
+
 def build_scope_boundary_audit(project_root: Path) -> dict[str, Any]:
-    """Build the scope_boundary_audit.v1 payload scanning numbered manuscript sections for empirical-biological claims outside the allowed future-work files."""
+    """Build the scope_boundary_audit.v1 payload scanning numbered manuscript sections for scope leaks."""
     root = project_root.resolve()
     rows = []
     violations: list[str] = []
     allowed_future_files = {"15_discussion_outlook.md", "17_conclusion.md"}
     for path in sorted((root / "manuscript").glob("[0-9][0-9]_*.md")):
-        text = path.read_text(encoding="utf-8").lower()
-        forbidden = "empirical biological" in text or "biological data" in text
-        negated = "not empirical" in text or "future" in text
+        text = path.read_text(encoding="utf-8")
+        all_hits = _scope_forbidden_hits(text)
+        forbidden_hits = [hit for hit in all_hits if not hit["negated"]]
+        forbidden = bool(forbidden_hits)
+        negated = bool(all_hits) and not forbidden_hits
         allowed = path.name in allowed_future_files
         ok = not forbidden or negated or allowed
         rows.append(
@@ -915,11 +1530,14 @@ def build_scope_boundary_audit(project_root: Path) -> dict[str, Any]:
                 "has_forbidden_wording": forbidden,
                 "is_negated": negated,
                 "allowed": allowed,
+                "forbidden_hits": forbidden_hits,
+                "negated_hits": [hit for hit in all_hits if hit["negated"]],
                 "ok": ok,
             }
         )
         if not ok:
-            violations.append(path.name)
+            for hit in forbidden_hits:
+                violations.append(f"{path.name}:{hit['line']}:{hit['rule']}")
     return {
         "schema": "template_active_inference.scope_boundary_audit.v1",
         "rows": rows,

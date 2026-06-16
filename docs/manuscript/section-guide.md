@@ -25,6 +25,16 @@ into each section.
 
 ## Front matter
 
+### Title page / cover graphical abstract
+- **IMRAD role:** Front matter — title-page orientation.
+- **Claim carried:** A quantitative-free schematic of the finite active-inference
+  reading, with evidence lanes and caveats but no metric badges, counts, losses,
+  nats, or cue values. Detailed quantitative evidence stays in the numbered body
+  figures and tables.
+- **Key tokens:** none on the cover itself; source binding is checked by
+  `figure_source_map`, `figure_hash_manifest`, and `visualization_quality_audit`.
+- **Feeding tracks:** front-matter renderer (figure `graphical_abstract`).
+
 ### `00_abstract.md` — `{#sec:abstract}`
 - **IMRAD role:** Abstract (hand-authored).
 - **Claim carried:** The full scoped thesis in miniature — teacher↔generative model
@@ -56,7 +66,7 @@ into each section.
   and scopes the thesis to formal objects, not biology or production LLMs.
 - **Key tokens:** `{{sheaf_track_count}}`, `{{pipeline_track_count}}`,
   `{{si_tmaze_planning_horizon}}`, `{{si_tmaze_policy_len}}`.
-- **Feeding tracks:** prose.
+- **Feeding tracks:** prose, visualization (figure `opd_reader_map`).
 
 ### `03_intro_contributions.md` — `{#sec:intro_contributions}`
 - **IMRAD role:** Introduction — contributions.
@@ -70,8 +80,8 @@ into each section.
   `{{hardcoded_variable_issue_count}}`, `{{classroom_*}}`,
   `{{exposure_bias_off_policy_final:.3f}}`, `{{exposure_bias_on_policy_final:.3f}}`,
   `{{exposure_bias_terminal_gap:.3f}}`.
-- **Feeding tracks:** prose, visualization (figures `correspondence_map`,
-  `multi_track_architecture`, `exposure_bias_recovery`), ontology.
+- **Feeding tracks:** prose, visualization (figures `opd_situational_awareness`,
+  `correspondence_map`, `multi_track_architecture`, `exposure_bias_recovery`), ontology.
 
 ## Methods
 

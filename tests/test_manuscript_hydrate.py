@@ -5,7 +5,30 @@ import re
 from manuscript.hydrate import format_variables, substitute_snake_case_tokens, write_resolved_manuscript
 from manuscript.variables import generate_variables
 
-_TOKEN_RE = re.compile(r"\{\{[a-z][a-z0-9_]*(?::\.[0-9]+f)?\}\}")
+_TOKEN_RE = re.compile(r"\{\{[a-z][a-z0-9_]*(?::[+]?\.\d+[efg])?\}\}")
+
+
+def test_provenance_token_regex_matches_renderer_scientific_notation() -> None:
+    # Regression: the provenance/staleness scanner regex must match the renderer's
+    # format specs (e/f/g), or scientific-notation tokens ({{x:.1e}}) silently escape
+    # token provenance and the hardcoded-variable audit (vacuous-green gates).
+    from manuscript.hydrate import _TOKEN_RE as RENDER_RE
+    from roadmap_tracks.integration_audit_builders import (
+        TOKEN_MATCH_RE,
+        TOKEN_RE,
+        _expected_token_value,
+    )
+
+    text = "a {{alpha:.1e}} b {{beta:.3f}} c {{gamma:.2g}} d {{delta}}"
+    rendered = {m.group(1) for m in RENDER_RE.finditer(text)}
+    scanned = set(TOKEN_RE.findall(text))
+    matched = {token for token, _spec in TOKEN_MATCH_RE.findall(text)}
+    assert rendered == {"alpha", "beta", "gamma", "delta"}
+    assert scanned == rendered, "provenance scanner must enumerate every rendered token"
+    assert matched == rendered
+    # expected value renders identically to the live renderer across format specs
+    assert _expected_token_value("alpha", ":.1e", {"alpha": 4.44e-16}) == "4.4e-16"
+    assert _expected_token_value("beta", ":.3f", {"beta": 0.0}) == "0.000"
 
 
 def test_generate_variables_includes_structural_counts() -> None:

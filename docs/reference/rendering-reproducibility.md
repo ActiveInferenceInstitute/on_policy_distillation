@@ -95,10 +95,18 @@ The sheaf claim is finite and falsifiable:
 - every promoted artifact must have a producer, a bound manuscript track, a
   typed claim, a validation restriction, and a negative-control test.
 
-## Root output parity
+## Project render and optional Root output parity
 
-Project-local outputs are authoritative during generation. After a root pipeline
-run, verify copied root output parity as well:
+Project-local outputs are authoritative during generation. The default PDF render
+gate is the project-local convergent chain:
+
+```bash
+uv run python scripts/run_full_chain.py --render
+uv run python scripts/validate_outputs.py
+```
+
+When you also run the optional sibling-template polish pipeline, verify copied
+root output parity as well:
 
 ```bash
 cd ../../../template
@@ -109,6 +117,7 @@ uv run python scripts/validate_outputs.py
 ```
 
 The semantic and release-bundle reports allow render-deferred PDF/web rows before
-copy, but final acceptance must inspect both `output/**` inside the project and
-`../../../template/output/working/active_inference_on_policy_distillation/**` from
-the sibling template checkout.
+copy, but a template-polish acceptance must inspect both `output/**` inside the
+project and
+`../../../template/output/working/active_inference_on_policy_distillation/**`
+from the sibling template checkout.

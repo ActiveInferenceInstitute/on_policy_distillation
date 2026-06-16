@@ -22,6 +22,7 @@ sections:
   output_name: 02_intro_motivation.md
   tracks:
     prose: manuscript/sections/imrad/intro_motivation/prose.md
+    visualization: manuscript/sections/imrad/intro_motivation/visualization.md
 - id: intro_contributions
   order: 3
   kind: section

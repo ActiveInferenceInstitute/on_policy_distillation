@@ -18,6 +18,7 @@ def test_hydrate_manuscript_fixed_point_clears_stale_figure_source_map(
     from manuscript import sheaf
     from manuscript.sheaf import semantic
     import roadmap_tracks
+    import roadmap_tracks.sheaf_tracks as sheaf_tracks
 
     state = {"audit_writes": 0, "semantic_writes": 0, "sheaf_writes": 0}
 
@@ -72,7 +73,6 @@ def test_hydrate_manuscript_fixed_point_clears_stale_figure_source_map(
     monkeypatch.setattr(roadmap_tracks, "write_integration_audit_artifacts", fake_audit)
     monkeypatch.setattr(roadmap_tracks, "write_sheaf_track_artifacts", fake_sheaf_tracks)
     monkeypatch.setattr(semantic, "write_semantic_gluing_outputs", fake_semantic)
-    import roadmap_tracks.sheaf_tracks as sheaf_tracks
 
     monkeypatch.setattr(sheaf_tracks, "build_artifact_provenance", lambda root: {"schema": "test"})
     monkeypatch.setattr(roadmap_tracks, "validate_integration_audit_artifacts", validate_audit)
@@ -81,7 +81,7 @@ def test_hydrate_manuscript_fixed_point_clears_stale_figure_source_map(
 
     paths = hydrate_manuscript_fixed_point(tmp_path, require_analysis_outputs=False, max_passes=2)
 
-    assert state == {"audit_writes": 2, "semantic_writes": 2, "sheaf_writes": 2}
+    assert state == {"audit_writes": 2, "semantic_writes": 2, "sheaf_writes": 1}
     assert paths["variables"] == tmp_path / "output" / "data" / "manuscript_variables.json"
     assert paths["resolved_manuscript"] == tmp_path / "output" / "manuscript"
     assert paths["figure_source_map"] == tmp_path / "output" / "data" / "figure_source_map.json"
@@ -95,6 +95,7 @@ def test_hydrate_manuscript_fixed_point_fails_closed_when_still_stale(
     from manuscript import sheaf
     from manuscript.sheaf import semantic
     import roadmap_tracks
+    import roadmap_tracks.sheaf_tracks as sheaf_tracks
 
     monkeypatch.setattr(sheaf, "compose_all_sections", lambda root: None)
     monkeypatch.setattr(
@@ -111,7 +112,6 @@ def test_hydrate_manuscript_fixed_point_fails_closed_when_still_stale(
     monkeypatch.setattr(roadmap_tracks, "write_integration_audit_artifacts", lambda root: {})
     monkeypatch.setattr(roadmap_tracks, "write_sheaf_track_artifacts", lambda root, **_: {})
     monkeypatch.setattr(semantic, "write_semantic_gluing_outputs", lambda root, **_: {})
-    import roadmap_tracks.sheaf_tracks as sheaf_tracks
 
     monkeypatch.setattr(sheaf_tracks, "build_artifact_provenance", lambda root: {"schema": "test"})
     monkeypatch.setattr(
@@ -124,6 +124,66 @@ def test_hydrate_manuscript_fixed_point_fails_closed_when_still_stale(
 
     with pytest.raises(RuntimeError, match="artifact fixed point did not converge"):
         hydrate_manuscript_fixed_point(tmp_path, require_analysis_outputs=False, max_passes=1)
+
+
+def test_hydrate_manuscript_fixed_point_stops_on_unchanged_hashes(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    from manuscript import hydrate, variables
+    from manuscript import sheaf
+    from manuscript.sheaf import semantic
+    import roadmap_tracks
+    import roadmap_tracks.sheaf_tracks as sheaf_tracks
+
+    state = {"audit_writes": 0, "semantic_writes": 0, "sheaf_writes": 0}
+
+    def write_constant(path: Path) -> Path:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text('{"stable": true}\n', encoding="utf-8")
+        return path
+
+    monkeypatch.setattr(sheaf, "compose_all_sections", lambda root: None)
+    monkeypatch.setattr(
+        variables,
+        "generate_variables",
+        lambda root, *, require_analysis_outputs: {"pipeline_track_count": 1},
+    )
+    monkeypatch.setattr(hydrate, "write_resolved_manuscript", lambda root, data: root / "output" / "manuscript")
+    monkeypatch.setattr(
+        roadmap_tracks,
+        "write_manuscript_staleness_report",
+        lambda root: write_constant(root / "output" / "reports" / "manuscript_staleness_report.json"),
+    )
+
+    def fake_audit(root: Path) -> dict[str, Path]:
+        state["audit_writes"] += 1
+        return {"figure_source_map": write_constant(root / "output" / "data" / "figure_source_map.json")}
+
+    def fake_sheaf_tracks(root: Path, **_: object) -> dict[str, Path]:
+        state["sheaf_writes"] += 1
+        return {"semantic": write_constant(root / "output" / "data" / "sheaf_gluing_certificate.json")}
+
+    def fake_semantic(root: Path, **_: object) -> dict[str, Path]:
+        state["semantic_writes"] += 1
+        return {"dependency_graph": write_constant(root / "output" / "data" / "validation_dependency_graph.json")}
+
+    monkeypatch.setattr(roadmap_tracks, "write_integration_audit_artifacts", fake_audit)
+    monkeypatch.setattr(roadmap_tracks, "write_sheaf_track_artifacts", fake_sheaf_tracks)
+    monkeypatch.setattr(semantic, "write_semantic_gluing_outputs", fake_semantic)
+    monkeypatch.setattr(sheaf_tracks, "build_artifact_provenance", lambda root: {"schema": "test"})
+    monkeypatch.setattr(
+        roadmap_tracks,
+        "validate_integration_audit_artifacts",
+        lambda root: ["figure_source_map stale"],
+    )
+    monkeypatch.setattr(roadmap_tracks, "validate_sheaf_track_artifacts", lambda root: [])
+    monkeypatch.setattr(semantic, "validate_semantic_gluing", lambda root: [])
+
+    with pytest.raises(RuntimeError, match="unchanged artifact hashes"):
+        hydrate_manuscript_fixed_point(tmp_path, require_analysis_outputs=False, max_passes=4)
+
+    assert state == {"audit_writes": 4, "semantic_writes": 4, "sheaf_writes": 2}
 
 
 def test_refresh_promoted_track_artifacts_runs_canonical_order(monkeypatch, tmp_path: Path) -> None:

@@ -36,26 +36,34 @@ _DEFAULT_PALETTE: dict[str, str] = {
     "header_bg": "#e2e8f0",
 }
 
+# Legibility pass: the small text roles (legend, tick, annotation, source, dense,
+# table) were the visually weak elements in multi-panel and dense figures, so their
+# multipliers and floors are raised. The base size is intentionally unchanged (the
+# 25-row dictionary schematics are already near their fixed-height limit); only the
+# sub-label roles grow. Every value stays above the lower bounds locked in
+# tests/test_figure_style.py.
 _FONT_ROLE_MULTIPLIERS: dict[str, float] = {
-    "title": 1.12,
-    "subtitle": 1.0,
+    "title": 1.18,
+    "subtitle": 1.04,
     "label": 1.0,
-    "tick": 0.9,
-    "legend": 0.82,
-    "annotation": 0.78,
-    "small": 0.74,
-    "source": 0.7,
+    "tick": 0.95,
+    "legend": 0.92,
+    "annotation": 0.84,
+    "small": 0.8,
+    "source": 0.74,
     "dense": 0.64,
     "table": 0.7,
     "hero": 2.05,
 }
 
 _FONT_ROLE_MINIMUMS: dict[str, float] = {
-    "annotation": 11.5,
-    "small": 10.5,
-    "source": 10.5,
-    "dense": 10.5,
-    "table": 11.0,
+    "legend": 12.5,
+    "tick": 12.5,
+    "annotation": 12.0,
+    "small": 11.0,
+    "source": 11.0,
+    "dense": 11.0,
+    "table": 11.5,
 }
 
 _ACCESSIBLE_TEXT_PAIRS: dict[str, tuple[str, str, float]] = {
@@ -159,9 +167,19 @@ class FigureStyleConfig:
             "font.size": base,
             "axes.titlesize": self.font_size("title"),
             "axes.labelsize": self.font_size("label"),
+            "axes.labelweight": "medium",
+            "axes.titleweight": "semibold",
             "xtick.labelsize": self.font_size("tick"),
             "ytick.labelsize": self.font_size("tick"),
             "legend.fontsize": self.font_size("legend"),
+            # A faint paper-colored frame separates legends from busy grids/markers.
+            # Uses only existing palette roles, so palette_contrast_ok is unaffected.
+            "legend.frameon": True,
+            "legend.framealpha": 0.9,
+            "legend.facecolor": self.color("paper"),
+            "legend.edgecolor": self.color("panel_edge"),
+            "legend.borderpad": 0.5,
+            "legend.labelspacing": 0.4,
             "figure.titlesize": base * 1.18,
         }
 

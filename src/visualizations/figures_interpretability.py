@@ -86,10 +86,19 @@ def figure_correspondence_map(project_root: Path) -> Path:
                 ax.annotate("", xy=(x_right, y), xytext=(x_left, y),
                             arrowprops={"arrowstyle": "<->", "color": style.color("muted"), "linewidth": 0.9})
         ax.set_title(
-            f"The audited correspondence dictionary (all {n} rows, machine-validated)",
+            f"Reader dictionary: active inference <-> shared object <-> on-policy distillation ({n} rows)",
             fontsize=style.font_size("title"),
             color=style.color("primary"),
             pad=16,
+        )
+        ax.text(
+            0.5,
+            0.28,
+            "Source: output/data/firstprinciples/correspondence_map.json; every row is machine-validated.",
+            ha="center",
+            va="center",
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
         )
         save_styled_figure(fig, out, style)
     return out
@@ -108,8 +117,12 @@ def figure_policy_posterior_grid(project_root: Path) -> Path:
     out = figure_output_path(root, "policy_posterior_grid")
     with apply_style(style):
         fig, axes = plt.subplots(
-            1, len(planners) + 1, figsize=(13.4, 4.6), gridspec_kw={"width_ratios": [*([1.0] * len(planners)), 1.15]}
+            1,
+            len(planners) + 1,
+            figsize=(14.2, 5.4),
+            gridspec_kw={"width_ratios": [*([1.0] * len(planners)), 1.22]},
         )
+        fig.subplots_adjust(left=0.075, right=0.935, top=0.76, bottom=0.24, wspace=0.34)
         mappable = None
         for panel_index, planner in enumerate(planners):
             ax = axes[panel_index]
@@ -131,15 +144,17 @@ def figure_policy_posterior_grid(project_root: Path) -> Path:
                 ax.set_ylabel("action (marginal posterior)", fontsize=style.font_size("label"))
             ax.set_title(
                 f"{planner.replace('_', ' ')} ({len(planner_rows)} steps)",
-                fontsize=style.font_size("subtitle"),
+                fontsize=style.font_size("annotation"),
                 color=style.color("primary"),
+                pad=10,
             )
             for (row_idx, col_idx), value in np.ndenumerate(matrix):
                 if value >= 0.30:
                     ax.text(col_idx, row_idx, f"{value:.2f}", ha="center", va="center",
                             fontsize=style.font_size("small"), color="white")
         if mappable is not None:
-            colorbar = fig.colorbar(mappable, ax=list(axes[: len(planners)]), fraction=0.030, pad=0.015)
+            colorbar = fig.colorbar(mappable, ax=list(axes[: len(planners)]), fraction=0.030, pad=0.030)
+            colorbar.set_label("posterior mass", fontsize=style.font_size("source"))
             colorbar.ax.tick_params(labelsize=style.font_size("tick"))
         ax_entropy = axes[-1]
         ax_entropy.yaxis.set_label_position("right")
@@ -158,15 +173,39 @@ def figure_policy_posterior_grid(project_root: Path) -> Path:
         ax_entropy.set_ylabel("policy posterior entropy (nats)", fontsize=style.font_size("label"))
         ax_entropy.set_title(
             f"posterior sharpness ({len(rows)} of {total} grid rows measured)",
-            fontsize=style.font_size("subtitle"),
+            fontsize=style.font_size("annotation"),
             color=style.color("primary"),
+            pad=10,
         )
-        ax_entropy.legend(fontsize=style.font_size("legend"))
+        ax_entropy.legend(
+            fontsize=style.font_size("legend"),
+            loc="upper center",
+            bbox_to_anchor=(0.5, -0.24),
+            frameon=True,
+            ncol=1,
+        )
         ax_entropy.grid(True, alpha=0.3)
         fig.suptitle(
             "Measured policy posteriors: the student's q over policies, step by step",
             fontsize=style.font_size("title"),
             color=style.color("primary"),
+            y=0.965,
+        )
+        fig.text(
+            0.5,
+            0.875,
+            "Heatmaps show marginal action mass; the right panel shows the entropy trace from the same posterior-grid artifact.",
+            fontsize=style.font_size("annotation"),
+            color=style.color("muted"),
+            ha="center",
+        )
+        fig.text(
+            0.075,
+            0.055,
+            "Source: output/data/pymdp_policy_posterior_grid.json.",
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
+            ha="left",
         )
         # colorbar layout conflicts with tight_layout; save via the shared PNG path
         save_figure_png(fig, out, dpi=style.dpi, facecolor="white", transparent=style.transparent)

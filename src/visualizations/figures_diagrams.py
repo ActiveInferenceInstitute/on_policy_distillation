@@ -212,7 +212,7 @@ def figure_multi_track_architecture(project_root: Path) -> Path:
         ax.text(
             0.25,
             7.62,
-            "Evidence architecture: artifacts -> variables -> manuscript claims",
+            "Evidence architecture: source artifacts -> gates -> reader claims",
             fontsize=style.font_size("title"),
             fontweight="bold",
             color=style.color("primary"),
@@ -224,7 +224,7 @@ def figure_multi_track_architecture(project_root: Path) -> Path:
             (
                 f"{counts['imrad_manifest_rows']} manifest rows | "
                 f"{counts['coverage_present']}/{counts['coverage_bound']} bound cells | "
-                f"{counts['sheaf_track_count']} fragment types"
+                f"{counts['sheaf_track_count']} fragment types | reader route starts with source-bound figures"
             ),
             ha="left",
             va="center",
@@ -419,13 +419,15 @@ def figure_lean_boundary_status(project_root: Path) -> Path:
         for row in rows
     ]
     with styled_figure(root, "lean_boundary_status") as (style, out):
-        fig_h = max(3.8, 0.56 * len(rows) + 1.4)
+        fig_h = max(4.6, 0.58 * len(rows) + 2.0)
         fig, ax = plt.subplots(figsize=(11.8, fig_h))
         ax.axis("off")
+        proved_count = sum(1 for row in rows if row.status == "proved")
+        sorry_count = len(rows) - proved_count
         table = ax.table(
             cellText=table_data,
             colLabels=["Module", "Kind", "Name", "Status"],
-            bbox=[0.0, 0.02, 1.0, 0.88],
+            bbox=[0.0, 0.02, 1.0, 0.78],
             cellLoc="left",
             colWidths=[0.25, 0.12, 0.48, 0.15],
         )
@@ -433,13 +435,31 @@ def figure_lean_boundary_status(project_root: Path) -> Path:
         table.set_fontsize(style.font_size("table"))
         table.scale(1, 1.85)
         for (row_idx, col_idx), cell in table.get_celld().items():
+            cell.set_edgecolor(style.color("panel_edge"))
+            cell.set_linewidth(0.55)
             if row_idx == 0:
                 cell.set_facecolor(style.color("header_bg"))
+                cell.set_text_props(weight="bold", color=style.color("primary"))
                 continue
             if col_idx == 3:
                 status = table_data[row_idx - 1][3]
                 cell.set_facecolor(style.color("proved") if status == "proved" else style.color("sorry"))
-        ax.set_title("Lean formalization boundary status", pad=12)
+        fig.suptitle(
+            "Lean formalization boundary status",
+            x=0.02,
+            y=0.97,
+            ha="left",
+            fontsize=style.font_size("title"),
+            color=style.color("primary"),
+        )
+        fig.text(
+            0.02,
+            0.90,
+            f"{proved_count} proved declarations, {sorry_count} sorry declarations; rows are loaded from lean/OnPolicyDistillation/.",
+            ha="left",
+            fontsize=style.font_size("annotation"),
+            color=style.color("muted"),
+        )
         save_styled_figure(fig, out, style)
     return out
 

@@ -40,6 +40,15 @@ def inv_empirical_matches_closed_form() -> bool:
     return True
 
 
+def inv_ising_mi_monotone() -> bool:
+    """Check closed-form Ising mutual information is monotone non-decreasing across the
+    lambda grid. This is the load-bearing 'more coupling means more transferable
+    information' property of the MI-sweep result; without it that claim is unchecked."""
+    hp = load_hyperparameters()
+    mi = np.array([ising_mutual_information(lam) for lam in lambda_grid(hp)], dtype=np.float64)
+    return bool(mi.size >= 2 and np.all(np.diff(mi) >= -BERNOULLI_VERIFICATION_TOLERANCE))
+
+
 def inv_decomposition_identity() -> bool:
     """Check the free-energy decomposition identity holds for the Ising joint posterior at lambda = 1.5."""
     lam = 1.5
@@ -78,6 +87,7 @@ def inv_mean_field_at_lambda_zero() -> bool:
 CORE_INVARIANTS: dict[str, InvariantFn] = {
     "ising_mi_at_zero": inv_ising_mi_at_zero,
     "ising_mi_saturates": inv_ising_mi_saturates,
+    "ising_mi_monotone": inv_ising_mi_monotone,
     "empirical_matches_closed_form": inv_empirical_matches_closed_form,
     "decomposition_identity": inv_decomposition_identity,
     "joint_is_pmf": inv_joint_is_pmf,

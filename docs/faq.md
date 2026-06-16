@@ -38,7 +38,7 @@ mass — the **mode-seeking** direction. The manuscript treats the reverse/forwa
 KL contrast as a finite-support divergence-direction *intuition*, not a universal
 law: it is the loss whose variational role the toy artifacts make explicit, while
 forward-KL, skew, entropy-aware, contrastive, and hybrid objectives are mapped as
-neighboring design points. See [reverse / forward KL](glossary.md#reverse--forward-kl).
+neighboring design points. See [reverse / forward KL](glossary.md#reverse-forward-kl).
 
 ### Is the T-maze agent an OPD algorithm?
 

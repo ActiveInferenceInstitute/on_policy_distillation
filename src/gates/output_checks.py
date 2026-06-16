@@ -384,17 +384,24 @@ def _figure_hash_manifest_ok(root: Path, payload: dict) -> bool:
     )
 
 
-def _visualization_quality_audit_ok(payload: dict) -> bool:
+def _visualization_quality_audit_ok(root: Path, payload: dict) -> bool:
+    from roadmap_tracks.integration_audit import _visualization_quality_caption_claims_rederived
+
     rows = payload.get("rows") or []
     contrast_rows = (payload.get("palette_contrast_report") or {}).values()
     font_rows = (payload.get("font_role_report") or {}).values()
     return (
         payload.get("schema") == "template_active_inference.visualization_quality_audit.v1"
+        # Defense-in-depth: re-derive caption-claim booleans from the registry so a
+        # fully self-consistent forged audit (all stored booleans flipped green over a
+        # bad claim) cannot pass on stored values alone.
+        and _visualization_quality_caption_claims_rederived(root, payload)
         and bool(rows)
         and int(payload.get("figure_count", -1) or -1) == len(rows)
         and payload.get("all_figures_readable") is True
         and payload.get("all_figures_nonblank") is True
         and payload.get("all_figures_source_bound") is True
+        and payload.get("all_caption_claims_ok") is True
         and payload.get("all_scope_guards_present") is True
         and payload.get("all_caption_overclaims_free") is True
         and payload.get("all_claim_wording_ok") is True
@@ -426,6 +433,13 @@ def _visualization_quality_audit_ok(payload: dict) -> bool:
             row.get("readable") is True
             and row.get("nonblank") is True
             and row.get("source_bound") is True
+            and int(row.get("caption_claim_count", 0) or 0) > 0
+            and row.get("caption_claims_source_bound") is True
+            and row.get("caption_claim_fields_resolved") is True
+            and row.get("caption_claim_terms_present") is True
+            and row.get("caption_claim_scope_ok") is True
+            and row.get("caption_claim_display_transform_ok") is True
+            and row.get("caption_claims_ok") is True
             and row.get("metadata_complete") is True
             and row.get("scope_guard_present") is True
             and row.get("caption_overclaim_free") is True
@@ -672,6 +686,7 @@ def _validate_outputs_selected(root: Path, selected: set[str]) -> dict[str, bool
         )
     if "visualization_quality_audit_schema" in selected:
         checks["visualization_quality_audit_schema"] = _visualization_quality_audit_ok(
+            root,
             _read_json(root / "output" / "reports" / "visualization_quality_audit.json"),
         )
     if "figure_output_integrity" in selected:
@@ -771,7 +786,11 @@ def validate_outputs(project_root: Path, *, only: set[str] | None = None) -> dic
         selected_checks = _validate_outputs_selected(root, selected)
         if selected <= set(selected_checks):
             return selected_checks
-        return {key: value for key, value in _validate_outputs_full(root).items() if key in selected}
+        full = _validate_outputs_full(root)
+        unsupported = selected - set(full) - set(selected_checks)
+        if unsupported:
+            raise KeyError(f"unsupported output check keys: {sorted(unsupported)}")
+        return {key: full.get(key, selected_checks.get(key, False)) for key in selected}
     return _validate_outputs_full(root)
 
 
@@ -1133,7 +1152,7 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     )
     checks["figure_source_map_schema"] = _figure_source_map_ok(root, figure_source)
     checks["figure_hash_manifest_schema"] = _figure_hash_manifest_ok(root, figure_hash)
-    checks["visualization_quality_audit_schema"] = _visualization_quality_audit_ok(visualization_quality)
+    checks["visualization_quality_audit_schema"] = _visualization_quality_audit_ok(root, visualization_quality)
     checks["figure_output_integrity"] = _figure_output_integrity_ok(root)
     checks["scope_boundary_audit_schema"] = scope.get("scope_boundary_status") == "toy_only_pass"
     checks["adversarial_audit_schema"] = (

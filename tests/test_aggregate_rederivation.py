@@ -193,6 +193,47 @@ def test_scope_boundary_wording_mutation_caught(project_root: Path, tmp_path: Pa
     assert lying and not lying[0]["consistent"]
 
 
+def test_scope_boundary_audit_rejects_overbroad_manuscript_claims(tmp_path: Path) -> None:
+    from roadmap_tracks.integration_audit_artifacts import build_scope_boundary_audit
+
+    manuscript = tmp_path / "manuscript"
+    manuscript.mkdir()
+    overclaims = [
+        "OPD = Active Inference.",
+        "This paper proves a universal theorem about OPD.",
+        "We reproduce Qwen results on production LLMs.",
+        "The Markov blanket result proves a biological boundary.",
+    ]
+    (manuscript / "00_abstract.md").write_text("\n".join(overclaims), encoding="utf-8")
+
+    payload = build_scope_boundary_audit(tmp_path)
+
+    assert payload["scope_boundary_status"] == "scope_leak"
+    assert payload["all_current_claims_toy"] is False
+    assert len(payload["violations"]) == len(overclaims)
+    assert payload["rows"][0]["has_forbidden_wording"] is True
+
+
+def test_scope_boundary_audit_allows_negated_scope_guardrails(tmp_path: Path) -> None:
+    from roadmap_tracks.integration_audit_artifacts import build_scope_boundary_audit
+
+    manuscript = tmp_path / "manuscript"
+    manuscript.mkdir()
+    guardrails = [
+        "The result is not a universal theorem about OPD.",
+        "Qwen and Thinking Machines are external context, not reproduced results.",
+        "No biological Markov blanket boundary claim is made.",
+    ]
+    (manuscript / "00_abstract.md").write_text("\n".join(guardrails), encoding="utf-8")
+
+    payload = build_scope_boundary_audit(tmp_path)
+
+    assert payload["scope_boundary_status"] == "toy_only_pass"
+    assert payload["all_current_claims_toy"] is True
+    assert payload["violations"] == []
+    assert payload["rows"][0]["negated_hits"]
+
+
 def test_false_flag_over_passing_rows_is_inconsistent(project_root: Path, tmp_path: Path) -> None:
     """Inverse lying case: a False flag over all-passing rows is broken bookkeeping."""
     rel = "output/reports/stale_artifact_report.json"

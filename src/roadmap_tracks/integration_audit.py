@@ -19,6 +19,7 @@ from pathlib import Path
 from .integration_audit_artifacts import (
     _figure_hash_rows_complete,
     _figure_source_rows_complete,
+    _visualization_quality_caption_claims_rederived,
     build_adversarial_audit,
     build_artifact_diffoscope,
     build_artifact_license_audit,
@@ -62,6 +63,7 @@ __all__ = [
     "_expected_token_value",
     "_figure_hash_rows_complete",
     "_figure_source_rows_complete",
+    "_visualization_quality_caption_claims_rederived",
     "_load_json",
     "_sha256",
     "_write_json",

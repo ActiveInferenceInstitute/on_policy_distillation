@@ -52,7 +52,7 @@ def figure_ising_mi_curve(project_root: Path) -> Path:
                 arrowprops={"arrowstyle": "->", "color": style.color("muted"), "linewidth": 0.9},
             )
         style_grid(ax_main, style)
-        ax_main.legend(frameon=False, fontsize=style.font_size("legend"))
+        ax_main.legend(frameon=True, fontsize=style.font_size("legend"))
         residuals = [e - c for e, c in zip(empirical, closed, strict=True)]
         ax_resid.axhline(0.0, color=style.color("reference"), linewidth=1)
         markerline, stemlines, baseline = ax_resid.stem(lambdas, residuals)
@@ -233,7 +233,7 @@ def figure_free_energy_curve(project_root: Path) -> Path:
         curve_ax.set_title("Mean-field students pay the missing-coupling gap")
         curve_ax.set_ylim(-0.04, max(0.08, max_gap * 1.17))
         style_grid(curve_ax, style)
-        curve_ax.legend(frameon=False, fontsize=style.font_size("legend"), loc="upper left")
+        curve_ax.legend(frameon=True, fontsize=style.font_size("legend"), loc="upper left")
 
         q_max = ising_joint_posterior(max_lam)
         tc_max = float(total_correlation(q_max))

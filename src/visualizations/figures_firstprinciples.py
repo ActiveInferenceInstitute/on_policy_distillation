@@ -53,7 +53,7 @@ def figure_distillation_divergence_geometry(project_root: Path) -> Path:
         mass_ax.set_ylabel("Probability mass")
         mass_ax.set_title("Teacher/student mass on finite support")
         style_grid(mass_ax, style)
-        mass_ax.legend(frameon=False, fontsize=style.font_size("legend"))
+        mass_ax.legend(frameon=True, fontsize=style.font_size("legend"))
 
         names = [name for name, _value in measures]
         values = [value for _name, value in measures]
@@ -178,12 +178,32 @@ def figure_exposure_bias_recovery(project_root: Path) -> Path:
                 fontsize=style.font_size("annotation"),
                 color=style.color("reference"),
             )
+        ax.annotate(
+            "teacher-forced path",
+            xy=(xs[min(1, len(xs) - 1)], off_policy[min(1, len(off_policy) - 1)] if off_policy else 0.0),
+            xytext=(42, -28),
+            textcoords="offset points",
+            fontsize=style.font_size("annotation"),
+            color=style.color("fail"),
+            arrowprops={"arrowstyle": "->", "color": style.color("fail"), "linewidth": 0.8},
+        )
+        if on_policy:
+            mid = min(max(len(on_policy) // 2, 1), len(on_policy) - 1)
+            ax.annotate(
+                "student-visited correction loop",
+                xy=(xs[mid], on_policy[mid]),
+                xytext=(18, 42),
+                textcoords="offset points",
+                fontsize=style.font_size("annotation"),
+                color=style.color("pass"),
+                arrowprops={"arrowstyle": "->", "color": style.color("pass"), "linewidth": 0.8},
+            )
         ax.set_xlabel("Generated step")
         ax.set_ylabel("Expected correctness (closed form)")
         ax.set_ylim(0.0, 1.02)
-        ax.set_title("Per-step expected correctness: off-policy vs on-policy training (toy drift model)")
+        ax.set_title("On-policy correction changes the generated trajectory (toy drift model)")
         style_grid(ax, style)
-        ax.legend(frameon=False, fontsize=style.font_size("legend"))
+        ax.legend(frameon=True, fontsize=style.font_size("legend"))
         fig.text(
             0.01,
             0.01,
@@ -242,7 +262,7 @@ def figure_classroom_distillation_signal(project_root: Path) -> Path:
         div_ax.set_ylabel("Divergence (nats)")
         div_ax.set_title("Per-step divergence")
         style_grid(div_ax, style)
-        div_ax.legend(frameon=False, fontsize=style.font_size("legend"))
+        div_ax.legend(frameon=True, fontsize=style.font_size("legend"))
         div_ax.text(
             0.02,
             0.95,
@@ -348,7 +368,7 @@ def figure_sequential_shift_recovery(project_root: Path) -> Path:
         visit_ax.set_title("Student rollouts shift the state distribution")
         visit_ax.set_ylim(0.0, max(0.72, float(max(train.max(), test_before.max(), test_after.max())) * 1.14))
         style_grid(visit_ax, style)
-        visit_ax.legend(frameon=False, fontsize=style.font_size("legend"))
+        visit_ax.legend(frameon=True, fontsize=style.font_size("legend"))
         visit_ax.text(
             0.02,
             0.94,
@@ -451,7 +471,7 @@ def figure_sequential_shift_sensitivity(project_root: Path) -> Path:
         loss_ax.set_title("Correction dose lowers induced test loss")
         loss_ax.set_ylim(0.0, max(float(test_losses.max()), float(train_losses.max())) * 1.20)
         style_grid(loss_ax, style)
-        loss_ax.legend(frameon=False, fontsize=style.font_size("legend"))
+        loss_ax.legend(frameon=True, fontsize=style.font_size("legend"))
         loss_ax.annotate(
             f"test loss reduced\n{reduction:.3f} nats",
             xy=(fractions[-1], test_losses[-1]),
@@ -484,7 +504,7 @@ def figure_sequential_shift_sensitivity(project_root: Path) -> Path:
         shift_ax.set_title("Correction dose reduces the drift state")
         shift_ax.set_ylim(0.0, max(float(shift_masses.max()), float(drift_visits.max())) * 1.22)
         style_grid(shift_ax, style)
-        shift_ax.legend(frameon=False, fontsize=style.font_size("legend"))
+        shift_ax.legend(frameon=True, fontsize=style.font_size("legend"))
         shift_ax.annotate(
             f"shift mass reduced\n{shift_reduction:.3f}",
             xy=(fractions[-1], shift_masses[-1]),
@@ -543,7 +563,7 @@ def figure_parallel_convergence(project_root: Path) -> Path:
         bar_ax.set_ylabel("probability")
         bar_ax.set_title("Recovered posterior")
         bar_ax.legend(
-            frameon=False,
+            frameon=True,
             fontsize=style.font_size("legend"),
             loc="center right",
         )
@@ -612,7 +632,7 @@ def figure_diversity_tradeoff(project_root: Path) -> Path:
         ax.set_xlabel(r"student temperature $\tau$ (low = sharper / reverse-KL)")
         ax.set_ylabel("success probability")
         ax.set_title(f"Sharpening costs Pass@{k} coverage; greedy Pass@1 is temperature-invariant")
-        ax.legend(frameon=False, fontsize=style.font_size("legend"), loc="best")
+        ax.legend(frameon=True, fontsize=style.font_size("legend"), loc="best")
         style_grid(ax, style)
         fig.text(0.01, 0.01, "Source: output/data/firstprinciples/diversity_demo.json", fontsize=style.font_size("source"), color=style.color("muted"))
         save_styled_figure(fig, out, style)

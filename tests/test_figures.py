@@ -16,6 +16,8 @@ from visualizations.figures import (
     figure_energy_decomposition,
     figure_free_energy_curve,
     figure_ising_mi_curve,
+    figure_opd_reader_map,
+    figure_opd_situational_awareness,
     figure_opd_taxonomy_landscape,
     figure_scholarship_source_map,
     figure_semantic_gluing_graph,
@@ -133,6 +135,9 @@ def test_figure_registry_json_matches_yaml(project_root: Path) -> None:
         record = payload[f"fig:{figure_id}"]
         assert record["filename"] == spec.filename
         assert record["generated_by"] == f"visualizations.figures::{figure_id}"
+        assert record["claims"]
+        assert len(record["claims"]) == len(spec.claims)
+        assert all(claim["id"] for claim in record["claims"])
 
 
 @pytest.mark.timeout(300)
@@ -175,6 +180,14 @@ def test_figure_source_map_has_registry_parity_and_data_backing(project_root: Pa
         assert row["source_field_count"] == len(row["source_fields"])
         assert row["validation_gates"]
         assert row["validation_gate_count"] == len(row["validation_gates"])
+        assert spec.claims
+        assert row["caption_claims"] == [claim.as_payload() for claim in spec.claims]
+        assert row["caption_claim_count"] == len(spec.claims)
+        assert row["caption_claims_source_bound"] is True
+        assert row["caption_claim_terms_present"] is True
+        assert row["caption_claim_scope_ok"] is True
+        assert row["caption_claim_display_transform_ok"] is True
+        assert row["caption_claims_ok"] is True
         assert row["source_paths_exist"] is True
         assert row["mapped"] is True
         assert set(row["source_path_status"]) == set(row["sources"])
@@ -232,12 +245,51 @@ def test_figure_source_map_has_registry_parity_and_data_backing(project_root: Pa
     cover_row = rows_by_id["graphical_abstract"]
     assert "output/data/manuscript_variables.json" not in cover_row["sources"]
     assert {
-        "manuscript/sheaf/tracks.yaml:track_registry",
+        "manuscript/sheaf/tracks.yaml:tracks",
         "output/data/firstprinciples/classroom.json:schema",
         "output/data/firstprinciples/energy_demo.json:schema",
         "output/data/firstprinciples/sequential_shift.json:schema",
         "output/data/validation_dependency_graph.json:producer_consumer_spine",
     } <= set(cover_row["source_fields"])
+
+    reader_row = rows_by_id["opd_reader_map"]
+    assert {
+        "output/data/firstprinciples/correspondence_map.json",
+        "output/data/firstprinciples/exposure_bias_demo.json",
+        "output/data/firstprinciples/sequential_shift.json",
+        "output/data/validation_dependency_graph.json",
+    } <= set(reader_row["sources"])
+    assert {
+        "$.rows",
+        "$.curves.off_policy",
+        "$.student_test_visitation_after",
+        "output/data/validation_dependency_graph.json:$.edges",
+    } <= set(reader_row["source_fields"])
+    assert "test_figures.opd_reader_map_is_intro_bound_and_source_backed" in reader_row["validation_gates"]
+
+    situational_row = rows_by_id["opd_situational_awareness"]
+    assert {
+        "output/data/firstprinciples/correspondence_map.json",
+        "output/data/firstprinciples/sequential_shift.json",
+        "output/data/firstprinciples/classroom.json",
+        "output/data/firstprinciples/energy_demo.json",
+        "output/data/firstprinciples/opd_taxonomy.json",
+        "output/data/validation_dependency_graph.json",
+        "output/data/manuscript_variables.json",
+    } <= set(situational_row["sources"])
+    assert {
+        "output/data/firstprinciples/correspondence_map.json:$.rows",
+        "output/data/firstprinciples/sequential_shift.json:$.schema",
+        "output/data/firstprinciples/classroom.json:$.schema",
+        "output/data/firstprinciples/energy_demo.json:$.schema",
+        "output/data/firstprinciples/opd_taxonomy.json:$.methods",
+        "output/data/validation_dependency_graph.json:$.edges",
+        "output/data/manuscript_variables.json:$.sheaf_track_count",
+    } <= set(situational_row["source_fields"])
+    assert (
+        "test_figures.opd_situational_awareness_is_intro_bound_and_source_backed"
+        in situational_row["validation_gates"]
+    )
 
     quality = build_visualization_quality_audit(project_root)
     quality_rows = {row["figure_id"]: row for row in quality["rows"]}
@@ -247,6 +299,7 @@ def test_figure_source_map_has_registry_parity_and_data_backing(project_root: Pa
     assert quality["all_figures_readable"] is True
     assert quality["all_figures_nonblank"] is True
     assert quality["all_figures_source_bound"] is True
+    assert quality["all_caption_claims_ok"] is True
     assert quality["all_scope_guards_present"] is True
     assert quality["all_caption_overclaims_free"] is True
     assert quality["all_claim_wording_ok"] is True
@@ -264,6 +317,13 @@ def test_figure_source_map_has_registry_parity_and_data_backing(project_root: Pa
     assert quality_rows["graphical_abstract"]["claim_wording_ok"] is True
     assert quality_rows["graphical_abstract"]["cover_quantitative_free"] is True
     assert quality_rows["graphical_abstract"]["accessibility_ok"] is True
+    for row in quality_rows.values():
+        assert row["caption_claim_count"] > 0
+        assert row["caption_claims_source_bound"] is True
+        assert row["caption_claim_terms_present"] is True
+        assert row["caption_claim_scope_ok"] is True
+        assert row["caption_claim_display_transform_ok"] is True
+        assert row["caption_claims_ok"] is True
 
 
 def test_visualization_quality_audit_rejects_unregistered_image(project_root: Path) -> None:
@@ -325,6 +385,18 @@ def test_interpretive_figures_expose_formula_signs_and_caveats(project_root: Pat
         "sequential_shift_sensitivity"
     ].caption.lower()
     assert "not an empirical OPD benchmark" in registry["sequential_shift_sensitivity"].caption
+    assert "source-bound figure 1 mechanism map" in registry["opd_reader_map"].caption.lower()
+    assert "validation dependency graph" in registry["opd_reader_map"].caption.lower()
+    reader_source = inspect.getsource(figure_opd_reader_map)
+    assert "first-read mechanism map" in reader_source.lower()
+    assert "correspondence_map.json" in reader_source
+    assert "validation_dependency_graph.json" in reader_source
+    situational_source = inspect.getsource(figure_opd_situational_awareness)
+    assert "situational-awareness atlas" in situational_source.lower()
+    assert "opd_taxonomy.json" in situational_source
+    assert "manuscript_variables.json" in situational_source
+    assert "production-LLM benchmark" in registry["opd_situational_awareness"].caption
+    assert "universal theorem" in registry["opd_situational_awareness"].caption
 
 
 def test_dense_figures_disclose_readability_compression(project_root: Path) -> None:
@@ -365,6 +437,10 @@ def test_figure_registry_rejects_formal_and_causal_overclaim_phrases(project_roo
 
 def test_visualization_claim_wording_guard_rejects_cover_equality() -> None:
     from roadmap_tracks.integration_audit_artifacts import (
+        _caption_claim_display_transform_ok,
+        _caption_claim_scope_ok,
+        _caption_claim_terms_present,
+        _caption_claims_source_bound,
         _caption_overclaim_free,
         _cover_quantitative_free,
         _figure_claim_wording_ok,
@@ -383,6 +459,126 @@ def test_visualization_claim_wording_guard_rejects_cover_equality() -> None:
         "Finite-model reading schematic; quantitative evidence appears in body figures.",
     )
     assert _cover_quantitative_free("sequential_shift_recovery", "test loss 0.41 nats")
+
+    claim = {
+        "id": "probe",
+        "claim_type": "local_deterministic",
+        "caption_terms": ["finite toy"],
+        "sources": ["output/data/probe.json"],
+        "source_fields": ["$.rows"],
+        "scope": "finite probe",
+        "display_transform": "full",
+    }
+    assert _caption_claim_terms_present("This finite toy figure is source-bound.", [claim])
+    assert not _caption_claim_terms_present("This figure is source-bound.", [claim])
+    assert _caption_claims_source_bound([claim], ["output/data/probe.json"], ["$.rows", "$.ok"])
+    assert not _caption_claims_source_bound([claim], ["output/data/probe.json"], ["$.ok"])
+    # scope_ok now also enforces the id-names-its-figure convention, so give each
+    # probe claim a figure-prefixed id and isolate the property under test.
+    assert _caption_claim_scope_ok("sequential_shift_recovery", [{**claim, "id": "sequential_shift_recovery_x"}])
+    bad_external = {**claim, "id": "sequential_shift_recovery_x", "claim_type": "external_context"}
+    assert not _caption_claim_scope_ok("sequential_shift_recovery", [bad_external])
+    assert _caption_claim_scope_ok(
+        "graphical_abstract",
+        [{**claim, "id": "graphical_abstract_x", "claim_type": "schematic", "display_transform": "schematic"}],
+    )
+    assert not _caption_claim_scope_ok(
+        "policy_posterior_grid",
+        [{**claim, "id": "policy_posterior_grid_x", "claim_type": "schematic", "display_transform": "schematic"}],
+    )
+    assert _caption_claim_display_transform_ok("Full rows are shown.", [claim])
+    compacted_claim = {**claim, "display_transform": "compacted_subset"}
+    assert _caption_claim_display_transform_ok("Compacted subset with omitted rows disclosed.", [compacted_claim])
+    assert not _caption_claim_display_transform_ok("Compacted all source rows are shown.", [compacted_claim])
+    assert not _caption_claim_display_transform_ok("Compacted subset with omitted rows disclosed.", [claim])
+
+    # Fix A: a term must occur in authored prose, not merely inside a `{{token}}`
+    # name that renders to a number after hydration.
+    token_term = {**claim, "caption_terms": ["sweep_max_residual"]}
+    assert not _caption_claim_terms_present("Residual is {{sweep_max_residual:.1e}} nats.", [token_term])
+    grid_term = {**claim, "caption_terms": ["grid points"]}
+    assert _caption_claim_terms_present("Across {{param_sweep_grid_points}} grid points.", [grid_term])
+
+    # Fix C: completeness overclaims on a compressed figure are rejected in either
+    # word order and across display verbs, not only "all rows shown".
+    for overclaim in (
+        "Compacted; all twelve rows are displayed.",
+        "Compacted; every row is shown.",
+        "Compacted view shows all rows.",
+        "Aggregated panel renders each row.",
+        "Compacted; all twelve source rows appear here.",
+        "Compacted view visualizes the entire set of rows.",
+        "Compacted panel; no rows are omitted.",
+    ):
+        assert not _caption_claim_display_transform_ok(overclaim, [compacted_claim])
+    # positive disclosure: a row-dropping transform must affirmatively disclose it.
+    assert not _caption_claim_display_transform_ok("A clean panel of the data.", [compacted_claim])
+    assert _caption_claim_display_transform_ok("A compacted subset; remaining rows omitted.", [compacted_claim])
+    # cross-sentence completeness overclaim (period-spanning windows) is caught even
+    # with a disclosure token present.
+    assert not _caption_claim_display_transform_ok(
+        "Print-condensed overview. All rows. Displayed in the figure for completeness.", [compacted_claim]
+    )
+    # disclosure matching is word-boundary: "disaggregate" must not satisfy "aggregate".
+    aggregate_claim = {**claim, "display_transform": "aggregate"}
+    assert not _caption_claim_display_transform_ok("This disaggregate view summarizes the scene.", [aggregate_claim])
+    assert _caption_claim_display_transform_ok("This aggregate view; long-tail rows collapsed.", [aggregate_claim])
+    # word-boundary terms: an opposite-sense substring must not satisfy a term.
+    assert not _caption_claim_terms_present("the unmeasured residual", [{**claim, "caption_terms": ["measured"]}])
+    assert _caption_claim_terms_present("the measured residual", [{**claim, "caption_terms": ["measured"]}])
+
+    # Fix B: empty or duplicate claim ids must not pass silently.
+    assert not _caption_claim_scope_ok("policy_posterior_grid", [claim, dict(claim)])
+    assert not _caption_claim_scope_ok("policy_posterior_grid", [{**claim, "id": ""}])
+
+    # #3: a claim id must name its figure.
+    assert not _caption_claim_scope_ok("policy_posterior_grid", [{**claim, "id": "some_other_figure_claim"}])
+    assert _caption_claim_scope_ok("policy_posterior_grid", [{**claim, "id": "policy_posterior_grid_caption_claim"}])
+
+
+def test_caption_claim_source_field_resolution(project_root: Path) -> None:
+    # #1: a declared source_field must resolve to a present value in the artifact,
+    # not merely be listed on the row. Covers the claim grammar: bare jsonpath,
+    # bare-filename CSV column, and file-scoped/nested selectors.
+    from roadmap_tracks.integration_audit_artifacts import (
+        _caption_claim_fields_resolved,
+        _source_field_resolves,
+    )
+
+    root = project_root
+    # bare jsonpath against a row JSON source
+    assert _source_field_resolves("$.rows", ["output/data/theorem_traceability_matrix.json"], root)
+    assert _source_field_resolves("parameter_sweep.csv:closed_form_mi", ["output/data/parameter_sweep.csv"], root)
+    assert not _source_field_resolves("parameter_sweep.csv:not_a_column", ["output/data/parameter_sweep.csv"], root)
+    assert _source_field_resolves("manuscript/sheaf/tracks.yaml:tracks", ["manuscript/sheaf/tracks.yaml"], root)
+    assert not _source_field_resolves("manuscript/sheaf/tracks.yaml:track_registry", ["manuscript/sheaf/tracks.yaml"], root)
+    assert not _source_field_resolves("$.totally_made_up", ["output/data/parameter_sweep.csv"], root)
+
+    # degenerate selectors bind nothing and must be rejected
+    assert not _source_field_resolves("$.", ["output/data/parameter_sweep.csv"], root)
+    assert not _source_field_resolves("$", ["output/data/parameter_sweep.csv"], root)
+    # numeric jsonpath index resolves against a real list
+    assert _source_field_resolves("$.rows[0]", ["output/data/theorem_traceability_matrix.json"], root)
+
+    good = {
+        "id": "ising_mi_curve_caption_claim",
+        "source_fields": ["parameter_sweep.csv:closed_form_mi"],
+    }
+    bad = {"id": "ising_mi_curve_caption_claim", "source_fields": ["$.not_present_anywhere"]}
+    assert _caption_claim_fields_resolved([good], ["output/data/parameter_sweep.csv"], root)
+    assert not _caption_claim_fields_resolved([bad], ["output/data/parameter_sweep.csv"], root)
+
+    # A claim field resolves against the claim's OWN sources, not the row-wide set:
+    # a field present only in a sibling source the claim does not cite is rejected.
+    leak = {
+        "id": "ising_mi_curve_caption_claim",
+        "sources": ["output/data/parameter_sweep.csv"],
+        "source_fields": ["$.rows"],
+    }
+    two_sources = ["output/data/parameter_sweep.csv", "output/data/theorem_traceability_matrix.json"]
+    assert not _caption_claim_fields_resolved([leak], two_sources, root)
+    honest = {**leak, "sources": ["output/data/theorem_traceability_matrix.json"]}
+    assert _caption_claim_fields_resolved([honest], ["output/data/theorem_traceability_matrix.json"], root)
 
 
 def test_figure_sheaf_layers_overview_dimensions(project_root: Path) -> None:
@@ -434,9 +630,12 @@ def test_graphical_abstract_represents_artifact_validation_spine(project_root: P
     source = (project_root / "src" / "visualizations" / "figures_abstract.py").read_text(encoding="utf-8")
     registry = load_figure_registry(project_root)
     metadata = registry["graphical_abstract"].alt + "\n" + registry["graphical_abstract"].caption
+    assert "On-Policy Distillation as Active Inference" in source
     assert "Validation spine" in source
-    assert "sequential shift witness" in source
-    assert "finite active-inference reading" in source
+    assert "finite variational-model reading" in source
+    assert "student-induced observations close the loop" in source
+    assert "reverse-KL loss as VFE" in source
+    assert "EFE: planning-side action selection" in source
     assert "correspondence, not universal identity" in source
     assert "body figures and tables" in metadata
     assert "manuscript_variables" not in source
@@ -459,6 +658,61 @@ def test_graphical_abstract_represents_artifact_validation_spine(project_root: P
         assert metric not in combined
     for stale in ("OPD = Active Inference", "= free energy", "universal identity."):
         assert stale not in source
+    for stale_title in ("A Finite-Model Active-Inference Reading", "of On-Policy Distillation"):
+        assert stale_title not in source
+
+
+@pytest.mark.render_slow
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_opd_reader_map_is_intro_bound_and_source_backed(project_root: Path) -> None:
+    from visualizations.figure_registry import load_section_figures, render_section_figures
+
+    manifest = (project_root / "manuscript" / "sheaf" / "manifest.yaml").read_text(encoding="utf-8")
+    assert "intro_motivation" in manifest
+    assert "manuscript/sections/imrad/intro_motivation/visualization.md" in manifest
+    refs = load_section_figures(project_root).get("intro_motivation", ())
+    assert [ref.figure_id for ref in refs] == ["opd_reader_map"]
+    rendered = render_section_figures(project_root, "intro_motivation")
+    assert "opd_reader_map.png" in rendered
+    assert "#fig:opd_reader_map" in rendered
+    path = run_figure("opd_reader_map", project_root)
+    assert path.name == "opd_reader_map.png"
+    _assert_png(path, min_width=900, min_height=450)
+    _assert_nonblank_png(path)
+
+    registry = load_figure_registry(project_root)
+    metadata = registry["opd_reader_map"].alt + "\n" + registry["opd_reader_map"].caption
+    assert "source-bound" in metadata.lower()
+    assert "finite" in metadata.lower()
+    assert "OPD = Active Inference" not in metadata
+    assert "On-Policy Distillation is Active Inference" not in metadata
+
+
+@pytest.mark.render_slow
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_opd_situational_awareness_is_intro_bound_and_source_backed(project_root: Path) -> None:
+    from visualizations.figure_registry import load_section_figures, render_section_figures
+
+    refs = load_section_figures(project_root).get("intro_contributions", ())
+    assert [ref.figure_id for ref in refs[:2]] == ["opd_situational_awareness", "correspondence_map"]
+    rendered = render_section_figures(project_root, "intro_contributions")
+    assert "opd_situational_awareness.png" in rendered
+    assert "#fig:opd_situational_awareness" in rendered
+    path = run_figure("opd_situational_awareness", project_root)
+    assert path.name == "opd_situational_awareness.png"
+    _assert_png(path, min_width=900, min_height=450)
+    _assert_nonblank_png(path)
+
+    registry = load_figure_registry(project_root)
+    metadata = registry["opd_situational_awareness"].alt + "\n" + registry["opd_situational_awareness"].caption
+    assert "situational-awareness" in metadata.lower()
+    assert "source-bound" in metadata.lower()
+    assert "non-claims" in metadata.lower()
+    assert "production-LLM benchmark" in metadata
+    assert "OPD = Active Inference" not in metadata
+    assert "On-Policy Distillation is Active Inference" not in metadata
 
 
 def test_tmaze_schematic_uses_configured_horizon(project_root: Path) -> None:

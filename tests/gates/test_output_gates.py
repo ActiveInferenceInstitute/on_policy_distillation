@@ -53,6 +53,12 @@ def test_validate_outputs_selected_strict_rejects_unknown_key(project_root: Path
         validate_outputs_selected_strict(project_root, {"not_a_real_output_check"})
 
 
+def test_validate_outputs_public_only_rejects_unknown_key(project_root: Path) -> None:
+    """A misspelled selected gate must not certify an empty check set."""
+    with pytest.raises(KeyError, match="unsupported output check keys"):
+        validate_outputs(project_root, only={"not_a_real_output_check"})
+
+
 @pytest.mark.artifact_slow
 @pytest.mark.mutates_artifacts
 def test_validate_outputs_negative_hidden_temp_figure_artifact_fails(project_root: Path) -> None:
@@ -254,6 +260,269 @@ def test_validate_outputs_negative_figure_source_map_requires_provenance(project
 @pytest.mark.timeout(300)
 @pytest.mark.artifact_slow
 @pytest.mark.mutates_artifacts
+def test_validate_outputs_negative_figure_source_map_requires_caption_claim_contract(
+    project_root: Path,
+    tmp_path: Path,
+) -> None:
+    ensure_gate_artifacts_for(project_root, "output/data/figure_source_map.json")
+    path = project_root / "output" / "data" / "figure_source_map.json"
+    backup = tmp_path / "figure_source_map.json.bak"
+    backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+    payload = json.loads(backup.read_text(encoding="utf-8"))
+    row = next(row for row in payload["rows"] if row["figure_id"] == "policy_posterior_grid")
+    row["caption_claims"][0]["source_fields"] = ["$.not_a_real_field"]
+    row["caption_claims_source_bound"] = True
+    row["caption_claims_ok"] = True
+    row["mapped"] = True
+    payload["all_caption_claims_ok"] = True
+    payload["all_figures_mapped"] = True
+    try:
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        checks = validate_outputs(project_root, only={"figure_source_map_schema"})
+        assert checks["figure_source_map_schema"] is False
+    finally:
+        path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+@pytest.mark.timeout(300)
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_validate_outputs_negative_caption_term_only_in_token_name(
+    project_root: Path,
+    tmp_path: Path,
+) -> None:
+    # A `caption_term` that only matches a `{{token}}` name (which renders to a
+    # number after hydration) and never appears in the authored prose must be
+    # rejected by row-level rederivation, even when every stored boolean is forged
+    # green. This is the historical failure mode: a plausible artifact accepted by
+    # a verifier that checked the raw template instead of the rendered caption.
+    ensure_gate_artifacts_for(project_root, "output/data/figure_source_map.json")
+    path = project_root / "output" / "data" / "figure_source_map.json"
+    backup = tmp_path / "figure_source_map.json.bak"
+    backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+    payload = json.loads(backup.read_text(encoding="utf-8"))
+    row = next(row for row in payload["rows"] if row["figure_id"] == "ising_mi_curve")
+    assert "{{sweep_max_residual" in row["caption"]  # token present only in the raw template
+    row["caption_claims"][0]["caption_terms"] = ["sweep_max_residual"]
+    row["caption_claim_terms_present"] = True
+    row["caption_claims_ok"] = True
+    row["mapped"] = True
+    payload["all_caption_claims_ok"] = True
+    payload["all_figures_mapped"] = True
+    try:
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        checks = validate_outputs(project_root, only={"figure_source_map_schema"})
+        assert checks["figure_source_map_schema"] is False
+    finally:
+        path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+@pytest.mark.timeout(300)
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_validate_outputs_negative_caption_claim_field_does_not_resolve(
+    project_root: Path,
+    tmp_path: Path,
+) -> None:
+    # A claim source_field that is merely *declared* but resolves to no value in the
+    # artifact must be rejected by row-level rederivation, even with every stored
+    # boolean forged green. Closes the gap where the contract only checked that a
+    # field string was listed on the row, not that it binds to artifact content.
+    ensure_gate_artifacts_for(project_root, "output/data/figure_source_map.json")
+    path = project_root / "output" / "data" / "figure_source_map.json"
+    backup = tmp_path / "figure_source_map.json.bak"
+    backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+    payload = json.loads(backup.read_text(encoding="utf-8"))
+    row = next(row for row in payload["rows"] if row["figure_id"] == "ising_mi_curve")
+    row["caption_claims"][0]["source_fields"] = ["$.totally_made_up_field"]
+    row["source_fields"] = ["$.totally_made_up_field"]
+    row["source_field_count"] = 1
+    row["caption_claim_fields_resolved"] = True
+    row["caption_claims_source_bound"] = True
+    row["caption_claims_ok"] = True
+    row["mapped"] = True
+    payload["all_caption_claims_ok"] = True
+    payload["all_figures_mapped"] = True
+    try:
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        checks = validate_outputs(project_root, only={"figure_source_map_schema"})
+        assert checks["figure_source_map_schema"] is False
+    finally:
+        path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+@pytest.mark.timeout(300)
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_validate_outputs_negative_figure_source_map_caption_is_registry_authoritative(
+    project_root: Path,
+    tmp_path: Path,
+) -> None:
+    # The figure_source_map gate must treat the registry (figures.yaml) as the source
+    # of truth for caption prose: a forged JSON that rewrites the stored caption to
+    # satisfy the term check (while keeping every boolean green) must be rejected
+    # because the stored caption no longer equals the registry caption.
+    ensure_gate_artifacts_for(project_root, "output/data/figure_source_map.json")
+    path = project_root / "output" / "data" / "figure_source_map.json"
+    backup = tmp_path / "figure_source_map.json.bak"
+    backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+    payload = json.loads(backup.read_text(encoding="utf-8"))
+    row = next(row for row in payload["rows"] if row["figure_id"] == "policy_posterior_grid")
+    row["caption"] = row["caption"] + " Every deterministic row is shown here."
+    row["caption_claim_terms_present"] = True
+    row["caption_claims_ok"] = True
+    row["mapped"] = True
+    payload["all_caption_claims_ok"] = True
+    payload["all_figures_mapped"] = True
+    try:
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        checks = validate_outputs(project_root, only={"figure_source_map_schema"})
+        assert checks["figure_source_map_schema"] is False
+    finally:
+        path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+@pytest.mark.timeout(300)
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_validate_outputs_negative_visualization_audit_rederives_claim_count(
+    project_root: Path,
+    tmp_path: Path,
+) -> None:
+    # The visualization audit gate now re-derives caption-claim structure from the
+    # registry, so a forged-green audit whose stored claim count disagrees with the
+    # registry is rejected on stored booleans alone (defense-in-depth #2).
+    ensure_gate_artifacts_for(project_root, "output/reports/visualization_quality_audit.json")
+    path = project_root / "output" / "reports" / "visualization_quality_audit.json"
+    backup = tmp_path / "visualization_quality_audit.json.bak"
+    backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+    payload = json.loads(backup.read_text(encoding="utf-8"))
+    row = next(row for row in payload["rows"] if row["figure_id"] == "semantic_gluing_graph")
+    row["caption_claim_count"] = 99  # disagrees with the registry's claim count
+    row["caption_claims_ok"] = True
+    row["ok"] = True
+    payload["all_caption_claims_ok"] = True
+    payload["all_rows_ok"] = True
+    try:
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        checks = validate_outputs(project_root, only={"visualization_quality_audit_schema"})
+        assert checks["visualization_quality_audit_schema"] is False
+    finally:
+        path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+def test_jsonpath_present_rejects_empty_containers() -> None:
+    # Defect-2 control: a key that exists but holds an empty container/None must not
+    # count as "present" — a zeroed/stale artifact (e.g. {"rows": []}) cannot resolve a
+    # caption claim the figure generator itself would refuse to draw. 0/False are kept.
+    from roadmap_tracks.integration_audit_artifacts import _jsonpath_present
+
+    assert _jsonpath_present({"rows": [1]}, "$.rows") is True
+    assert _jsonpath_present({"rows": []}, "$.rows") is False
+    assert _jsonpath_present({"curves": {}}, "$.curves") is False
+    assert _jsonpath_present({"x": None}, "$.x") is False
+    assert _jsonpath_present({"x": ""}, "$.x") is False
+    assert _jsonpath_present({"x": 0}, "$.x") is True
+    assert _jsonpath_present({"x": False}, "$.x") is True
+
+
+def test_asserts_complete_rows_catches_synonyms_and_cross_clause_overclaims() -> None:
+    # Defect-4/5 control: completeness overclaims must be caught across the row-unit
+    # synonym family and across clause boundaries, while same-clause disclosure and
+    # verb collisions ("each edge records a link") must NOT be flagged.
+    from roadmap_tracks.integration_audit_artifacts import (
+        _asserts_complete_rows,
+        _caption_claim_display_transform_ok,
+        _normalize_claim_text,
+    )
+
+    def flagged(text: str) -> bool:
+        return _asserts_complete_rows(_normalize_claim_text(text))
+
+    # synonyms (Defect 4), incl. adjective-filler forms that an early fix let evade
+    for overclaim in (
+        "all entries are displayed; no entry is omitted",
+        "displays every record",
+        "all 51 entries are shown",
+        "each line of the ledger appears here",
+        "the complete set of claims is shown",
+        "every single record is rendered",
+        "every individual entry is displayed",
+        "the complete collection of claims is displayed",
+        "the entire list of items is drawn",
+        "all rows are visible",
+    ):
+        assert flagged(overclaim) is True, overclaim
+    # cross-clause negation no longer suppresses a real overclaim (Defect 5)
+    for overclaim in (
+        "figures show no captions, yet all 51 rows are displayed in full",
+        "aside from styling, all rows are shown",
+    ):
+        assert flagged(overclaim) is True, overclaim
+    # honest same-clause disclosure / non-matching prose stays legal
+    for honest in (
+        "not all rows are shown",
+        "rather than all rows, a subset is shown",
+        "only a subset of rows is shown",
+        "the full row-level contract remains in the appendix",
+        # determiner-object verb usage: the synonym is a verb, not the unit noun
+        "each edge records a declared provenance link",
+        "the model claims a result for every observation",
+    ):
+        assert flagged(honest) is False, honest
+
+    # Gate level: a compacted figure whose caption uses a synonym AS A VERB passes, while
+    # a genuine completeness overclaim (incl. cross-sentence) is rejected. The compacted
+    # transform requires a disclosure token, which all three inputs carry.
+    compacted = {
+        "id": "probe",
+        "claim_type": "local_deterministic",
+        "caption_terms": ["finite toy"],
+        "sources": [],
+        "source_fields": [],
+        "scope": "finite toy",
+        "display_transform": "compacted_subset",
+    }
+    assert _caption_claim_display_transform_ok(
+        "Compacted finite toy subset; each edge records a declared provenance link.", [compacted]
+    )
+    assert not _caption_claim_display_transform_ok(
+        "Compacted finite toy subset; every single record is rendered.", [compacted]
+    )
+    assert not _caption_claim_display_transform_ok(
+        "Print-condensed finite toy overview. All entries. Displayed for completeness.", [compacted]
+    )
+
+
+@pytest.mark.timeout(300)
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_validate_outputs_negative_visualization_quality_audit_rejects_blank_image(
+    project_root: Path,
+    tmp_path: Path,
+) -> None:
+    # Defect-1 control: the audit gate re-opens each PNG, so a genuine-green audit JSON
+    # over a blanked image is rejected — image facts cannot pass on stored values alone,
+    # including in the selected-only path where no sibling integrity gate re-runs.
+    from PIL import Image
+
+    ensure_gate_artifacts_for(project_root, "output/reports/visualization_quality_audit.json")
+    path = project_root / "output" / "reports" / "visualization_quality_audit.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    victim = project_root / payload["rows"][0]["output"]
+    image_backup = tmp_path / "victim.png"
+    image_backup.write_bytes(victim.read_bytes())
+    try:
+        Image.new("RGB", (1200, 800), "white").save(victim)  # readable but blank
+        checks = validate_outputs(project_root, only={"visualization_quality_audit_schema"})
+        assert checks["visualization_quality_audit_schema"] is False
+    finally:
+        victim.write_bytes(image_backup.read_bytes())
+
+
+@pytest.mark.timeout(300)
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
 def test_validate_outputs_negative_tmaze_schematic_requires_config_sources(
     project_root: Path,
     tmp_path: Path,
@@ -319,6 +588,32 @@ def test_validate_outputs_negative_visualization_quality_audit_rejects_overclaim
     row["ok"] = False
     payload["all_caption_overclaims_free"] = True
     payload["all_scope_guards_present"] = True
+    payload["all_rows_ok"] = True
+    try:
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        checks = validate_outputs(project_root, only={"visualization_quality_audit_schema"})
+        assert checks["visualization_quality_audit_schema"] is False
+    finally:
+        path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+@pytest.mark.timeout(300)
+@pytest.mark.artifact_slow
+@pytest.mark.mutates_artifacts
+def test_validate_outputs_negative_visualization_quality_audit_rejects_caption_claim_row(
+    project_root: Path,
+    tmp_path: Path,
+) -> None:
+    ensure_gate_artifacts_for(project_root, "output/reports/visualization_quality_audit.json")
+    path = project_root / "output" / "reports" / "visualization_quality_audit.json"
+    backup = tmp_path / "visualization_quality_audit.json.bak"
+    backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+    payload = json.loads(backup.read_text(encoding="utf-8"))
+    row = next(row for row in payload["rows"] if row["figure_id"] == "semantic_gluing_graph")
+    row["caption_claims_source_bound"] = False
+    row["caption_claims_ok"] = False
+    row["ok"] = False
+    payload["all_caption_claims_ok"] = True
     payload["all_rows_ok"] = True
     try:
         path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")

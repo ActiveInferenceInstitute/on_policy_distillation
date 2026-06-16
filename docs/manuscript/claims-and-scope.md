@@ -45,10 +45,12 @@ policy mixtures and requires induced test loss and shift mass to decrease monoto
 It is an accounting check for induced
 distribution shift, not an empirical OPD benchmark.
 
-The other genuine contribution is a **discipline**: a sheaf-indexed compose contract
-binds fragment tracks into flat IMRAD sections, every reported number is hydrated from
-a generated artifact, every cross-track claim is machine-checked before render, and the
-gates fail closed so no figure or statistic can drift from its producing artifact.
+A separate supplemental contribution is a **discipline**: a sheaf-indexed compose
+contract binds fragment tracks into flat IMRAD sections, every reported number is
+hydrated from a generated artifact, every cross-track claim is machine-checked before
+render, and the gates fail closed so no figure or statistic can drift from its
+producing artifact. This supports the technical claims above; it is not the primary
+domain finding.
 
 ## (b) What is NOT claimed
 

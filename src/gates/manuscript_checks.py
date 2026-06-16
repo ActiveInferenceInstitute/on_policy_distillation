@@ -119,9 +119,10 @@ def validate_manuscript_selected_strict(project_root: Path, only: set[str]) -> d
 def validate_manuscript(project_root: Path, *, only: set[str] | None = None) -> dict[str, bool]:
     root = project_root.resolve()
     requested = set(only) if only is not None else None
-    if requested is not None and not requested <= SUPPORTED_SELECTED_MANUSCRIPT_CHECKS:
-        full = validate_manuscript(root)
-        return {key: value for key, value in full.items() if key in requested}
+    if requested is not None:
+        unsupported = requested - SUPPORTED_SELECTED_MANUSCRIPT_CHECKS
+        if unsupported:
+            raise KeyError(f"unsupported manuscript check keys: {sorted(unsupported)}")
 
     def _wants(*keys: str) -> bool:
         return requested is None or any(key in requested for key in keys)

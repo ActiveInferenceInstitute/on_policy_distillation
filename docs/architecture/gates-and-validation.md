@@ -52,6 +52,22 @@ states the threat model precisely:
 `aggregate_rederivation` is itself a supported check in `output_checks.py`'s
 `SUPPORTED_SELECTED_OUTPUT_CHECKS`.
 
+The same *re-derive, never trust the stored flag* discipline is applied a second
+time by `visualization_quality_audit_schema`. Beyond checking the stored row
+booleans, `_visualization_quality_caption_claims_rederived`
+([`integration_audit_artifacts.py`](../../src/roadmap_tracks/integration_audit_artifacts.py))
+rebuilds the authoritative figure source map and registry claim payloads and
+**re-derives** each caption-claim boolean (source-bound, fields-resolve-to-content,
+caption-terms-present, scope, display-transform) plus the per-figure **image
+facts** (readable / non-blank / dimensions, re-opened from the PNG bytes). A field
+that resolves only to an empty container (`[]`/`{}`/`null`) is rejected, and a
+blanked or deleted image fails even when only this check is selected — so a forged
+audit JSON, a zeroed source artifact, or a blank PNG cannot pass on stored values
+alone. The caption-overclaim denylist (a compacted figure must not claim it shows
+every row) is paired with a positive compaction-disclosure allowlist and is
+robust to row-unit synonyms, cross-clause negation, and verb/noun homographs;
+because a denylist is inherently enumerable, the disclosure allowlist is the floor.
+
 ## Schema and existence validators
 
 `output_checks.py` builds its supported check set from `REQUIRED_OUTPUTS` plus a

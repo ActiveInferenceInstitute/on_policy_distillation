@@ -16,8 +16,14 @@ from typing import Any
 
 import yaml
 
-TOKEN_RE = re.compile(r"\{\{([a-z][a-z0-9_]*)(?::\.[0-9]+f)?\}\}")
-TOKEN_MATCH_RE = re.compile(r"\{\{([a-z][a-z0-9_]*)(?::\.(\d+)f)?\}\}")
+# Format spec must mirror the renderer in manuscript/hydrate.py (_TOKEN_RE): it
+# accepts e/f/g conversions (and an optional sign), not only fixed-point `:.Nf`.
+# A narrower regex here silently drops scientific-notation tokens ({{x:.1e}}) from
+# token provenance and the hardcoded-variable audit, so those gates pass vacuously
+# for an entire class of rendered tokens. TOKEN_MATCH_RE captures the full spec
+# (group 2, e.g. ":.1e" or "") so the expected value is rendered via hydrate itself.
+TOKEN_RE = re.compile(r"\{\{([a-z][a-z0-9_]*)(?::[+]?\.\d+[efg])?\}\}")
+TOKEN_MATCH_RE = re.compile(r"\{\{([a-z][a-z0-9_]*)((?::[+]?\.\d+[efg])?)\}\}")
 HARDCODED_AUDIT_SELF_TOKENS: frozenset[str] = frozenset(
     {
         "hardcoded_variable_guarded_count",
@@ -389,7 +395,7 @@ def build_hardcoded_variable_audit(project_root: Path) -> dict[str, Any]:
         text = path.read_text(encoding="utf-8")
         rel = path.relative_to(root).as_posix()
         source_by_path[rel] = TOKEN_MATCH_RE.sub("", text)
-        for token, _precision in TOKEN_MATCH_RE.findall(text):
+        for token, _spec in TOKEN_MATCH_RE.findall(text):
             used_tokens_by_path.setdefault(rel, set()).add(token)
 
     used_tokens = sorted(
@@ -435,17 +441,17 @@ def build_hardcoded_variable_audit(project_root: Path) -> dict[str, Any]:
     }
 
 
-def _expected_token_value(token: str, precision: str | None, variables: dict[str, Any]) -> str:
-    from manuscript.hydrate import format_variables
+def _expected_token_value(token: str, spec: str | None, variables: dict[str, Any]) -> str:
+    # Render the actual placeholder through hydrate so the expected value matches the
+    # renderer byte-for-byte across all format specs (e/f/g, sign) with no second
+    # formatter to drift. `spec` is the captured ":.Nf"/":.1e"/"" suffix.
+    from manuscript.hydrate import format_variables, substitute_snake_case_tokens
 
     formatted = format_variables(variables)
-    value = str(formatted.get(token, ""))
-    if precision is None:
-        return value
-    try:
-        return f"{float(value):.{int(precision)}f}"
-    except ValueError:
-        return value
+    placeholder = f"{{{{{token}{spec or ''}}}}}"
+    rendered, _unresolved = substitute_snake_case_tokens(placeholder, formatted)
+    # An unknown token renders back to its placeholder; fall back to the raw value.
+    return rendered if rendered != placeholder else str(formatted.get(token, ""))
 
 
 def build_manuscript_staleness_report(project_root: Path) -> dict[str, Any]:
@@ -478,12 +484,12 @@ def build_manuscript_staleness_report(project_root: Path) -> dict[str, Any]:
         seen: set[tuple[str, str | None]] = set()
         for match in TOKEN_MATCH_RE.finditer(source_text):
             token = match.group(1)
-            precision = match.group(2)
-            key = (token, precision)
+            spec = match.group(2)
+            key = (token, spec)
             if key in seen:
                 continue
             seen.add(key)
-            expected = _expected_token_value(token, precision, variables)
+            expected = _expected_token_value(token, spec, variables)
             if token == "manuscript_staleness_all_fresh":
                 expected = "true"
             unresolved = match.group(0) in resolved_text

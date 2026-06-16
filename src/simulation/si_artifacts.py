@@ -91,6 +91,21 @@ def write_si_artifacts(
     reports_dir.mkdir(parents=True, exist_ok=True)
 
     snapshot = config_snapshot(cfg)
+    # Re-derive the belief-entropy decrease so the "the student that acts to observe
+    # the cue drives its posterior entropy down" claim is gated, not just summarised by
+    # a scalar mean. The series must be monotone non-increasing within tolerance.
+    _belief_entropy_series = [
+        float(step["belief_entropy"])
+        for step in (trace_steps or [])
+        if isinstance(step, dict) and step.get("belief_entropy") is not None
+    ]
+    belief_entropy_non_increasing = bool(
+        len(_belief_entropy_series) >= 2
+        and all(
+            _belief_entropy_series[i + 1] <= _belief_entropy_series[i] + 1e-9
+            for i in range(len(_belief_entropy_series) - 1)
+        )
+    )
     summary = {
         "schema": "template_active_inference.si_tmaze_summary.v2",
         "profile": result.profile,
@@ -101,6 +116,9 @@ def write_si_artifacts(
         "policy_len": result.policy_len,
         "num_policies": result.num_policies,
         "mean_belief_entropy": result.mean_belief_entropy,
+        "belief_entropy_start": _belief_entropy_series[0] if _belief_entropy_series else None,
+        "belief_entropy_end": _belief_entropy_series[-1] if _belief_entropy_series else None,
+        "belief_entropy_non_increasing": belief_entropy_non_increasing,
         "actions": result.actions,
         "action_names": result.action_names,
         "action_vectors": result.action_vectors,
@@ -342,6 +360,21 @@ def write_policy_posterior_grid(
             )
     available = [row for row in rows if row["posterior_available"]]
     unavailable = [row for row in rows if not row["posterior_available"]]
+
+    # Re-derive the sophisticated-inference vs vanilla concentration contrast from the
+    # rows so the "SI concentrates / vanilla stays near-uniform" claim is a gated
+    # property, not a figure-only assertion. SI should place majority mass on one
+    # policy (peak >= 0.5) while the comparison-only vanilla evaluator stays diffuse
+    # (an order of magnitude less peaked).
+    def _peak_action_mass(planner: str) -> float:
+        masses = [max(row["q_pi"]) for row in available if row["planner"] == planner and row["q_pi"]]
+        return float(max(masses)) if masses else 0.0
+
+    si_peak_action_mass = _peak_action_mass("sophisticated_inference")
+    vanilla_peak_action_mass = _peak_action_mass("vanilla")
+    si_concentrates_vanilla_uniform = bool(
+        si_peak_action_mass >= 0.5 and si_peak_action_mass >= 10.0 * vanilla_peak_action_mass
+    )
     grid = {
         "schema": "template_active_inference.pymdp_policy_posterior_grid.v1",
         "source": "output/data/si_policy_comparison.json",
@@ -352,6 +385,9 @@ def write_policy_posterior_grid(
         "available_row_count": len(available),
         "all_available_posteriors_normalized": bool(available) and all(row["normalized"] for row in available),
         "all_unavailable_rows_explained": all(bool(row["fallback_reason"]) for row in unavailable),
+        "si_peak_action_mass": si_peak_action_mass,
+        "vanilla_peak_action_mass": vanilla_peak_action_mass,
+        "si_concentrates_vanilla_uniform": si_concentrates_vanilla_uniform,
     }
     out = root / "output" / "data" / "pymdp_policy_posterior_grid.json"
     out.parent.mkdir(parents=True, exist_ok=True)

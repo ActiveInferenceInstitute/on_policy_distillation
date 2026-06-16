@@ -57,6 +57,12 @@ def test_validate_manuscript_selected_strict_rejects_unknown_key(project_root: P
         validate_manuscript_selected_strict(project_root, {"not_a_real_manuscript_check"})
 
 
+def test_validate_manuscript_public_only_rejects_unknown_key(project_root: Path) -> None:
+    """A misspelled selected manuscript gate must not certify an empty check set."""
+    with pytest.raises(KeyError, match="unsupported manuscript check keys"):
+        validate_manuscript(project_root, only={"not_a_real_manuscript_check"})
+
+
 def test_validate_manuscript_methods_sheaf_layers_negative(project_root: Path) -> None:
     from manuscript.sheaf import compose_all_sections
 

@@ -118,7 +118,7 @@ def figure_si_obs_action_trace(project_root: Path) -> Path:
         obs_ax.set_ylabel("Observation index")
         obs_ax.set_title("Observations and actions form one closed rollout loop")
         _style_discrete_y(obs_ax, style)
-        obs_ax.legend(frameon=False, ncol=3, loc="upper left", title="Observation modality")
+        obs_ax.legend(frameon=True, ncol=3, loc="upper left", title="Observation modality")
         obs_ax.text(
             0.99,
             0.97,
@@ -215,7 +215,7 @@ def figure_si_tmaze_actions(project_root: Path) -> Path:
             f"Policy posterior: cue action is selected first (horizon={planning_horizon})"
         )
         style_grid(prob_ax, style)
-        prob_ax.legend(frameon=False, ncol=2, fontsize=style.font_size("legend"))
+        prob_ax.legend(frameon=True, ncol=2, fontsize=style.font_size("legend"))
         fig.text(0.01, 0.01, "Source: output/data/si_tmaze_summary.json", fontsize=style.font_size("source"), color=style.color("muted"))
         save_styled_figure(fig, out, style)
     return out
@@ -296,7 +296,7 @@ def figure_si_tmaze_model_matrices(project_root: Path) -> Path:
         norm_ax.set_ylabel("Column sum (mass)")
         norm_ax.set_title("Every model factor normalizes")
         style_grid(norm_ax, style)
-        norm_ax.legend(frameon=False, loc="upper right", fontsize=style.font_size("legend"))
+        norm_ax.legend(frameon=True, loc="upper right", fontsize=style.font_size("legend"))
         norm_ax.text(
             0.02,
             0.06,

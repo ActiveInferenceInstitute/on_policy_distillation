@@ -24,7 +24,12 @@ top-level structure is:
   purple for finite energy terms, green for validation, and red only for failure/risk.
 - **`figures:`** — one entry per registry figure id. Each entry carries `filename`,
   `alt` (verbose accessibility description), `caption` (the numbered figure caption), and
-  `width` (fractional page width).
+  `width` (fractional page width). Each entry also carries a `claims:` list: every
+  caption-claim contract declares a stable `id`, `claim_type`, required
+  `caption_terms`, source `sources`, `source_fields`, `scope`, and `display_transform`.
+  `claim_type` distinguishes local deterministic evidence, schematic orientation,
+  external context, and compact display transforms; `display_transform` says whether the
+  pixels show the full artifact, an aggregate, a compacted subset, or a schematic.
 - **`section_figures:`** — binds figure ids to IMRAD sections (e.g. `results_invariants`
   → `invariant_dashboard`, `diversity_tradeoff`). An entry may set `labeled: false` for a
   deliberate repeated embedding (e.g. `si_tmaze_model_matrices` reappears in
@@ -35,8 +40,8 @@ top-level structure is:
 [`../../scripts/generate_figures.py`](../../scripts/generate_figures.py) is a thin
 orchestrator: it calls `generate_all_figures(PROJECT_ROOT)` from
 `src/visualizations/figures.py` and prints each output path. Generators are organized by
-module — `figures`, `figures_interpretability`, `figures_diagrams`, `figures_sheaf`,
-`figures_validation`, `figures_abstract` — and the id→generator mapping is tabulated in
+module — `figures`, `figures_interpretability`, `figures_diagrams`, `figures_intro`,
+`figures_sheaf`, `figures_validation`, `figures_abstract` — and the id→generator mapping is tabulated in
 [`../../manuscript/SYNTAX.md`](../../manuscript/SYNTAX.md) (e.g.
 `figure_ising_mi_curve`, `figures_interpretability.figure_correspondence_map`).
 
@@ -54,6 +59,17 @@ cover. Its source-bound conceptual regions summarize the analytical oracle,
 pymdp/classroom rollout witness, energy decomposition, sequential-shift witness, and
 Lean/sheaf validation gates, while detailed quantitative evidence remains in the body
 figures and tables.
+
+The opening motivation section has its own registered orientation figure,
+`opd_reader_map`. It is intentionally schematic like the cover, but it lives in the body:
+the map binds the problem surface, teacher target, student-owned rollout,
+reverse-KL/VFE update, EFE planning lane, and validation dependency graph to the first
+reader-facing explanation before quantitative figures begin.
+
+The early contributions section then opens with `opd_situational_awareness`, a distinct
+source-bound atlas. It explains what Active Inference contributes, what OPD contributes,
+what this paper actually witnesses, and what it does not claim before the detailed
+`correspondence_map` dictionary appears.
 
 ## Where figures land
 
@@ -81,6 +97,32 @@ complete. Captions reinforce this by naming their source inline — e.g.
 `sequential_shift_sensitivity` cites
 `output/data/firstprinciples/sequential_shift_sensitivity.json`,
 `policy_posterior_grid` cites `output/data/pymdp_policy_posterior_grid.json`.
+
+The source map also replays the per-figure **caption-claim contract** from
+`figures.yaml`. For every claim row it checks that:
+
+- `sources` exist on disk and match the figure source row;
+- `source_fields` are declared on the same row, not only implied by prose;
+- every declared `source_field` resolves to a present value inside its artifact —
+  bare `$.jsonpath`, `relpath:column` (CSV header), and `relpath:$.path` /
+  `relpath:dotted.key` are each checked against artifact content, so a field that
+  is merely listed but does not bind is rejected;
+- every required `caption_terms` string appears in the rendered caption or alt text;
+- each claim `id` names its figure (convention `{figure_id}_caption_claim`) and is unique;
+- `claim_type` is scope-safe (`graphical_abstract` is schematic, scholarship/taxonomy
+  maps are external context, generated toy/result figures are local deterministic
+  evidence);
+- compacted or aggregated captions declare a non-`full` `display_transform`, and a
+  compressed figure may not claim that all rows are shown.
+
+Those booleans are emitted as `caption_claims`, `caption_claim_count`,
+`caption_claims_source_bound`, `caption_claim_fields_resolved`,
+`caption_claim_terms_present`, `caption_claim_scope_ok`,
+`caption_claim_display_transform_ok`, and `caption_claims_ok` per row, plus
+`all_caption_claims_ok` at the top level. The visualization audit repeats those
+fields, and `visualization_quality_audit_schema` re-derives the caption-claim
+booleans from the figure registry, so a green summary cannot be forged over a bad
+caption-claim row even when every stored boolean is flipped green.
 
 A companion **hash manifest** (`build_figure_hash_manifest()` →
 `output/reports/figure_hash_manifest.json`, schema
@@ -131,7 +173,7 @@ The figure-binding gates run before the PDF can render and fail closed:
 | --- | --- | --- |
 | `figure_source_map_schema` | each figure → its source data paths | schema wrong, not all figures mapped, or a source row incomplete/missing |
 | `figure_hash_manifest_schema` | each declared image → a verified content hash, no undeclared image artifacts | schema wrong, hashes unverified, or stray images present |
-| `visualization_quality_audit_schema` | each figure → readable pixels, source binding, caption scope, cover wording, cover quantitative-free status, contrast/font accessibility, and no unexpected images | any row is unreadable, blank, unbound, missing a required scope guard, overclaiming, metric-dashboard cover language appears, inaccessible by declared style tokens, or an undeclared image exists |
+| `visualization_quality_audit_schema` | each figure → readable pixels, source binding, caption-claim contracts, caption scope, cover wording, cover quantitative-free status, contrast/font accessibility, and no unexpected images | any row is unreadable, blank, unbound, missing a required caption-claim contract, missing a source field, missing a required caption term, missing compact-display disclosure, overclaiming, metric-dashboard cover language appears, inaccessible by declared style tokens, or an undeclared image exists |
 
 These sit alongside the manuscript token gates (unresolved/malformed tokens) and the
 integration audit, which also emits `manuscript_token_provenance.json` and the

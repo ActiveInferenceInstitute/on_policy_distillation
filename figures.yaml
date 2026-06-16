@@ -54,6 +54,17 @@ figures:
       precision) is a cross-implementation agreement check confirming the analytic
       information measure is reproducible to machine precision.
     width: 0.9
+    claims:
+      - id: ising_mi_curve_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "deterministic"
+        sources:
+          - "output/data/parameter_sweep.csv"
+        source_fields:
+          - "parameter_sweep.csv:closed_form_mi"
+        scope: "finite Bernoulli-Ising mutual-information sweep"
+        display_transform: full
   free_energy_curve:
     filename: free_energy_curve.png
     alt: >-
@@ -77,6 +88,17 @@ figures:
       gain cancel, while the mean-field student keeps the information gap that on-policy
       distillation is meant to close.
     width: 0.9
+    claims:
+      - id: free_energy_curve_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "mean-field"
+        sources:
+          - "output/data/parameter_sweep.csv"
+        source_fields:
+          - "parameter_sweep.csv:lambda"
+        scope: "finite Bernoulli-Ising free-energy gap sweep"
+        display_transform: full
   distillation_divergence_geometry:
     filename: distillation_divergence_geometry.png
     alt: >-
@@ -105,6 +127,17 @@ figures:
       (no epsilon is added); the illustrative pair here has full support, so all values
       are finite and deterministic.
     width: 0.92
+    claims:
+      - id: distillation_divergence_geometry_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "deterministic"
+        sources:
+          - "output/data/firstprinciples/divergence_demo.json"
+        source_fields:
+          - "$.reverse_kl"
+        scope: "finite categorical teacher/student divergence geometry"
+        display_transform: full
   exposure_bias_recovery:
     filename: exposure_bias_recovery.png
     alt: >-
@@ -128,6 +161,105 @@ figures:
       is task-dependent — and mirrors active inference's insistence on evaluating beliefs
       along the agent's own visited trajectory rather than a fixed reference distribution.
     width: 0.9
+    claims:
+      - id: exposure_bias_recovery_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "closed-form"
+        sources:
+          - "output/data/firstprinciples/exposure_bias_demo.json"
+        source_fields:
+          - "$.gap.terminal_gap"
+        scope: "finite exposure-bias recovery toy"
+        display_transform: full
+  opd_reader_map:
+    filename: opd_reader_map.png
+    alt: >-
+      Figure 1 mechanism-map schematic for the opening motivation section. Four source-bound
+      panels connect the problem surface, teacher target, student-owned rollout, and
+      reverse-KL/VFE update, with a visibly separate EFE planning lane and a validation
+      boundary that keeps the early finite active-inference reading scoped to deterministic
+      repository artifacts.
+    caption: >-
+      Source-bound Figure 1 mechanism map for the manuscript's opening sections. The
+      figure is a schematic finite reader map, not a metric dashboard: it shows the path
+      from problem surface to teacher target, student-owned rollout, and reverse-KL/VFE
+      update while keeping EFE on the planning-side action-selection lane. The bottom
+      boundary and validation dependency graph state that the figure supports finite
+      toy/artifact claims only; figure provenance, hash manifests, and strict compose
+      gates are part of the claim, not decoration. Sources:
+      `output/data/firstprinciples/correspondence_map.json`,
+      `output/data/firstprinciples/exposure_bias_demo.json`,
+      `output/data/firstprinciples/sequential_shift.json`, and
+      `output/data/validation_dependency_graph.json`.
+    width: 0.96
+    claims:
+      - id: opd_reader_map_caption_claim
+        claim_type: schematic
+        caption_terms:
+          - "source-bound"
+          - "finite"
+          - "mechanism"
+        sources:
+          - "output/data/firstprinciples/correspondence_map.json"
+          - "output/data/firstprinciples/exposure_bias_demo.json"
+          - "output/data/firstprinciples/sequential_shift.json"
+          - "output/data/validation_dependency_graph.json"
+        source_fields:
+          - "$.rows"
+          - "$.curves.off_policy"
+          - "$.student_test_visitation_after"
+          - "output/data/validation_dependency_graph.json:$.edges"
+        scope: "finite source-bound opening reader map"
+        display_transform: schematic
+  opd_situational_awareness:
+    filename: opd_situational_awareness.png
+    alt: >-
+      Early situational-awareness atlas for the introduction. The source-bound schematic
+      separates Active Inference primitives, on-policy distillation machinery, the finite
+      correspondence object, deterministic local witnesses, explicit non-claims, and the
+      validation trust surface that keeps the manuscript scoped to repository artifacts.
+    caption: >-
+      Source-bound situational-awareness atlas for the early manuscript. The figure is a
+      finite orientation atlas, not a metric dashboard: it separates Active Inference
+      primitives, OPD machinery, the correspondence dictionary, deterministic local
+      witnesses, and explicit non-claims before the detailed correspondence map. The
+      bottom panels make the scope guardrail visible: this is not a production-LLM
+      benchmark, no biological mechanism is claimed, and it is not a universal theorem; it points to
+      local deterministic artifacts and validation gates that later figures quantify or
+      audit. Sources: `output/data/firstprinciples/correspondence_map.json`,
+      `output/data/firstprinciples/sequential_shift.json`,
+      `output/data/firstprinciples/classroom.json`,
+      `output/data/firstprinciples/energy_demo.json`,
+      `output/data/firstprinciples/opd_taxonomy.json`,
+      `output/data/validation_dependency_graph.json`, and
+      `output/data/manuscript_variables.json`.
+    width: 0.96
+    claims:
+      - id: opd_situational_awareness_caption_claim
+        claim_type: schematic
+        caption_terms:
+          - "situational-awareness"
+          - "non-claims"
+          - "source-bound"
+        sources:
+          - "output/data/firstprinciples/correspondence_map.json"
+          - "output/data/firstprinciples/sequential_shift.json"
+          - "output/data/firstprinciples/classroom.json"
+          - "output/data/firstprinciples/energy_demo.json"
+          - "output/data/firstprinciples/opd_taxonomy.json"
+          - "output/data/validation_dependency_graph.json"
+          - "output/data/manuscript_variables.json"
+        source_fields:
+          - "output/data/firstprinciples/correspondence_map.json:$.rows"
+          - "output/data/firstprinciples/sequential_shift.json:$.schema"
+          - "output/data/firstprinciples/classroom.json:$.schema"
+          - "output/data/firstprinciples/energy_demo.json:$.schema"
+          - "output/data/firstprinciples/opd_taxonomy.json:$.methods"
+          - "output/data/validation_dependency_graph.json:$.edges"
+          - "output/data/manuscript_variables.json:$.sheaf_track_count"
+        scope: "finite source-bound situational-awareness atlas"
+        display_transform: schematic
   energy_decomposition:
     filename: energy_decomposition.png
     alt: >-
@@ -157,6 +289,17 @@ figures:
       on-policy student is simultaneously matching the teacher's outputs (accuracy/pragmatic)
       and reducing its own uncertainty about unvisited states (epistemic).
     width: 0.95
+    claims:
+      - id: energy_decomposition_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "deterministic"
+        sources:
+          - "output/data/firstprinciples/energy_demo.json"
+        source_fields:
+          - "$.vfe_at_prior.complexity"
+        scope: "finite categorical VFE/EFE decomposition"
+        display_transform: full
   parallel_convergence:
     filename: parallel_convergence.png
     alt: >-
@@ -175,10 +318,21 @@ figures:
       descent at learning rate {{parallel_opt_learning_rate}}, at most
       {{parallel_opt_max_steps}} steps with early stop at loss tolerance
       {{parallel_opt_stop_tolerance:.0e}}; the run is fully deterministic (no sampling), so
-      no uncertainty intervals apply. The reverse-KL distillation gradient is the variational
-      free-energy gradient, so the correspondence is executed rather than asserted.
-      Source: `output/data/firstprinciples/parallel_demo.json`.
+      no uncertainty intervals apply. Minimising the reverse-KL distillation loss converges to
+      the same minimiser as variational free energy, so the correspondence is executed rather
+      than asserted. Source: `output/data/firstprinciples/parallel_demo.json`.
     width: 0.95
+    claims:
+      - id: parallel_convergence_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "deterministic"
+        sources:
+          - "output/data/firstprinciples/parallel_demo.json"
+        source_fields:
+          - "$.loss_trajectory"
+        scope: "finite parallel active-inference/distillation convergence witness"
+        display_transform: full
   diversity_tradeoff:
     filename: diversity_tradeoff.png
     alt: >-
@@ -199,6 +353,17 @@ figures:
       generation literature on objective- and decoding-induced diversity loss.
       Source: `output/data/firstprinciples/diversity_demo.json`.
     width: 0.9
+    claims:
+      - id: diversity_tradeoff_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "closed form"
+        sources:
+          - "output/data/firstprinciples/diversity_demo.json"
+        source_fields:
+          - "$.pass_at_k"
+        scope: "finite temperature/diversity toy ensemble"
+        display_transform: full
   privilege_dose_response:
     filename: privilege_dose_response.png
     alt: >-
@@ -222,6 +387,17 @@ figures:
       miss. Gap/validity rank correlation {{privilege_sweep_gap_rank_correlation:.2f}}.
       Source: `output/data/firstprinciples/privilege_sweep.json`.
     width: 0.95
+    claims:
+      - id: privilege_dose_response_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "dose-response"
+        sources:
+          - "output/data/firstprinciples/privilege_sweep.json"
+        source_fields:
+          - "$.levels"
+        scope: "finite teacher-privilege cue-validity sweep"
+        display_transform: full
   correspondence_map:
     filename: correspondence_map.png
     alt: >-
@@ -239,6 +415,17 @@ figures:
       rhetorical analogy. The full table with per-row notes appears in the appendix.
       Source: `output/data/firstprinciples/correspondence_map.json`.
     width: 0.84
+    claims:
+      - id: correspondence_map_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "machine-validated"
+        sources:
+          - "output/data/firstprinciples/correspondence_map.json"
+        source_fields:
+          - "$.rows"
+        scope: "finite audited correspondence dictionary"
+        display_transform: full
   policy_posterior_grid:
     filename: policy_posterior_grid.png
     alt: >-
@@ -257,6 +444,17 @@ figures:
       version of the induced-distribution argument for on-policy distillation.
       Source: `output/data/pymdp_policy_posterior_grid.json`.
     width: 0.99
+    claims:
+      - id: policy_posterior_grid_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "measured"
+        sources:
+          - "output/data/pymdp_policy_posterior_grid.json"
+        source_fields:
+          - "$.rows"
+        scope: "finite pymdp policy-posterior grid"
+        display_transform: full
   opd_taxonomy_landscape:
     filename: opd_taxonomy_landscape.png
     alt: >-
@@ -280,6 +478,17 @@ figures:
       use deterministic offsets, so horizontal position is approximate within one year.
       Source: `output/data/firstprinciples/opd_taxonomy.json`.
     width: 0.99
+    claims:
+      - id: opd_taxonomy_landscape_caption_claim
+        claim_type: external_context
+        caption_terms:
+          - "right-side label key"
+        sources:
+          - "output/data/firstprinciples/opd_taxonomy.json"
+        source_fields:
+          - "$.methods"
+        scope: "external distillation-method taxonomy context only"
+        display_transform: compacted_label_key
   si_tmaze_actions:
     filename: si_tmaze_actions.png
     alt: >-
@@ -298,6 +507,17 @@ figures:
       drop after the cue is {{si_tmaze_policy_entropy_drop_after_cue_formatted}} nats,
       quantifying the information-seeking step an on-policy student must learn to reproduce.
     width: 0.9
+    claims:
+      - id: si_tmaze_actions_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "policy posterior"
+        sources:
+          - "output/data/si_tmaze_summary.json"
+        source_fields:
+          - "$.action_probabilities"
+        scope: "finite pymdp action-selection rollout"
+        display_transform: full
   si_belief_entropy_curve:
     filename: si_belief_entropy_curve.png
     alt: >-
@@ -313,6 +533,17 @@ figures:
       the reward/outcome appears at timestep {{si_tmaze_reward_observed_step}}. The entropy
       trace is the epistemic payoff of the cue action made quantitative.
     width: 0.9
+    claims:
+      - id: si_belief_entropy_curve_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "belief entropy"
+        sources:
+          - "output/data/si_tmaze_trace.json"
+        source_fields:
+          - "$.steps[*].belief_entropy"
+        scope: "finite pymdp belief-entropy trace"
+        display_transform: full
   si_obs_action_trace:
     filename: si_obs_action_trace.png
     alt: >-
@@ -331,6 +562,17 @@ figures:
       rather than a marginal action policy, is what makes the active-inference teacher
       faithfully reproducible.
     width: 0.9
+    claims:
+      - id: si_obs_action_trace_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "observation"
+        sources:
+          - "output/data/si_tmaze_summary.json"
+        source_fields:
+          - "$.observations_by_modality"
+        scope: "finite pymdp observation-action trace"
+        display_transform: full
   sheaf_coverage_heatmap:
     filename: sheaf_coverage_heatmap.png
     alt: >-
@@ -351,6 +593,17 @@ figures:
       licenses gluing the local toy results, Lean witnesses, and pymdp rollouts into one
       globally coherent active-inference argument about on-policy distillation.
     width: 0.95
+    claims:
+      - id: sheaf_coverage_heatmap_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "science-bearing track subset"
+        sources:
+          - "output/data/sheaf_coverage_matrix.json"
+        source_fields:
+          - "$.sections"
+        scope: "generated sheaf coverage matrix"
+        display_transform: compacted_subset
   sheaf_layers_overview:
     filename: sheaf_layers_overview.png
     alt: >-
@@ -369,6 +622,17 @@ figures:
       section, the constructive mechanism by which the multi-track active-inference and
       on-policy-distillation argument is glued into a single coherent document.
     width: 0.98
+    claims:
+      - id: sheaf_layers_overview_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "registry stack"
+        sources:
+          - "output/data/sheaf_coverage_matrix.json"
+        source_fields:
+          - "$.tracks"
+        scope: "generated sheaf registry and IMRAD binding overview"
+        display_transform: matrix_overview
   invariant_dashboard:
     filename: invariant_dashboard.png
     alt: >-
@@ -384,6 +648,17 @@ figures:
       means the registered analytical and simulation invariants pass for the generated
       toy artifacts.
     width: 0.9
+    claims:
+      - id: invariant_dashboard_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "pass/fail"
+        sources:
+          - "output/reports/invariants.json"
+        source_fields:
+          - "$.invariants"
+        scope: "generated analytical and simulation invariant report"
+        display_transform: full
   tmaze_schematic:
     filename: tmaze_schematic.png
     alt: >-
@@ -400,6 +675,17 @@ figures:
       the world model in which the active-inference teacher is computed and, in turn, the
       task structure an on-policy student must operate within to be distilled faithfully.
     width: 0.85
+    claims:
+      - id: tmaze_schematic_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "generative process"
+        sources:
+          - "pymdp.yaml"
+        source_fields:
+          - "pymdp.yaml:planning_horizon"
+        scope: "configured finite pymdp T-maze schematic"
+        display_transform: schematic
   si_tmaze_model_matrices:
     filename: si_tmaze_model_matrices.png
     alt: >-
@@ -416,6 +702,17 @@ figures:
       probabilities, so the active-inference policy being distilled rests on a well-formed
       generative model rather than an unchecked numerical artifact.
     width: 0.92
+    claims:
+      - id: si_tmaze_model_matrices_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "normalization"
+        sources:
+          - "output/data/si_tmaze_model_matrices.json"
+        source_fields:
+          - "$.normalization_checks"
+        scope: "finite pymdp matrix/value audit"
+        display_transform: full
   classroom_distillation_signal:
     filename: classroom_distillation_signal.png
     alt: >-
@@ -438,6 +735,17 @@ figures:
       rather than the teacher's idealized path. It is a deterministic toy signal, not an
       empirical OPD benchmark.
     width: 0.94
+    claims:
+      - id: classroom_distillation_signal_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "deterministic toy signal"
+        sources:
+          - "output/data/firstprinciples/classroom.json"
+        source_fields:
+          - "$.per_step[*].teacher"
+        scope: "finite classroom teacher/student divergence signal"
+        display_transform: full
   sequential_shift_recovery:
     filename: sequential_shift_recovery.png
     alt: >-
@@ -460,6 +768,17 @@ figures:
       `output/data/firstprinciples/sequential_shift.json`; the panel is a toy witness for
       train/test distribution-shift accounting, not local evidence about production LLMs.
     width: 0.94
+    claims:
+      - id: sequential_shift_recovery_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "deterministic finite sequential-shift witness"
+        sources:
+          - "output/data/firstprinciples/sequential_shift.json"
+        source_fields:
+          - "$.test_loss_before"
+        scope: "finite sequential train/test shift witness"
+        display_transform: full
   sequential_shift_sensitivity:
     filename: sequential_shift_sensitivity.png
     alt: >-
@@ -481,6 +800,17 @@ figures:
       sensitivity guard for the toy witness, not local evidence about production LLM
       optimization.
     width: 0.94
+    claims:
+      - id: sequential_shift_sensitivity_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "deterministic finite correction-dose"
+        sources:
+          - "output/data/firstprinciples/sequential_shift_sensitivity.json"
+        source_fields:
+          - "$.rows[*].test_loss"
+        scope: "finite sequential-shift correction-dose sensitivity sweep"
+        display_transform: full
   multi_track_architecture:
     filename: multi_track_architecture.png
     alt: >-
@@ -499,6 +829,17 @@ figures:
       tokens, {{validation_gate_index_count}} validation gates, and
       {{hardcoded_variable_issue_count}} hard-coded variable issues in the generated audit.
     width: 0.95
+    claims:
+      - id: multi_track_architecture_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "evidence architecture"
+        sources:
+          - "tracks.yaml"
+        source_fields:
+          - "tracks.yaml:tracks"
+        scope: "generated manuscript evidence architecture schematic"
+        display_transform: schematic
   lean_boundary_status:
     filename: lean_boundary_status.png
     alt: >-
@@ -513,6 +854,17 @@ figures:
       the declared finite witness set, not a general proof about all OPD or active-inference
       systems.
     width: 0.9
+    claims:
+      - id: lean_boundary_status_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "lake build"
+        sources:
+          - "lean/OnPolicyDistillation"
+        source_fields:
+          - "lean/OnPolicyDistillation/*.lean"
+        scope: "Lean finite formalization boundary inventory"
+        display_transform: full
   gnn_ontology_concordance:
     filename: gnn_ontology_concordance.png
     alt: >-
@@ -528,6 +880,17 @@ figures:
       the on-policy-distillation toy aligned with a GNN/ontology-scoped active-inference
       specification rather than relying on a loose analogy.
     width: 0.9
+    claims:
+      - id: gnn_ontology_concordance_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "concordance"
+        sources:
+          - "gnn"
+        source_fields:
+          - "gnn/*.gnn.md"
+        scope: "GNN and ontology naming concordance"
+        display_transform: full
   semantic_gluing_graph:
     filename: semantic_gluing_graph.png
     alt: >-
@@ -546,6 +909,17 @@ figures:
       Long consumer lists are visually compacted with `+N` counts while remaining bound to
       `output/data/validation_dependency_graph.json`.
     width: 0.95
+    claims:
+      - id: semantic_gluing_graph_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "compacted"
+        sources:
+          - "output/data/validation_dependency_graph.json"
+        source_fields:
+          - "$.edges"
+        scope: "generated semantic gluing dependency graph"
+        display_transform: compacted
   theorem_traceability_graph:
     filename: theorem_traceability_graph.png
     alt: >-
@@ -556,15 +930,26 @@ figures:
     caption: >-
       Theorem traceability graph generated from {{theorem_traceability_row_count}} linked
       theorem rows and {{proof_dependency_edge_count}} proof-dependency edges; all
-      {{theorem_traceability_row_count}} theorem rows are drawn, each carrying the same
-      finite-witness count (collapsed into a single annotation), and all theorem rows have
-      resolved dependency edges: {{proof_dependency_all_resolved}}. The graph exposes the
+      {{theorem_traceability_row_count}} theorem rows are drawn with their finite-witness
+      counts, and all theorem rows have resolved dependency edges:
+      {{proof_dependency_all_resolved}}. The graph exposes the
       deductive backbone of the formal track -- which lemmas each
       distillation/active-inference theorem rests on and which finite models witness it.
       Fully resolved dependencies show that each declared finite theorem row has a registered
       proof-dependency chain rather than appearing as an isolated assertion; they do not close
       formal obligations outside this inventory.
     width: 0.95
+    claims:
+      - id: theorem_traceability_graph_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "theorem rows"
+        sources:
+          - "output/data/theorem_traceability_matrix.json"
+        source_fields:
+          - "$.rows[*].theorem"
+        scope: "generated theorem traceability and proof-dependency graph"
+        display_transform: full
   causal_ablation_heatmap:
     filename: causal_ablation_heatmap.png
     alt: >-
@@ -583,6 +968,17 @@ figures:
       generated on-policy behavior would shift under declared model misspecification without
       asserting deployment-scale effects.
     width: 0.92
+    claims:
+      - id: causal_ablation_heatmap_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "aggregated max-effect"
+        sources:
+          - "output/data/causal_ablation_matrix.json"
+        source_fields:
+          - "$.rows[*].topology"
+        scope: "finite causal-ablation aggregate heatmap"
+        display_transform: aggregate
   scholarship_source_map:
     filename: scholarship_source_map.png
     alt: >-
@@ -603,34 +999,63 @@ figures:
       concrete place where the exemplar uses or tests it, evidencing load-bearing
       scholarship rather than decorative citation.
     width: 0.95
+    claims:
+      - id: scholarship_source_map_caption_claim
+        claim_type: external_context
+        caption_terms:
+          - "print-condensed"
+        sources:
+          - "output/data/scholarship_source_matrix.json"
+        source_fields:
+          - "$.rows[*].citation_key"
+        scope: "external scholarship binding context only"
+        display_transform: compacted_aggregate
   graphical_abstract:
     filename: graphical_abstract.png
     alt: >-
-      Near-square cover-page technical schematic for the finite-model active-inference
-      reading of on-policy distillation. A dark title band states the scoped title, a
-      central finite active-inference reading loop connects a teacher policy, student
-      rollout, realized trajectory, and validation gate. Surrounding conceptual regions
-      identify the declared finite model, teacher/student rollout situation,
-      sequential-shift correction setting, and source-bound validation spine. The cover
-      carries no metric values; detailed quantitative evidence lives in the body
-      figures and tables.
+      Near-square cover-page technical schematic for On-Policy Distillation as Active
+      Inference in finite variational models. A dark title band states the technical
+      title framing, a central finite active-inference reading loop connects a teacher
+      generative model, student posterior, student-induced observations, and
+      reverse-KL/VFE update, while EFE is shown only as the planning-side
+      action-selection lane. Surrounding conceptual regions identify the declared finite
+      model, student-induced sampling, VFE/EFE split, and source-bound validation spine.
+      The cover carries no metric values; detailed quantitative evidence lives in the
+      body figures and tables.
     caption: >-
-      Near-square graphical abstract for the toy/artifact exemplar. The central technical
-      schematic reads on-policy distillation through a declared finite active-inference
-      correspondence object: a teacher policy is related to a student rollout under the
-      declared rollout measure, with the image explicitly scoped as a correspondence
-      rather than a universal identity. The surrounding conceptual regions point to the
-      analytical oracle, pymdp/classroom rollout artifacts, first-principles energy
-      decomposition, deterministic finite sequential-shift witness, and Lean/sheaf
-      validation gates without printing configurable or output-derived metric values.
-      Detailed quantitative evidence remains in the registered body figures and tables,
-      so the cover image is source-bound orientation rather than narrative decoration.
+      Near-square graphical abstract for the toy/artifact exemplar under the title
+      On-Policy Distillation as Active Inference in Finite Variational Models. The
+      central technical schematic reads on-policy distillation through a declared finite
+      active-inference correspondence object: a teacher/generative model is related to a
+      student posterior under student-induced observations, with reverse KL shown as the
+      VFE update path and EFE shown only as the planning-side action-selection path. The
+      image is explicitly scoped as a finite correspondence reading rather than a
+      universal identity. The surrounding conceptual regions point to the analytical
+      oracle, pymdp/classroom rollout artifacts, first-principles energy decomposition,
+      deterministic finite sequential-shift witness, and Lean/sheaf validation gates
+      without printing configurable or output-derived metric values. Detailed quantitative
+      evidence remains in the registered body figures and tables, so the cover image is
+      source-bound orientation rather than narrative decoration.
     width: 0.96
+    claims:
+      - id: graphical_abstract_caption_claim
+        claim_type: schematic
+        caption_terms:
+          - "no metric values"
+        sources:
+          - "manuscript/sheaf/tracks.yaml"
+        source_fields:
+          - "manuscript/sheaf/tracks.yaml:tracks"
+        scope: "quantitative-free finite-model cover orientation"
+        display_transform: schematic
 
 section_figures:
   coverage_page:
     - id: sheaf_coverage_heatmap
+  intro_motivation:
+    - id: opd_reader_map
   intro_contributions:
+    - id: opd_situational_awareness
     - id: correspondence_map
     - id: multi_track_architecture
     - id: exposure_bias_recovery

@@ -1,6 +1,6 @@
 paper:
-  title: "A Finite-Model Active-Inference Reading of On-Policy Distillation"
-  subtitle: "Declared variational objects, finite toy witnesses, and source-bound manuscript gates"
+  title: "On-Policy Distillation as Active Inference in Finite Variational Models"
+  subtitle: "Reverse-KL free energy, student-induced sampling, and deterministic toy witnesses"
   version: "1.0.0"
   date: "June 2026"
 
@@ -28,7 +28,7 @@ front_matter:
   graphical_abstract:
     enabled: true
     image: output/figures/graphical_abstract.png
-    caption: "Graphical abstract: the finite-model active-inference reading of on-policy distillation, executable classroom and sequential-shift witnesses, energy decomposition, and Lean-backed validation gates."
+    caption: "Graphical abstract: on-policy distillation as active inference in finite variational models, with executable classroom and sequential-shift witnesses, energy decomposition, and Lean-backed validation gates."
     width: "0.96\\textwidth"
     max_height: "0.58\\textheight"
 

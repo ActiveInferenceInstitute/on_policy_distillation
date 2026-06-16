@@ -135,7 +135,7 @@ def draw_coverage_heatmap(
             bbox_to_anchor=(1.02, 1.0),
             ncol=1,
             fontsize=style.font_size("annotation"),
-            frameon=False,
+            frameon=True,
         )
 
 

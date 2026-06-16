@@ -1,3 +1,9 @@
+```{=latex}
+\phantomsection
+\addcontentsline{toc}{section}{Appendix}
+\section*{Appendix}
+```
+
 # Supplementary material: reproducibility methodology {#sec:methods_sheaf}
 
 <!-- sheaf-track:prose -->
@@ -8,13 +14,13 @@ This standalone supplement documents the reproducibility methodology behind the 
 
 Each manifest row in `manuscript/sheaf/manifest.yaml` binds fragment tracks from `manuscript/sheaf/tracks.yaml`. A track supplies a renderer, compose order, label, and optional flag; the composer flattens the binding set into one Markdown section for PDF and web output. The machinery is generic, but the manuscript it assembles here argues a specific thesis: that on-policy distillation admits a finite-model active-inference reading when the variational objects are declared, so the composer must keep the analytical toy model, the pymdp rollout, the sequential-shift witness and sensitivity sweep, and the self-distillation literature mutually consistent about that scoped correspondence.
 
-The operational claim is auditable binding: analytical, simulation, pymdp, visualization, Lean, GNN, ontology, scholarship, and optional media fragments attach to each IMRAD row under [@eq:coverage_cell] (**P** present, **—** unbound, **M** missing). This is an applied local-to-global consistency and composition-contract use of sheaf language in the spirit of cellular sheaves, sheaf-theoretic contracts, sheaf-signal-processing work, sensor-integration sheaves, semantic sheaving, applied compositionality, and reproducible computational research references [@curry2014sheaves; @speranzon2018contracts; @robinson2014topological; @robinson2017sensor_sheaf; @phillips2019sheaving; @fong2019applied_category; @rosiak2022sheaf_examples; @cox2026fragmented_risk_sheaf; @sandve2013reproducible; @wilkinson2016fair], but instantiated here as a finite manuscript artifact gate rather than as a public archive or release claim. The same gate forces the teacher-student framing to remain coherent end to end: the Bernoulli-Ising free-energy analysis [@friston2006fep; @friston2009rl_active_inference; @friston2010fep], the sophisticated-inference T-maze rollout [@parr2022active; @dacosta2020discrete], the sequential-shift witness and sensitivity sweep, and the on-policy distillation context [@agarwal2024gkd; @thinkingmachines2025opd] each occupy their own track yet must agree on the variational posterior they describe.
+The operational claim is auditable binding: analytical, simulation, pymdp, visualization, Lean, GNN, ontology, scholarship, and optional media fragments attach to each IMRAD row under [@eq:coverage_cell] (**P** present, **—** unbound, **M** missing). This is an applied local-to-global consistency and composition-contract use of sheaf language in the spirit of cellular sheaves, sheaf-theoretic contracts, sheaf-signal-processing work, sensor-integration sheaves, semantic sheaving, applied compositionality, and reproducible computational research references [@curry2014sheaves; @speranzon2018contracts; @robinson2014topological; @robinson2017sensor_sheaf; @phillips2019sheaving; @fong2019applied_category; @rosiak2022sheaf_examples; @cox2026fragmented_risk_sheaf; @sandve2013reproducible; @wilkinson2016fair], but instantiated here as a finite manuscript artifact gate rather than as a public archive or release claim. Concretely, what this gate verifies is machine-executable provenance and version capture in the sense of standard reproducible-research practice [@sandve2013reproducible]; that discipline is necessary but not sufficient, since findable, accessible, interoperable, and reusable artifacts [@wilkinson2016fair] are not the same thing as end-to-end rerunnability or independent reproduction of the toy results by a third party, neither of which is claimed here. The same gate forces the teacher-student framing to remain coherent end to end: the Bernoulli-Ising free-energy analysis [@friston2006fep; @friston2009rl_active_inference; @friston2010fep], the sophisticated-inference T-maze rollout [@parr2022active; @dacosta2020discrete], the sequential-shift witness and sensitivity sweep, and the on-policy distillation context [@agarwal2024gkd; @thinkingmachines2025opd] each occupy their own track yet must agree on the variational posterior they describe.
 
 ## Coverage and figures
 
 [@fig:sheaf_layers_overview] summarizes {{sheaf_track_count}} fragment types and their IMRAD bindings. Generated tables below list every track definition and section×track binding at compose time. The bindings span the full argument: the minimal-model demonstrations (analytical and pymdp tracks) and the scholarship track that situates them against the off-policy baseline [@hinton2015distilling], the reverse-KL turn [@gu2024minillm], and the 2026 self-distillation wave [@zhao2026opsd; @shenfeld2026sdft; @liu2026sdpg].
 
-The visualization layer is audited as data, not as decoration. `output/data/figure_source_map.json` binds every registered figure to source artifacts, source fields, and validation gates; `output/reports/figure_hash_manifest.json` records the declared rendered image bytes; and `output/reports/visualization_quality_audit.json` rechecks readability, nonblank pixels, source binding, caption scope guardrails, cover wording, cover quantitative-free status, declared palette contrast, font-role floors, and absence of unregistered image artifacts. The negative controls mutate rows under green summaries and add stray image files, so a figure with an unreadable image, missing source, unscoped empirical/production caption, inaccessible declared style token, stale cover equality claim, metric-dashboard cover language, or stale unregistered PNG cannot remain validated by a stale boolean.
+The visualization layer is audited as data, not as decoration. `output/data/figure_source_map.json` binds every registered figure to source artifacts, source fields, validation gates, and explicit caption-claim contracts; `output/reports/figure_hash_manifest.json` records the declared rendered image bytes; and `output/reports/visualization_quality_audit.json` rechecks readability, nonblank pixels, source binding, caption-claim source fields, caption scope guardrails, cover wording, cover quantitative-free status, declared palette contrast, font-role floors, and absence of unregistered image artifacts. The negative controls mutate rows under green summaries and add stray image files, so a figure with an unreadable image, missing source, missing caption-claim field, unscoped empirical/production caption, inaccessible declared style token, stale cover equality claim, metric-dashboard cover language, or stale unregistered PNG cannot remain validated by a stale boolean.
 
 The statistical layer follows the same rule. `output/data/firstprinciples/statistics_demo.json` is accepted only when its matched teacher/student entropy series, paired deltas, summaries, effect size, and seeded permutation metadata rederive from `output/data/firstprinciples/classroom.json` at validation time. This makes the classroom inferential paragraph a source-bound toy summary rather than a free-floating significance claim.
 
@@ -114,6 +120,8 @@ The `release_bundle` fragment records whether the canonical deliverables exist b
 <!-- sheaf-track:gate_ergonomics -->
 
 The `gate_ergonomics` fragment turns validation commands into evidence rows. `output/data/validation_gate_index.json` records {{validation_gate_index_count}} gate rows, each naming required inputs and the negative-control surface that should fail closed.
+
+**Integration-audit sub-artifacts.** Beyond the named sheaf tracks, `generate_integration_audit.py` emits a set of cross-cutting audit artifacts that are each enforced with a fail-closed negative control, so this section states what every one of them guarantees rather than leaving them as unexplained inventory rows. *Producer completeness* (`output/reports/producer_completeness.json`) requires every registered sheaf-track artifact to name a configured producer script; its `all_complete` flag is re-derived from the rows, so a registered artifact with a missing or unconfigured producer fails even if the stored flag was left true. *Token provenance* (`output/data/manuscript_token_provenance.json`) maps each hydrated double-brace token placeholder back to the artifact and field that produced it; the gate independently re-scans the manuscript and requires the rendered-token set, the provenance-key set, the per-row token set, and the live re-scan to coincide, so a deleted provenance row (a rendered token with no producer) or a phantom row (a provenance key that is never rendered) fails. *Claim-evidence audit* (`output/reports/claim_evidence_audit.json`) re-derives `all_claims_typed` per row, so any manuscript claim lacking a typed evidence binding or track set fails. *Scope-boundary audit* (`output/reports/scope_boundary_audit.json`) keeps every current claim inside the deterministic toy boundary and fails on any empirical or production scope leak. *Cross-track symbol table* (`output/data/cross_track_symbol_table.json`) is the table of shared symbols and the tracks that must agree on each; it backs the gluing certificate, which fails if two tracks bind different values to one symbol. *Evidence crosswalk* (`output/data/sheaf_evidence_crosswalk.json`) ties each typed claim to the evidence artifact and gate that back it; its schema gate fails closed on a malformed or inconsistent crosswalk, and its presence is enforced upstream by the producer-completeness check. *Validation dependency graph* (`output/data/validation_dependency_graph.json`) is the producer-to-artifact-to-consumer edge set that the semantic-gluing figure renders; manuscript validation fails on an unresolved dependency edge. *Reproducibility replay* (`output/data/reproducibility_replay.json`) records the end-to-end validation-spine replay distinct from the per-producer replay matrix, and its schema gate fails closed on a malformed replay record.
 
 <!-- sheaf-track:artifact_diffoscope -->
 
@@ -255,7 +263,7 @@ Section rows versus fragment track columns. **P** = present (bound and file exis
 | Section | prose | formalism | simulation | assumption_index | layers | pymdp | interop | provenance | replay_matrix | counterexample | adversarial_audit | evidence_fields | release_bundle | gate_ergonomics | artifact_diffoscope | artifact_license | scholarship | sensitivity | uncertainty | benchmark | manuscript_staleness | visualization | lean | model_checking | theorem_traceability | proof_extraction | state_space_catalog | causal_ablation | gnn | ontology | animation | animation_delta | release_notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Introduction (group) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-|   Motivation and scope | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+|   Motivation and scope | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | — | — | — | — | — |
 |   Contributions | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | — | P | — | — | — |
 | Methods (group) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 |   Teacher and student coupling: the analytical model | P | P | P | P | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | — | — | P | P | — | — | — |
@@ -288,7 +296,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 
 | Section | IMRAD | Bound | Present | Missing | Status |
 | --- | --- | ---: | ---: | ---: | --- |
-| Motivation and scope | introduction | 1 | 1 | 0 | `fully_sheafed` |
+| Motivation and scope | introduction | 2 | 2 | 0 | `fully_sheafed` |
 | Contributions | introduction | 3 | 3 | 0 | `fully_sheafed` |
 | Teacher and student coupling: the analytical model | methods | 7 | 7 | 0 | `fully_sheafed` |
 | On-policy student: pymdp sophisticated inference | methods | 7 | 7 | 0 | `fully_sheafed` |
@@ -313,23 +321,23 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `simulation` | `markdown` | 5 | 5 | 0 | 29 | `complete` |
 | `assumption_index` | `markdown` | 2 | 2 | 0 | 1 | `complete` |
 | `layers` | `layers_report` | 1 | 1 | 0 | 1 | `complete` |
-| `pymdp` | `markdown` | 3 | 3 | 0 | 22 | `complete` |
+| `pymdp` | `markdown` | 3 | 3 | 0 | 24 | `complete` |
 | `interop` | `markdown` | 2 | 2 | 0 | 6 | `complete` |
 | `provenance` | `markdown` | 2 | 2 | 0 | 12 | `complete` |
 | `replay_matrix` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
 | `counterexample` | `markdown` | 2 | 2 | 0 | 2 | `complete` |
-| `adversarial_audit` | `markdown` | 2 | 2 | 0 | 10 | `complete` |
-| `evidence_fields` | `markdown` | 2 | 2 | 0 | 1 | `complete` |
+| `adversarial_audit` | `markdown` | 2 | 2 | 0 | 11 | `complete` |
+| `evidence_fields` | `markdown` | 2 | 2 | 0 | 2 | `complete` |
 | `release_bundle` | `markdown` | 2 | 2 | 0 | 5 | `complete` |
 | `gate_ergonomics` | `markdown` | 2 | 2 | 0 | 5 | `complete` |
 | `artifact_diffoscope` | `markdown` | 2 | 2 | 0 | 1 | `complete` |
 | `artifact_license` | `markdown` | 2 | 2 | 0 | 1 | `complete` |
 | `scholarship` | `markdown` | 3 | 3 | 0 | 12 | `complete` |
 | `sensitivity` | `markdown` | 2 | 2 | 0 | 10 | `complete` |
-| `uncertainty` | `markdown` | 2 | 2 | 0 | 4 | `complete` |
+| `uncertainty` | `markdown` | 2 | 2 | 0 | 6 | `complete` |
 | `benchmark` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
 | `manuscript_staleness` | `markdown` | 2 | 2 | 0 | 1 | `complete` |
-| `visualization` | `section_figures` | 11 | 11 | 0 | 15 | `complete` |
+| `visualization` | `section_figures` | 12 | 12 | 0 | 16 | `complete` |
 | `lean` | `markdown` | 2 | 2 | 0 | 8 | `complete` |
 | `model_checking` | `markdown` | 2 | 2 | 0 | 7 | `complete` |
 | `theorem_traceability` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
@@ -351,7 +359,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | --- | --- | --- | --- | --- |
 | `registry_loaded` | `sheaf.registry` | `registered_tracks` | `ok` | 33 tracks |
 | `manifest_loaded` | `sheaf.manifest` | `manifest_sections` | `ok` | 17 sections |
-| `coverage_matrix_built` | `sheaf.coverage` | `output/data/sheaf_coverage_matrix.json` | `ok` | 94 present cells |
+| `coverage_matrix_built` | `sheaf.coverage` | `output/data/sheaf_coverage_matrix.json` | `ok` | 95 present cells |
 | `section_status_matrix_built` | `sheaf.status` | `output/data/sheaf_section_status_matrix.json` | `ok` | 561 section-track cells |
 | `layers_renderer_bound` | `sheaf.layers_report` | `manuscript/19_supplement_reproducibility.md` | `ok` | methods sheaf layer tables |
 | `semantic_artifacts_indexed` | `sheaf.semantic` | `output/data/validation_dependency_graph.json` | `ok` | 116 artifact producer rows |
@@ -374,7 +382,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `evidence_field_index` | `output/data/evidence_field_index.json` | `generate_sheaf_tracks.py` | validate_outputs, validate_manuscript |
 | `validation_dependency_graph` | `output/data/validation_dependency_graph.json` | `generate_sheaf_tracks.py` | validate_manuscript, validate_outputs |
 
-**Claim rows:** 124 typed evidence claims.
+**Claim rows:** 128 typed evidence claims.
 
 <!-- sheaf-layers:artifact-producers -->
 ## Artifact producer graph

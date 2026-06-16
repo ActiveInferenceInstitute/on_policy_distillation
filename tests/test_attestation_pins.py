@@ -112,6 +112,7 @@ def test_carveout_is_exactly_one_row_wide(tmp_path: Path) -> None:
         "experiment_plan_metrics",
         "integration_audit_artifacts",
         "integration_audit_track_schemas",
+        "manuscript_staleness_report_schema",
         "release_attestation_schema",
         "release_notes_evidence_schema",
         "semantic_sheaf_gluing",

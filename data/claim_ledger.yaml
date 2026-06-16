@@ -212,6 +212,18 @@ claims:
   waiver: Presence-only by design; this composed IMRAD section file's content is
     validated by the sheaf composition and manuscript_staleness gates, which fail
     closed on missing fragments or stale hydrated variables.
+- id: ising_mi_monotone
+  statement: Closed-form Ising mutual information is monotone non-decreasing across
+    the lambda grid, so more coupling never reduces transferable information in the
+    finite toy.
+  path: output/reports/invariants.json
+  section: results_mi_sweep
+  tracks:
+  - analytical
+  evidence:
+    field: invariants.ising_mi_monotone
+    equals: true
+  waiver: None
 - id: composed_appendix_full_sheaf
   statement: Appendix binds and composes appendix_sheaf_track_count fragment track
     types from the live manifest.
@@ -293,6 +305,32 @@ claims:
   evidence:
     field: all_available_posteriors_normalized
     equals: true
+- id: pymdp_policy_posterior_grid_concentration_contrast
+  statement: Sophisticated-inference policy posterior concentrates majority mass on one
+    policy while the comparison-only vanilla evaluator stays near-uniform, re-derived
+    from the per-step posterior rows.
+  path: output/data/pymdp_policy_posterior_grid.json
+  section: results_si_tmaze
+  tracks:
+  - pymdp
+  - uncertainty
+  evidence:
+    field: si_concentrates_vanilla_uniform
+    equals: true
+  waiver: None
+- id: si_tmaze_belief_entropy_non_increasing
+  statement: The sophisticated-inference student's per-step belief entropy is monotone
+    non-increasing, so acting to observe the cue drives posterior uncertainty down in
+    the finite rollout.
+  path: output/data/si_tmaze_summary.json
+  section: results_si_tmaze
+  tracks:
+  - pymdp
+  - uncertainty
+  evidence:
+    field: belief_entropy_non_increasing
+    equals: true
+  waiver: None
 - id: si_graph_world_summary
   statement: Graph-world extension summary is a real deterministic artifact.
   path: output/data/si_graph_world_summary.json
@@ -684,6 +722,19 @@ claims:
   - adversarial_audit
   evidence:
     field: all_rows_ok
+    equals: true
+- id: visualization_caption_claims_source_bound
+  statement: Visualization quality audit verifies every registered figure has
+    explicit caption-claim metadata whose terms, source paths, source fields,
+    scope, and display-transform status pass row-level checks.
+  path: output/reports/visualization_quality_audit.json
+  section: methods_sheaf
+  tracks:
+  - visualization
+  - evidence_fields
+  - adversarial_audit
+  evidence:
+    field: all_caption_claims_ok
     equals: true
 - id: scope_boundary_toy_only
   statement: Scope boundary audit keeps current claims confined to deterministic toy

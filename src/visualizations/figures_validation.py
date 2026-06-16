@@ -64,9 +64,18 @@ def figure_semantic_gluing_graph(project_root: Path) -> Path:
         fig.text(
             0.05,
             0.965,
-            "Every generated claim flows through a producer, artifact, and checked binding",
+            "Generated artifact and claim flows shown from the compacted source ledger",
             fontsize=style.font_size("title"),
             color=style.color("primary"),
+            ha="left",
+            va="top",
+        )
+        fig.text(
+            0.05,
+            0.93,
+            "Compacted consumers use +N labels; full edge records remain in validation_dependency_graph.json.",
+            fontsize=style.font_size("annotation"),
+            color=style.color("muted"),
             ha="left",
             va="top",
         )
@@ -160,82 +169,112 @@ def figure_theorem_traceability_graph(project_root: Path) -> Path:
     dependency = json.loads(dependency_path.read_text(encoding="utf-8"))
     all_rows = theorem.get("rows") or []
     total_rows = len(all_rows)
-    max_rows = 11
-    shown_rows = all_rows[:max_rows]
+    shown_rows = all_rows
     edges = dependency.get("edges") or []
     edge_count_by_theorem = {
         row.get("theorem", ""): sum(1 for edge in edges if edge.get("source") == row.get("theorem")) for row in shown_rows
     }
-    shown_edge_total = sum(edge_count_by_theorem.values())
-    witness_counts = {len(row.get("model_witnesses") or []) for row in shown_rows}
-    collapse_witnesses = len(witness_counts) == 1
-    row_fontsize = style.font_size("dense") if len(shown_rows) <= 10 else style.font_size("source")
+    max_edges = max(edge_count_by_theorem.values(), default=1)
+    row_fontsize = style.font_size("dense") if len(shown_rows) <= 12 else style.font_size("source")
     out = figure_output_path(root, "theorem_traceability_graph")
     with apply_style(style):
-        fig, ax = plt.subplots(figsize=(10.8, max(5.6, 0.55 * len(shown_rows) + 1.2)))
+        fig, ax = plt.subplots(figsize=(12.6, max(6.8, 0.70 * len(shown_rows) + 2.2)))
+        fig.subplots_adjust(left=0.045, right=0.985, top=0.82, bottom=0.11)
         ax.axis("off")
-        columns = [0.05, 0.56] if collapse_witnesses else [0.05, 0.42, 0.78]
-        headers = ["Lean theorem", "Proof dependency rows"]
-        if not collapse_witnesses:
-            headers.append("Finite witnesses")
+        ax.set_xlim(0.0, 1.0)
+        ax.set_ylim(0.0, 1.0)
+        columns = [0.04, 0.47, 0.76]
+        headers = ["Lean theorem", "Proof-dependency edges", "Finite witnesses"]
         for x, header in zip(columns, headers, strict=True):
-            ax.text(x, 0.94, header, weight="bold", color=style.color("primary"), fontsize=style.font_size("annotation"))
-        y_positions = np.linspace(0.82, 0.14, max(1, len(shown_rows)))
-        for y, row in zip(y_positions, shown_rows, strict=False):
-            theorem_id = str(row.get("theorem", ""))
-            theorem_words = theorem_id.split("_")
-            theorem_label = "\n".join(
-                " ".join(theorem_words[index : index + 3]) for index in range(0, len(theorem_words), 3)
+            ax.text(
+                x,
+                0.94,
+                header,
+                weight="bold",
+                color=style.color("primary"),
+                fontsize=style.font_size("annotation"),
+                ha="left",
+                va="center",
             )
+        y_positions = np.linspace(0.86, 0.10, max(1, len(shown_rows)))
+        for idx, (y, row) in enumerate(zip(y_positions, shown_rows, strict=False)):
+            theorem_id = str(row.get("theorem", ""))
+            theorem_label = _wrap_label(theorem_id.replace("_", " "), 31)
             witness_count = len(row.get("model_witnesses") or [])
             linked = row.get("linked") is True
             edge_color = style.color("pass") if linked else style.color("fail")
-            proof_label = f"{edge_count_by_theorem.get(theorem_id, 0)} dependency edges"
-            witness_label = f"{witness_count} finite witnesses"
+            edge_count = edge_count_by_theorem.get(theorem_id, 0)
+            width = 0.20 * (edge_count / max_edges if max_edges else 0.0)
+            if idx % 2 == 0:
+                ax.axhspan(y - 0.033, y + 0.033, xmin=0.015, xmax=0.985, color=style.color("muted"), alpha=0.055, lw=0)
             ax.text(
                 columns[0],
                 y,
                 theorem_label,
                 fontsize=row_fontsize,
                 va="center",
+                ha="left",
+                linespacing=1.08,
                 bbox=dict(boxstyle="round,pad=0.25", facecolor="#f8fafc", edgecolor=edge_color),
+            )
+            ax.add_patch(
+                plt.Rectangle(
+                    (columns[1], y - 0.018),
+                    max(width, 0.008),
+                    0.036,
+                    facecolor=style.color("secondary"),
+                    edgecolor=style.color("secondary"),
+                    alpha=0.72,
+                )
             )
             ax.text(
                 columns[1],
                 y,
-                proof_label,
+                f"{edge_count} edges",
                 fontsize=row_fontsize,
                 va="center",
-                bbox=dict(boxstyle="round,pad=0.25", facecolor="#ffffff", edgecolor=style.color("secondary")),
+                ha="left",
+                color=style.color("primary"),
             )
-            ax.annotate("", xy=(columns[1] - 0.03, y), xytext=(columns[0] + 0.24, y), arrowprops={"arrowstyle": "->"})
-            if not collapse_witnesses:
-                ax.text(
-                    columns[2],
-                    y,
-                    witness_label,
-                    fontsize=row_fontsize,
-                    va="center",
-                    bbox=dict(boxstyle="round,pad=0.25", facecolor="#f8fafc", edgecolor=style.color("accent")),
-                )
-                ax.annotate("", xy=(columns[2] - 0.03, y), xytext=(columns[1] + 0.24, y), arrowprops={"arrowstyle": "->"})
-        if total_rows > len(shown_rows):
-            subtitle = (
-                f"showing {len(shown_rows)} of {total_rows} theorem rows; "
-                f"{shown_edge_total} dependency edges in the shown subset"
+            ax.text(
+                columns[2],
+                y,
+                f"{witness_count} finite witnesses",
+                fontsize=row_fontsize,
+                va="center",
+                ha="left",
+                bbox=dict(boxstyle="round,pad=0.22", facecolor="#f8fafc", edgecolor=style.color("accent")),
             )
-        else:
-            subtitle = f"all {total_rows} theorem rows shown; {shown_edge_total} dependency edges across the shown set"
-        fig.text(0.05, 0.91, subtitle, fontsize=style.font_size("annotation"), color=style.color("muted"))
-        if collapse_witnesses and witness_counts:
-            fig.text(
-                0.05,
-                0.03,
-                f"each theorem carries {next(iter(witness_counts))} finite witnesses",
-                fontsize=style.font_size("annotation"),
-                color=style.color("accent"),
-            )
-        ax.set_title("Lean theorem rows connect to dependencies and finite witnesses", loc="left", pad=16)
+            arrow = {"arrowstyle": "->", "linewidth": 0.8, "color": style.color("muted"), "alpha": 0.70}
+            ax.annotate("", xy=(columns[1] - 0.018, y), xytext=(0.37, y), arrowprops=arrow)
+            ax.annotate("", xy=(columns[2] - 0.018, y), xytext=(0.69, y), arrowprops=arrow)
+        fig.suptitle(
+            "Lean theorem rows connect to proof dependencies and finite witnesses",
+            x=0.045,
+            y=0.975,
+            ha="left",
+            fontsize=style.font_size("title"),
+            color=style.color("primary"),
+        )
+        fig.text(
+            0.045,
+            0.925,
+            (
+                f"All {total_rows} theorem rows are shown from theorem_traceability_matrix.json; "
+                f"edge counts are sourced from proof_dependency_graph.json."
+            ),
+            fontsize=style.font_size("annotation"),
+            color=style.color("muted"),
+            ha="left",
+        )
+        fig.text(
+            0.045,
+            0.035,
+            "All rows are sourced; the display is a row chart/table hybrid, not a network force layout.",
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
+            ha="left",
+        )
         save_styled_figure(fig, out, style)
     return out
 
@@ -340,6 +379,14 @@ def figure_scholarship_source_map(project_root: Path) -> Path:
         display_family = family if family in family_indices else other_family_label
         bucket = artifact_bucket(str(row.get("artifact", "")))
         family_bucket_counts[family_indices[display_family], bucket_indices[bucket]] += 1
+    bucket_abbreviations = {
+        "first-principles": "FP",
+        "pymdp/runtime": "pymdp",
+        "sheaf/validation": "sheaf",
+        "interop/notation": "interop",
+        "reports": "reports",
+        "other data": "other",
+    }
 
     out = figure_output_path(root, "scholarship_source_map")
     with apply_style(style):
@@ -349,7 +396,7 @@ def figure_scholarship_source_map(project_root: Path) -> Path:
             1,
             3,
             figsize=(14.8, fig_height),
-            gridspec_kw={"width_ratios": [1.6, 1.32, 1.16], "wspace": 0.52},
+            gridspec_kw={"width_ratios": [1.55, 1.55, 1.20], "wspace": 0.58},
         )
         family_ax, bucket_ax, kind_ax = axes
 
@@ -368,21 +415,39 @@ def figure_scholarship_source_map(project_root: Path) -> Path:
         for y, value in zip(y_positions, family_values, strict=True):
             family_ax.text(value + 0.08, y, str(value), va="center", fontsize=style.font_size("dense"), color=style.color("primary"))
 
-        bucket_ax.imshow(family_bucket_counts, cmap="YlGnBu", aspect="auto")
+        masked_counts = np.ma.masked_where(family_bucket_counts == 0, family_bucket_counts)
+        cmap = plt.get_cmap("YlGnBu").copy()
+        cmap.set_bad("#f8fafc")
+        image = bucket_ax.imshow(masked_counts, cmap=cmap, aspect="auto", vmin=0.0)
         bucket_ax.set_xticks(
             np.arange(len(buckets)),
-            ["\n".join(textwrap.wrap(bucket, width=13, break_long_words=False)) for bucket in buckets],
-            fontsize=style.font_size("dense"),
-            rotation=28,
+            [bucket_abbreviations.get(bucket, bucket) for bucket in buckets],
+            fontsize=style.font_size("source"),
+            rotation=35,
             ha="right",
         )
+        bucket_ax.set_yticks(np.arange(family_count))
         bucket_ax.tick_params(axis="y", labelleft=False, left=False)
+        bucket_ax.set_xlabel("Artifact bucket (abbrev.)", fontsize=style.font_size("source"), labelpad=8)
         bucket_ax.set_title("Artifact buckets\nwhere citations bind", fontsize=style.font_size("small"))
+        max_bucket_value = float(family_bucket_counts.max() or 1.0)
         for i in range(family_bucket_counts.shape[0]):
             for j in range(family_bucket_counts.shape[1]):
                 value = int(family_bucket_counts[i, j])
                 if value:
-                    bucket_ax.text(j, i, str(value), ha="center", va="center", fontsize=style.font_size("dense"), color="#111827")
+                    text_color = "white" if value >= 0.55 * max_bucket_value else style.color("primary")
+                    bucket_ax.text(
+                        j,
+                        i,
+                        str(value),
+                        ha="center",
+                        va="center",
+                        fontsize=style.font_size("dense"),
+                        color=text_color,
+                    )
+        cbar = fig.colorbar(image, ax=bucket_ax, shrink=0.70, pad=0.035)
+        cbar.ax.set_title("rows", fontsize=style.font_size("source"), color=style.color("muted"), pad=6)
+        cbar.ax.tick_params(labelsize=style.font_size("source"))
         kind_order = [kind for kind, _count in kind_counts.most_common()]
         kind_values = [kind_counts[kind] for kind in kind_order]
         kind_positions = np.arange(len(kind_order))
@@ -409,7 +474,7 @@ def figure_scholarship_source_map(project_root: Path) -> Path:
         fig.text(
             0.01,
             0.015,
-            f"{summary}. Row-level bindings: output/data/scholarship_source_matrix.json",
+            f"{summary}. Bucket key: FP=first-principles. Row-level bindings: output/data/scholarship_source_matrix.json",
             fontsize=style.font_size("source"),
             color=style.color("muted"),
         )

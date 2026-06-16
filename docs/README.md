@@ -40,16 +40,16 @@ mutate shared generated artifacts. The tighter edit loop also excludes expensive
 rendering, animation, rollout, and large-compose checks. The full coverage gate
 remains authoritative. Details: [`development/testing.md`](development/testing.md).
 
-Render through the sibling template checkout after linking sidecar projects:
+Render the validated project-local PDF through the canonical full chain:
 
 ```bash
-cd ../../../template
-uv run python -m infrastructure.orchestration link-projects
-uv run python scripts/03_render_pdf.py --project working/active_inference_on_policy_distillation
+uv run python scripts/run_full_chain.py --render
 ```
 
-See [`reproducibility/rendering.md`](reproducibility/rendering.md) for the
-standalone path and common failure modes.
+This composes, regenerates, validates, converges the fixed-point attestation, and
+emits `output/pdf/on_policy_distillation.pdf`. See
+[`reproducibility/rendering.md`](reproducibility/rendering.md) for the optional
+sibling-template polish path and common failure modes.
 
 ## The one-paragraph scope contract
 

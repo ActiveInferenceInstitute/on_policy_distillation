@@ -11,7 +11,7 @@ repository evidence. Dispositions are file-backed:
 
 | Review item | Disposition | Evidence |
 |---|---|---|
-| Retitle the manuscript to "A Finite-Model Active-Inference Reading of On-Policy Distillation" | **LANDED** | `manuscript/config.yaml`; `README.md`; `docs/reference/README.md`; `docs/reference/notation-supplement.md` |
+| Retitle the manuscript to a finite-scope active-inference framing, now "On-Policy Distillation as Active Inference in Finite Variational Models" | **LANDED** | `manuscript/config.yaml`; `README.md`; `docs/reference/README.md`; `docs/reference/notation-supplement.md` |
 | Reframe abstract, introduction, discussion, and conclusion around finite-model reading/correspondence rather than a universal identity | **LANDED** | `manuscript/00_abstract.md`; `manuscript/sections/imrad/intro_motivation/prose.md`; `manuscript/sections/imrad/intro_contributions/prose.md`; `manuscript/sections/imrad/discussion_outlook/prose.md`; `manuscript/17_conclusion.md`; `docs/manuscript/claims-and-scope.md` |
 | Preserve VFE/EFE separation and existing finite-object proposition | **LANDED** | `manuscript/00_abstract.md`; `manuscript/sections/imrad/intro_contributions/prose.md`; `docs/manuscript/claims-and-scope.md` |
 | Add deterministic finite sequential distribution-shift artifact | **LANDED** | `src/firstprinciples/sequential_shift.py`; `src/firstprinciples/artifacts.py`; `src/manuscript/variables.py`; `src/artifact_contracts.py`; `src/gates/output_checks.py` |

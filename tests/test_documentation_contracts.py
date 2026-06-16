@@ -154,6 +154,10 @@ def test_figure_docs_signpost_cover_scope_and_accessibility_audit(project_root: 
         "quantitative-free overview schematic",
         "body figures and tables",
         "font-role floors",
+        "caption-claim contract",
+        "display_transform",
+        "caption_claims_ok",
+        "all_caption_claims_ok",
     ):
         assert phrase in combined
 

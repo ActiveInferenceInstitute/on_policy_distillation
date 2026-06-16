@@ -7,6 +7,7 @@ agree. Scripts and tests should call this module instead of copying the sequence
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -92,6 +93,29 @@ def _write_variables(project_root: Path, *, require_analysis_outputs: bool) -> t
     return variables, out, resolved_dir
 
 
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _artifact_content_signature(root: Path, paths: dict[str, Path]) -> tuple[tuple[str, str], ...]:
+    """Return content hashes for the files touched in one fixed-point pass."""
+    rows: list[tuple[str, str]] = []
+    for path in sorted({path.resolve() for path in paths.values()}, key=str):
+        try:
+            rel = path.relative_to(root).as_posix()
+        except ValueError:
+            rel = str(path)
+        if path.is_file():
+            rows.append((rel, _sha256_file(path)))
+        elif not path.exists():
+            rows.append((rel, "<missing>"))
+    return tuple(rows)
+
+
 def hydrate_manuscript_fixed_point(
     project_root: Path,
     *,
@@ -102,6 +126,8 @@ def hydrate_manuscript_fixed_point(
     root = project_root.resolve()
     paths: dict[str, Path] = {}
     remaining_issues: dict[str, list[str]] = {}
+    previous_issues: dict[str, list[str]] | None = None
+    previous_signature: tuple[tuple[str, str], ...] | None = None
 
     from manuscript.sheaf import compose_all_sections
     from manuscript.sheaf.semantic import validate_semantic_gluing, write_semantic_gluing_outputs
@@ -113,28 +139,29 @@ def hydrate_manuscript_fixed_point(
         write_sheaf_track_artifacts,
     )
 
-    for _ in range(max_passes):
+    for pass_index in range(max_passes):
+        pass_paths: dict[str, Path] = {}
         compose_all_sections(root)
         _, variables_path, resolved_dir = _write_variables(root, require_analysis_outputs=require_analysis_outputs)
-        paths["variables"] = variables_path
-        paths["resolved_manuscript"] = resolved_dir
-        paths["manuscript_staleness"] = write_manuscript_staleness_report(root)
-        paths.update(write_integration_audit_artifacts(root))
-        paths.update(write_sheaf_track_artifacts(root, refresh_hydration=False))
-        paths.update(write_semantic_gluing_outputs(root, refresh_hydration=False))
-        paths.update(write_integration_audit_artifacts(root))
-        paths.update(write_sheaf_track_artifacts(root, refresh_dependencies=False, refresh_hydration=False))
+        pass_paths["variables"] = variables_path
+        pass_paths["resolved_manuscript"] = resolved_dir
+        pass_paths["manuscript_staleness"] = write_manuscript_staleness_report(root)
+        pass_paths.update(write_integration_audit_artifacts(root))
+        pass_paths.update(write_sheaf_track_artifacts(root, refresh_hydration=False))
+        pass_paths.update(write_semantic_gluing_outputs(root, refresh_hydration=False))
+        pass_paths.update(write_integration_audit_artifacts(root))
         _, variables_path, resolved_dir = _write_variables(root, require_analysis_outputs=require_analysis_outputs)
-        paths["variables"] = variables_path
-        paths["resolved_manuscript"] = resolved_dir
-        paths["manuscript_staleness"] = write_manuscript_staleness_report(root)
+        pass_paths["variables"] = variables_path
+        pass_paths["resolved_manuscript"] = resolved_dir
+        pass_paths["manuscript_staleness"] = write_manuscript_staleness_report(root)
+        pass_paths.update(write_semantic_gluing_outputs(root, refresh_hydration=False))
         from roadmap_tracks.sheaf_tracks import CANONICAL_ARTIFACTS, _write_json, build_artifact_provenance
 
-        paths["provenance"] = _write_json(
+        pass_paths["provenance"] = _write_json(
             root / CANONICAL_ARTIFACTS["provenance"],
             build_artifact_provenance(root),
         )
-        paths.update(write_semantic_gluing_outputs(root, refresh_hydration=False))
+        paths.update(pass_paths)
 
         remaining_issues = {
             "integration_audit": validate_integration_audit_artifacts(root),
@@ -143,6 +170,16 @@ def hydrate_manuscript_fixed_point(
         }
         if not any(remaining_issues.values()):
             break
+        signature = _artifact_content_signature(root, pass_paths)
+        if signature == previous_signature and remaining_issues == previous_issues:
+            details = "; ".join(
+                f"{name}: {', '.join(issues)}" for name, issues in remaining_issues.items() if issues
+            )
+            raise RuntimeError(
+                f"artifact fixed point stalled after {pass_index + 1} passes with unchanged artifact hashes: {details}"
+            )
+        previous_signature = signature
+        previous_issues = {name: list(issues) for name, issues in remaining_issues.items()}
     else:
         details = "; ".join(
             f"{name}: {', '.join(issues)}" for name, issues in remaining_issues.items() if issues

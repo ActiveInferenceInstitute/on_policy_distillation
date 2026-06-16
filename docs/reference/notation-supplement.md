@@ -1,9 +1,9 @@
 # Notation & Formalism Supplement
 
-**A Finite-Model Active-Inference Reading of On-Policy Distillation.**
+**On-Policy Distillation as Active Inference in Finite Variational Models.**
 
 This supplement gives the integrated notation and the formal identities behind
-that scoped title. It is the human-readable companion to the executable
+that finite-scope title. It is the human-readable companion to the executable
 [`firstprinciples`](../../src/firstprinciples/) package: every definition here
 has a tested implementation, and every implementation cites a definition here.
 All divergences are in **nats**.

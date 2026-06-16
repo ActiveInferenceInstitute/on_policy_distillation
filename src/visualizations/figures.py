@@ -37,6 +37,7 @@ from .figures_firstprinciples import (
     figure_sequential_shift_sensitivity,
 )
 from .figures_abstract import figure_graphical_abstract
+from .figures_intro import figure_opd_reader_map, figure_opd_situational_awareness
 from .figures_interpretability import (
     figure_correspondence_map,
     figure_opd_taxonomy_landscape,
@@ -74,6 +75,8 @@ __all__ = [
     "figure_ising_mi_curve",
     "figure_lean_boundary_status",
     "figure_multi_track_architecture",
+    "figure_opd_reader_map",
+    "figure_opd_situational_awareness",
     "figure_opd_taxonomy_landscape",
     "figure_parallel_convergence",
     "figure_policy_posterior_grid",
@@ -126,6 +129,8 @@ FIGURE_GENERATORS: dict[str, Callable[[Path], Path | None]] = {
     "causal_ablation_heatmap": figure_causal_ablation_heatmap,
     "scholarship_source_map": figure_scholarship_source_map,
     "graphical_abstract": figure_graphical_abstract,
+    "opd_reader_map": figure_opd_reader_map,
+    "opd_situational_awareness": figure_opd_situational_awareness,
 }
 
 
