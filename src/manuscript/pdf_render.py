@@ -92,18 +92,16 @@ def build_cover_tex(config: dict, project_root: Path) -> str:
     )
 
 
-def render_pdf(project_root: Path) -> int:
-    """Compose, hydrate, and render the canonical manuscript PDF."""
-    root = project_root.resolve()
-    for tool in ("pandoc", "xelatex"):
-        if shutil.which(tool) is None:
-            print(f"error: `{tool}` not found on PATH (required for standalone render)", file=sys.stderr)
-            return 2
+def _combine_manuscript_markdown(project_root: Path) -> tuple[Path, Path]:
+    """Compose + hydrate the sheaf sections into the combined manuscript markdown.
 
+    Shared by the canonical PDF render and the `.tex` consumed-inventory render so the
+    two never diverge. Returns (combined_md_path, out_pdf_dir)."""
     from manuscript.hydrate import write_resolved_manuscript
     from manuscript.sheaf import compose_all_sections
     from manuscript.variables import generate_variables
 
+    root = project_root.resolve()
     manuscript_dir = root / "manuscript"
     out_pdf_dir = root / "output" / "pdf"
     out_pdf_dir.mkdir(parents=True, exist_ok=True)
@@ -120,6 +118,60 @@ def render_pdf(project_root: Path) -> int:
     combined_text = "\n\n".join(p.read_text(encoding="utf-8") for p in sections)
     combined_md = out_pdf_dir / "_combined_manuscript.md"
     combined_md.write_text(combined_text, encoding="utf-8")
+    return combined_md, out_pdf_dir
+
+
+def render_combined_tex(project_root: Path) -> Path:
+    """Render the combined manuscript to standalone LaTeX (`_combined_manuscript.tex`).
+
+    Pandoc emits the `.tex` without compiling a PDF (no xelatex), so this is a cheap,
+    deterministic way to materialise the *rendered* LaTeX that the typography
+    consumed-inventory gate checks: declared geometry and the preamble font-scale must
+    survive into the render, not just be declared. Uses the SAME preamble include and
+    geometry variable as `render_pdf`, so what this proves about the `.tex` holds for
+    the canonical PDF. Raises if pandoc is unavailable."""
+    if shutil.which("pandoc") is None:
+        raise RuntimeError("pandoc not found on PATH (required to render the combined .tex)")
+    root = project_root.resolve()
+    manuscript_dir = root / "manuscript"
+    combined_md, out_pdf_dir = _combine_manuscript_markdown(root)
+    header_tex = out_pdf_dir / "_standalone_preamble.tex"
+    header_tex.write_text(extract_preamble(manuscript_dir / "preamble.md") + "\n", encoding="utf-8")
+    tex_out = out_pdf_dir / "_combined_manuscript.tex"
+    cmd = [
+        "pandoc",
+        str(combined_md),
+        "-o",
+        str(tex_out),
+        "--from=markdown+tex_math_dollars+raw_tex",
+        "--to=latex",
+        "--standalone",
+        "--number-sections",
+        "-H",
+        str(header_tex),
+        "-V",
+        f"geometry:{geometry_string(manuscript_dir / 'config.yaml')}",
+        "-V",
+        "colorlinks=true",
+        f"--resource-path={manuscript_dir}",
+    ]
+    result = subprocess.run(cmd, cwd=root, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"pandoc latex render failed: {result.stderr.strip()}")
+    return tex_out
+
+
+def render_pdf(project_root: Path) -> int:
+    """Compose, hydrate, and render the canonical manuscript PDF."""
+    root = project_root.resolve()
+    for tool in ("pandoc", "xelatex"):
+        if shutil.which(tool) is None:
+            print(f"error: `{tool}` not found on PATH (required for standalone render)", file=sys.stderr)
+            return 2
+
+    manuscript_dir = root / "manuscript"
+    combined_md, out_pdf_dir = _combine_manuscript_markdown(root)
+    combined_text = combined_md.read_text(encoding="utf-8")
     # Keep the historical standalone path as a mirror so older diagnostics do
     # not accidentally compare against a stale combined manuscript.
     (out_pdf_dir / "_standalone_combined.md").write_text(combined_text, encoding="utf-8")
@@ -182,4 +234,4 @@ def render_pdf(project_root: Path) -> int:
     return 0
 
 
-__all__ = ["_tex_escape", "build_cover_tex", "render_pdf"]
+__all__ = ["_tex_escape", "build_cover_tex", "render_combined_tex", "render_pdf"]

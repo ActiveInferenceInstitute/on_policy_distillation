@@ -28,6 +28,13 @@ pythonpath = [".", "src"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-v --tb=short --strict-markers"
+filterwarnings = [
+    # Third-party only: pymdp calls jax.nn.one_hot with float-typed indices internally
+    # (not reachable from this project's code). Scoped to the exact message + category so
+    # it can never mask a first-party warning; if jax removes the float path pymdp fails
+    # loudly rather than silently, so this ignore hides no real signal.
+    "ignore:jax.nn.one_hot input should be integer-typed:DeprecationWarning",
+]
 markers = [
     "artifact_slow: full fixed-point or artifact-write tests kept out of the fast local lane",
     "render_slow: figure rendering, animation, rollout, or large-compose tests kept out of the daily edit loop",

@@ -2,7 +2,7 @@
 
 Generated documentation coverage for every Python `def` and `class` under `src/` and `scripts/`. Entries marked `inventory fallback` have no inline docstring yet, but remain documented here by path, line, kind, and qualified name.
 
-Total documented definitions: 950
+Total documented definitions: 952
 
 ## `src/analytical/bernoulli_toy.py`
 
@@ -504,7 +504,9 @@ Total documented definitions: 950
 | ---: | --- | --- | --- | --- |
 | 19 | `function` | `_tex_escape` | docstring | Escape the LaTeX special characters that occur in metadata strings. |
 | 36 | `function` | `build_cover_tex` | docstring | Build a standalone title page: title, subtitle, author block, graphical abstract. |
-| 95 | `function` | `render_pdf` | docstring | Compose, hydrate, and render the canonical manuscript PDF. |
+| 95 | `function` | `_combine_manuscript_markdown` | docstring | Compose + hydrate the sheaf sections into the combined manuscript markdown. |
+| 124 | `function` | `render_combined_tex` | docstring | Render the combined manuscript to standalone LaTeX (`_combined_manuscript.tex`). |
+| 164 | `function` | `render_pdf` | docstring | Compose, hydrate, and render the canonical manuscript PDF. |
 
 ## `src/manuscript/render_helpers.py`
 

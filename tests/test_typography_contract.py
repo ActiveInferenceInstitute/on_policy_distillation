@@ -35,20 +35,20 @@ def _fenced_latex(preamble_text: str) -> str:
     return "\n".join(blocks)
 
 
-_EMITTED_TEX = PROJECT_ROOT / "output" / "pdf" / "_combined_manuscript.tex"
-
-
+@pytest.mark.render_slow
 def test_declared_typography_reaches_emitted_tex() -> None:
     """Consumed-inventory gate: every declared typography knob reaches the render.
 
     Declaring a knob is not enough — it must be *consumed* into the emitted LaTeX
     (a knob can be named yet overridden/dropped and change no pixel). Binds the
     silent declared-vs-rendered gap: config geometry and the preamble font-scale must
-    both appear verbatim in the rendered .tex. Skipped only when no render exists yet.
+    both appear verbatim in the rendered .tex. Renders the combined `.tex` on demand
+    (pandoc → LaTeX, no PDF compile) using the same preamble include and geometry
+    variable as the canonical PDF render, so the gate always runs instead of skipping.
     """
-    if not _EMITTED_TEX.is_file():
-        pytest.skip("no rendered _combined_manuscript.tex yet — run scripts/03_render_pdf.py")
-    tex = _EMITTED_TEX.read_text(encoding="utf-8")
+    from manuscript.pdf_render import render_combined_tex
+
+    tex = render_combined_tex(PROJECT_ROOT).read_text(encoding="utf-8")
     config = yaml.safe_load(CONFIG.read_text())
     geometry = (config.get("metadata") or {}).get("geometry", "")
     assert geometry and geometry in tex, f"declared geometry {geometry!r} did not reach the emitted tex"
