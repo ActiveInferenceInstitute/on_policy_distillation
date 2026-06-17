@@ -177,6 +177,55 @@ def figure_active_selection_landscape(project_root: Path) -> Path:
     return out
 
 
+def figure_si_bridge_match(project_root: Path) -> Path:
+    """Analytical residual curve with the pymdp SI agent's post-cue entropy on it.
+
+    The closed-form residual E_o[H(r|o)] (reused from the active-selection module)
+    is plotted as a smooth curve against cue validity; the pymdp sophisticated-
+    inference agent's measured post-cue belief entropy is overlaid as a single
+    point that lands on the curve at the environment's own cue validity --
+    the quantitative analytical<->simulation bridge.
+    """
+    from firstprinciples import si_bridge
+
+    root = project_root.resolve()
+    style = load_figure_style(root)
+    data = json.loads((root / "output" / "data" / "firstprinciples" / "si_bridge_demo.json").read_text(encoding="utf-8"))
+    env_validity = float(data["cue_validity"])
+    pymdp_entropy = float(data["post_cue_belief_entropy"])
+    match_abs = float(data["residual_entropy_match_abs"])
+
+    grid = [0.5 + 0.01 * i for i in range(51)]  # 0.50 .. 1.00
+    residual_curve = [si_bridge.analytical_residual_at_validity(v) for v in grid]
+
+    out = figure_output_path(root, "si_bridge_match")
+    with apply_style(style):
+        fig, ax = plt.subplots(1, 1, figsize=(8.4, 5.3))
+        ax.plot(grid, residual_curve, color=style.color("secondary"),
+                label="analytical residual $E_o[H(r\\mid o)]$")
+        ax.scatter([env_validity], [pymdp_entropy], s=120, zorder=5,
+                   color=style.color("accent"), edgecolor="white",
+                   label="pymdp SI post-cue belief entropy")
+        ax.axvline(env_validity, ls=":", color=style.color("muted"), lw=1.0)
+        ax.set_xlabel("Cue validity")
+        ax.set_ylabel("Nats")
+        ax.set_title("Closed-form residual predicts the pymdp SI agent")
+        style_grid(ax, style)
+        ax.legend(frameon=True, fontsize=style.font_size("legend"), loc="upper right")
+        ax.annotate(
+            f"match at validity {env_validity:.2f}: |Δ| = {match_abs:.1e} nats",
+            xy=(env_validity, pymdp_entropy), xytext=(0.30, 0.30), textcoords="axes fraction",
+            fontsize=style.font_size("annotation"), color=style.color("primary"),
+            arrowprops=dict(arrowstyle="->", color=style.color("muted")),
+        )
+        fig.tight_layout(rect=(0.0, 0.03, 1.0, 1.0))
+        fig.text(0.01, 0.01,
+                 "Source: output/data/firstprinciples/{si_bridge_demo,active_selection_demo}.json; finite toy, observable bridge.",
+                 fontsize=style.font_size("source"), color=style.color("muted"))
+        save_styled_figure(fig, out, style)
+    return out
+
+
 def figure_exposure_bias_recovery(project_root: Path) -> Path:
     """Render off-policy compounding versus on-policy correction curves."""
     root = project_root.resolve()

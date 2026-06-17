@@ -185,6 +185,7 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         "policy_posterior_grid": ["output/data/pymdp_policy_posterior_grid.json"],
         "opd_taxonomy_landscape": ["output/data/firstprinciples/opd_taxonomy.json"],
         "active_selection_landscape": ["output/data/firstprinciples/active_selection_demo.json"],
+        "si_bridge_match": ["output/data/firstprinciples/si_bridge_demo.json"],
         "sheaf_layers_overview": ["output/data/sheaf_coverage_matrix.json"],
         "sheaf_coverage_heatmap": ["output/data/sheaf_coverage_matrix.json"],
         "invariant_dashboard": ["output/reports/invariants.json"],
@@ -337,6 +338,11 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
             "$.prior_entropy_nats",
             "$.efe_selected_policy",
         ],
+        "si_bridge_match": [
+            "$.cue_validity",
+            "$.post_cue_belief_entropy",
+            "$.residual_entropy_match_abs",
+        ],
         "sheaf_layers_overview": ["$.tracks", "$.layers", "$.bound_cell_count", "$.validated_cell_count"],
         "sheaf_coverage_heatmap": ["$.tracks", "$.sections"],
         "invariant_dashboard": ["$.invariants", "$.simulation", "$.all_pass"],
@@ -447,6 +453,10 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         ],
         "active_selection_landscape": [
             "validate_outputs.firstprinciples_active_selection_schema",
+            "test_figures.nonblank_png",
+        ],
+        "si_bridge_match": [
+            "validate_outputs.firstprinciples_si_bridge_schema",
             "test_figures.nonblank_png",
         ],
         "sheaf_layers_overview": ["validate_outputs.canonical_sheaf_track_schemas", "test_figures.nonblank_png"],
@@ -633,6 +643,7 @@ _FIGURE_SCOPE_REQUIRED = {
     "correspondence_map",
     "opd_taxonomy_landscape",
     "active_selection_landscape",
+    "si_bridge_match",
     "causal_ablation_heatmap",
     "scholarship_source_map",
     "graphical_abstract",

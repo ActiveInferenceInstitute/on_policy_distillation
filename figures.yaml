@@ -491,6 +491,38 @@ figures:
           - "$.prior_entropy_nats"
         scope: "finite EFE active-selection toy"
         display_transform: full
+  si_bridge_match:
+    filename: si_bridge_match.png
+    alt: >-
+      Single-panel figure plotting the closed-form residual conditional entropy against cue
+      validity as a smooth curve, with a single overlaid point marking the pymdp sophisticated-
+      inference agent's measured post-cue belief entropy. The point lies on the curve at the
+      environment's cue validity, with an annotation reporting the absolute difference.
+    caption: >-
+      The analytical active-selection result predicts the project's pymdp sophisticated-inference
+      simulation quantitatively. The curve is the closed-form residual
+      $E_o[H(r\mid o)]$ versus cue validity; the point is the SI agent's measured post-cue belief
+      entropy ({{si_bridge_post_cue_entropy:.3f}} nats) at the environment's own cue validity
+      ({{si_bridge_cue_validity:.2f}}). They agree to {{si_bridge_match_abs:.1e}} nats — a
+      quantitative, validity-specific prediction, not a fit, and the agent visits the cue before
+      any arm. The bridge is bound to observable belief entropy because pymdp does not expose its
+      internal expected-free-energy terms. Finite toy, exact.
+      Source: `output/data/firstprinciples/si_bridge_demo.json`.
+    width: 0.8
+    claims:
+      - id: si_bridge_match_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "post-cue belief entropy"
+          - "cue validity"
+        sources:
+          - "output/data/firstprinciples/si_bridge_demo.json"
+        source_fields:
+          - "$.post_cue_belief_entropy"
+          - "$.cue_validity"
+          - "$.residual_entropy_match_abs"
+        scope: "finite analytical<->pymdp observable bridge"
+        display_transform: full
   opd_taxonomy_landscape:
     filename: opd_taxonomy_landscape.png
     alt: >-
@@ -1110,6 +1142,7 @@ section_figures:
     - id: free_energy_curve
     - id: energy_decomposition
     - id: active_selection_landscape
+    - id: si_bridge_match
   results_invariants:
     - id: invariant_dashboard
     - id: diversity_tradeoff

@@ -216,6 +216,10 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
         root / "output" / "data" / "firstprinciples" / "active_selection_demo.json"
     )
     active_selection_policies = active_selection_data.get("policies") or []
+    active_general_data = _load_json(root / "output" / "data" / "firstprinciples" / "active_selection_general_demo.json")
+    sequential_data = _load_json(root / "output" / "data" / "firstprinciples" / "sequential_selection_demo.json")
+    sequential_policies = sequential_data.get("policies") or {}
+    si_bridge_data = _load_json(root / "output" / "data" / "firstprinciples" / "si_bridge_demo.json")
     gkd_data = _load_json(root / "output" / "data" / "firstprinciples" / "gkd_demo.json")
     gkd_gap = gkd_data.get("reverse_kl") or {}
     diversity_data = _load_json(root / "output" / "data" / "firstprinciples" / "diversity_demo.json")
@@ -484,6 +488,15 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
         "active_selection_cue_residual": float(active_selection_data.get("efe_selected_residual_gap", 0.0)),
         "active_selection_pragmatic_residual": float(active_selection_data.get("pragmatic_only_residual_gap", 0.0)),
         "active_selection_policy_count": len(active_selection_policies),
+        "active_general_max_identity_residual": float(active_general_data.get("max_identity_residual", 0.0)),
+        "active_general_wrong_measure_gap": float(active_general_data.get("wrong_measure_residual_gap", 0.0)),
+        "active_general_channel_count": len(active_general_data.get("channels") or []),
+        "sequential_cue_step_cost": float(sequential_data.get("cue_step_cost", 0.0)),
+        "sequential_cue_policy_efe": float((sequential_policies.get("cue_first") or {}).get("policy_efe", 0.0)),
+        "sequential_commit_policy_efe": float((sequential_policies.get("commit_now") or {}).get("policy_efe", 0.0)),
+        "si_bridge_match_abs": float(si_bridge_data.get("residual_entropy_match_abs", 0.0)),
+        "si_bridge_post_cue_entropy": float(si_bridge_data.get("post_cue_belief_entropy", 0.0)),
+        "si_bridge_cue_validity": float(si_bridge_data.get("cue_validity", 0.0)),
         "active_selection_sweep_points": len(active_selection_data.get("validity_sweep") or []),
         "gkd_on_policy_loss": float(gkd_gap.get("on_policy_loss", 0.0)),
         "gkd_off_policy_loss": float(gkd_gap.get("off_policy_loss", 0.0)),

@@ -2,7 +2,7 @@
 
 Generated documentation coverage for every Python `def` and `class` under `src/` and `scripts/`. Entries marked `inventory fallback` have no inline docstring yet, but remain documented here by path, line, kind, and qualified name.
 
-Total documented definitions: 992
+Total documented definitions: 993
 
 ## `src/analytical/bernoulli_toy.py`
 
@@ -882,36 +882,36 @@ Total documented definitions: 992
 | 98 | `function` | `build_release_notes_evidence` | docstring | Build the release_notes_evidence.v1 payload: three source-backed release notes (validation report, bundle sources, semantic certificate), deferring rows whose source artifact does not exist yet. |
 | 144 | `function` | `build_figure_source_map` | docstring | Build the figure_source_map.v1 payload: per-registry-figure sources, source fields, validation gates, caption/alt tokens, and image dimensions. |
 | 151 | `function` | `build_figure_source_map._image_dimensions` | inventory fallback | Inventory fallback for function `build_figure_source_map._image_dimensions` defined at `src/roadmap_tracks/integration_audit_artifacts.py:151`. |
-| 572 | `function` | `_actual_figure_image_paths` | inventory fallback | Inventory fallback for function `_actual_figure_image_paths` defined at `src/roadmap_tracks/integration_audit_artifacts.py:572`. |
-| 583 | `function` | `_expected_figure_image_paths` | inventory fallback | Inventory fallback for function `_expected_figure_image_paths` defined at `src/roadmap_tracks/integration_audit_artifacts.py:583`. |
-| 590 | `function` | `build_figure_hash_manifest` | docstring | Build the figure_hash_manifest.v1 payload for declared figure/animation images. |
-| 687 | `function` | `_caption_overclaim_free` | inventory fallback | Inventory fallback for function `_caption_overclaim_free` defined at `src/roadmap_tracks/integration_audit_artifacts.py:687`. |
-| 695 | `function` | `_figure_claim_wording_ok` | inventory fallback | Inventory fallback for function `_figure_claim_wording_ok` defined at `src/roadmap_tracks/integration_audit_artifacts.py:695`. |
-| 732 | `function` | `_cover_quantitative_free` | docstring | Reject metric-dashboard language only on the graphical abstract. |
-| 835 | `function` | `_asserts_complete_rows` | inventory fallback | Inventory fallback for function `_asserts_complete_rows` defined at `src/roadmap_tracks/integration_audit_artifacts.py:835`. |
-| 851 | `function` | `_normalize_claim_text` | inventory fallback | Inventory fallback for function `_normalize_claim_text` defined at `src/roadmap_tracks/integration_audit_artifacts.py:851`. |
-| 856 | `function` | `_term_in_text` | docstring | Word-boundary containment so an opposite-sense substring cannot satisfy a term |
-| 862 | `function` | `_figure_caption_claim_payloads` | inventory fallback | Inventory fallback for function `_figure_caption_claim_payloads` defined at `src/roadmap_tracks/integration_audit_artifacts.py:862`. |
-| 879 | `function` | `_caption_claims_source_bound` | inventory fallback | Inventory fallback for function `_caption_claims_source_bound` defined at `src/roadmap_tracks/integration_audit_artifacts.py:879`. |
-| 902 | `function` | `_load_structured_artifact` | inventory fallback | Inventory fallback for function `_load_structured_artifact` defined at `src/roadmap_tracks/integration_audit_artifacts.py:902`. |
-| 917 | `function` | `_nonempty_node` | docstring | A resolved node carries content iff it is not None and not an empty |
-| 925 | `function` | `_jsonpath_present` | docstring | Return True iff a `$.a.b[*].c` / `$.a[0].b` JSONPath resolves to ≥1 *non-empty* |
-| 957 | `function` | `_nested_key_present` | inventory fallback | Inventory fallback for function `_nested_key_present` defined at `src/roadmap_tracks/integration_audit_artifacts.py:957`. |
-| 967 | `function` | `_source_field_resolves` | docstring | Resolve a caption-claim ``source_field`` against the figure's artifacts. |
-| 1024 | `function` | `_caption_claim_fields_resolved` | inventory fallback | Inventory fallback for function `_caption_claim_fields_resolved` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1024`. |
-| 1038 | `function` | `_caption_claim_terms_present` | inventory fallback | Inventory fallback for function `_caption_claim_terms_present` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1038`. |
-| 1051 | `function` | `_caption_claim_scope_ok` | inventory fallback | Inventory fallback for function `_caption_claim_scope_ok` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1051`. |
-| 1080 | `function` | `_caption_claim_display_transform_ok` | inventory fallback | Inventory fallback for function `_caption_claim_display_transform_ok` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1080`. |
-| 1101 | `function` | `build_visualization_quality_audit` | docstring | Build a verifier-facing audit over figure readability, provenance, and caption scope. |
-| 1232 | `function` | `_figure_source_rows_complete` | inventory fallback | Inventory fallback for function `_figure_source_rows_complete` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1232`. |
-| 1352 | `function` | `_rederive_image_facts` | docstring | Re-open a figure PNG and recompute (readable, nonblank, width, height). |
-| 1372 | `function` | `_visualization_quality_caption_claims_rederived` | docstring | Re-derive the visualization audit's caption-claim AND image booleans from source. |
-| 1434 | `function` | `_figure_hash_rows_complete` | inventory fallback | Inventory fallback for function `_figure_hash_rows_complete` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1434`. |
-| 1506 | `function` | `_scope_forbidden_hits` | docstring | Return scoped-overclaim hits by line, preserving negated guardrail mentions. |
-| 1524 | `function` | `build_scope_boundary_audit` | docstring | Build the scope_boundary_audit.v1 payload scanning numbered manuscript sections for scope leaks. |
-| 1563 | `function` | `build_manuscript_evidence_tables` | docstring | Build the manuscript_evidence_tables.v1 payload: an id/row_count/source index over twenty evidence artifacts. |
-| 1696 | `function` | `build_adversarial_audit` | docstring | Return a copy of the canonical adversarial audit from roadmap_tracks.sheaf_tracks. |
-| 1703 | `function` | `build_integration_semantic_snapshot` | docstring | Build the integration_semantic_snapshot.v1 payload: ~30 boolean restrictions over the saved artifacts plus structural/semantic/artifact/manuscript section rollups. |
+| 582 | `function` | `_actual_figure_image_paths` | inventory fallback | Inventory fallback for function `_actual_figure_image_paths` defined at `src/roadmap_tracks/integration_audit_artifacts.py:582`. |
+| 593 | `function` | `_expected_figure_image_paths` | inventory fallback | Inventory fallback for function `_expected_figure_image_paths` defined at `src/roadmap_tracks/integration_audit_artifacts.py:593`. |
+| 600 | `function` | `build_figure_hash_manifest` | docstring | Build the figure_hash_manifest.v1 payload for declared figure/animation images. |
+| 698 | `function` | `_caption_overclaim_free` | inventory fallback | Inventory fallback for function `_caption_overclaim_free` defined at `src/roadmap_tracks/integration_audit_artifacts.py:698`. |
+| 706 | `function` | `_figure_claim_wording_ok` | inventory fallback | Inventory fallback for function `_figure_claim_wording_ok` defined at `src/roadmap_tracks/integration_audit_artifacts.py:706`. |
+| 743 | `function` | `_cover_quantitative_free` | docstring | Reject metric-dashboard language only on the graphical abstract. |
+| 846 | `function` | `_asserts_complete_rows` | inventory fallback | Inventory fallback for function `_asserts_complete_rows` defined at `src/roadmap_tracks/integration_audit_artifacts.py:846`. |
+| 862 | `function` | `_normalize_claim_text` | inventory fallback | Inventory fallback for function `_normalize_claim_text` defined at `src/roadmap_tracks/integration_audit_artifacts.py:862`. |
+| 867 | `function` | `_term_in_text` | docstring | Word-boundary containment so an opposite-sense substring cannot satisfy a term |
+| 873 | `function` | `_figure_caption_claim_payloads` | inventory fallback | Inventory fallback for function `_figure_caption_claim_payloads` defined at `src/roadmap_tracks/integration_audit_artifacts.py:873`. |
+| 890 | `function` | `_caption_claims_source_bound` | inventory fallback | Inventory fallback for function `_caption_claims_source_bound` defined at `src/roadmap_tracks/integration_audit_artifacts.py:890`. |
+| 913 | `function` | `_load_structured_artifact` | inventory fallback | Inventory fallback for function `_load_structured_artifact` defined at `src/roadmap_tracks/integration_audit_artifacts.py:913`. |
+| 928 | `function` | `_nonempty_node` | docstring | A resolved node carries content iff it is not None and not an empty |
+| 936 | `function` | `_jsonpath_present` | docstring | Return True iff a `$.a.b[*].c` / `$.a[0].b` JSONPath resolves to ≥1 *non-empty* |
+| 968 | `function` | `_nested_key_present` | inventory fallback | Inventory fallback for function `_nested_key_present` defined at `src/roadmap_tracks/integration_audit_artifacts.py:968`. |
+| 978 | `function` | `_source_field_resolves` | docstring | Resolve a caption-claim ``source_field`` against the figure's artifacts. |
+| 1035 | `function` | `_caption_claim_fields_resolved` | inventory fallback | Inventory fallback for function `_caption_claim_fields_resolved` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1035`. |
+| 1049 | `function` | `_caption_claim_terms_present` | inventory fallback | Inventory fallback for function `_caption_claim_terms_present` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1049`. |
+| 1062 | `function` | `_caption_claim_scope_ok` | inventory fallback | Inventory fallback for function `_caption_claim_scope_ok` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1062`. |
+| 1091 | `function` | `_caption_claim_display_transform_ok` | inventory fallback | Inventory fallback for function `_caption_claim_display_transform_ok` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1091`. |
+| 1112 | `function` | `build_visualization_quality_audit` | docstring | Build a verifier-facing audit over figure readability, provenance, and caption scope. |
+| 1243 | `function` | `_figure_source_rows_complete` | inventory fallback | Inventory fallback for function `_figure_source_rows_complete` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1243`. |
+| 1363 | `function` | `_rederive_image_facts` | docstring | Re-open a figure PNG and recompute (readable, nonblank, width, height). |
+| 1383 | `function` | `_visualization_quality_caption_claims_rederived` | docstring | Re-derive the visualization audit's caption-claim AND image booleans from source. |
+| 1445 | `function` | `_figure_hash_rows_complete` | inventory fallback | Inventory fallback for function `_figure_hash_rows_complete` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1445`. |
+| 1517 | `function` | `_scope_forbidden_hits` | docstring | Return scoped-overclaim hits by line, preserving negated guardrail mentions. |
+| 1535 | `function` | `build_scope_boundary_audit` | docstring | Build the scope_boundary_audit.v1 payload scanning numbered manuscript sections for scope leaks. |
+| 1574 | `function` | `build_manuscript_evidence_tables` | docstring | Build the manuscript_evidence_tables.v1 payload: an id/row_count/source index over twenty evidence artifacts. |
+| 1707 | `function` | `build_adversarial_audit` | docstring | Return a copy of the canonical adversarial audit from roadmap_tracks.sheaf_tracks. |
+| 1714 | `function` | `build_integration_semantic_snapshot` | docstring | Build the integration_semantic_snapshot.v1 payload: ~30 boolean restrictions over the saved artifacts plus structural/semantic/artifact/manuscript section rollups. |
 
 ## `src/roadmap_tracks/integration_audit_builders.py`
 
@@ -1344,8 +1344,8 @@ Total documented definitions: 992
 
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
-| 140 | `function` | `run_figure` | docstring | Dispatch a registry figure id to its generator. |
-| 153 | `function` | `generate_all_figures` | inventory fallback | Inventory fallback for function `generate_all_figures` defined at `src/visualizations/figures.py:153`. |
+| 143 | `function` | `run_figure` | docstring | Dispatch a registry figure id to its generator. |
+| 156 | `function` | `generate_all_figures` | inventory fallback | Inventory fallback for function `generate_all_figures` defined at `src/visualizations/figures.py:156`. |
 
 ## `src/visualizations/figures_abstract.py`
 
@@ -1386,13 +1386,14 @@ Total documented definitions: 992
 | ---: | --- | --- | --- | --- |
 | 21 | `function` | `figure_distillation_divergence_geometry` | docstring | Render first-principles divergence geometry for teacher/student policies. |
 | 99 | `function` | `figure_active_selection_landscape` | docstring | Render the EFE active-selection landscape: validity-sweep identity + per-policy EFE bars. |
-| 180 | `function` | `figure_exposure_bias_recovery` | docstring | Render off-policy compounding versus on-policy correction curves. |
-| 299 | `function` | `figure_classroom_distillation_signal` | docstring | Render teacher/student policy gaps in the two-agent classroom artifact. |
-| 407 | `function` | `figure_sequential_shift_recovery` | docstring | Render the deterministic finite sequential train/test shift witness. |
-| 502 | `function` | `figure_sequential_shift_sensitivity` | docstring | Render the finite correction-dose sensitivity sweep for sequential shift. |
-| 611 | `function` | `figure_parallel_convergence` | docstring | Two frameworks, one answer: ML distillation converging to the AIF posterior. |
-| 674 | `function` | `figure_diversity_tradeoff` | docstring | Pass@1 (greedy, temperature-invariant) vs Pass@k (collapses under sharpening). |
-| 723 | `function` | `figure_privilege_dose_response` | docstring | Teacher-privilege dose-response: entropy gap is a threshold, reverse KL is the sensitive detector. |
+| 180 | `function` | `figure_si_bridge_match` | docstring | Analytical residual curve with the pymdp SI agent's post-cue entropy on it. |
+| 229 | `function` | `figure_exposure_bias_recovery` | docstring | Render off-policy compounding versus on-policy correction curves. |
+| 348 | `function` | `figure_classroom_distillation_signal` | docstring | Render teacher/student policy gaps in the two-agent classroom artifact. |
+| 456 | `function` | `figure_sequential_shift_recovery` | docstring | Render the deterministic finite sequential train/test shift witness. |
+| 551 | `function` | `figure_sequential_shift_sensitivity` | docstring | Render the finite correction-dose sensitivity sweep for sequential shift. |
+| 660 | `function` | `figure_parallel_convergence` | docstring | Two frameworks, one answer: ML distillation converging to the AIF posterior. |
+| 723 | `function` | `figure_diversity_tradeoff` | docstring | Pass@1 (greedy, temperature-invariant) vs Pass@k (collapses under sharpening). |
+| 772 | `function` | `figure_privilege_dose_response` | docstring | Teacher-privilege dose-response: entropy gap is a threshold, reverse KL is the sensitive detector. |
 
 ## `src/visualizations/figures_interpretability.py`
 
