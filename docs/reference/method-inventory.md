@@ -2,7 +2,7 @@
 
 Generated documentation coverage for every Python `def` and `class` under `src/` and `scripts/`. Entries marked `inventory fallback` have no inline docstring yet, but remain documented here by path, line, kind, and qualified name.
 
-Total documented definitions: 952
+Total documented definitions: 964
 
 ## `src/analytical/bernoulli_toy.py`
 
@@ -97,6 +97,23 @@ Total documented definitions: 952
 | ---: | --- | --- | --- | --- |
 | 14 | `class` | `ScriptStep` | docstring | One configured analysis script in deterministic pipeline order. |
 | 42 | `function` | `_unique` | docstring | Return values in declaration order with duplicates removed. |
+
+## `src/firstprinciples/active_selection.py`
+
+| line | kind | name | documentation source | summary |
+| ---: | --- | --- | --- | --- |
+| 99 | `class` | `RolloutPolicy` | docstring | A candidate on-policy data-collection policy. |
+| 114 | `function` | `RolloutPolicy.likelihood_array` | inventory fallback | Inventory fallback for function `RolloutPolicy.likelihood_array` defined at `src/firstprinciples/active_selection.py:114`. |
+| 122 | `class` | `PolicyScore` | inventory fallback | Inventory fallback for class `PolicyScore` defined at `src/firstprinciples/active_selection.py:122`. |
+| 131 | `function` | `policy_model` | docstring | Build the categorical generative model a rollout policy induces. |
+| 143 | `function` | `expected_conditional_entropy` | docstring | ``E_o[H(r \| o)]`` -- the residual uncertainty an on-policy student keeps. |
+| 161 | `function` | `score_policy` | docstring | Score one rollout policy with the shared EFE functional + the residual. |
+| 183 | `function` | `rank_by_efe` | docstring | Active-inference selection: ascending expected free energy (best first). |
+| 188 | `function` | `rank_by_pragmatic_only` | docstring | Negative-control selector: most reward-tilted first, epistemics ablated. |
+| 193 | `function` | `canonical_policies` | docstring | The toy T-maze data-collection menu (declared assumptions A1-A4). |
+| 210 | `function` | `_symmetric_cue` | inventory fallback | Inventory fallback for function `_symmetric_cue` defined at `src/firstprinciples/active_selection.py:210`. |
+| 219 | `function` | `validity_sweep` | docstring | Graded cue diagnosticity: residual = H(r) - epistemic across validities. |
+| 239 | `function` | `build_payload` | docstring | Build the ``firstprinciples.active_selection_demo`` artifact. |
 
 ## `src/firstprinciples/adaptive.py`
 
