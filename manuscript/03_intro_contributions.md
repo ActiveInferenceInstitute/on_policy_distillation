@@ -6,6 +6,32 @@
 
 We argue that on-policy distillation (OPD) admits an active-inference reading at the level of the finite variational objects studied here: the intractable teacher policy $\pi_T(y\mid x, I)$ plays the role of the generative model $p(o,s)$, the tractable student family $\pi_S(y\mid x)$ plays the role of the approximate posterior $q(s)$, and the per-token reverse-KL distillation loss is the variational free energy $F = D_{\mathrm{KL}}(q\Vert p(s\mid o)) - \log p(o)$, the KL target being the exact posterior $p(s\mid o)\propto p(o,s)$ the teacher induces [@kullback1951information; @jordan1999variational; @blei2017variational; @friston2006fep; @friston2009rl_active_inference; @friston2010fep; @friston2017process; @parr2022active]. This paper substantiates that scoped correspondence with an audited map, executable minimal models, and a source-bound manuscript pipeline. We make five contributions.
 
+Because the correspondence relabels objects across two vocabularies, we fix the type translation once, before any derivation. The mapping below is applied only after this translation; the teacher/student reading is never assumed implicitly.
+
+| Symbol | Active-inference role | On-policy-distillation role |
+| --- | --- | --- |
+| $x$ | conditioning context | prompt |
+| $y$ | — (output index) | generated token / sequence |
+| $I$ | privileged information | teacher-only signal (verified trace / cue) |
+| $o$ | observation | realized token / outcome |
+| $s$ | hidden state | latent the student must infer |
+| $p(o,s)$ | generative model | teacher policy $\pi_T(y\mid x,I)$ |
+| $q(s)$ | approximate posterior | student policy $\pi_S(y\mid x)$ |
+| $p(s\mid o)$ | exact posterior (KL target) | teacher-induced target |
+| $F$ | variational free energy | per-token reverse-KL loss |
+| $G$ | expected free energy | data-collection / planning side, not the realized-rollout loss |
+| $\lambda$ | teacher–student coupling | strength of teacher signal |
+| $\beta$ | precision / temperature | distillation temperature |
+
+We also fix, up front, exactly what kind of claim each result is, so that a reader can separate what is proved from what is illustrated from what is borrowed as context. Every assertion in the paper falls into one of four tiers, formalized in the scoped Proposition ([@sec:methods_analytical]):
+
+| Tier | Claim kind | Status | Where |
+| --- | --- | --- | --- |
+| 1 | **Algebraic identity** — reverse-KL distillation loss equals variational free energy up to the evidence constant; the mutual-information / conditional-entropy complement | proved in closed form (two-route verified) | Proposition (i)–(ii) |
+| 2 | **Numerical witness** — reverse-KL and free-energy descent reach the same posterior; the pymdp T-maze, classroom, and sequential-shift toys | measured on deterministic toy artifacts | Proposition (iii), [@sec:results_si_tmaze] |
+| 3 | **Interpretive analogy** — on-policy rollouts as active sampling, differential cue reliability as privileged information, expected free energy as planning, the Markov-blanket reading | a correspondence built on Tiers 1–2, not a further theorem | Proposition (iv), [@sec:discussion_outlook] |
+| 4 | **External context** — literature-reported OPD-vs-RL empirics (Qwen3, Thinking Machines) | not measured here; cited only as neighbouring context | [@sec:discussion_outlook] |
+
 1. **Audited correspondence map** ([@sec:methods_analytical]): a checked, component-by-component identification of the active-inference machinery with the OPD machinery — generative model to teacher, posterior to student, free energy to reverse-KL loss, active sampling to on-policy student rollouts (the posterior generating its own observations), epistemic value to teacher signal on novel student states, pragmatic value to the reward-tilted target $\exp(R/\beta)$, the Markov blanket to teacher/student context asymmetry, predictive coding to top-down teacher target plus bottom-up residual, privileged sensory access to the privileged information $I$, and sophisticated inference to a teacher conditioned on the student's own verified traces [@friston2017curiosity; @dacosta2020discrete; @sajid2021demystified; @friston2018deep_temporal; @friston2021sophisticated; @kirchhoff2018markov; @rao1999predictive; @vapnik2009lupi; @lopezpaz2016unifying; @zhao2026opsd; @liu2026sdpg]. The correspondence is exact for the explicitly constructed finite toy objects studied here — a claim we pin down as a proposition with stated assumptions in [@sec:methods_analytical], separating what is proved in closed form, what is demonstrated numerically, and what remains an interpretive reading — and we keep all claims scoped to these minimal models and artifacts. The full dictionary — all {{correspondence_row_count}} machine-validated rows — is rendered as [@fig:correspondence_map], so the thesis can be read as a single picture before any derivation.
 
 2. **Shared divergence geometry** ([@sec:methods_analytical]): closed-form mutual information $I(\lambda)$ and a free-energy decomposition on a symmetric Bernoulli-Ising toy, with an independent exact-recomputation cross-check ([@sec:results_mi_sweep], [@sec:results_free_energy]). Here $\lambda$ couples the teacher's privileged variable to the answer, $I(\lambda)$ is the teacher-student mutual information, and the finite free energy is the distillation objective for this toy. The entangled posterior versus mean-field comparison instantiates the divergence-direction choice that organises the OPD landscape [@awesomeopd2026]: the reverse-KL side concentrates on target-supported mass in this finite example (the MiniLLM/GKD lineage [@gu2024minillm; @agarwal2024gkd]), the forward-KL side covers teacher mass (the SFT and classical knowledge-distillation limit [@hinton2015distilling], with fine-tuning distribution-gap variants kept as context [@yang2024sdft_gap]), skew/adaptive KL methods occupy middle regimes [@ko2024distillm; @jin2026entropy_opd; @zhu2026hpd], and alpha/f-divergence or KL-geometry work warns against treating that toy contrast as a universal LLM law [@hernandezlobato2016blackbox_alpha; @ke2019f_divergence_imitation; @wu2024rethinking_kl_kd]. Student-induced rollouts address the training/inference mismatch identified in sequential prediction and LLM exposure-bias work [@ross2011dagger; @bengio2015scheduled; @arora2022exposure; @pozzi2025exposure_distill].
