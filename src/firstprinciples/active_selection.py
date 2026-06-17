@@ -73,6 +73,12 @@ _RESIDUAL_TOL = 1e-9
 # Margin separating the cue from epistemically blind policies in the controls.
 _GAP_MARGIN = 1e-3
 
+# Precision (inverse-temperature) grid for the active-inference policy posterior
+# q(pi) = softmax(-gamma * G(pi)). gamma=0 is uniform; gamma -> inf concentrates
+# on the unique EFE argmin.
+_PRECISION_GAMMAS: tuple[float, ...] = (0.0, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0)
+_PRECISION_LIMIT_GAMMA = 1.0e6
+
 # Likelihood p(o | r) for each canonical data-collection policy, as 2x2 rows.
 # A diagnostic channel has distinct rows (observation discriminates r); a blind
 # channel has identical rows (observation independent of r).
@@ -91,6 +97,8 @@ __all__ = [
     "rank_by_pragmatic_only",
     "canonical_policies",
     "validity_sweep",
+    "policy_posterior",
+    "precision_sweep",
     "build_payload",
     "validate_payload",
 ]
@@ -243,6 +251,36 @@ def validity_sweep(validities: tuple[float, ...] = (0.5, 0.6, 0.7, 0.8, 0.9, 1.0
     return rows
 
 
+def policy_posterior(efe_values: list[float], gamma: float) -> list[float]:
+    """Active-inference policy posterior ``q(pi) = softmax(-gamma * G(pi))``.
+
+    ``gamma`` (precision / inverse temperature) >= 0. ``gamma = 0`` returns the
+    uniform posterior; larger ``gamma`` concentrates mass on the lowest-EFE
+    policies, and ``gamma -> inf`` puts all mass on the unique EFE argmin (mass
+    splits evenly across ties). Numerically stable (subtracts the min EFE).
+    """
+    if gamma < 0.0:
+        raise ValueError("gamma (precision) must be non-negative")
+    g = np.asarray(efe_values, dtype=np.float64)
+    logits = -gamma * (g - g.min())
+    weights = np.exp(logits - logits.max())
+    total = float(weights.sum())
+    return (weights / total).tolist()
+
+
+def precision_sweep(
+    scores: list[PolicyScore], gammas: tuple[float, ...] = _PRECISION_GAMMAS
+) -> list[dict[str, float]]:
+    """Posterior mass on the cue policy across a precision grid (monotone up)."""
+    efe = [s.efe for s in scores]
+    cue_index = next((i for i, s in enumerate(scores) if s.name == "cue"), 0)
+    rows: list[dict[str, float]] = []
+    for gamma in gammas:
+        q = policy_posterior(efe, gamma)
+        rows.append({"gamma": float(gamma), "q_cue": float(q[cue_index])})
+    return rows
+
+
 def build_payload() -> dict[str, object]:
     """Build the ``firstprinciples.active_selection_demo`` artifact.
 
@@ -293,6 +331,30 @@ def build_payload() -> dict[str, object]:
     pragmatic_pick_keeps_residual = bool(pragmatic_pick.residual_gap > efe_pick.residual_gap + _GAP_MARGIN)
     uniform_keeps_residual = bool(uniform_expected_residual > efe_pick.residual_gap + _GAP_MARGIN)
 
+    # Precision-weighted policy posterior q(pi)=softmax(-gamma*G): the cue's mass
+    # rises monotonically with precision and -- given a UNIQUE EFE argmin --
+    # concentrates fully on the cue as gamma grows; gamma=0 is uniform.
+    prec_sweep = precision_sweep(scores)
+    q_cue_seq = [row["q_cue"] for row in prec_sweep]
+    n_policies = len(scores)
+    cue_index = next(i for i, s in enumerate(scores) if s.name == "cue")
+    efe_sorted = sorted(s.efe for s in scores)
+    efe_argmin_unique = bool(efe_sorted[1] - efe_sorted[0] > 1e-9)
+    q_limit = policy_posterior([s.efe for s in scores], _PRECISION_LIMIT_GAMMA)
+    posterior_uniform_at_zero = bool(
+        prec_sweep[0]["gamma"] == 0.0 and abs(q_cue_seq[0] - 1.0 / n_policies) < 1e-12
+    )
+    posterior_monotone_in_gamma = bool(
+        all(q_cue_seq[i] <= q_cue_seq[i + 1] + 1e-12 for i in range(len(q_cue_seq) - 1))
+        and q_cue_seq[-1] > q_cue_seq[0] + _GAP_MARGIN
+    )
+    posterior_limit_concentrates_on_cue = bool(efe_argmin_unique and abs(q_limit[cue_index] - 1.0) < 1e-9)
+    # Control: with the cue blinded it is no longer the EFE argmin, so its mass
+    # must NOT concentrate even at high precision.
+    blinded_menu_efe = [s.efe for s in scores if s.name != "cue"] + [blinded_score.efe]
+    q_blind_limit = policy_posterior(blinded_menu_efe, _PRECISION_LIMIT_GAMMA)
+    blinded_posterior_does_not_concentrate = bool(q_blind_limit[-1] < 0.5)
+
     ok = bool(
         identity_holds
         and sweep_monotone
@@ -303,6 +365,10 @@ def build_payload() -> dict[str, object]:
         and pragmatic_pick_keeps_residual
         and uniform_keeps_residual
         and blinding_reopens_gap
+        and posterior_uniform_at_zero
+        and posterior_monotone_in_gamma
+        and posterior_limit_concentrates_on_cue
+        and blinded_posterior_does_not_concentrate
     )
 
     return {
@@ -340,6 +406,13 @@ def build_payload() -> dict[str, object]:
         "pragmatic_only_keeps_residual": pragmatic_pick_keeps_residual,
         "uniform_keeps_residual": uniform_keeps_residual,
         "blinding_reopens_gap": blinding_reopens_gap,
+        "precision_gammas": list(_PRECISION_GAMMAS),
+        "precision_sweep": prec_sweep,
+        "efe_argmin_unique": efe_argmin_unique,
+        "posterior_uniform_at_zero": posterior_uniform_at_zero,
+        "posterior_monotone_in_gamma": posterior_monotone_in_gamma,
+        "posterior_limit_concentrates_on_cue": posterior_limit_concentrates_on_cue,
+        "blinded_posterior_does_not_concentrate": blinded_posterior_does_not_concentrate,
         "ok": ok,
     }
 
@@ -410,6 +483,30 @@ def validate_payload(payload: dict[str, object]) -> list[str]:
         blinded = float(payload.get("blinded_cue_residual_gap", 0.0))  # type: ignore[arg-type]
         if not blinded > residual["cue"] + _GAP_MARGIN:
             issues.append("blinding does not reopen the gap")
+
+    # Precision posterior re-derived from the stored efe rows (never trust the
+    # stored q_cue or the monotonicity/concentration flags).
+    prec_rows = payload.get("precision_sweep") or []
+    if not isinstance(prec_rows, list) or not prec_rows:
+        issues.append("precision_sweep missing or empty")
+    else:
+        try:
+            efe_vals = [float(p["efe"]) for p in policies]
+        except (KeyError, TypeError, ValueError) as exc:
+            return [*issues, f"malformed efe rows: {exc}"]
+        cue_i = names.index("cue") if "cue" in names else 0
+        q_cue_re = [policy_posterior(efe_vals, float(r["gamma"]))[cue_i] for r in prec_rows]
+        if any(abs(q_cue_re[i] - float(prec_rows[i]["q_cue"])) > 1e-9 for i in range(len(q_cue_re))):
+            issues.append("precision_sweep q_cue disagrees with re-derived softmax")
+        if any(q_cue_re[i] > q_cue_re[i + 1] + 1e-12 for i in range(len(q_cue_re) - 1)):
+            issues.append("precision posterior not monotone in gamma")
+        if float(prec_rows[0].get("gamma", -1.0)) == 0.0 and abs(q_cue_re[0] - 1.0 / len(efe_vals)) > 1e-9:
+            issues.append("precision posterior not uniform at gamma=0")
+        sorted_efe = sorted(efe_vals)
+        if sorted_efe[1] - sorted_efe[0] > 1e-9:  # unique argmin
+            q_lim = policy_posterior(efe_vals, _PRECISION_LIMIT_GAMMA)
+            if abs(q_lim[cue_i] - 1.0) > 1e-9:
+                issues.append("precision posterior does not concentrate on cue at high gamma")
 
     # Stored ok must agree with the re-derived verdict (catches a lying flag).
     if bool(payload.get("ok")) != (not issues):

@@ -2,7 +2,7 @@
 
 Generated documentation coverage for every Python `def` and `class` under `src/` and `scripts/`. Entries marked `inventory fallback` have no inline docstring yet, but remain documented here by path, line, kind, and qualified name.
 
-Total documented definitions: 967
+Total documented definitions: 969
 
 ## `src/analytical/bernoulli_toy.py`
 
@@ -102,19 +102,21 @@ Total documented definitions: 967
 
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
-| 100 | `class` | `RolloutPolicy` | docstring | A candidate on-policy data-collection policy. |
-| 115 | `function` | `RolloutPolicy.likelihood_array` | inventory fallback | Inventory fallback for function `RolloutPolicy.likelihood_array` defined at `src/firstprinciples/active_selection.py:115`. |
-| 123 | `class` | `PolicyScore` | inventory fallback | Inventory fallback for class `PolicyScore` defined at `src/firstprinciples/active_selection.py:123`. |
-| 132 | `function` | `policy_model` | docstring | Build the categorical generative model a rollout policy induces. |
-| 148 | `function` | `expected_conditional_entropy` | docstring | ``E_o[H(r \| o)]`` -- the residual uncertainty an on-policy student keeps. |
-| 168 | `function` | `score_policy` | docstring | Score one rollout policy with the shared EFE functional + the residual. |
-| 190 | `function` | `rank_by_efe` | docstring | Active-inference selection: ascending expected free energy (best first). |
-| 195 | `function` | `rank_by_pragmatic_only` | docstring | Negative-control selector: most reward-tilted first, epistemics ablated. |
-| 200 | `function` | `canonical_policies` | docstring | The toy T-maze data-collection menu (declared assumptions A1-A4). |
-| 217 | `function` | `_symmetric_cue` | inventory fallback | Inventory fallback for function `_symmetric_cue` defined at `src/firstprinciples/active_selection.py:217`. |
-| 226 | `function` | `validity_sweep` | docstring | Graded cue diagnosticity: residual = H(r) - epistemic across validities. |
-| 246 | `function` | `build_payload` | docstring | Build the ``firstprinciples.active_selection_demo`` artifact. |
-| 347 | `function` | `validate_payload` | docstring | Re-derive the active-selection certificate from the rows; return issues. |
+| 108 | `class` | `RolloutPolicy` | docstring | A candidate on-policy data-collection policy. |
+| 123 | `function` | `RolloutPolicy.likelihood_array` | inventory fallback | Inventory fallback for function `RolloutPolicy.likelihood_array` defined at `src/firstprinciples/active_selection.py:123`. |
+| 131 | `class` | `PolicyScore` | inventory fallback | Inventory fallback for class `PolicyScore` defined at `src/firstprinciples/active_selection.py:131`. |
+| 140 | `function` | `policy_model` | docstring | Build the categorical generative model a rollout policy induces. |
+| 156 | `function` | `expected_conditional_entropy` | docstring | ``E_o[H(r \| o)]`` -- the residual uncertainty an on-policy student keeps. |
+| 176 | `function` | `score_policy` | docstring | Score one rollout policy with the shared EFE functional + the residual. |
+| 198 | `function` | `rank_by_efe` | docstring | Active-inference selection: ascending expected free energy (best first). |
+| 203 | `function` | `rank_by_pragmatic_only` | docstring | Negative-control selector: most reward-tilted first, epistemics ablated. |
+| 208 | `function` | `canonical_policies` | docstring | The toy T-maze data-collection menu (declared assumptions A1-A4). |
+| 225 | `function` | `_symmetric_cue` | inventory fallback | Inventory fallback for function `_symmetric_cue` defined at `src/firstprinciples/active_selection.py:225`. |
+| 234 | `function` | `validity_sweep` | docstring | Graded cue diagnosticity: residual = H(r) - epistemic across validities. |
+| 254 | `function` | `policy_posterior` | docstring | Active-inference policy posterior ``q(pi) = softmax(-gamma * G(pi))``. |
+| 271 | `function` | `precision_sweep` | docstring | Posterior mass on the cue policy across a precision grid (monotone up). |
+| 284 | `function` | `build_payload` | docstring | Build the ``firstprinciples.active_selection_demo`` artifact. |
+| 420 | `function` | `validate_payload` | docstring | Re-derive the active-selection certificate from the rows; return issues. |
 
 ## `src/firstprinciples/adaptive.py`
 

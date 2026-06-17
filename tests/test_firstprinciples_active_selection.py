@@ -122,6 +122,36 @@ def test_validate_payload_rejects_malformed() -> None:
     assert asel.validate_payload({"schema": asel.SCHEMA, "policies": []}) != []
 
 
+def test_policy_posterior_uniform_at_zero_and_concentrates() -> None:
+    efe = [0.0, 0.5, 0.5, 0.693]  # unique argmin at index 0
+    q0 = asel.policy_posterior(efe, 0.0)
+    assert all(abs(qi - 0.25) < 1e-12 for qi in q0)
+    q_hi = asel.policy_posterior(efe, 1e6)
+    assert abs(q_hi[0] - 1.0) < 1e-9
+    assert asel.policy_posterior(efe, 5.0)[0] > asel.policy_posterior(efe, 1.0)[0]
+    with pytest.raises(ValueError):
+        asel.policy_posterior(efe, -1.0)
+
+
+def test_precision_sweep_monotone_onto_cue() -> None:
+    scores = [asel.score_policy(p) for p in asel.canonical_policies()]
+    sweep = asel.precision_sweep(scores)
+    q = [r["q_cue"] for r in sweep]
+    assert sweep[0]["gamma"] == 0.0 and abs(q[0] - 0.25) < 1e-12
+    assert all(q[i] <= q[i + 1] + 1e-12 for i in range(len(q) - 1))
+    assert q[-1] > 0.999
+
+
+def test_validate_payload_catches_lying_precision_row() -> None:
+    # Tamper q_cue in the stored sweep but leave ok true: re-derivation must catch it.
+    import copy
+
+    payload = copy.deepcopy(asel.build_payload())
+    payload["precision_sweep"][-1]["q_cue"] = 0.123  # was ~1.0
+    issues = asel.validate_payload(payload)
+    assert any("precision_sweep q_cue disagrees" in i for i in issues)
+
+
 def test_build_payload_certificate_ok() -> None:
     payload = asel.build_payload()
     assert payload["schema"] == asel.SCHEMA
@@ -134,5 +164,9 @@ def test_build_payload_certificate_ok() -> None:
     assert payload["blinding_reopens_gap"] is True
     assert payload["max_identity_residual"] < 1e-12
     assert payload["efe_selected_residual_gap"] < 1e-9
+    assert payload["posterior_uniform_at_zero"] is True
+    assert payload["posterior_monotone_in_gamma"] is True
+    assert payload["posterior_limit_concentrates_on_cue"] is True
+    assert payload["blinded_posterior_does_not_concentrate"] is True
     # full policy menu present
     assert {p["name"] for p in payload["policies"]} == {"cue", "commit_left", "commit_right", "stay"}
