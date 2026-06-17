@@ -6,7 +6,7 @@ phase: complete
 progress: 79/82
 mode: algorithm
 started: 2026-06-10
-updated: 2026-06-10
+updated: 2026-06-17
 ---
 
 # ISA — On-Policy Distillation is Active Inference (project system of record)
@@ -397,3 +397,39 @@ PDF render all green afterward.
   quota-exhausted until 2026-06-20 across this session; the math pass ran Opus-family adversarial
   probes (PASS, not green-by-construction) but the true cross-vendor audit of both the math and
   the integration remains to be run after quota resets.
+
+## Run-11 session record (2026-06-17) — four Science-survivor active-selection extensions
+
+> Goal: comprehensively deepen the active/EFE result toward SOTA while codex (cross-vendor) is
+> down, via /workflows /Science (parallel prototype-before-claim) + /RedTeam (parallel
+> Opus-family refutation). The /Science fan-out tested 4 candidate extensions on real
+> computation; all held, and it REFUTED the naive sequential control (green-by-construction trap)
+> before any build, finding the honest cue-step-cost regime.
+
+- **Four extensions, each prototype-confirmed then built as a first-class audited artifact**
+  (module + re-derive-never-trust `validate_payload` + producer + 5 artifact_contracts structures
+  bound to `results_free_energy` + `output_checks` validator + typed claim rows + tests with biting
+  controls), narrated in the `results_free_energy` active-selection subsection with hydrated tokens:
+  1. **precision posterior** (in `active_selection.py`): `q(pi)=softmax(-gamma*G)` -> cue 0.25->1.0
+     monotone, uniform at gamma=0, concentrates on the unique EFE argmin, blinded cue does not.
+  2. **`active_selection_general.py`**: identity `gap_closed=epistemic` holds n,k in {3,4} to
+     2.2e-16; wrong-measure ablation bites; k<n under-resolves; k>=n closes to zero.
+  3. **`sequential_selection.py`**: honest horizon-dependent regime (cue_step_cost=1.0 in the
+     analytically-derived window (0.693,1.524] nats) -- myopic prefers commit, 2-step planner
+     prefers cue; blinded cue collapses it.
+  4. **`si_bridge.py` (HEADLINE)** + figure `si_bridge_match`: the closed-form residual at the
+     env cue_validity equals the pymdp SI agent's measured post-cue belief entropy to **6.6e-9**
+     -- a quantitative, validity-specific cross-artifact prediction (two independent code paths:
+     Bayes vs pymdp variational inference); cue-before-arm + entropy-collapse observable bridge.
+     Bound to observables only (pymdp exposes no internal EFE).
+- **/RedTeam (5 Opus-family skeptics): 0 refuted.** si_bridge + manuscript-honesty SOLID; 4
+  MINOR issues found and fixed (commit `f8e4350`): multistate docstring overclaim + 4 selection
+  flags now re-derived from rows; sequential expected_reward derived (was hardcoded); precision
+  blinded-flag re-derived; manuscript "full pymdp simulation" -> "a measured observable". Skeptics
+  confirmed by defect injection that every certificate is not green-by-construction.
+- **Verification:** full chain `--render` green, `validate_outputs` ALL TRUE (4 new schema checks
+  true), PDF 0 dangling crossrefs, **full suite 586->~600 (fast-lane 471) passed**, ruff+mypy clean,
+  claim ledger 128->139 typed claims, figures +2 (`active_selection_landscape`, `si_bridge_match`).
+  Commits this session: `e7823ff`, `97a18aa`, `2301d30`, `f8e4350` (+ the Run-10 integration set).
+- **Cross-vendor (`OPD-ACTIVE-XVENDOR-1`) still deferred** to codex quota reset (2026-06-20); it now
+  also covers these four extensions. /Science + /RedTeam (Opus-family) stood in this session.
