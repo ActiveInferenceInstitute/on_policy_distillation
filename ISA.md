@@ -433,3 +433,29 @@ PDF render all green afterward.
   Commits this session: `e7823ff`, `97a18aa`, `2301d30`, `f8e4350` (+ the Run-10 integration set).
 - **Cross-vendor (`OPD-ACTIVE-XVENDOR-1`) still deferred** to codex quota reset (2026-06-20); it now
   also covers these four extensions. /Science + /RedTeam (Opus-family) stood in this session.
+
+## Run-12 session record (2026-06-17) — external publication-grade review integration (commit `e503923`)
+
+> A reviewer (PDF-only) returned a publication-grade review. /workflows recon (4 agents) triaged it
+> against the live repo. Verdict: the artifact-availability complaints (Critical#1, C5/C6/C7/C8/C10/C16)
+> are MOOT — the reviewer lacked the repo, which ships with the publication. Many technical points were
+> already satisfied (all 12 requested citations present; LUPI already 'differential cue reliability';
+> Qwen Table 21 + title already token-pinpointed in prose; C9 'posterior sharpness not success' already
+> stated; the Proposition already tiers proved/numerical/interpretive). Net relevant fixes integrated:
+
+- **Notation/typing table** + prominent **4-tier claim-taxonomy box** (algebraic identity / numerical
+  witness / interpretive analogy / external context) added early in `intro_contributions`, forward-
+  referencing the scoped Proposition — the reviewer's two top asks.
+- **Claim-scoping (C1/C14/p30):** rewrote the single over-promoting passage in `discussion_outlook`
+  ('...are mathematical facts inside the studied objects, not analogies') so only reverse-KL=VFE is the
+  closed-form fact; EFE-planning is the witness construction; the Markov-blanket reading is Tier-3.
+- **C15:** 'full benchmark table' → 'reduced AIME-24 excerpt'; full table = `benchmark_table.md` artifact.
+- **Alternative causal explanations** enumerated (dense supervision / verifier / optimization geometry /
+  teacher quality / curriculum) + a compact **Threats-to-validity** section (internal/construct/external/
+  reproducibility) in `discussion_outlook`.
+- **C9 apples-to-oranges:** classroom multi-step KL flagged as not numerically comparable to the
+  single-decision log-2 MI ceiling, in `results_si_tmaze`.
+- **C13:** Thinking-Machines bib entry given `urldate` + non-peer-reviewed-context `note`.
+- **Verification:** full chain `--render` green, `validate_outputs` ALL TRUE, PDF 66pp / 0 dangling
+  crossrefs, fast-lane 471 passed, no hardcoded numbers (tokens/math only), all citations pre-existing
+  keys. Opus-family honesty cross-check of the tier assignments + new prose run post-edit.
