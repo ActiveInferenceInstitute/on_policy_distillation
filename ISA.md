@@ -371,14 +371,29 @@ PDF render all green afterward.
   files (module + test + doc) pathspec-only.
 - **Cross-vendor:** Forge GPT-5.4 audit of the math/claim launched this session (verdict
   pending at write time) — `OPD-ACTIVE-XVENDOR-1`.
-- **DELIBERATELY DEFERRED — six-surface integration (`OPD-ACTIVE-INTEGRATE-1`):** registering
-  `active_selection_demo.json` as a first-class audited artifact requires the full footprint
-  a comparable demo carries — `artifacts.py write_all` (producer) + `artifact_contracts.py`
-  (REQUIRED_OUTPUTS, ARTIFACT_CONSUMERS, producer map, ARTIFACT_GATES) + an `output_checks.py`
-  read-time re-derivation validator + a `claim_ledger.py` typed predicate + `manuscript/variables.py`
-  hydration tokens + a results/methods fragment + a `figures.yaml` figure (validity sweep +
-  per-policy EFE/residual) + the EFE correspondence-map row in `mapping.py` updated from
-  "not minimized" to cite this result + full-chain regen + `validate_outputs` + PDF render.
-  Per the project's "six surfaces or nothing — partial integration is worse than absence"
-  principle, this is its own run; the verified science is committed and standalone-tested in
-  the meantime.
+- **`OPD-ACTIVE-INTEGRATE-1` COMPLETE (commits `533170d`, `0ee4b56`).** The result is now a
+  first-class audited, visualized, narrated, and re-centered part of the paper across every
+  surface:
+  - **Audited artifact:** `active_selection_demo.json` is a REQUIRED_OUTPUT bound to
+    `results_free_energy` (producer + contracts ×5 + gates), with an `output_checks` validator
+    (`firstprinciples_active_selection_schema`) delegating to `active_selection.validate_payload`,
+    which RE-DERIVES the certificate from the `policies[]`/`validity_sweep[]` rows (argmin-EFE,
+    per-row identity, controls) and requires stored `ok` to agree — a mutated row under a true
+    `ok` is caught (3 negative-control tests).
+  - **Visualization:** `active_selection_landscape` 2-panel figure (cue-validity sweep showing
+    epistemic+residual=H(r); per-policy EFE/epistemic/pragmatic/residual bars) wired across all
+    six figure surfaces + the README/AGENTS/SYNTAX doc-contract lists; scope-required, captioned
+    with hydrated tokens, visually QA'd (titles + legend non-colliding).
+  - **Manuscript:** new `sec:active_selection` subsection in `results_free_energy` with five
+    hydrated tokens (no hardcoded numerals) and an `@fig` reference; numbers hydrate live
+    ("prior entropy 0.693 nats", "residual gap to 0.0e+00 nats").
+  - **Claim ledger + correspondence map (the re-center):** four typed-claim rows; a new 26th
+    correspondence row "Expected free energy action selection (active sampling)" formalizing the
+    previously un-formalized action-selection half; row-count claim updated 25→26.
+  - **Verification:** full chain `--render` exit 0, `validate_outputs` ALL TRUE, PDF renders with
+    0 dangling crossrefs; **full suite 586 passed / 0 failed** (all markers incl. artifact/render
+    slow); figure tests 27 passed; ruff + mypy clean.
+- **`OPD-ACTIVE-XVENDOR-1` still DEFERRED (honest):** the GPT-5.4/codex cross-vendor channel was
+  quota-exhausted until 2026-06-20 across this session; the math pass ran Opus-family adversarial
+  probes (PASS, not green-by-construction) but the true cross-vendor audit of both the math and
+  the integration remains to be run after quota resets.

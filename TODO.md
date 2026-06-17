@@ -84,8 +84,7 @@ implementation begins.
 | `AI-TEST-ISOLATION-1` | Test infra | Complete the 5-consecutive-run idle-host soak. `run_test_isolation_soak.py` records repeated deterministic shuffled chunked runs incrementally, and `--validate-report --require-complete` verifies seed continuity, failed chunk ids, failed tests, diagnostic completeness, and `complete_soak`. The 2026-06-13 diagnostic soak exposed stale-artifact order failures that were hardened; the 2026-06-14 loaded-host transcript then failed only through SIGTERM-style chunk exits at seeds 61303 and 61304 with no pytest failures. A fresh idle-host completion transcript is still needed. | `output/reports/test_isolation_soak.json` | five green consecutive runs with fixed or reported shuffle seeds and `complete_soak: true` | Red shuffled run is reported with its seed and tail, not re-rolled |
 | `REVIEW-FIGURE-RELOCATION-1` | Visualization | At venue-submission time, decide whether dense dashboard figures should move to the supplement with simplified main-text replacements. Deliberately deferred because the current paper is an auditable artifact paper. | `figures.yaml` `section_figures` | compose and figure-source gates stay green | Figure lacks source artifact |
 | `TMAZE-MATRIX-TABLE-1` | Visualization | At venue-submission time, convert `si_tmaze_model_matrices` into a generated table or move it fully to the supplement. Do not hand-typeset values; bind them to the matrix artifact. | generated table binding + matrix artifact | compose and figure gates stay green | Typeset values diverge from matrix artifact |
-| `OPD-ACTIVE-INTEGRATE-1` | Correspondence / sheaf | Promote the committed `firstprinciples.active_selection` result (EFE epistemic value = closeable distillation gap; commit `80053f5`) to a first-class audited artifact: register `active_selection_demo.json` in `artifacts.py write_all` + `artifact_contracts.py` (4 lists) + an `output_checks.py` read-time re-derivation validator + a `claim_ledger.py` typed predicate + `manuscript/variables.py` hydration tokens + a methods/results fragment + a `figures.yaml` figure (validity sweep + per-policy EFE/residual), and update the EFE row of `mapping.py` from "not minimized" to cite this result. | `output/data/firstprinciples/active_selection_demo.json` + bound fragment + figure | `validate_outputs` ALL TRUE + claim-ledger predicate + compose strict + PDF render, all six surfaces | Mutate a residual/epistemic row leaving `ok` true ⇒ re-derivation gate fails; blinded-cue control reopens gap |
-| `OPD-ACTIVE-XVENDOR-1` | Verification | Disposition the Forge GPT-5.4 cross-vendor audit of the active-selection math/claim (launched 2026-06-17). | Forge verdict + any fixes | no unaddressed CRITICAL/HIGH | n/a |
+| `OPD-ACTIVE-XVENDOR-1` | Verification | Run the GPT-5.4/codex cross-vendor audit of the active-selection math AND integration once quota resets (was exhausted until 2026-06-20). The 2026-06-17 pass ran Opus-family adversarial probes only (PASS, proven not green-by-construction); the cross-vendor blind-spot reduction is not yet present. | Forge verdict + any fixes | no unaddressed CRITICAL/HIGH | n/a |
 
 `tasks.yaml` is the taskboard metadata surface. `scripts/audit_roadmap_tasks.py`
 keeps the open TODO rows, task status/progress, and blocked/deferred semantics in
@@ -104,7 +103,10 @@ The following roadmap IDs are implemented and no longer active TODO work:
 `AI-RELEASE-PARITY-1`, `AI-EVIDENCE-FIELDS-1`, `AI-SYMBOL-SPINE-3`,
 `AI-STALE-SUMMARY-1`, `AI-EFE-NONVACUOUS-1`, `AI-STUB-DEPTH-1`,
 `AI-APPENDIX-HYDRATE-1`, `AI-APPENDIX-FIGURES-1`, `AI-HYGIENE-1`,
-and `QWEN-TABLE-PIN-1`.
+and `QWEN-TABLE-PIN-1`. `OPD-ACTIVE-INTEGRATE-1` (2026-06-17, commits `533170d`/`0ee4b56`)
+promoted the EFE active-selection result to a first-class audited artifact + figure
+(`active_selection_landscape`) + `results_free_energy` prose + four typed-claim rows + a 26th
+correspondence-map row; full suite 586 passed, validate ALL TRUE, PDF renders.
 
 The proof surface for completed rows is the live artifact contract:
 `validate_outputs.py`, `compose_manuscript.py --validate-only --strict`,
