@@ -1516,3 +1516,66 @@ claims:
   evidence:
     field: blinding_reopens_gap
     equals: true
+- id: active_selection_general_identity_multistate
+  statement: The gap_closed = epistemic identity holds for n,k in {3,4}, not just the binary toy.
+  path: output/data/firstprinciples/active_selection_general_demo.json
+  section: results_free_energy
+  tracks:
+  - analytical
+  evidence:
+    field: identity_holds_multistate
+    equals: true
+- id: active_selection_general_wrong_measure_breaks
+  statement: A wrong-measure ablation breaks the multi-state identity (non-vacuity control).
+  path: output/data/firstprinciples/active_selection_general_demo.json
+  section: results_free_energy
+  tracks:
+  - analytical
+  evidence:
+    field: wrong_measure_breaks_identity
+    equals: true
+- id: sequential_selection_horizon_matters
+  statement: A myopic planner prefers commit while the 2-step planner prefers the cue (horizon-dependent).
+  path: output/data/firstprinciples/sequential_selection_demo.json
+  section: results_free_energy
+  tracks:
+  - analytical
+  evidence:
+    field: horizon_matters
+    equals: true
+- id: sequential_selection_blind_cue_collapses
+  statement: Blinding the cue collapses the cue-first advantage in the sequential toy (control).
+  path: output/data/firstprinciples/sequential_selection_demo.json
+  section: results_free_energy
+  tracks:
+  - analytical
+  evidence:
+    field: blind_cue_collapses_advantage
+    equals: true
+- id: si_bridge_quantitative_match
+  statement: The analytical residual matches the pymdp SI agent's post-cue belief entropy to <1e-6.
+  path: output/data/firstprinciples/si_bridge_demo.json
+  section: results_free_energy
+  tracks:
+  - analytical
+  evidence:
+    field: residual_entropy_match_abs
+    max: 1.0e-06
+- id: si_bridge_cue_before_arm
+  statement: The pymdp SI agent visits the cue before any arm (observable bridge claim).
+  path: output/data/firstprinciples/si_bridge_demo.json
+  section: results_free_energy
+  tracks:
+  - analytical
+  evidence:
+    field: cue_before_arm
+    equals: true
+- id: si_bridge_match_validity_specific
+  statement: The analytical-to-pymdp match holds only at the environment's cue validity (real prediction).
+  path: output/data/firstprinciples/si_bridge_demo.json
+  section: results_free_energy
+  tracks:
+  - analytical
+  evidence:
+    field: match_is_validity_specific
+    equals: true

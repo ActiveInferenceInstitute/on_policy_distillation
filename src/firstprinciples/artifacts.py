@@ -15,8 +15,10 @@ from typing import Any
 import numpy as np
 
 from . import active_selection
+from . import active_selection_general
 from . import adaptive
 from . import divergences as dv
+from . import sequential_selection
 from . import diversity
 from . import empirical
 from . import energy
@@ -216,6 +218,12 @@ def write_all(root: Path) -> dict[str, Path]:
         "energy_demo.json": write_json(root, "energy_demo.json", energy.build_payload()),
         "active_selection_demo.json": write_json(
             root, "active_selection_demo.json", active_selection.build_payload()
+        ),
+        "active_selection_general_demo.json": write_json(
+            root, "active_selection_general_demo.json", active_selection_general.build_payload()
+        ),
+        "sequential_selection_demo.json": write_json(
+            root, "sequential_selection_demo.json", sequential_selection.build_payload()
         ),
         "empirical_benchmark.json": write_json(root, "empirical_benchmark.json", empirical.build_payload()),
         "parallel_demo.json": write_json(root, "parallel_demo.json", parallel.build_payload()),

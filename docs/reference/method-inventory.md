@@ -2,7 +2,7 @@
 
 Generated documentation coverage for every Python `def` and `class` under `src/` and `scripts/`. Entries marked `inventory fallback` have no inline docstring yet, but remain documented here by path, line, kind, and qualified name.
 
-Total documented definitions: 969
+Total documented definitions: 992
 
 ## `src/analytical/bernoulli_toy.py`
 
@@ -118,6 +118,22 @@ Total documented definitions: 969
 | 284 | `function` | `build_payload` | docstring | Build the ``firstprinciples.active_selection_demo`` artifact. |
 | 420 | `function` | `validate_payload` | docstring | Re-derive the active-selection certificate from the rows; return issues. |
 
+## `src/firstprinciples/active_selection_general.py`
+
+| line | kind | name | documentation source | summary |
+| ---: | --- | --- | --- | --- |
+| 53 | `class` | `Channel` | docstring | A named observation channel ``p(o \| r)`` over ``n`` states, ``k`` outcomes. |
+| 59 | `function` | `Channel.array` | inventory fallback | Inventory fallback for function `Channel.array` defined at `src/firstprinciples/active_selection_general.py:59`. |
+| 66 | `function` | `_flat_prior` | inventory fallback | Inventory fallback for function `_flat_prior` defined at `src/firstprinciples/active_selection_general.py:66`. |
+| 70 | `function` | `_model` | inventory fallback | Inventory fallback for function `_model` defined at `src/firstprinciples/active_selection_general.py:70`. |
+| 78 | `function` | `_wrong_measure_conditional_entropy` | docstring | Ablation: weight H(r\|o) by a UNIFORM q(o) instead of the true predicted q(o). |
+| 99 | `class` | `ChannelScore` | inventory fallback | Inventory fallback for class `ChannelScore` defined at `src/firstprinciples/active_selection_general.py:99`. |
+| 108 | `function` | `ChannelScore.as_row` | inventory fallback | Inventory fallback for function `ChannelScore.as_row` defined at `src/firstprinciples/active_selection_general.py:108`. |
+| 120 | `function` | `score_channel` | inventory fallback | Inventory fallback for function `score_channel` defined at `src/firstprinciples/active_selection_general.py:120`. |
+| 137 | `function` | `canonical_channels` | docstring | A menu spanning n,k in {3,4}: perfect (k>=n), noisy, under-resolving, blind. |
+| 149 | `function` | `build_payload` | docstring | Certify the multi-state identity + caveats over the canonical channel menu. |
+| 201 | `function` | `validate_payload` | docstring | Re-derive the multi-state identity from the channel rows; return issues. |
+
 ## `src/firstprinciples/adaptive.py`
 
 | line | kind | name | documentation source | summary |
@@ -133,15 +149,15 @@ Total documented definitions: 969
 
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
-| 66 | `function` | `_dir` | inventory fallback | Inventory fallback for function `_dir` defined at `src/firstprinciples/artifacts.py:66`. |
-| 72 | `function` | `write_json` | inventory fallback | Inventory fallback for function `write_json` defined at `src/firstprinciples/artifacts.py:72`. |
-| 78 | `function` | `divergence_demo` | docstring | Forward/reverse/JSD/skew/alpha geometry on the canonical example. |
-| 94 | `function` | `reward_tilting_demo` | docstring | Reward-tilted target and numerical optimality certificate. |
-| 109 | `function` | `exposure_bias_demo` | docstring | On-policy vs off-policy survival curves under compounding error. |
-| 125 | `function` | `sdpg_demo` | docstring | SDPG objective terms across KL modes on canonical logits. |
-| 173 | `function` | `write_statistics_artifact` | docstring | Write ``statistics_demo.json`` from measured classroom belief entropies. |
-| 188 | `function` | `write_markdown_tables` | docstring | Write the correspondence and taxonomy markdown tables. |
-| 203 | `function` | `write_all` | docstring | Emit every deterministic first-principles artifact; return name->path. |
+| 68 | `function` | `_dir` | inventory fallback | Inventory fallback for function `_dir` defined at `src/firstprinciples/artifacts.py:68`. |
+| 74 | `function` | `write_json` | inventory fallback | Inventory fallback for function `write_json` defined at `src/firstprinciples/artifacts.py:74`. |
+| 80 | `function` | `divergence_demo` | docstring | Forward/reverse/JSD/skew/alpha geometry on the canonical example. |
+| 96 | `function` | `reward_tilting_demo` | docstring | Reward-tilted target and numerical optimality certificate. |
+| 111 | `function` | `exposure_bias_demo` | docstring | On-policy vs off-policy survival curves under compounding error. |
+| 127 | `function` | `sdpg_demo` | docstring | SDPG objective terms across KL modes on canonical logits. |
+| 175 | `function` | `write_statistics_artifact` | docstring | Write ``statistics_demo.json`` from measured classroom belief entropies. |
+| 190 | `function` | `write_markdown_tables` | docstring | Write the correspondence and taxonomy markdown tables. |
+| 205 | `function` | `write_all` | docstring | Emit every deterministic first-principles artifact; return name->path. |
 
 ## `src/firstprinciples/classroom.py`
 
@@ -307,6 +323,15 @@ Total documented definitions: 969
 | 79 | `function` | `sdpg_loss` | docstring | Evaluate the three SDPG terms for one token position. |
 | 111 | `function` | `signal_density` | docstring | Contrast the density of the self-distillation signal vs a scalar reward. |
 
+## `src/firstprinciples/sequential_selection.py`
+
+| line | kind | name | documentation source | summary |
+| ---: | --- | --- | --- | --- |
+| 52 | `function` | `step_efe` | docstring | Expected free energy of one step, via the shared energy.efe_report. |
+| 58 | `function` | `policy_efe` | docstring | Two-step policy EFE breakdown for a cue-first or commit-now policy. |
+| 77 | `function` | `build_payload` | docstring | Certify the horizon-dependent active-selection result with its controls. |
+| 112 | `function` | `validate_payload` | docstring | Re-derive the horizon-dependence verdict from the per-step G rows. |
+
 ## `src/firstprinciples/sequential_shift.py`
 
 | line | kind | name | documentation source | summary |
@@ -324,6 +349,16 @@ Total documented definitions: 969
 | 238 | `function` | `build_sensitivity_payload` | docstring | Assemble a finite correction-dose sensitivity sweep for the shift witness. |
 | 312 | `function` | `validate_payload` | docstring | Return validation issues for a sequential-shift payload. |
 | 368 | `function` | `validate_sensitivity_payload` | docstring | Return validation issues for a sequential-shift correction-dose sweep. |
+
+## `src/firstprinciples/si_bridge.py`
+
+| line | kind | name | documentation source | summary |
+| ---: | --- | --- | --- | --- |
+| 51 | `function` | `_load` | inventory fallback | Inventory fallback for function `_load` defined at `src/firstprinciples/si_bridge.py:51`. |
+| 55 | `function` | `analytical_residual_at_validity` | docstring | Closed-form residual E_o[H(r\|o)] for a symmetric binary cue (reuses active_selection). |
+| 60 | `function` | `efe_menu_selects_cue` | docstring | Does the analytical EFE menu (cue at this validity) still pick the cue? |
+| 67 | `function` | `build_payload` | docstring | Certify the observable + quantitative bridge from the committed SI artifacts. |
+| 135 | `function` | `validate_payload` | docstring | Re-derive the bridge verdict from the stored trace-derived rows. |
 
 ## `src/firstprinciples/statistics.py`
 
@@ -432,37 +467,40 @@ Total documented definitions: 969
 
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
-| 43 | `function` | `_read_json` | inventory fallback | Inventory fallback for function `_read_json` defined at `src/gates/output_checks.py:43`. |
-| 53 | `function` | `_as_float` | inventory fallback | Inventory fallback for function `_as_float` defined at `src/gates/output_checks.py:53`. |
-| 60 | `function` | `_as_int` | inventory fallback | Inventory fallback for function `_as_int` defined at `src/gates/output_checks.py:60`. |
-| 67 | `function` | `_close_float` | inventory fallback | Inventory fallback for function `_close_float` defined at `src/gates/output_checks.py:67`. |
-| 75 | `function` | `_finite_series` | inventory fallback | Inventory fallback for function `_finite_series` defined at `src/gates/output_checks.py:75`. |
-| 90 | `function` | `_summary_matches_series` | inventory fallback | Inventory fallback for function `_summary_matches_series` defined at `src/gates/output_checks.py:90`. |
-| 106 | `function` | `_cohens_d_student_minus_teacher` | inventory fallback | Inventory fallback for function `_cohens_d_student_minus_teacher` defined at `src/gates/output_checks.py:106`. |
-| 135 | `function` | `_float_field_equals` | inventory fallback | Inventory fallback for function `_float_field_equals` defined at `src/gates/output_checks.py:135`. |
-| 141 | `function` | `_firstprinciples_empirical_benchmark_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_empirical_benchmark_ok` defined at `src/gates/output_checks.py:141`. |
-| 184 | `function` | `_firstprinciples_taxonomy_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_taxonomy_ok` defined at `src/gates/output_checks.py:184`. |
-| 203 | `function` | `_firstprinciples_sequential_shift_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_sequential_shift_ok` defined at `src/gates/output_checks.py:203`. |
-| 209 | `function` | `_firstprinciples_sequential_shift_sensitivity_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_sequential_shift_sensitivity_ok` defined at `src/gates/output_checks.py:209`. |
-| 215 | `function` | `_firstprinciples_active_selection_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_active_selection_ok` defined at `src/gates/output_checks.py:215`. |
-| 221 | `function` | `_firstprinciples_statistics_ok` | docstring | Validate the classroom statistics artifact against its measured source rows. |
-| 303 | `function` | `_pymdp_logging_expected` | inventory fallback | Inventory fallback for function `_pymdp_logging_expected` defined at `src/gates/output_checks.py:303`. |
-| 313 | `function` | `_efe_values_explained` | inventory fallback | Inventory fallback for function `_efe_values_explained` defined at `src/gates/output_checks.py:313`. |
-| 322 | `function` | `_si_invariants_all_pass_ok` | inventory fallback | Inventory fallback for function `_si_invariants_all_pass_ok` defined at `src/gates/output_checks.py:322`. |
-| 327 | `function` | `_si_efe_rows_explained` | inventory fallback | Inventory fallback for function `_si_efe_rows_explained` defined at `src/gates/output_checks.py:327`. |
-| 351 | `function` | `_gate_index_binding` | docstring | Every indexed gate-index row must bind to the live validator surface. |
-| 374 | `function` | `_figure_source_map_ok` | inventory fallback | Inventory fallback for function `_figure_source_map_ok` defined at `src/gates/output_checks.py:374`. |
-| 384 | `function` | `_figure_hash_manifest_ok` | inventory fallback | Inventory fallback for function `_figure_hash_manifest_ok` defined at `src/gates/output_checks.py:384`. |
-| 394 | `function` | `_visualization_quality_audit_ok` | inventory fallback | Inventory fallback for function `_visualization_quality_audit_ok` defined at `src/gates/output_checks.py:394`. |
-| 464 | `function` | `_figure_output_integrity_ok` | inventory fallback | Inventory fallback for function `_figure_output_integrity_ok` defined at `src/gates/output_checks.py:464`. |
-| 506 | `function` | `_proof_extraction_ok` | inventory fallback | Inventory fallback for function `_proof_extraction_ok` defined at `src/gates/output_checks.py:506`. |
-| 526 | `function` | `_ontology_profile_ok` | inventory fallback | Inventory fallback for function `_ontology_profile_ok` defined at `src/gates/output_checks.py:526`. |
-| 555 | `function` | `_cross_track_symbol_table_ok` | inventory fallback | Inventory fallback for function `_cross_track_symbol_table_ok` defined at `src/gates/output_checks.py:555`. |
-| 595 | `function` | `_firstprinciples_classroom_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_classroom_ok` defined at `src/gates/output_checks.py:595`. |
-| 601 | `function` | `_validate_outputs_selected` | inventory fallback | Inventory fallback for function `_validate_outputs_selected` defined at `src/gates/output_checks.py:601`. |
-| 774 | `function` | `validate_outputs_selected_strict` | docstring | Validate selected output keys without falling back to the full gate. |
-| 793 | `function` | `validate_outputs` | inventory fallback | Inventory fallback for function `validate_outputs` defined at `src/gates/output_checks.py:793`. |
-| 808 | `function` | `_validate_outputs_full` | inventory fallback | Inventory fallback for function `_validate_outputs_full` defined at `src/gates/output_checks.py:808`. |
+| 46 | `function` | `_read_json` | inventory fallback | Inventory fallback for function `_read_json` defined at `src/gates/output_checks.py:46`. |
+| 56 | `function` | `_as_float` | inventory fallback | Inventory fallback for function `_as_float` defined at `src/gates/output_checks.py:56`. |
+| 63 | `function` | `_as_int` | inventory fallback | Inventory fallback for function `_as_int` defined at `src/gates/output_checks.py:63`. |
+| 70 | `function` | `_close_float` | inventory fallback | Inventory fallback for function `_close_float` defined at `src/gates/output_checks.py:70`. |
+| 78 | `function` | `_finite_series` | inventory fallback | Inventory fallback for function `_finite_series` defined at `src/gates/output_checks.py:78`. |
+| 93 | `function` | `_summary_matches_series` | inventory fallback | Inventory fallback for function `_summary_matches_series` defined at `src/gates/output_checks.py:93`. |
+| 109 | `function` | `_cohens_d_student_minus_teacher` | inventory fallback | Inventory fallback for function `_cohens_d_student_minus_teacher` defined at `src/gates/output_checks.py:109`. |
+| 138 | `function` | `_float_field_equals` | inventory fallback | Inventory fallback for function `_float_field_equals` defined at `src/gates/output_checks.py:138`. |
+| 144 | `function` | `_firstprinciples_empirical_benchmark_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_empirical_benchmark_ok` defined at `src/gates/output_checks.py:144`. |
+| 187 | `function` | `_firstprinciples_taxonomy_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_taxonomy_ok` defined at `src/gates/output_checks.py:187`. |
+| 206 | `function` | `_firstprinciples_sequential_shift_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_sequential_shift_ok` defined at `src/gates/output_checks.py:206`. |
+| 212 | `function` | `_firstprinciples_sequential_shift_sensitivity_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_sequential_shift_sensitivity_ok` defined at `src/gates/output_checks.py:212`. |
+| 218 | `function` | `_firstprinciples_active_selection_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_active_selection_ok` defined at `src/gates/output_checks.py:218`. |
+| 224 | `function` | `_firstprinciples_active_selection_general_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_active_selection_general_ok` defined at `src/gates/output_checks.py:224`. |
+| 230 | `function` | `_firstprinciples_sequential_selection_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_sequential_selection_ok` defined at `src/gates/output_checks.py:230`. |
+| 236 | `function` | `_firstprinciples_si_bridge_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_si_bridge_ok` defined at `src/gates/output_checks.py:236`. |
+| 242 | `function` | `_firstprinciples_statistics_ok` | docstring | Validate the classroom statistics artifact against its measured source rows. |
+| 324 | `function` | `_pymdp_logging_expected` | inventory fallback | Inventory fallback for function `_pymdp_logging_expected` defined at `src/gates/output_checks.py:324`. |
+| 334 | `function` | `_efe_values_explained` | inventory fallback | Inventory fallback for function `_efe_values_explained` defined at `src/gates/output_checks.py:334`. |
+| 343 | `function` | `_si_invariants_all_pass_ok` | inventory fallback | Inventory fallback for function `_si_invariants_all_pass_ok` defined at `src/gates/output_checks.py:343`. |
+| 348 | `function` | `_si_efe_rows_explained` | inventory fallback | Inventory fallback for function `_si_efe_rows_explained` defined at `src/gates/output_checks.py:348`. |
+| 372 | `function` | `_gate_index_binding` | docstring | Every indexed gate-index row must bind to the live validator surface. |
+| 395 | `function` | `_figure_source_map_ok` | inventory fallback | Inventory fallback for function `_figure_source_map_ok` defined at `src/gates/output_checks.py:395`. |
+| 405 | `function` | `_figure_hash_manifest_ok` | inventory fallback | Inventory fallback for function `_figure_hash_manifest_ok` defined at `src/gates/output_checks.py:405`. |
+| 415 | `function` | `_visualization_quality_audit_ok` | inventory fallback | Inventory fallback for function `_visualization_quality_audit_ok` defined at `src/gates/output_checks.py:415`. |
+| 485 | `function` | `_figure_output_integrity_ok` | inventory fallback | Inventory fallback for function `_figure_output_integrity_ok` defined at `src/gates/output_checks.py:485`. |
+| 527 | `function` | `_proof_extraction_ok` | inventory fallback | Inventory fallback for function `_proof_extraction_ok` defined at `src/gates/output_checks.py:527`. |
+| 547 | `function` | `_ontology_profile_ok` | inventory fallback | Inventory fallback for function `_ontology_profile_ok` defined at `src/gates/output_checks.py:547`. |
+| 576 | `function` | `_cross_track_symbol_table_ok` | inventory fallback | Inventory fallback for function `_cross_track_symbol_table_ok` defined at `src/gates/output_checks.py:576`. |
+| 616 | `function` | `_firstprinciples_classroom_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_classroom_ok` defined at `src/gates/output_checks.py:616`. |
+| 622 | `function` | `_validate_outputs_selected` | inventory fallback | Inventory fallback for function `_validate_outputs_selected` defined at `src/gates/output_checks.py:622`. |
+| 795 | `function` | `validate_outputs_selected_strict` | docstring | Validate selected output keys without falling back to the full gate. |
+| 814 | `function` | `validate_outputs` | inventory fallback | Inventory fallback for function `validate_outputs` defined at `src/gates/output_checks.py:814`. |
+| 829 | `function` | `_validate_outputs_full` | inventory fallback | Inventory fallback for function `_validate_outputs_full` defined at `src/gates/output_checks.py:829`. |
 
 ## `src/gnn/concordance.py`
 

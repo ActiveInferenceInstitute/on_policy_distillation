@@ -36,6 +36,15 @@ def main(argv: list[str] | None = None) -> int:
     for name, path in paths.items():
         print(f"{name}: {path}")
 
+    # The analytical<->pymdp bridge reads the committed SI T-maze trace, so it is
+    # emitted here (after simulate_si_tmaze in the chain) rather than in write_all.
+    from firstprinciples import si_bridge
+
+    bridge_path = artifacts.write_json(
+        PROJECT_ROOT, "si_bridge_demo.json", si_bridge.build_payload(PROJECT_ROOT)
+    )
+    print(f"si_bridge_demo.json: {bridge_path}")
+
     if args.classroom:
         result = run_classroom(PROJECT_ROOT, ClassroomConfig())
         path = write_classroom_artifact(PROJECT_ROOT, result)
