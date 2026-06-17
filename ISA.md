@@ -335,3 +335,50 @@ PDF render all green afterward.
 - **OPD-XVENDOR-1 CLOSED — Forge GPT-5.4 cross-vendor ran (verdict FAIL → fixed → PASS).** It enumerated 68 `all_*` flags and found **9 surviving lying-flag attacks**: stored aggregates over NESTED rows (summary/sections/tracks/cells/events/runs/promotion_matrix) were re-read at validate but never re-derived (the central `aggregate_rederivation` table covers only flat `$.rows[*]`). Fixed all 9 with read-time `stored != recompute(rows)` (commit f73bcc0): all_pass, all_efe_rows_explained (writer si_artifacts.py was a hardcoded `True` → now computed), all_models_complete, all_bound_fragments_present, all_sections/all_tracks_have_status, all_events_ok, all_configured_producers_represented, all_live_tracks_valid; +4 `bool()`→`is True`; +15 negative controls (`tests/test_lying_flag_controls.py`, incl. empty-rows vacuous-pass, commit 2e6b74b). 3 BLOCKED class-c flags (all_seeded, all_topologies_witnessed, all_policy_witnesses_present) intentionally untouched (defended by live-diff). Scientific overclaim: NONE (A1-A4 clean).
 - **Verification:** full-chain regen `validate_outputs` exit 0 (0 convergence passes); chunked suite **470 passed / 0 failed**; ruff clean; mypy no new errors in changed code; Forge re-audit **PASS** (9 blocked, no false-fail, no new gaps); Advisor consulted (empty-rows vacuous-pass proven defended, coverage demoted as non-quiescent, claims scoped to "9 instances from exhaustive 68-flag enumeration").
 - **OPEN:** clean post-fix coverage re-measure (deferred — concurrent co-actor pytest makes the tree non-quiescent; honest non-measurement over a contaminated number).
+
+## Run-10 session record (2026-06-17) — the ACTIVE (EFE) half of the correspondence
+
+> Goal (principal-selected, "close the active/EFE loop"): re-center the paper toward
+> Active-Inference state of the art by formalizing the one half the paper itself scoped
+> out. The 25-row correspondence map's EFE row is annotated "action selected by EFE; loss
+> evaluated by VFE" with the *action* side un-formalized. The energy module proves the
+> passive (VFE) reading; nothing formalized *which* states the student rolls out on — the
+> data-collection decision the word "on-policy" actually names.
+
+- **Contribution (committed `80053f5`):** new deterministic module
+  `src/firstprinciples/active_selection.py` proves the toy-exact identity
+  `gap_closed(pi) = H(r) - E_o[H(r|o)] = I(o;r) = epistemic_value(pi)` — the EFE epistemic
+  term IS the student↔teacher distillation gap a data-collection policy can close. EFE is
+  computed via `energy.efe_epistemic_pragmatic` (ONE shared definition — the active and
+  passive halves cannot drift). On a toy T-maze menu, EFE selection picks the `cue` policy
+  and closes the residual gap to **machine zero** (perfectly diagnostic cue → residual 0,
+  epistemic = full prior entropy 0.693 nats).
+- **Negative controls (all bite):** (1) pragmatic-only selector (epistemic term ablated)
+  commits to an arm, residual stays ≈H(r)=0.693 — on-policy distillation cannot be driven
+  by reward/pragmatic value alone; (2) uniform selector keeps a strictly positive expected
+  residual; (3) **non-vacuity** — blinding the cue (validity→0.5) collapses epistemic value
+  to 0 and re-opens the gap, proving the gate measures a real channel property. A graded
+  validity sweep (0.5→1.0) shows epistemic↑/residual↓ in lockstep, identity exact at every
+  point.
+- **Verification (this session):** self-check `ok: True`, `max_identity_residual 6.9e-17`;
+  9-test suite `tests/test_firstprinciples_active_selection.py` green; **full fast-lane
+  suite 446 passed / 0 failed** (baseline without the module was 437; +9). Authoritative
+  command `uv run --frozen --extra dev python -m pytest tests/ -m "not artifact_slow and not render_slow"`.
+- **Regression discipline (R10/R8):** the module added documented functions → method count
+  952→964 → staled `docs/reference/method-inventory.md`, which cascaded 5 order-dependent
+  failures (aggregate_rederivation×3, field_level_promotion×2). Isolated the baseline (437
+  green without my files), regenerated the inventory doc → all 6 green. Committed all three
+  files (module + test + doc) pathspec-only.
+- **Cross-vendor:** Forge GPT-5.4 audit of the math/claim launched this session (verdict
+  pending at write time) — `OPD-ACTIVE-XVENDOR-1`.
+- **DELIBERATELY DEFERRED — six-surface integration (`OPD-ACTIVE-INTEGRATE-1`):** registering
+  `active_selection_demo.json` as a first-class audited artifact requires the full footprint
+  a comparable demo carries — `artifacts.py write_all` (producer) + `artifact_contracts.py`
+  (REQUIRED_OUTPUTS, ARTIFACT_CONSUMERS, producer map, ARTIFACT_GATES) + an `output_checks.py`
+  read-time re-derivation validator + a `claim_ledger.py` typed predicate + `manuscript/variables.py`
+  hydration tokens + a results/methods fragment + a `figures.yaml` figure (validity sweep +
+  per-policy EFE/residual) + the EFE correspondence-map row in `mapping.py` updated from
+  "not minimized" to cite this result + full-chain regen + `validate_outputs` + PDF render.
+  Per the project's "six surfaces or nothing — partial integration is worse than absence"
+  principle, this is its own run; the verified science is committed and standalone-tested in
+  the meantime.
