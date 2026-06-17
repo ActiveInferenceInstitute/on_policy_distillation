@@ -28,6 +28,7 @@ SUPPORTED_SELECTED_OUTPUT_CHECKS = {
     "firstprinciples_classroom_schema",
     "firstprinciples_sequential_shift_schema",
     "firstprinciples_sequential_shift_sensitivity_schema",
+    "firstprinciples_active_selection_schema",
     "firstprinciples_benchmark_table_present",
     "toy_sweep_track_schemas",
     "formal_interop_track_schemas",
@@ -209,6 +210,12 @@ def _firstprinciples_sequential_shift_sensitivity_ok(payload: dict) -> bool:
     from firstprinciples.sequential_shift import validate_sensitivity_payload
 
     return bool(payload) and not validate_sensitivity_payload(payload)
+
+
+def _firstprinciples_active_selection_ok(payload: dict) -> bool:
+    from firstprinciples.active_selection import validate_payload
+
+    return bool(payload) and not validate_payload(payload)
 
 
 def _firstprinciples_statistics_ok(root: Path, payload: dict) -> bool:
@@ -719,6 +726,10 @@ def _validate_outputs_selected(root: Path, selected: set[str]) -> dict[str, bool
                 _read_json(root / "output" / "data" / "firstprinciples" / "sequential_shift_sensitivity.json")
             )
         )
+    if "firstprinciples_active_selection_schema" in selected:
+        checks["firstprinciples_active_selection_schema"] = _firstprinciples_active_selection_ok(
+            _read_json(root / "output" / "data" / "firstprinciples" / "active_selection_demo.json")
+        )
 
     if "firstprinciples_benchmark_table_present" in selected:
         fp_benchmark_table_path = root / "output" / "data" / "firstprinciples" / "benchmark_table.md"
@@ -1041,6 +1052,7 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     fp_exposure = _read_json(root / "output" / "data" / "firstprinciples" / "exposure_bias_demo.json")
     fp_classroom = _read_json(root / "output" / "data" / "firstprinciples" / "classroom.json")
     fp_sequential_shift = _read_json(root / "output" / "data" / "firstprinciples" / "sequential_shift.json")
+    fp_active_selection = _read_json(root / "output" / "data" / "firstprinciples" / "active_selection_demo.json")
     fp_sequential_sensitivity = _read_json(
         root / "output" / "data" / "firstprinciples" / "sequential_shift_sensitivity.json"
     )
@@ -1241,6 +1253,7 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     checks["firstprinciples_sequential_shift_sensitivity_schema"] = (
         _firstprinciples_sequential_shift_sensitivity_ok(fp_sequential_sensitivity)
     )
+    checks["firstprinciples_active_selection_schema"] = _firstprinciples_active_selection_ok(fp_active_selection)
     checks["firstprinciples_taxonomy_schema"] = _firstprinciples_taxonomy_ok(fp_taxonomy)
     checks["firstprinciples_empirical_benchmark_schema"] = _firstprinciples_empirical_benchmark_ok(fp_empirical)
     checks["firstprinciples_statistics_schema"] = _firstprinciples_statistics_ok(root, fp_statistics)

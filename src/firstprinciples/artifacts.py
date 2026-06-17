@@ -14,6 +14,7 @@ from typing import Any
 
 import numpy as np
 
+from . import active_selection
 from . import adaptive
 from . import divergences as dv
 from . import diversity
@@ -213,6 +214,9 @@ def write_all(root: Path) -> dict[str, Path]:
         "diversity_demo.json": write_json(root, "diversity_demo.json", diversity.build_payload()),
         "adaptive_demo.json": write_json(root, "adaptive_demo.json", adaptive.build_payload()),
         "energy_demo.json": write_json(root, "energy_demo.json", energy.build_payload()),
+        "active_selection_demo.json": write_json(
+            root, "active_selection_demo.json", active_selection.build_payload()
+        ),
         "empirical_benchmark.json": write_json(root, "empirical_benchmark.json", empirical.build_payload()),
         "parallel_demo.json": write_json(root, "parallel_demo.json", parallel.build_payload()),
         "sequential_shift.json": write_json(root, "sequential_shift.json", sequential_shift.build_payload()),

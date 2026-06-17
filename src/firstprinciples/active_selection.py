@@ -92,6 +92,7 @@ __all__ = [
     "canonical_policies",
     "validity_sweep",
     "build_payload",
+    "validate_payload",
 ]
 
 
@@ -341,6 +342,79 @@ def build_payload() -> dict[str, object]:
         "blinding_reopens_gap": blinding_reopens_gap,
         "ok": ok,
     }
+
+
+def validate_payload(payload: dict[str, object]) -> list[str]:
+    """Re-derive the active-selection certificate from the rows; return issues.
+
+    Trusts NO stored aggregate flag (the project's "re-derive, never trust"
+    law): it recomputes the EFE selection, the ``gap_closed = epistemic``
+    identity, the pragmatic-only control, the validity-sweep monotonicity/
+    strictness, and the blinding control directly from the serialized
+    ``policies[]`` and ``validity_sweep[]`` rows, then requires the stored ``ok``
+    flag to AGREE with the re-derived verdict. A mutated row left under a true
+    ``ok`` therefore surfaces as a non-empty issue list. Empty list == valid.
+    """
+    issues: list[str] = []
+    if not isinstance(payload, dict):
+        return ["payload is not a dict"]
+    if payload.get("schema") != SCHEMA:
+        issues.append("schema mismatch")
+    policies = payload.get("policies") or []
+    if not isinstance(policies, list) or len(policies) < 4:
+        return [*issues, "expected >=4 policy rows"]
+    try:
+        prior_entropy = float(payload.get("prior_entropy_nats"))  # type: ignore[arg-type]
+        tol = float(payload.get("residual_tolerance", _RESIDUAL_TOL))  # type: ignore[arg-type]
+        names = [str(p["name"]) for p in policies]
+        residual = {str(p["name"]): float(p["residual_gap"]) for p in policies}
+        epistemic = {str(p["name"]): float(p["epistemic_value"]) for p in policies}
+    except (KeyError, TypeError, ValueError) as exc:
+        return [*issues, f"malformed policy rows: {exc}"]
+
+    # gap_closed = H(r) - E_o[H(r|o)] = epistemic, re-derived per row.
+    for name in names:
+        if abs((prior_entropy - residual[name]) - epistemic[name]) > 1e-9:
+            issues.append(f"gap_closed!=epistemic identity violated for {name}")
+
+    # EFE selection = argmin EFE; must be cue and must close the gap.
+    efe_pick = min(policies, key=lambda p: (float(p["efe"]), str(p["name"])))
+    if str(efe_pick["name"]) != "cue":
+        issues.append("EFE selection is not cue")
+    if float(efe_pick["residual_gap"]) >= tol:
+        issues.append("EFE-selected policy does not close the residual gap")
+
+    # Pragmatic-only control = argmax pragmatic; must avoid cue and keep residual.
+    prag_pick = sorted(policies, key=lambda p: (-float(p["pragmatic_value"]), str(p["name"])))[0]
+    if str(prag_pick["name"]) == "cue":
+        issues.append("pragmatic-only control selected cue")
+    if float(prag_pick["residual_gap"]) <= float(efe_pick["residual_gap"]) + _GAP_MARGIN:
+        issues.append("pragmatic-only control did not keep a larger residual")
+
+    # Validity sweep monotone + strictly separated, re-derived from its rows.
+    sweep = payload.get("validity_sweep") or []
+    if not isinstance(sweep, list) or len(sweep) < 2:
+        issues.append("validity_sweep missing or too short")
+    else:
+        eps_seq = [float(r["epistemic_value"]) for r in sweep]
+        res_seq = [float(r["residual_gap"]) for r in sweep]
+        if any(eps_seq[i] > eps_seq[i + 1] + 1e-12 for i in range(len(eps_seq) - 1)):
+            issues.append("sweep epistemic not monotone non-decreasing")
+        if any(res_seq[i] < res_seq[i + 1] - 1e-12 for i in range(len(res_seq) - 1)):
+            issues.append("sweep residual not monotone non-increasing")
+        if not (eps_seq[-1] > eps_seq[0] + _GAP_MARGIN and res_seq[0] > res_seq[-1] + _GAP_MARGIN):
+            issues.append("sweep endpoints not strictly separated")
+
+    # Blinding control: a blinded cue must reopen the gap above the live cue.
+    if "cue" in residual:
+        blinded = float(payload.get("blinded_cue_residual_gap", 0.0))  # type: ignore[arg-type]
+        if not blinded > residual["cue"] + _GAP_MARGIN:
+            issues.append("blinding does not reopen the gap")
+
+    # Stored ok must agree with the re-derived verdict (catches a lying flag).
+    if bool(payload.get("ok")) != (not issues):
+        issues.append("stored ok disagrees with re-derived verdict")
+    return issues
 
 
 if __name__ == "__main__":  # pragma: no cover - runnable self-check

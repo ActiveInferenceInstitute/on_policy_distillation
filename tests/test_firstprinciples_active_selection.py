@@ -87,6 +87,41 @@ def test_unnormalised_likelihood_raises() -> None:
         asel.policy_model(bad)
 
 
+def test_validate_payload_accepts_honest_certificate() -> None:
+    assert asel.validate_payload(asel.build_payload()) == []
+
+
+def test_validate_payload_catches_lying_residual_row() -> None:
+    # Mutate the cue residual but leave `ok` true: the re-derivation must catch
+    # both the broken identity and the stored-flag disagreement.
+    import copy
+
+    payload = copy.deepcopy(asel.build_payload())
+    cue = next(p for p in payload["policies"] if p["name"] == "cue")
+    cue["residual_gap"] = 0.5  # was ~0; a lie
+    issues = asel.validate_payload(payload)
+    assert issues  # non-empty => caught
+    assert any("identity" in i for i in issues)
+    assert any("stored ok disagrees" in i for i in issues)
+
+
+def test_validate_payload_catches_tampered_efe_selection() -> None:
+    # Make commit_left the EFE-minimiser by lying about its EFE; the row-level
+    # re-derivation (argmin over efe) must no longer select cue.
+    import copy
+
+    payload = copy.deepcopy(asel.build_payload())
+    for p in payload["policies"]:
+        if p["name"] == "commit_left":
+            p["efe"] = -1.0
+    assert asel.validate_payload(payload)  # caught
+
+
+def test_validate_payload_rejects_malformed() -> None:
+    assert asel.validate_payload({}) != []
+    assert asel.validate_payload({"schema": asel.SCHEMA, "policies": []}) != []
+
+
 def test_build_payload_certificate_ok() -> None:
     payload = asel.build_payload()
     assert payload["schema"] == asel.SCHEMA
