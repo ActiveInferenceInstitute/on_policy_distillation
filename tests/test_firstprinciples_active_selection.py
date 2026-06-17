@@ -95,6 +95,7 @@ def test_build_payload_certificate_ok() -> None:
     assert payload["pragmatic_only_selected_policy"] != "cue"
     assert payload["gap_closed_equals_epistemic_identity"] is True
     assert payload["validity_sweep_monotone"] is True
+    assert payload["validity_sweep_strict"] is True
     assert payload["blinding_reopens_gap"] is True
     assert payload["max_identity_residual"] < 1e-12
     assert payload["efe_selected_residual_gap"] < 1e-9

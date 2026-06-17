@@ -128,16 +128,20 @@ class PolicyScore:
     closeable_gap: float
 
 
-def policy_model(policy: RolloutPolicy, *, prior: ArrayF | None = None) -> energy.GenerativeModel:
+def policy_model(policy: RolloutPolicy) -> energy.GenerativeModel:
     """Build the categorical generative model a rollout policy induces.
 
     Two reward-relevant latent states ``r in {reward_left, reward_right}`` with a
     flat prior; the policy supplies the observation likelihood ``p(o|r)`` and the
-    preferences ``p(o)``.
+    preferences ``p(o)``. The prior is fixed flat by construction: this is a
+    deterministic flat-prior toy (project genre), and the residual identity
+    proved here requires the data-collection prior to *be* the EFE recognition
+    density ``q(s)`` -- so the single flat prior is shared by both sides on
+    purpose. A non-flat prior would need that coincidence re-established per side.
     """
-    pr = np.array([0.5, 0.5], dtype=np.float64) if prior is None else normalize(prior)
+    prior = np.array([0.5, 0.5], dtype=np.float64)
     preferences = normalize(np.array(policy.preferences, dtype=np.float64))
-    return energy.GenerativeModel(prior=pr, likelihood=policy.likelihood_array(), preferences=preferences)
+    return energy.GenerativeModel(prior=prior, likelihood=policy.likelihood_array(), preferences=preferences)
 
 
 def expected_conditional_entropy(model: energy.GenerativeModel) -> float:
@@ -146,7 +150,9 @@ def expected_conditional_entropy(model: energy.GenerativeModel) -> float:
     A student that matches the privileged teacher posterior ``p(r|o)`` on the
     policy's own observation distribution ``q(o)`` carries exactly this expected
     residual entropy about ``r``. It is the part of the teacher's signal the
-    channel never delivers.
+    channel never delivers. The ``gap_closed = epistemic`` identity holds because
+    this marginalises over the *same* ``q(s) = model.prior`` that the EFE
+    epistemic term uses; the two sides must share that recognition density.
     """
     q_o = energy.predicted_observations(model.prior, model)
     total = 0.0
@@ -158,7 +164,7 @@ def expected_conditional_entropy(model: energy.GenerativeModel) -> float:
     return total
 
 
-def score_policy(policy: RolloutPolicy, *, prior: ArrayF | None = None) -> PolicyScore:
+def score_policy(policy: RolloutPolicy) -> PolicyScore:
     """Score one rollout policy with the shared EFE functional + the residual.
 
     The closeable gap is the EFE epistemic value; the residual is the prior
@@ -166,7 +172,7 @@ def score_policy(policy: RolloutPolicy, *, prior: ArrayF | None = None) -> Polic
     ``H(r) - E_o[H(r|o)] = I(o;r) = epistemic`` is asserted to machine precision
     in :func:`build_payload`.
     """
-    model = policy_model(policy, prior=prior)
+    model = policy_model(policy)
     _g, epistemic, pragmatic = energy.efe_epistemic_pragmatic(model.prior, model)
     g_report = energy.efe_report(model.prior, model)
     residual = expected_conditional_entropy(model)
@@ -266,6 +272,12 @@ def build_payload() -> dict[str, object]:
         all(sweep[i]["epistemic_value"] <= sweep[i + 1]["epistemic_value"] + 1e-12 for i in range(len(sweep) - 1))
         and all(sweep[i]["residual_gap"] >= sweep[i + 1]["residual_gap"] - 1e-12 for i in range(len(sweep) - 1))
     )
+    # Strictness floor: a flat sweep would satisfy the tolerant monotone check
+    # vacuously, so require the endpoints to actually separate (non-vacuity).
+    sweep_strict = bool(
+        sweep[-1]["epistemic_value"] > sweep[0]["epistemic_value"] + _GAP_MARGIN
+        and sweep[0]["residual_gap"] > sweep[-1]["residual_gap"] + _GAP_MARGIN
+    )
 
     # Non-vacuity control: blind the cue and the gap must re-open.
     blinded_score = score_policy(_symmetric_cue(0.5))
@@ -283,6 +295,7 @@ def build_payload() -> dict[str, object]:
     ok = bool(
         identity_holds
         and sweep_monotone
+        and sweep_strict
         and efe_selects_cue
         and efe_pick_closes_gap
         and pragmatic_avoids_cue
@@ -319,6 +332,7 @@ def build_payload() -> dict[str, object]:
         "gap_closed_equals_epistemic_identity": identity_holds,
         "max_identity_residual": float(max(identity_residuals)),
         "validity_sweep_monotone": sweep_monotone,
+        "validity_sweep_strict": sweep_strict,
         "efe_selects_cue": efe_selects_cue,
         "efe_pick_closes_gap": efe_pick_closes_gap,
         "pragmatic_only_avoids_cue": pragmatic_avoids_cue,
@@ -337,5 +351,6 @@ if __name__ == "__main__":  # pragma: no cover - runnable self-check
     assert payload["ok"], "active-selection certificate failed"
     assert payload["efe_selected_policy"] == "cue"
     assert payload["pragmatic_only_selected_policy"] != "cue"
-    assert payload["efe_selected_residual_gap"] < 1e-9
+    residual = payload["efe_selected_residual_gap"]
+    assert isinstance(residual, float) and residual < 1e-9
     print("\nactive_selection self-check OK")
