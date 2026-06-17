@@ -455,6 +455,42 @@ figures:
           - "$.rows"
         scope: "finite pymdp policy-posterior grid"
         display_transform: full
+  active_selection_landscape:
+    filename: active_selection_landscape.png
+    alt: >-
+      Two-panel figure of the expected-free-energy active-selection landscape. The left
+      panel plots two curves against cue validity: epistemic value rising and residual gap
+      falling, with a dashed line at the prior entropy and a note that the two curves sum to
+      it. The right panel shows grouped bars per canonical data-collection policy (cue,
+      commit_left, commit_right, stay) for four quantities: expected free energy, epistemic
+      value, pragmatic value, and residual gap.
+    caption: >-
+      The active half of the correspondence: expected free energy chooses where the student
+      collects rollouts. Left: across {{active_selection_sweep_points}} cue-validity settings
+      the epistemic value (information gain) rises and the residual distillation gap falls,
+      and at every point their sum is the prior entropy
+      H(r)={{active_selection_prior_entropy_nats:.3f}} nats — the exact identity that the gap
+      a policy can close equals its epistemic value. Right: the expected-free-energy
+      decomposition for the {{active_selection_policy_count}} canonical data-collection
+      policies; minimising expected free energy selects the cue, whose rollouts close the gap
+      to {{active_selection_cue_residual:.1e}} nats, while a pragmatic-only rule commits to an
+      arm and leaves {{active_selection_pragmatic_residual:.3f}} nats unresolved. Finite
+      flat-prior toy, exact. Source: `output/data/firstprinciples/active_selection_demo.json`.
+    width: 0.99
+    claims:
+      - id: active_selection_landscape_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "expected free energy"
+          - "epistemic value"
+        sources:
+          - "output/data/firstprinciples/active_selection_demo.json"
+        source_fields:
+          - "$.policies"
+          - "$.validity_sweep"
+          - "$.prior_entropy_nats"
+        scope: "finite EFE active-selection toy"
+        display_transform: full
   opd_taxonomy_landscape:
     filename: opd_taxonomy_landscape.png
     alt: >-
@@ -1073,6 +1109,7 @@ section_figures:
   results_free_energy:
     - id: free_energy_curve
     - id: energy_decomposition
+    - id: active_selection_landscape
   results_invariants:
     - id: invariant_dashboard
     - id: diversity_tradeoff

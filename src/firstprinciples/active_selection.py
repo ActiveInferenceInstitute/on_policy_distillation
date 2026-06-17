@@ -5,10 +5,10 @@ half of the correspondence: on a fixed model, the reverse-KL distillation loss
 ``D_KL(pi_S || pi_T)`` is the variational free energy of the student up to a
 constant. That is the realized-rollout (VFE) reading. It says nothing about
 *which* states the student should roll out on -- the data-collection decision
-that the word "on-policy" actually names. The 25-row correspondence map records
-exactly this hole: the "expected free energy (planning)" row is annotated
-"action selected by EFE; loss evaluated by VFE" with the action side left
-un-formalised.
+that the word "on-policy" actually names. The correspondence map records exactly
+this hole: its expected-free-energy rows assign action selection to EFE while the
+realized-rollout loss is evaluated by VFE, with the action side left
+un-formalised until this module (which adds its own dedicated map row).
 
 This module closes that hole with the **active** (expected-free-energy) half.
 On-policy distillation does not distil on a fixed observation stream; a

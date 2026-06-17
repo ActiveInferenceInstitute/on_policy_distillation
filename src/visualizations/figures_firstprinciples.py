@@ -96,6 +96,87 @@ def figure_distillation_divergence_geometry(project_root: Path) -> Path:
     return out
 
 
+def figure_active_selection_landscape(project_root: Path) -> Path:
+    """Render the EFE active-selection landscape: validity-sweep identity + per-policy EFE bars.
+
+    Left: as cue validity rises, the epistemic value (information gain) rises and
+    the residual distillation gap falls; their sum is the constant prior entropy
+    H(r) -- the ``gap_closed = epistemic`` identity, shown across the sweep.
+    Right: the expected-free-energy decomposition per canonical data-collection
+    policy, making explicit that minimising EFE selects the cue while a
+    pragmatic-only rule would commit to an arm.
+    """
+    root = project_root.resolve()
+    style = load_figure_style(root)
+    data_path = root / "output" / "data" / "firstprinciples" / "active_selection_demo.json"
+    data = json.loads(data_path.read_text(encoding="utf-8"))
+    sweep = list(data.get("validity_sweep") or [])
+    policies = list(data.get("policies") or [])
+    prior_entropy = float(data.get("prior_entropy_nats", 0.0))
+    efe_pick = str(data.get("efe_selected_policy", ""))
+
+    validities = [float(row["cue_validity"]) for row in sweep]
+    epistemic_sweep = [float(row["epistemic_value"]) for row in sweep]
+    residual_sweep = [float(row["residual_gap"]) for row in sweep]
+
+    names = [str(p["name"]) for p in policies]
+    efe = [float(p["efe"]) for p in policies]
+    epistemic = [float(p["epistemic_value"]) for p in policies]
+    pragmatic = [float(p["pragmatic_value"]) for p in policies]
+    residual = [float(p["residual_gap"]) for p in policies]
+
+    out = figure_output_path(root, "active_selection_landscape")
+    with apply_style(style):
+        fig, (sweep_ax, bar_ax) = plt.subplots(
+            1, 2, figsize=(14.0, 5.3), gridspec_kw={"width_ratios": [1.0, 1.15]}
+        )
+        sweep_ax.plot(
+            validities, epistemic_sweep, marker="o",
+            color=style.color("accent"), label="epistemic value I(o;r)",
+        )
+        sweep_ax.plot(
+            validities, residual_sweep, marker="s",
+            color=style.color("secondary"), label="residual gap E_o[H(r|o)]",
+        )
+        sweep_ax.axhline(
+            prior_entropy, ls="--", color=style.color("reference"),
+            label=f"prior entropy H(r)={prior_entropy:.3f}",
+        )
+        sweep_ax.set_xlabel("Cue validity")
+        sweep_ax.set_ylabel("Nats")
+        sweep_ax.set_title("Cue-validity sweep")
+        sweep_ax.set_ylim(0.0, max(prior_entropy * 1.15, 0.1))
+        style_grid(sweep_ax, style)
+        sweep_ax.legend(frameon=True, fontsize=style.font_size("legend"), loc="center left")
+        sweep_ax.annotate(
+            "epistemic + residual = H(r)",
+            xy=(0.62, 0.5), xycoords="axes fraction",
+            fontsize=style.font_size("annotation"), color=style.color("primary"),
+        )
+
+        x = np.arange(len(names))
+        width = 0.2
+        bar_ax.bar(x - 1.5 * width, efe, width, label="EFE G", color=style.color("primary"))
+        bar_ax.bar(x - 0.5 * width, epistemic, width, label="epistemic", color=style.color("accent"))
+        bar_ax.bar(x + 0.5 * width, pragmatic, width, label="pragmatic", color="#7c3aed")
+        bar_ax.bar(x + 1.5 * width, residual, width, label="residual", color=style.color("secondary"))
+        bar_ax.axhline(0.0, color=style.color("muted"), lw=0.8)
+        bar_ax.set_xticks(x, names, fontsize=style.font_size("dense"))
+        bar_ax.set_ylabel("Nats")
+        bar_ax.set_title(f"Expected free energy selects '{efe_pick}'")
+        style_grid(bar_ax, style)
+        bar_ax.legend(frameon=True, fontsize=style.font_size("legend"), ncol=2)
+
+        fig.tight_layout(rect=(0.0, 0.03, 1.0, 1.0))
+        fig.text(
+            0.01, 0.01,
+            "Source: output/data/firstprinciples/active_selection_demo.json; finite flat-prior toy, exact.",
+            fontsize=style.font_size("source"), color=style.color("muted"),
+        )
+        save_styled_figure(fig, out, style)
+    return out
+
+
 def figure_exposure_bias_recovery(project_root: Path) -> Path:
     """Render off-policy compounding versus on-policy correction curves."""
     root = project_root.resolve()

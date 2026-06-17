@@ -89,6 +89,15 @@ CORRESPONDENCES: tuple[Correspondence, ...] = (
         "The diversity and adaptive-divergence artifacts treat pure reverse KL as incomplete when coverage is load-bearing.",
     ),
     Correspondence(
+        "Expected free energy action selection (active sampling)",
+        "On-policy choice of which states to roll out and distil on",
+        "EFE-minimising data-collection policy; epistemic value equals the closeable student-teacher gap",
+        "Formalised in the active-selection demo (sec:active_selection): minimising expected free energy "
+        "selects the cue-visiting policy and closes the distillation gap exactly, while a pragmatic-only rule "
+        "leaves it open. This is the active complement to the realized-rollout (VFE) reading: the identity "
+        "gap_closed = epistemic is exact in this finite toy.",
+    ),
+    Correspondence(
         "Pragmatic value (prior preference)",
         "Reward-tilted distillation target",
         "exp(R / beta) tilt of the prior",

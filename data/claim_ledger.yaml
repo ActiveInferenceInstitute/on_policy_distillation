@@ -1362,7 +1362,7 @@ claims:
     field: max_abs_residual
     max: 1.0e-12
 - id: correspondence_map_row_count
-  statement: The first-principles correspondence map enumerates exactly 25 distillation-to-active-inference
+  statement: The first-principles correspondence map enumerates exactly 26 distillation-to-active-inference
     correspondence rows with zero unresolved issues.
   path: output/data/firstprinciples/correspondence_map.json
   section: methods_analytical
@@ -1371,7 +1371,7 @@ claims:
   - manuscript
   evidence:
     field: row_count
-    equals: 25
+    equals: 26
 - id: fp_empirical_benchmark_literature_reported
   statement: The empirical OPD benchmark is recorded as EXTERNAL literature-reported context
     (Qwen technical report relayed by the Thinking Machines replication), never an original
@@ -1479,4 +1479,40 @@ claims:
   - interop
   evidence:
     field: all_mapped_once
+    equals: true
+- id: active_selection_efe_selects_cue
+  statement: Expected free energy selects the cue-visiting data-collection policy in the active-selection toy.
+  path: output/data/firstprinciples/active_selection_demo.json
+  section: results_free_energy
+  tracks:
+  - analytical
+  evidence:
+    field: efe_selects_cue
+    equals: true
+- id: active_selection_residual_gap_closed
+  statement: The EFE-selected policy closes the residual distillation gap to machine precision.
+  path: output/data/firstprinciples/active_selection_demo.json
+  section: results_free_energy
+  tracks:
+  - analytical
+  evidence:
+    field: efe_selected_residual_gap
+    max: 1.0e-09
+- id: active_selection_gap_closed_epistemic_identity
+  statement: The closeable distillation gap equals the EFE epistemic value to machine precision (identity).
+  path: output/data/firstprinciples/active_selection_demo.json
+  section: results_free_energy
+  tracks:
+  - analytical
+  evidence:
+    field: gap_closed_equals_epistemic_identity
+    equals: true
+- id: active_selection_blinding_reopens_gap
+  statement: Blinding the cue collapses epistemic value and reopens the gap (non-vacuity control).
+  path: output/data/firstprinciples/active_selection_demo.json
+  section: results_free_energy
+  tracks:
+  - analytical
+  evidence:
+    field: blinding_reopens_gap
     equals: true

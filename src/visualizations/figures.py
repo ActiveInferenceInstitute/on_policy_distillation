@@ -27,6 +27,7 @@ from .figures_diagrams import (
     figure_tmaze_schematic,
 )
 from .figures_firstprinciples import (
+    figure_active_selection_landscape,
     figure_classroom_distillation_signal,
     figure_distillation_divergence_geometry,
     figure_diversity_tradeoff,
@@ -60,6 +61,7 @@ from .figures_validation import (
 
 __all__ = [
     "FIGURE_GENERATORS",
+    "figure_active_selection_landscape",
     "figure_causal_ablation_heatmap",
     "figure_classroom_distillation_signal",
     "figure_correspondence_map",
@@ -99,6 +101,7 @@ __all__ = [
 
 
 FIGURE_GENERATORS: dict[str, Callable[[Path], Path | None]] = {
+    "active_selection_landscape": figure_active_selection_landscape,
     "ising_mi_curve": figure_ising_mi_curve,
     "free_energy_curve": figure_free_energy_curve,
     "si_belief_entropy_curve": figure_si_belief_entropy_curve,

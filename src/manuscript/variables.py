@@ -212,6 +212,10 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
     energy_data = _load_json(root / "output" / "data" / "firstprinciples" / "energy_demo.json")
     energy_vfe_prior = energy_data.get("vfe_at_prior") or {}
     energy_efe = energy_data.get("efe") or {}
+    active_selection_data = _load_json(
+        root / "output" / "data" / "firstprinciples" / "active_selection_demo.json"
+    )
+    active_selection_policies = active_selection_data.get("policies") or []
     gkd_data = _load_json(root / "output" / "data" / "firstprinciples" / "gkd_demo.json")
     gkd_gap = gkd_data.get("reverse_kl") or {}
     diversity_data = _load_json(root / "output" / "data" / "firstprinciples" / "diversity_demo.json")
@@ -476,6 +480,11 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
         "efe_ambiguity": float(energy_efe.get("ambiguity", 0.0)),
         "efe_epistemic": float(energy_efe.get("epistemic_value", 0.0)),
         "efe_pragmatic": float(energy_efe.get("pragmatic_value", 0.0)),
+        "active_selection_prior_entropy_nats": float(active_selection_data.get("prior_entropy_nats", 0.0)),
+        "active_selection_cue_residual": float(active_selection_data.get("efe_selected_residual_gap", 0.0)),
+        "active_selection_pragmatic_residual": float(active_selection_data.get("pragmatic_only_residual_gap", 0.0)),
+        "active_selection_policy_count": len(active_selection_policies),
+        "active_selection_sweep_points": len(active_selection_data.get("validity_sweep") or []),
         "gkd_on_policy_loss": float(gkd_gap.get("on_policy_loss", 0.0)),
         "gkd_off_policy_loss": float(gkd_gap.get("off_policy_loss", 0.0)),
         "gkd_exposure_gap": float(gkd_gap.get("exposure_gap", 0.0)),
