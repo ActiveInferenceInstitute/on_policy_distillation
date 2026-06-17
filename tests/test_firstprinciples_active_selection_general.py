@@ -46,6 +46,21 @@ def test_validate_payload_accepts_honest_and_catches_lie() -> None:
     assert gen.validate_payload(bad)  # identity now violated -> caught
 
 
+def test_validate_rederives_selection_flags_not_just_identity() -> None:
+    # Give the blind channel a high epistemic value but keep its row identity intact
+    # (residual = H - epistemic). The re-derived ranking must still catch that the
+    # blind channel no longer ranks last -- proving validate checks selection from
+    # rows, not just the per-row identity. (RedTeam-found gap.)
+    payload = gen.build_payload()
+    bad = copy.deepcopy(payload)
+    for r in bad["channels"]:
+        if r["name"] == "blind3_k3":
+            r["epistemic_value"] = 1.0
+            r["residual_gap"] = r["prior_entropy"] - 1.0  # identity preserved
+    issues = gen.validate_payload(bad)
+    assert any("rank last" in i for i in issues)
+
+
 def test_unnormalised_channel_raises() -> None:
     with pytest.raises(ValueError):
         gen.score_channel(gen.Channel("bad", ((0.7, 0.7, 0.7), (0.1, 0.1, 0.1), (0.2, 0.2, 0.2))))

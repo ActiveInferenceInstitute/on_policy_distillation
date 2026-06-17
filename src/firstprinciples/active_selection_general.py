@@ -21,9 +21,12 @@ Three honest caveats are encoded as part of the contract rather than hidden:
 * **Exact gap closure needs ``k >= n``.** A channel with fewer outcomes than
   states under-resolves ``r``; its residual cannot reach zero. The certificate
   asserts a residual floor for the declared ``k < n`` channel.
-* **Selection is stated for the epistemic term.** Under flat preferences EFE
-  argmin coincides with epistemic argmax; this module ranks channels by epistemic
-  value (the active term), which selects the most diagnostic channel.
+* **Selection is stated for the epistemic term.** This module ranks channels by
+  epistemic value (the active, information-seeking term), which selects the most
+  diagnostic channel. Full-EFE argmin coincides with epistemic argmax only
+  *within a fixed* ``k`` -- across a mixed-``k`` menu the pragmatic term carries a
+  ``-ln k`` offset that shifts the full-EFE ranking, so the selection claim here
+  is deliberately about the epistemic term, not raw EFE.
 """
 
 from __future__ import annotations
@@ -219,6 +222,20 @@ def validate_payload(payload: dict[str, object]) -> list[str]:
         return [*issues, f"malformed channel rows: {exc}"]
     if float(payload.get("wrong_measure_residual_gap", 0.0)) <= 1e-3:  # type: ignore[arg-type]
         issues.append("wrong-measure ablation does not break the identity (vacuous)")
+
+    # Re-derive the selection/closure flags from the rows (never trust stored flags).
+    by_name = {str(r["name"]): r for r in channels}
+    epistemic_ranked = sorted(channels, key=lambda r: (-float(r["epistemic_value"]), str(r["name"])))
+    if "blind3_k3" in by_name and float(by_name["blind3_k3"]["epistemic_value"]) >= _BLIND_EPISTEMIC_TOL:
+        issues.append("blind channel epistemic value not ~0 (re-derived)")
+    if str(epistemic_ranked[-1]["name"]) != "blind3_k3":
+        issues.append("blind channel does not rank last by epistemic value (re-derived)")
+    for perfect in ("perfect3_k3", "perfect4_k4"):
+        if perfect in by_name and float(by_name[perfect]["residual_gap"]) >= _ZERO_RESIDUAL_TOL:
+            issues.append(f"{perfect} does not close the gap (re-derived)")
+    if "under4_k3" in by_name and float(by_name["under4_k3"]["residual_gap"]) <= 1e-3:
+        issues.append("under-resolving channel does not keep a residual (re-derived)")
+
     if bool(payload.get("ok")) != (not issues):
         issues.append("stored ok disagrees with re-derived verdict")
     return issues

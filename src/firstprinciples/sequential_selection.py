@@ -45,6 +45,10 @@ _UNINFORMATIVE = np.array([[0.5, 0.5], [0.5, 0.5]], dtype=np.float64)  # commit 
 _ARM_LIKELIHOOD = np.array([[0.95, 0.05], [0.05, 0.95]], dtype=np.float64)  # step-2 reward/punish
 _ARM_PREF = np.array([0.95, 0.05], dtype=np.float64)                # prefer reward
 _RESOLVED_BELIEF = np.array([1.0, 0.0], dtype=np.float64)           # after a valid cue
+# Expected reward derived from the arm likelihood (not hardcoded): a resolved
+# belief picks the correct arm (reward prob = diagonal), chance averages the row.
+_REWARD_PROB_CORRECT = float(_ARM_LIKELIHOOD[0, 0])
+_REWARD_PROB_CHANCE = 0.5 * float(_ARM_LIKELIHOOD[0, 0] + _ARM_LIKELIHOOD[1, 0])
 
 __all__ = ["step_efe", "policy_efe", "build_payload", "validate_payload"]
 
@@ -66,11 +70,11 @@ def policy_efe(*, cue_first: bool, cue_resolves: bool, cue_step_cost: float = CU
         g1 = step_efe(_FLAT2, _RESOLVE if cue_resolves else _UNINFORMATIVE, _FLAT2) + cue_step_cost
         step2_belief = _RESOLVED_BELIEF if cue_resolves else _FLAT2
         g2 = step_efe(step2_belief, _ARM_LIKELIHOOD, _ARM_PREF)
-        expected_reward = 1.0 if cue_resolves else 0.5
+        expected_reward = _REWARD_PROB_CORRECT if cue_resolves else _REWARD_PROB_CHANCE
     else:
         g1 = step_efe(_FLAT2, _UNINFORMATIVE, _FLAT2)
         g2 = step_efe(_FLAT2, _ARM_LIKELIHOOD, _ARM_PREF)
-        expected_reward = 0.5
+        expected_reward = _REWARD_PROB_CHANCE
     return {"g1": g1, "g2": g2, "policy_efe": g1 + g2, "expected_reward": expected_reward}
 
 

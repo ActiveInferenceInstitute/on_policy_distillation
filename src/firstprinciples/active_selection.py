@@ -507,6 +507,15 @@ def validate_payload(payload: dict[str, object]) -> list[str]:
             q_lim = policy_posterior(efe_vals, _PRECISION_LIMIT_GAMMA)
             if abs(q_lim[cue_i] - 1.0) > 1e-9:
                 issues.append("precision posterior does not concentrate on cue at high gamma")
+        # Re-derive the blinded-cue non-concentration: a flat-preference blinded cue
+        # has efe = H(r) - epistemic(blinded) (epistemic ~0), which is the menu MAX,
+        # so its high-precision posterior mass must stay below 0.5.
+        prior_h = float(payload.get("prior_entropy_nats", 0.0))  # type: ignore[arg-type]
+        blinded_eps = float(payload.get("blinded_cue_epistemic_value", 0.0))  # type: ignore[arg-type]
+        blinded_cue_efe = prior_h - blinded_eps
+        blinded_menu = [efe_vals[i] for i in range(len(efe_vals)) if i != cue_i] + [blinded_cue_efe]
+        if policy_posterior(blinded_menu, _PRECISION_LIMIT_GAMMA)[-1] >= 0.5:
+            issues.append("blinded-cue posterior concentrates (re-derived)")
 
     # Stored ok must agree with the re-derived verdict (catches a lying flag).
     if bool(payload.get("ok")) != (not issues):

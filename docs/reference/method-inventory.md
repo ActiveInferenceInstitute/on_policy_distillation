@@ -122,17 +122,17 @@ Total documented definitions: 993
 
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
-| 53 | `class` | `Channel` | docstring | A named observation channel ``p(o \| r)`` over ``n`` states, ``k`` outcomes. |
-| 59 | `function` | `Channel.array` | inventory fallback | Inventory fallback for function `Channel.array` defined at `src/firstprinciples/active_selection_general.py:59`. |
-| 66 | `function` | `_flat_prior` | inventory fallback | Inventory fallback for function `_flat_prior` defined at `src/firstprinciples/active_selection_general.py:66`. |
-| 70 | `function` | `_model` | inventory fallback | Inventory fallback for function `_model` defined at `src/firstprinciples/active_selection_general.py:70`. |
-| 78 | `function` | `_wrong_measure_conditional_entropy` | docstring | Ablation: weight H(r\|o) by a UNIFORM q(o) instead of the true predicted q(o). |
-| 99 | `class` | `ChannelScore` | inventory fallback | Inventory fallback for class `ChannelScore` defined at `src/firstprinciples/active_selection_general.py:99`. |
-| 108 | `function` | `ChannelScore.as_row` | inventory fallback | Inventory fallback for function `ChannelScore.as_row` defined at `src/firstprinciples/active_selection_general.py:108`. |
-| 120 | `function` | `score_channel` | inventory fallback | Inventory fallback for function `score_channel` defined at `src/firstprinciples/active_selection_general.py:120`. |
-| 137 | `function` | `canonical_channels` | docstring | A menu spanning n,k in {3,4}: perfect (k>=n), noisy, under-resolving, blind. |
-| 149 | `function` | `build_payload` | docstring | Certify the multi-state identity + caveats over the canonical channel menu. |
-| 201 | `function` | `validate_payload` | docstring | Re-derive the multi-state identity from the channel rows; return issues. |
+| 56 | `class` | `Channel` | docstring | A named observation channel ``p(o \| r)`` over ``n`` states, ``k`` outcomes. |
+| 62 | `function` | `Channel.array` | inventory fallback | Inventory fallback for function `Channel.array` defined at `src/firstprinciples/active_selection_general.py:62`. |
+| 69 | `function` | `_flat_prior` | inventory fallback | Inventory fallback for function `_flat_prior` defined at `src/firstprinciples/active_selection_general.py:69`. |
+| 73 | `function` | `_model` | inventory fallback | Inventory fallback for function `_model` defined at `src/firstprinciples/active_selection_general.py:73`. |
+| 81 | `function` | `_wrong_measure_conditional_entropy` | docstring | Ablation: weight H(r\|o) by a UNIFORM q(o) instead of the true predicted q(o). |
+| 102 | `class` | `ChannelScore` | inventory fallback | Inventory fallback for class `ChannelScore` defined at `src/firstprinciples/active_selection_general.py:102`. |
+| 111 | `function` | `ChannelScore.as_row` | inventory fallback | Inventory fallback for function `ChannelScore.as_row` defined at `src/firstprinciples/active_selection_general.py:111`. |
+| 123 | `function` | `score_channel` | inventory fallback | Inventory fallback for function `score_channel` defined at `src/firstprinciples/active_selection_general.py:123`. |
+| 140 | `function` | `canonical_channels` | docstring | A menu spanning n,k in {3,4}: perfect (k>=n), noisy, under-resolving, blind. |
+| 152 | `function` | `build_payload` | docstring | Certify the multi-state identity + caveats over the canonical channel menu. |
+| 204 | `function` | `validate_payload` | docstring | Re-derive the multi-state identity from the channel rows; return issues. |
 
 ## `src/firstprinciples/adaptive.py`
 
@@ -327,10 +327,10 @@ Total documented definitions: 993
 
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
-| 52 | `function` | `step_efe` | docstring | Expected free energy of one step, via the shared energy.efe_report. |
-| 58 | `function` | `policy_efe` | docstring | Two-step policy EFE breakdown for a cue-first or commit-now policy. |
-| 77 | `function` | `build_payload` | docstring | Certify the horizon-dependent active-selection result with its controls. |
-| 112 | `function` | `validate_payload` | docstring | Re-derive the horizon-dependence verdict from the per-step G rows. |
+| 56 | `function` | `step_efe` | docstring | Expected free energy of one step, via the shared energy.efe_report. |
+| 62 | `function` | `policy_efe` | docstring | Two-step policy EFE breakdown for a cue-first or commit-now policy. |
+| 81 | `function` | `build_payload` | docstring | Certify the horizon-dependent active-selection result with its controls. |
+| 116 | `function` | `validate_payload` | docstring | Re-derive the horizon-dependence verdict from the per-step G rows. |
 
 ## `src/firstprinciples/sequential_shift.py`
 

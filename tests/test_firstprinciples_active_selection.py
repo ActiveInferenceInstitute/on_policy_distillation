@@ -152,6 +152,17 @@ def test_validate_payload_catches_lying_precision_row() -> None:
     assert any("precision_sweep q_cue disagrees" in i for i in issues)
 
 
+def test_validate_rederives_blinded_concentration() -> None:
+    # Forge a low blinded-cue efe (via a high stored blinded epistemic) so the
+    # blinded menu would concentrate on it; the re-derivation must catch it.
+    import copy
+
+    payload = copy.deepcopy(asel.build_payload())
+    payload["blinded_cue_epistemic_value"] = 5.0  # -> blinded_cue_efe = H - 5 (menu argmin)
+    issues = asel.validate_payload(payload)
+    assert any("blinded-cue posterior concentrates" in i for i in issues)
+
+
 def test_build_payload_certificate_ok() -> None:
     payload = asel.build_payload()
     assert payload["schema"] == asel.SCHEMA
