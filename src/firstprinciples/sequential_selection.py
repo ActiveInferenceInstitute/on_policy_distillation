@@ -208,6 +208,7 @@ def build_payload() -> dict[str, object]:
         "cue_first_lowest_policy_efe": cue_first_lowest_policy_efe,
         "cue_first_highest_expected_reward": cue_first_highest_expected_reward,
         "blind_cue_collapses_advantage": blind_cue_collapses_advantage,
+        "blind_collapse_margin": float(blind_cue["policy_efe"] - commit["policy_efe"]),
         "horizon_regime_holds": horizon_ok,
         "horizon_curve": horizon,
         "ok": ok,

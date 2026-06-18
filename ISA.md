@@ -489,3 +489,30 @@ PDF render all green afterward.
   figure on all 6 surfaces. Full chain `--render` green, `validate_outputs` ALL TRUE, PDF 67pp / 0 dangling
   crossrefs, claim ledger 142, fast-lane 481 passed, figure+lean tests 30, `lake build` green, ruff+mypy clean.
 - **Cross-vendor (`OPD-ACTIVE-XVENDOR-1`) still deferred** to codex quota reset; now also covers A/B/C.
+
+## Run-14 session record (2026-06-17) — synthesis: result-integrity ledger + figure (commit `4ef2a03`)
+
+> Goal: "make all updates and improvements as most intelligent". FirstPrinciples: after many
+> sessions of additions, the highest-leverage move is no longer another toy result (diminishing
+> returns) but a SYNTHESIS that makes the whole contribution legible and audits its integrity.
+
+- **`precision_ledger` meta-artifact:** aggregates the two integrity properties of the WHOLE result
+  set from the live source artifacts — **PRECISION** (every quantitative correspondence's residual
+  below tolerance: analytical MI cross-check 4.6e-16, active-selection identity exact 0, multi-state
+  5.6e-17, parallel convergence 3.6e-8, pymdp bridge post-cue + per-step 6.6e-9; max 3.6e-8) and
+  **CONTROLS** (5/5 negative controls bite — none green-by-construction). The output gate validator
+  `validate_against_sources` CROSS-READS each source artifact, so the ledger cannot claim a residual
+  or control flag the source does not contain (a lying row, a lying control, and a stale ledger are
+  all caught). It introduces no new science — it audits the structure of what is already proved,
+  witnessed, and controlled. +4 tests.
+- **`precision_ledger` synthesis figure:** a lollipop chart of every residual on a log axis against
+  the tolerance line, tier-coloured (proved identity vs numerical witness), with the controls-bite
+  count in the title — the whole quantitative contribution in one view. Wired across all 6 figure
+  surfaces + doc-contract lists.
+- **Coherence prose:** a closing synthesis paragraph in `results_free_energy` ties the arc into one
+  auditable picture (passive VFE + active EFE-selection + horizon scaling + per-step trajectory +
+  multi-state + Lean skeleton) and states the meta-properties with hydrated tokens; +3 typed claim
+  rows.
+- **Verification:** full chain `--render` green, `validate_outputs` ALL TRUE (new precision_ledger
+  check + cross-read), PDF 68pp / 0 dangling crossrefs, claim ledger 145, fast-lane 488 passed,
+  figure tests 27, ruff+mypy clean. Opus-family RedTeam of the synthesis run post-build.

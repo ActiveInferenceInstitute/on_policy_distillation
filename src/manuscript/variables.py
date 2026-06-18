@@ -503,6 +503,7 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
         "precision_ledger_result_count": len(precision_ledger_data.get("precision_rows") or []),
         "precision_ledger_control_count": len(precision_ledger_data.get("control_rows") or []),
         "precision_ledger_max_residual": float(precision_ledger_data.get("max_residual", 0.0)),
+        "precision_ledger_min_control_margin": float(precision_ledger_data.get("min_control_margin", 0.0)),
         "si_bridge_match_abs": float(si_bridge_data.get("residual_entropy_match_abs", 0.0)),
         "si_bridge_post_cue_entropy": float(si_bridge_data.get("post_cue_belief_entropy", 0.0)),
         "si_bridge_cue_validity": float(si_bridge_data.get("cue_validity", 0.0)),

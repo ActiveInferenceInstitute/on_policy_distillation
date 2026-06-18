@@ -191,7 +191,8 @@ def figure_precision_ledger(project_root: Path) -> Path:
     data = json.loads((root / "output" / "data" / "firstprinciples" / "precision_ledger_demo.json").read_text(encoding="utf-8"))
     rows = list(data["precision_rows"])
     controls = list(data["control_rows"])
-    tol = float(data["precision_tolerance"])
+    tier_tol = {int(k): float(v) for k, v in data["tier_tolerances"].items()}
+    tol = max(tier_tol.values())  # the looser (Tier 2) tolerance line
     n_controls = len(controls)
     n_bite = sum(1 for c in controls if c["bites"])
 

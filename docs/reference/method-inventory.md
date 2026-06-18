@@ -294,10 +294,10 @@ Total documented definitions: 1006
 
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
-| 50 | `function` | `_read` | inventory fallback | Inventory fallback for function `_read` defined at `src/firstprinciples/precision_ledger.py:50`. |
-| 54 | `function` | `build_payload` | docstring | Aggregate the precision and control properties from the live source artifacts. |
-| 88 | `function` | `validate_payload` | docstring | Re-derive the certificate from the stored ledger rows (internal consistency). |
-| 115 | `function` | `validate_against_sources` | docstring | Cross-read: confirm every ledger row reproduces its live source value. |
+| 63 | `function` | `_read` | inventory fallback | Inventory fallback for function `_read` defined at `src/firstprinciples/precision_ledger.py:63`. |
+| 67 | `function` | `build_payload` | docstring | Aggregate the precision and control margins from the live source artifacts. |
+| 111 | `function` | `validate_payload` | docstring | Re-derive the certificate from the stored ledger rows (internal consistency). |
+| 140 | `function` | `validate_against_sources` | docstring | Cross-read: confirm every ledger row reproduces its live source value. |
 
 ## `src/firstprinciples/privilege.py`
 
@@ -344,7 +344,7 @@ Total documented definitions: 1006
 | 123 | `function` | `build_horizon_curve.commit_efe` | inventory fallback | Inventory fallback for function `build_horizon_curve.commit_efe` defined at `src/firstprinciples/sequential_selection.py:123`. |
 | 126 | `function` | `build_horizon_curve.blind_efe` | inventory fallback | Inventory fallback for function `build_horizon_curve.blind_efe` defined at `src/firstprinciples/sequential_selection.py:126`. |
 | 169 | `function` | `build_payload` | docstring | Certify the horizon-dependent active-selection result with its controls. |
-| 217 | `function` | `validate_payload` | docstring | Re-derive the horizon-dependence verdict from the per-step G rows. |
+| 218 | `function` | `validate_payload` | docstring | Re-derive the horizon-dependence verdict from the per-step G rows. |
 
 ## `src/firstprinciples/sequential_shift.py`
 
@@ -373,7 +373,7 @@ Total documented definitions: 1006
 | 90 | `function` | `analytical_residual_at_validity` | docstring | Closed-form residual E_o[H(r\|o)] for a symmetric binary cue (reuses active_selection). |
 | 95 | `function` | `efe_menu_selects_cue` | docstring | Does the analytical EFE menu (cue at this validity) still pick the cue? |
 | 102 | `function` | `build_payload` | docstring | Certify the observable + quantitative bridge from the committed SI artifacts. |
-| 206 | `function` | `validate_payload` | docstring | Re-derive the bridge verdict from the stored trace-derived rows. |
+| 209 | `function` | `validate_payload` | docstring | Re-derive the bridge verdict from the stored trace-derived rows. |
 
 ## `src/firstprinciples/statistics.py`
 
@@ -1403,15 +1403,15 @@ Total documented definitions: 1006
 | 21 | `function` | `figure_distillation_divergence_geometry` | docstring | Render first-principles divergence geometry for teacher/student policies. |
 | 99 | `function` | `figure_active_selection_landscape` | docstring | Render the EFE active-selection landscape: validity-sweep identity + per-policy EFE bars. |
 | 180 | `function` | `figure_precision_ledger` | docstring | Synthesis: every quantitative correspondence's residual on one log axis. |
-| 241 | `function` | `figure_si_belief_entropy_trajectory` | docstring | Per-step bridge: analytical belief-entropy prediction overlaid on the pymdp SI trace. |
-| 282 | `function` | `figure_si_bridge_match` | docstring | Analytical residual curve with the pymdp SI agent's post-cue entropy on it. |
-| 331 | `function` | `figure_exposure_bias_recovery` | docstring | Render off-policy compounding versus on-policy correction curves. |
-| 450 | `function` | `figure_classroom_distillation_signal` | docstring | Render teacher/student policy gaps in the two-agent classroom artifact. |
-| 558 | `function` | `figure_sequential_shift_recovery` | docstring | Render the deterministic finite sequential train/test shift witness. |
-| 653 | `function` | `figure_sequential_shift_sensitivity` | docstring | Render the finite correction-dose sensitivity sweep for sequential shift. |
-| 762 | `function` | `figure_parallel_convergence` | docstring | Two frameworks, one answer: ML distillation converging to the AIF posterior. |
-| 825 | `function` | `figure_diversity_tradeoff` | docstring | Pass@1 (greedy, temperature-invariant) vs Pass@k (collapses under sharpening). |
-| 874 | `function` | `figure_privilege_dose_response` | docstring | Teacher-privilege dose-response: entropy gap is a threshold, reverse KL is the sensitive detector. |
+| 242 | `function` | `figure_si_belief_entropy_trajectory` | docstring | Per-step bridge: analytical belief-entropy prediction overlaid on the pymdp SI trace. |
+| 283 | `function` | `figure_si_bridge_match` | docstring | Analytical residual curve with the pymdp SI agent's post-cue entropy on it. |
+| 332 | `function` | `figure_exposure_bias_recovery` | docstring | Render off-policy compounding versus on-policy correction curves. |
+| 451 | `function` | `figure_classroom_distillation_signal` | docstring | Render teacher/student policy gaps in the two-agent classroom artifact. |
+| 559 | `function` | `figure_sequential_shift_recovery` | docstring | Render the deterministic finite sequential train/test shift witness. |
+| 654 | `function` | `figure_sequential_shift_sensitivity` | docstring | Render the finite correction-dose sensitivity sweep for sequential shift. |
+| 763 | `function` | `figure_parallel_convergence` | docstring | Two frameworks, one answer: ML distillation converging to the AIF posterior. |
+| 826 | `function` | `figure_diversity_tradeoff` | docstring | Pass@1 (greedy, temperature-invariant) vs Pass@k (collapses under sharpening). |
+| 875 | `function` | `figure_privilege_dose_response` | docstring | Teacher-privilege dose-response: entropy gap is a threshold, reverse KL is the sensitive detector. |
 
 ## `src/visualizations/figures_interpretability.py`
 

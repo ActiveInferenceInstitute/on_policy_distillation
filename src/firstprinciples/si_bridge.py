@@ -151,9 +151,10 @@ def build_payload(root: Path | None = None) -> dict[str, object]:
     # Controls along the WHOLE trajectory: wrong validity and shuffled observation
     # order must both break the match.
     wrong_validity_traj = analytical_entropy_trajectory(cue_obs_by_step, outcome_obs_by_step, 1.0)
-    wrong_validity_breaks_trajectory = bool(
-        max(abs(wrong_validity_traj[i] - belief_entropy[i]) for i in range(len(steps))) > _MISMATCH_MARGIN
+    wrong_validity_trajectory_max_error = max(
+        (abs(wrong_validity_traj[i] - belief_entropy[i]) for i in range(len(steps))), default=0.0
     )
+    wrong_validity_breaks_trajectory = bool(wrong_validity_trajectory_max_error > _MISMATCH_MARGIN)
     rev_traj = analytical_entropy_trajectory(list(reversed(cue_obs_by_step)), list(reversed(outcome_obs_by_step)), cue_validity)
     shuffled_order_breaks_trajectory = bool(
         max(abs(rev_traj[i] - belief_entropy[i]) for i in range(len(steps))) > _MISMATCH_MARGIN
@@ -188,6 +189,8 @@ def build_payload(root: Path | None = None) -> dict[str, object]:
         "quantitative_match": quantitative_match,
         "efe_selects_cue_at_validity": efe_selects_cue_at_validity,
         "blinded_control_bites": blinded_control_bites,
+        "blinded_efe_residual_margin": float(blinded_residual - analytical_residual),
+        "wrong_validity_trajectory_max_error": float(wrong_validity_trajectory_max_error),
         "match_is_validity_specific": match_is_validity_specific,
         "cue_obs_by_step": cue_obs_by_step,
         "outcome_obs_by_step": outcome_obs_by_step,

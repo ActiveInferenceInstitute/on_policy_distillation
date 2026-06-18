@@ -500,13 +500,14 @@ figures:
       tolerance line. An annotation reports how many negative controls bite.
     caption: >-
       A synthesis over the result set: every quantitative correspondence in the paper plotted by its
-      residual or error against the tolerance line. All {{precision_ledger_result_count}} measured
-      correspondences -- the analytical mutual-information cross-check, the active-selection and
-      multi-state identities, the reverse-KL/free-energy convergence, and the post-cue and per-step
-      pymdp bridges -- fall below tolerance, with maximum residual {{precision_ledger_max_residual:.1e}}
-      nats, and all {{precision_ledger_control_count}} negative controls bite. Tier 1 rows are proved
-      closed-form identities; Tier 2 rows are numerical witnesses. Finite toys, exact in the declared
-      models. Source: `output/data/firstprinciples/precision_ledger_demo.json`.
+      residual or error against the tolerance line. All {{precision_ledger_result_count}} of these
+      quantitative identities and cross-checks -- the analytical mutual-information cross-check, the
+      active-selection and multi-state identities, the reverse-KL/free-energy convergence, and the
+      post-cue and per-step pymdp bridges -- fall below their tier-aware tolerance, with maximum
+      residual {{precision_ledger_max_residual:.1e}} nats, and each of the
+      {{precision_ledger_control_count}} negative controls bites by a measured margin. Tier 1 rows are
+      proved closed-form identities; Tier 2 rows are numerical witnesses. Finite toys, exact in the
+      declared models. Source: `output/data/firstprinciples/precision_ledger_demo.json`.
     width: 0.9
     claims:
       - id: precision_ledger_caption_claim
