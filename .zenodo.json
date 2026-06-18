@@ -6,7 +6,7 @@
       "orcid": "0000-0001-6232-9096"
     }
   ],
-  "description": "Source code and manuscript for 'On-Policy Distillation is Active Inference' (2026): an audited correspondence between on-policy distillation and active inference, demonstrated on deterministic finite toy models with machine-checked manuscript bindings.",
+  "description": "Source code and manuscript for 'On-Policy Distillation as Active Inference in Finite Variational Models' (2026): an audited correspondence between on-policy distillation and active inference, demonstrated on deterministic finite toy models with machine-checked manuscript bindings.",
   "keywords": [
     "active inference",
     "on-policy distillation",
@@ -18,7 +18,7 @@
     "reproducible research"
   ],
   "license": "MIT",
-  "title": "On-Policy Distillation is Active Inference",
+  "title": "On-Policy Distillation as Active Inference in Finite Variational Models",
   "upload_type": "software",
   "version": "1.0.0"
 }

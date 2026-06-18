@@ -13,8 +13,8 @@
       "givenName": "Daniel Ari"
     }
   ],
-  "codeRepository": "https://github.com/docxology/on_policy",
-  "dateModified": "2026-06-10",
+  "codeRepository": "https://github.com/ActiveInferenceInstitute/on_policy_distillation",
+  "dateModified": "2026-06-18",
   "keywords": [
     "active inference",
     "on-policy distillation",
@@ -27,6 +27,6 @@
     "reproducible research"
   ],
   "license": "https://spdx.org/licenses/MIT",
-  "name": "On-Policy Distillation is Active Inference",
-  "version": "0.4.0"
+  "name": "On-Policy Distillation as Active Inference in Finite Variational Models",
+  "version": "1.0.0"
 }
