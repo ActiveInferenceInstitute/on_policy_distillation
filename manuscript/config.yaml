@@ -12,12 +12,10 @@ authors:
     corresponding: true
 
 publication:
-  # No DOI minted for this project yet (the previous values were the
-  # template_active_inference exemplar's Zenodo records — wrong attribution).
-  # Reserve a draft deposition DOI before release, then fill all three fields.
-  doi: ""
-  version_doi: ""
-  version_record: ""
+  # Zenodo concept DOI (resolves to the latest version) + the v1.0.0 version DOI.
+  doi: "10.5281/zenodo.20747834"
+  version_doi: "10.5281/zenodo.20747835"
+  version_record: "https://zenodo.org/records/20747835"
   github_repository: "ActiveInferenceInstitute/on_policy_distillation"
   transmission_bookends:
     enabled: true

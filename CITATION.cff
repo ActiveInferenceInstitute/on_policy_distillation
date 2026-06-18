@@ -4,7 +4,15 @@ authors:
   given-names: Daniel Ari
   orcid: 0000-0001-6232-9096
 cff-version: 1.2.0
-date-released: '2026-06-10'
+date-released: '2026-06-18'
+doi: 10.5281/zenodo.20747835
+identifiers:
+- description: Concept DOI (resolves to the latest version)
+  type: doi
+  value: 10.5281/zenodo.20747834
+- description: Version DOI (v1.0.0)
+  type: doi
+  value: 10.5281/zenodo.20747835
 keywords:
 - active inference
 - on-policy distillation

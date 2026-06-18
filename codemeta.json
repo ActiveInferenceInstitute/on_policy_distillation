@@ -14,6 +14,7 @@
     }
   ],
   "codeRepository": "https://github.com/ActiveInferenceInstitute/on_policy_distillation",
+  "identifier": "https://doi.org/10.5281/zenodo.20747834",
   "dateModified": "2026-06-18",
   "keywords": [
     "active inference",
