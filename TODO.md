@@ -13,52 +13,60 @@ deepen canonical tracks such as `provenance`, `replay_matrix`, `sensitivity`,
 
 ## Current baseline
 
-The current system is a validated multi-track toy Active Inference exemplar with
-canonical sheaf tracks, semantic gluing, dependency graph, typed claim evidence,
-manuscript hydration, Lean/GNN/ontology checks, graph-world and animation
-artifacts, and a blocked empirical boundary. Live proofs belong in the registry,
-project docs, generated certificates, `output/data/track_improvement_scope.json`,
-and output reports rather than repeated here as completed TODO work.
+The project is a mature, validated multi-track toy Active Inference exemplar and
+is **green**: `validate_outputs` ALL TRUE, `compose_manuscript --validate-only
+--strict` clean, `lake build` green, the PDF renders with zero dangling
+cross-references, and the full test suite passes.
 
-## Status & what's needed from here (2026-06-13, after verifier-first hardening)
+The active-inference ↔ on-policy-distillation correspondence is built on both
+halves and synthesised:
 
-**The project is mature and green — nothing here is blocking.** Full suite
-validation is `validate_outputs` ALL TRUE after the Run-12 fixed-point tail;
-compose strict and PDF rendering are green. Runs 10–12 landed the canonical
-promotion chains that used to occupy this file as active TODO rows. They have
-been removed from the active roadmap and now live in README/docs, generated
-certificates, validation reports, and tests.
+- **Passive (VFE):** the per-token reverse-KL distillation loss is variational
+  free energy up to the evidence constant — an algebraic identity of the declared
+  finite objects, two-route verified.
+- **Active (EFE):** EFE-driven rollout selection closes the distillation gap; the
+  toy-exact identity `gap_closed(pi) = H(r) - E_o[H(r|o)] = I(o;r) = epistemic`,
+  a precision-weighted policy posterior, multi-state generality (`n,k in {3,4}`),
+  a horizon-scaling sequential result, and the analytical↔pymdp bridge that
+  predicts the sophisticated-inference agent's belief-entropy trajectory.
+- **Formal + synthesis:** a sorry-free Lean finite chain-rule skeleton of the
+  complement identity, and a result-integrity ledger that certifies the whole
+  set is precise (tier-aware tolerances) and controlled (every result has a
+  measured-margin negative control), cross-read against the live source
+  artifacts.
 
-What remains is **optional future deepening or externally-gated**, in priority order:
+Each result is a first-class audited artifact (re-derive-never-trust validator +
+typed claim-ledger evidence + biting negative control), narrated in the
+manuscript with hydrated tokens, and visualised. Live proofs belong in the
+registry, project docs, generated certificates,
+`output/data/track_improvement_scope.json`, and output reports rather than as
+completed TODO work here.
 
-1. **Needs a human decision / external input (cannot proceed unilaterally):**
-   - *Venue/submission decision* → unblocks `REVIEW-FIGURE-RELOCATION-1` (move dense
-     dashboard figures to a supplement) and `TMAZE-MATRIX-TABLE-1` (typeset table vs
-     figure). Deliberately not done: current genre is an auditable artifact paper.
-   - *Publish decision* — this exemplar is LOCAL-ONLY by design; if publishing, the
-     release path is reserve-DOI-first → GitHub release → Zenodo (out of TODO scope).
-2. **Additive deepening (doable in a future session, medium value, under the promotion rule):**
-   - Live canonical artifacts now include `proof_dependency_graph`,
-     `state_transition_table`, `ablation_sensitivity_report`, and
-     `release_attestation`; the current verifier-first tranche deepens those
-     same stable surfaces with edge, transition, join, and attestation checks.
-     Future work should continue deepening these IDs rather than creating
-     versioned siblings.
-   - Remaining optional work is mostly venue- or release-process polish.
-3. **Environment-gated maintenance:** `AI-TEST-ISOLATION-1` — the durable soak
-   runner now writes and validates `output/reports/test_isolation_soak.json`
-   from repeated deterministic shuffled chunked runs. A local diagnostic
-   five-run soak on 2026-06-13 exposed order-sensitive stale-artifact failures
-   under seeds 61300, 61301, and 61302; the reported failing chunk groups and a
-   full same-seed 61300 rerun now pass after gate-surface refresh hardening. A
-   loaded-host 2026-06-14 five-run transcript then produced green seeds 61300,
-   61301, and 61302, followed by SIGTERM-style red rows at seed 61303 chunk 8
-   and seed 61304 chunk 4 (`EXIT -15`, no pytest failures, `complete_soak: false`).
-   The remaining closure item is still a fresh 5-consecutive-run
-   idle-host transcript with `complete_soak: true`.
-4. **Intentionally blocked (do NOT build without the unblock artifacts + gates):** all
-   rows under "Blocked scope" — empirical/biological, private data, network-dependent,
-   LLM-generated evidence, non-toy claims.
+## What remains
+
+Everything below is **optional future deepening or externally-gated** — nothing
+is blocking. In priority order:
+
+1. **Owed verification:** `OPD-ACTIVE-XVENDOR-1` — the GPT-5.4/codex cross-vendor
+   audit of the active-selection family (math + integration). Opus-family
+   adversarial probes have stood in (PASS, proven not green-by-construction), but
+   the cross-vendor blind-spot reduction is not yet present.
+2. **Optional formal deepening:** `OPD-LEAN-REAL-IDENTITY-1` — promote the Lean
+   witness from the integer chain-rule skeleton to the real-valued
+   `I + H_b(sigma) = log 2` entropy identity. Requires adding a Mathlib toolchain
+   (heavyweight; the current pinned Lean ships without it). Until then the
+   real-valued form remains the two-route numerical witness.
+3. **Human decision / external input (cannot proceed unilaterally):**
+   - *Publish decision* — this exemplar is LOCAL-ONLY by design; if publishing,
+     the release path is reserve-DOI-first → GitHub release → Zenodo.
+   - *Venue/submission decisions* → unblock `REVIEW-FIGURE-RELOCATION-1` and
+     `TMAZE-MATRIX-TABLE-1` (the paper is deliberately an auditable-artifact
+     paper, so these are deferred to a venue choice).
+4. **Environment-gated maintenance:** `AI-TEST-ISOLATION-1` — a fresh idle-host
+   isolation soak with `complete_soak: true`.
+5. **Intentionally blocked (do NOT build without the unblock artifacts + gates):**
+   everything under "Blocked scope" — empirical/biological, private data,
+   network-dependent, LLM-generated evidence, non-toy claims.
 
 ## Promotion rule
 
@@ -81,44 +89,46 @@ implementation begins.
 
 | ID | Area | Remaining improvement | Proving artifact | Gate or predicate | Negative control |
 | --- | --- | --- | --- | --- | --- |
-| `AI-TEST-ISOLATION-1` | Test infra | Complete the 5-consecutive-run idle-host soak. `run_test_isolation_soak.py` records repeated deterministic shuffled chunked runs incrementally, and `--validate-report --require-complete` verifies seed continuity, failed chunk ids, failed tests, diagnostic completeness, and `complete_soak`. The 2026-06-13 diagnostic soak exposed stale-artifact order failures that were hardened; the 2026-06-14 loaded-host transcript then failed only through SIGTERM-style chunk exits at seeds 61303 and 61304 with no pytest failures. A fresh idle-host completion transcript is still needed. | `output/reports/test_isolation_soak.json` | five green consecutive runs with fixed or reported shuffle seeds and `complete_soak: true` | Red shuffled run is reported with its seed and tail, not re-rolled |
+| `OPD-ACTIVE-XVENDOR-1` | Verification | Run the GPT-5.4/codex cross-vendor audit of the active-selection math and integration once quota is available. Opus-family adversarial probes have run (PASS); the cross-vendor blind-spot pass is not yet present. | Cross-vendor verdict + any fixes | no unaddressed CRITICAL/HIGH | n/a |
+| `OPD-LEAN-REAL-IDENTITY-1` | Formal | Promote the Lean witness from the integer chain-rule skeleton to the real-valued `I + H_b(sigma) = log 2` identity. Requires adding Mathlib (real-valued entropy / `Real.log`) to the Lean toolchain. | New Lean theorem over reals | `lake build` + axiom audit clean; bound to the analytical numerical witness | A wrong-definition mutation fails the elaboration gate |
+| `AI-TEST-ISOLATION-1` | Test infra | Complete a 5-consecutive-run idle-host soak. `run_test_isolation_soak.py` records repeated deterministic shuffled chunked runs incrementally; `--validate-report --require-complete` verifies seed continuity, failed chunk ids, failed tests, diagnostic completeness, and `complete_soak`. Chain-A stale-trust races are closed; remaining is a clean idle-host completion transcript. | `output/reports/test_isolation_soak.json` | five green consecutive idle-host runs with reported shuffle seeds and `complete_soak: true` | A red shuffled run is reported with its seed and tail, not re-rolled |
 | `REVIEW-FIGURE-RELOCATION-1` | Visualization | At venue-submission time, decide whether dense dashboard figures should move to the supplement with simplified main-text replacements. Deliberately deferred because the current paper is an auditable artifact paper. | `figures.yaml` `section_figures` | compose and figure-source gates stay green | Figure lacks source artifact |
 | `TMAZE-MATRIX-TABLE-1` | Visualization | At venue-submission time, convert `si_tmaze_model_matrices` into a generated table or move it fully to the supplement. Do not hand-typeset values; bind them to the matrix artifact. | generated table binding + matrix artifact | compose and figure gates stay green | Typeset values diverge from matrix artifact |
-| `OPD-ACTIVE-XVENDOR-1` | Verification | Run the GPT-5.4/codex cross-vendor audit of the active-selection math AND integration once quota resets (was exhausted until 2026-06-20). The 2026-06-17 pass ran Opus-family adversarial probes only (PASS, proven not green-by-construction); the cross-vendor blind-spot reduction is not yet present. | Forge verdict + any fixes | no unaddressed CRITICAL/HIGH | n/a |
 
 `tasks.yaml` is the taskboard metadata surface. `scripts/audit_roadmap_tasks.py`
 keeps the open TODO rows, task status/progress, and blocked/deferred semantics in
 agreement without making completed proof claims active roadmap work again.
 
-## Completed hardening removed from active scope
+## Completed and removed from active scope
 
-The following roadmap IDs are implemented and no longer active TODO work:
-`AI-ANALYTICAL-OBS-4`, `AI-PYMDP-EFE-3`, `AI-GRAPH-TOPOLOGY-3`,
-`AI-VIZ-PIXEL-2`, `AI-LEAN-BELIEF-3`, `AI-THEOREM-LINKS-1`,
-`AI-STALE-LIVE-1`, `AI-PYMDP-POLICY-3`, `AI-PYMDP-RUNTIME-3`,
-`AI-GNN-SHAPE-3`, `AI-ANIMATION-HASH-2`, `AI-CLAIM-PREDICATE-3`,
-`AI-SCOPE-ROWS-1`, `AI-GATE-INDEX-3`, `AI-ONTOLOGY-PROFILE-3`,
-`AI-MANUSCRIPT-TOKEN-3`, `AI-SEMANTIC-CLASSIFIED-1`,
-`AI-DEPENDENCY-FIELDS-1`, `AI-PROVENANCE-FIELDS-1`,
-`AI-RELEASE-PARITY-1`, `AI-EVIDENCE-FIELDS-1`, `AI-SYMBOL-SPINE-3`,
-`AI-STALE-SUMMARY-1`, `AI-EFE-NONVACUOUS-1`, `AI-STUB-DEPTH-1`,
-`AI-APPENDIX-HYDRATE-1`, `AI-APPENDIX-FIGURES-1`, `AI-HYGIENE-1`,
-and `QWEN-TABLE-PIN-1`. `OPD-ACTIVE-INTEGRATE-1` (2026-06-17, commits `533170d`/`0ee4b56`)
-promoted the EFE active-selection result to a first-class audited artifact + figure
-(`active_selection_landscape`) + `results_free_energy` prose + four typed-claim rows + a 26th
-correspondence-map row; full suite 586 passed, validate ALL TRUE, PDF renders.
+The following work is implemented, audited, and no longer active TODO. Its proof
+surface is the live artifact contract (`validate_outputs.py`,
+`compose_manuscript.py --validate-only --strict`, the generated
+semantic/provenance/dependency/evidence/release artifacts, the Lean inventory,
+and their negative-control tests). Do not re-open without a new failure, a
+changed venue requirement, or a changed artifact contract.
 
-The proof surface for completed rows is the live artifact contract:
-`validate_outputs.py`, `compose_manuscript.py --validate-only --strict`,
-the generated semantic/provenance/dependency/evidence/release artifacts, and
-their negative-control tests. Do not re-open completed IDs without a new
-failure, changed venue requirement, or changed artifact contract.
+- **Active-selection program (`OPD-ACTIVE-INTEGRATE-1` and follow-ons):** the
+  active/EFE half and its extensions — EFE rollout selection, precision posterior,
+  multi-state generality, sequential horizon scaling, the analytical↔pymdp bridge
+  (post-cue and per-step trajectory), the Lean chain-rule skeleton, and the
+  result-integrity ledger — all promoted to first-class audited artifacts with
+  figures, manuscript prose, typed claim rows, and biting controls.
+- **Prior canonical hardening IDs:** `AI-ANALYTICAL-OBS-4`, `AI-PYMDP-EFE-3`,
+  `AI-GRAPH-TOPOLOGY-3`, `AI-VIZ-PIXEL-2`, `AI-LEAN-BELIEF-3`, `AI-THEOREM-LINKS-1`,
+  `AI-STALE-LIVE-1`, `AI-PYMDP-POLICY-3`, `AI-PYMDP-RUNTIME-3`, `AI-GNN-SHAPE-3`,
+  `AI-ANIMATION-HASH-2`, `AI-CLAIM-PREDICATE-3`, `AI-SCOPE-ROWS-1`, `AI-GATE-INDEX-3`,
+  `AI-ONTOLOGY-PROFILE-3`, `AI-MANUSCRIPT-TOKEN-3`, `AI-SEMANTIC-CLASSIFIED-1`,
+  `AI-DEPENDENCY-FIELDS-1`, `AI-PROVENANCE-FIELDS-1`, `AI-RELEASE-PARITY-1`,
+  `AI-EVIDENCE-FIELDS-1`, `AI-SYMBOL-SPINE-3`, `AI-STALE-SUMMARY-1`,
+  `AI-EFE-NONVACUOUS-1`, `AI-STUB-DEPTH-1`, `AI-APPENDIX-HYDRATE-1`,
+  `AI-APPENDIX-FIGURES-1`, `AI-HYGIENE-1`, and `QWEN-TABLE-PIN-1`.
 
 ## Live canonical supplemental artifacts
 
-The IDs below are now live canonical artifacts. They are intentionally not
-versioned `_vN` tracks; future work should deepen these stable surfaces and keep
-the promotion rule intact.
+The IDs below are live canonical artifacts. They are intentionally not versioned
+`_vN` tracks; future work should deepen these stable surfaces and keep the
+promotion rule intact.
 
 | Canonical id | Purpose | Artifact | Manuscript binding | Gate | Negative control |
 | --- | --- | --- | --- | --- | --- |
@@ -141,7 +151,9 @@ fully satisfied.
 
 The following remain explicitly out of scope until a later plan promotes them
 with provenance, licensing/privacy review, typed claim evidence, semantic
-restrictions, gates, and negative controls.
+restrictions, gates, and negative controls. The falsifiable program for testing
+the correspondence at scale is written into the discussion as a future research
+direction, not as work to start unilaterally here.
 
 | Blocked area | Why blocked | Required unblock artifact | Required gate | Negative control |
 | --- | --- | --- | --- | --- |
@@ -161,23 +173,3 @@ restrictions, gates, and negative controls.
    over broader prose claims.
 4. Leave `empirical_adapter` blocked until the unblock artifacts and gates above
    exist and fail closed.
-
-## Known residual: idle-host isolation soak
-
-Historical full-suite artifact-isolation races have been narrowed by symmetric
-gate-cache eviction, file-chunk isolation, deterministic shuffle support, and
-machine validation for persisted soak reports.
-The remaining evidence task is a five-run idle-host soak. A loaded-host chunked
-run on 2026-06-11 produced one red chunk followed by two exact chunk reruns that
-passed. A diagnostic five-run local soak on 2026-06-13 recorded red seeds
-61300, 61301, and 61302, then green seeds 61303 and 61304; the failing chunk
-groups and a full same-seed 61300 rerun now pass after refresh hardening. A
-loaded-host five-run soak on 2026-06-14 recorded green seeds 61300, 61301, and
-61302, then red rows for seed 61303 chunk 8 and seed 61304 chunk 4; both were
-`EXIT -15` with no pytest failures in the emitted tail, so `complete_soak`
-remains false. Treat any future red shuffled run as evidence to report with the
-seed and emitted failure tail.
-
-| ID | Area | Improvement | Proving artifact | Gate or predicate | Negative control |
-| --- | --- | --- | --- | --- | --- |
-| `AI-TEST-ISOLATION-1` | Test infra | **PARTIAL:** chain-A stale-trust race closed; `run_tests_chunked.py --shuffle-seed N` provides deterministic file-order coverage; failure tails are emitted for red chunks; `run_test_isolation_soak.py` writes an incremental repeated-run report; the 2026-06-13 red diagnostic chunks and full same-seed 61300 rerun are now green after refresh hardening; the 2026-06-14 loaded-host five-run transcript preserved new SIGTERM-style red rows at seeds 61303 and 61304. Remaining: the 5-consecutive-run idle-host soak with `complete_soak: true` | `output/reports/test_isolation_soak.json` | chunked equivalent green across 5 consecutive idle-host runs | shuffled chunk order (`--shuffle-seed`) is reported with exact seed and tail if red |
