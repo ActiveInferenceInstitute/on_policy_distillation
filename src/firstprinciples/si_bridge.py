@@ -35,6 +35,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
+
+from analytical.free_energy import shannon_entropy
+
 from . import active_selection as asel
 
 SCHEMA = "firstprinciples.si_bridge_demo.v1"
@@ -45,7 +49,38 @@ _ARM_LOCATIONS = {"left_arm", "right_arm"}
 _MATCH_TOL = 1e-6
 _MISMATCH_MARGIN = 1e-2
 
-__all__ = ["analytical_residual_at_validity", "efe_menu_selects_cue", "build_payload", "validate_payload"]
+__all__ = [
+    "analytical_residual_at_validity",
+    "efe_menu_selects_cue",
+    "analytical_entropy_trajectory",
+    "build_payload",
+    "validate_payload",
+]
+
+
+def analytical_entropy_trajectory(cue_obs: list[int], outcome_obs: list[int], validity: float) -> list[float]:
+    """Running-Bayesian belief-entropy trajectory over the reward-location latent.
+
+    Flat prior gives ``H = ln 2``; a cue observation (cue_left / cue_right)
+    sharpens the posterior to ``H([v, 1-v])``; a reward outcome resolves the
+    latent, so ``H -> 0``. Reuses the shared :func:`shannon_entropy`; the one-hot
+    direction after resolution is irrelevant to the entropy. The closed-form
+    prediction of the pymdp SI agent's belief entropy at every step.
+    """
+    v = float(validity)
+    post = np.array([0.5, 0.5], dtype=np.float64)
+    traj: list[float] = []
+    for cue, outcome in zip(cue_obs, outcome_obs, strict=True):
+        if cue == 1:  # cue_left
+            post = post * np.array([v, 1.0 - v])
+            post = post / post.sum()
+        elif cue == 2:  # cue_right
+            post = post * np.array([1.0 - v, v])
+            post = post / post.sum()
+        if outcome == 1:  # reward resolves the latent
+            post = np.array([1.0, 0.0])
+        traj.append(float(shannon_entropy(post)))
+    return traj
 
 
 def _load(root: Path, parts: tuple[str, ...]) -> dict:
@@ -103,6 +138,27 @@ def build_payload(root: Path | None = None) -> dict[str, object]:
     mismatch_at_half = abs(analytical_residual_at_validity(0.5) - post_cue_entropy) > _MISMATCH_MARGIN
     match_is_validity_specific = bool(mismatch_at_one and mismatch_at_half)
 
+    # Per-step trajectory bridge: the closed-form running-Bayesian belief entropy
+    # predicts the pymdp SI agent's belief entropy at EVERY step, not just post-cue.
+    cue_obs_by_step = [int(s["observations_by_modality"]["cue"]) for s in steps]
+    outcome_obs_by_step = [int(s["observations_by_modality"]["outcome"]) for s in steps]
+    analytical_traj = analytical_entropy_trajectory(cue_obs_by_step, outcome_obs_by_step, cue_validity)
+    per_step_abs_error = [abs(analytical_traj[i] - belief_entropy[i]) for i in range(len(steps))]
+    max_trajectory_error_abs = max(per_step_abs_error) if per_step_abs_error else 0.0
+    trajectory_match = bool(max_trajectory_error_abs < _MATCH_TOL)
+    monotone_collapse_measured = bool(all(belief_entropy[i] >= belief_entropy[i + 1] - 1e-9 for i in range(len(belief_entropy) - 1)))
+    monotone_collapse_predicted = bool(all(analytical_traj[i] >= analytical_traj[i + 1] - 1e-9 for i in range(len(analytical_traj) - 1)))
+    # Controls along the WHOLE trajectory: wrong validity and shuffled observation
+    # order must both break the match.
+    wrong_validity_traj = analytical_entropy_trajectory(cue_obs_by_step, outcome_obs_by_step, 1.0)
+    wrong_validity_breaks_trajectory = bool(
+        max(abs(wrong_validity_traj[i] - belief_entropy[i]) for i in range(len(steps))) > _MISMATCH_MARGIN
+    )
+    rev_traj = analytical_entropy_trajectory(list(reversed(cue_obs_by_step)), list(reversed(outcome_obs_by_step)), cue_validity)
+    shuffled_order_breaks_trajectory = bool(
+        max(abs(rev_traj[i] - belief_entropy[i]) for i in range(len(steps))) > _MISMATCH_MARGIN
+    )
+
     ok = bool(
         cue_before_arm
         and entropy_collapses_at_cue
@@ -110,6 +166,11 @@ def build_payload(root: Path | None = None) -> dict[str, object]:
         and efe_selects_cue_at_validity
         and blinded_control_bites
         and match_is_validity_specific
+        and trajectory_match
+        and monotone_collapse_measured
+        and monotone_collapse_predicted
+        and wrong_validity_breaks_trajectory
+        and shuffled_order_breaks_trajectory
     )
     return {
         "schema": SCHEMA,
@@ -128,6 +189,16 @@ def build_payload(root: Path | None = None) -> dict[str, object]:
         "efe_selects_cue_at_validity": efe_selects_cue_at_validity,
         "blinded_control_bites": blinded_control_bites,
         "match_is_validity_specific": match_is_validity_specific,
+        "cue_obs_by_step": cue_obs_by_step,
+        "outcome_obs_by_step": outcome_obs_by_step,
+        "analytical_entropy_by_step": analytical_traj,
+        "per_step_abs_error": per_step_abs_error,
+        "max_trajectory_error_abs": max_trajectory_error_abs,
+        "trajectory_match": trajectory_match,
+        "monotone_collapse_measured": monotone_collapse_measured,
+        "monotone_collapse_predicted": monotone_collapse_predicted,
+        "wrong_validity_breaks_trajectory": wrong_validity_breaks_trajectory,
+        "shuffled_order_breaks_trajectory": shuffled_order_breaks_trajectory,
         "ok": ok,
     }
 
@@ -163,6 +234,24 @@ def validate_payload(payload: dict[str, object]) -> list[str]:
         # validity-specificity: wrong validities must NOT match
         if abs(analytical_residual_at_validity(1.0) - float(entropies[cue_step])) <= _MISMATCH_MARGIN:
             issues.append("match not validity-specific (v=1.0 also matches)")
+
+    # Re-derive the WHOLE entropy trajectory from the stored observation sequences
+    # (never trust the stored analytical_entropy_by_step vector).
+    cue_raw = payload.get("cue_obs_by_step")
+    out_raw = payload.get("outcome_obs_by_step")
+    cue_seq = [int(x) for x in cue_raw] if isinstance(cue_raw, list) else []
+    out_seq = [int(x) for x in out_raw] if isinstance(out_raw, list) else []
+    if not cue_seq or len(cue_seq) != len(entropies) or len(out_seq) != len(entropies):
+        issues.append("observation sequences missing or wrong length")
+    else:
+        re_traj = analytical_entropy_trajectory(cue_seq, out_seq, validity)
+        if max(abs(re_traj[i] - entropies[i]) for i in range(len(entropies))) >= _MATCH_TOL:
+            issues.append("analytical entropy trajectory does not match SI trajectory (re-derived)")
+        # wrong-validity control must break the whole-trajectory match
+        wrong = analytical_entropy_trajectory(cue_seq, out_seq, 1.0)
+        if max(abs(wrong[i] - entropies[i]) for i in range(len(entropies))) <= _MISMATCH_MARGIN:
+            issues.append("trajectory match not validity-specific (v=1.0 also matches)")
+
     if bool(payload.get("ok")) != (not issues):
         issues.append("stored ok disagrees with re-derived verdict")
     return issues

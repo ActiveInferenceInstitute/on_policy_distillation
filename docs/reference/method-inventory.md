@@ -2,7 +2,7 @@
 
 Generated documentation coverage for every Python `def` and `class` under `src/` and `scripts/`. Entries marked `inventory fallback` have no inline docstring yet, but remain documented here by path, line, kind, and qualified name.
 
-Total documented definitions: 998
+Total documented definitions: 999
 
 ## `src/analytical/bernoulli_toy.py`
 
@@ -359,11 +359,12 @@ Total documented definitions: 998
 
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
-| 51 | `function` | `_load` | inventory fallback | Inventory fallback for function `_load` defined at `src/firstprinciples/si_bridge.py:51`. |
-| 55 | `function` | `analytical_residual_at_validity` | docstring | Closed-form residual E_o[H(r\|o)] for a symmetric binary cue (reuses active_selection). |
-| 60 | `function` | `efe_menu_selects_cue` | docstring | Does the analytical EFE menu (cue at this validity) still pick the cue? |
-| 67 | `function` | `build_payload` | docstring | Certify the observable + quantitative bridge from the committed SI artifacts. |
-| 135 | `function` | `validate_payload` | docstring | Re-derive the bridge verdict from the stored trace-derived rows. |
+| 61 | `function` | `analytical_entropy_trajectory` | docstring | Running-Bayesian belief-entropy trajectory over the reward-location latent. |
+| 86 | `function` | `_load` | inventory fallback | Inventory fallback for function `_load` defined at `src/firstprinciples/si_bridge.py:86`. |
+| 90 | `function` | `analytical_residual_at_validity` | docstring | Closed-form residual E_o[H(r\|o)] for a symmetric binary cue (reuses active_selection). |
+| 95 | `function` | `efe_menu_selects_cue` | docstring | Does the analytical EFE menu (cue at this validity) still pick the cue? |
+| 102 | `function` | `build_payload` | docstring | Certify the observable + quantitative bridge from the committed SI artifacts. |
+| 206 | `function` | `validate_payload` | docstring | Re-derive the bridge verdict from the stored trace-derived rows. |
 
 ## `src/firstprinciples/statistics.py`
 
