@@ -2,7 +2,7 @@
 
 Generated documentation coverage for every Python `def` and `class` under `src/` and `scripts/`. Entries marked `inventory fallback` have no inline docstring yet, but remain documented here by path, line, kind, and qualified name.
 
-Total documented definitions: 1006
+Total documented definitions: 1007
 
 ## `src/analytical/bernoulli_toy.py`
 
@@ -439,9 +439,10 @@ Total documented definitions: 1006
 
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
-| 22 | `function` | `lean_project_present` | docstring | True when this project ships a Lake root (``lean/lakefile.lean``). |
-| 27 | `function` | `build_lean` | docstring | Build the Lean package when present; skip cleanly when absent. |
-| 44 | `function` | `lean_axioms_clean` | docstring | Audit declarations with ``#print axioms``; True iff only whitelisted axioms appear. |
+| 17 | `function` | `lean_project_present` | docstring | True when this project ships a Lake root (``lean/lakefile.lean``). |
+| 22 | `function` | `discover_audited_decls` | docstring | Every theorem in the boundary modules, namespaced -- so the axiom audit covers |
+| 33 | `function` | `build_lean` | docstring | Build the Lean package when present; skip cleanly when absent. |
+| 50 | `function` | `lean_axioms_clean` | docstring | Audit declarations with ``#print axioms``; True iff only whitelisted axioms appear. |
 
 ## `src/gates/manuscript_checks.py`
 

@@ -11,17 +11,23 @@ from pathlib import Path
 # `native_decide`) -- means the proof is not closed by the kernel alone.
 _AXIOM_WHITELIST = frozenset({"propext", "Classical.choice", "Quot.sound"})
 
-_DEFAULT_AUDITED_DECLS = (
-    "OnPolicyDistillation.sophisticated_requires_horizon",
-    "OnPolicyDistillation.mi_chain_rule",
-    "OnPolicyDistillation.cue_closes_gap",
-    "OnPolicyDistillation.pragmatic_leaves_gap",
-)
+_THEOREM_RE = re.compile(r"^\s*theorem\s+([A-Za-z_][A-Za-z0-9_']*)", re.MULTILINE)
 
 
 def lean_project_present(project_root: Path) -> bool:
     """True when this project ships a Lake root (``lean/lakefile.lean``)."""
     return (project_root.resolve() / "lean" / "lakefile.lean").is_file()
+
+
+def discover_audited_decls(project_root: Path) -> tuple[str, ...]:
+    """Every theorem in the boundary modules, namespaced -- so the axiom audit covers
+    them all and the set can never silently drift below the inventory. ponytail: scan
+    source instead of a hand-maintained list; a new theorem is audited automatically."""
+    module_dir = project_root.resolve() / "lean" / "OnPolicyDistillation"
+    names: list[str] = []
+    for path in sorted(module_dir.glob("*.lean")):
+        names.extend(_THEOREM_RE.findall(path.read_text(encoding="utf-8")))
+    return tuple(f"OnPolicyDistillation.{n}" for n in names)
 
 
 def build_lean(project_root: Path) -> tuple[int, str]:
@@ -43,7 +49,7 @@ def build_lean(project_root: Path) -> tuple[int, str]:
 
 def lean_axioms_clean(
     project_root: Path,
-    declarations: tuple[str, ...] = _DEFAULT_AUDITED_DECLS,
+    declarations: tuple[str, ...] | None = None,
 ) -> tuple[bool, str]:
     """Audit declarations with ``#print axioms``; True iff only whitelisted axioms appear.
 
@@ -56,6 +62,8 @@ def lean_axioms_clean(
     """
     if not lean_project_present(project_root):
         return True, "lean project absent -- skipped"
+    if declarations is None:
+        declarations = discover_audited_decls(project_root)
     lean_dir = project_root.resolve() / "lean"
     module_dir = lean_dir / "OnPolicyDistillation"
     sources: list[str] = []

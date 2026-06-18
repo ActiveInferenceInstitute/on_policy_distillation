@@ -1,3 +1,16 @@
+/-!
+# Sophisticated-inference finite witnesses
+
+Deterministic finite-map reachability and normalization witnesses for the
+sophisticated-inference / T-maze track. Each `..._reach_goal` theorem proves that ONE
+fixed action sequence reaches the goal in a specific finite topology -- honest
+reachability along a hardcoded path, not minimality nor reachability over the whole
+policy class. `sophisticated_requires_horizon` only checks that the chosen
+planning-horizon constant exceeds 1 (`defaultPolicyLen > 1`); it is a parameter sanity
+check, not a proof about sophistication. Bare lean4, no Mathlib -- real-valued expected
+free energy stays in the analytical/pymdp tracks.
+-/
+
 namespace OnPolicyDistillation
 
 /-- Planning horizon for sophisticated inference (policy length > 1). -/

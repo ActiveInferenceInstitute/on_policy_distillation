@@ -21,7 +21,9 @@
 namespace OnPolicyDistillation
 
 /-- Expected conditional entropy `E_o[H(r|o)]` as an explicit fold over the finite
-    observation list -- a genuine finite enumeration, not an opaque constant. -/
+    observation list -- a genuine finite enumeration, not an opaque constant. As a
+    signed `Int` sum it is not constrained to be non-negative; `expectedCondEntropy_nonneg`
+    below recovers non-negativity under the natural per-observation hypothesis. -/
 def expectedCondEntropy (obs : List Int) : Int := obs.foldl (· + ·) 0
 
 /-- Mutual information `I(o;r)` defined as prior entropy minus the expected
@@ -53,5 +55,99 @@ theorem pragmatic_leaves_gap (priorEntropy r : Int) (hr : r > 0) :
   unfold mutualInformation expectedCondEntropy
   simp
   omega
+
+/-! ### Structural properties of the skeleton
+
+The two theorems above pin the active-selection endpoints (full transfer / strictly
+less). The properties below establish the *shape* of the skeleton: the conditional
+entropy fold composes additively over channel concatenation, it is non-negative when
+each per-observation residual is, the mutual information is bounded between zero and
+the prior entropy, it is antitone in the residual, and a residual equal to the prior
+entropy transfers nothing. These are the integer-skeleton images of standard
+information-theoretic facts -- they remain over `Int`, not real-valued entropy. -/
+
+/-- `foldl` with an accumulator equals `acc` plus the fold from `0` -- the
+    accumulator lemma that lets the explicit conditional-entropy fold compose. -/
+theorem foldl_add_acc (obs : List Int) (acc : Int) :
+    obs.foldl (· + ·) acc = acc + obs.foldl (· + ·) 0 := by
+  induction obs generalizing acc with
+  | nil => simp
+  | cons x xs ih =>
+    simp only [List.foldl_cons]
+    rw [ih (acc + x), ih (0 + x)]
+    omega
+
+/-- ADDITIVITY: the expected conditional entropy of concatenated channels is the
+    sum of the parts -- `E_o[H(r|o)]` composes over channel concatenation. -/
+theorem expectedCondEntropy_append (a b : List Int) :
+    expectedCondEntropy (a ++ b) = expectedCondEntropy a + expectedCondEntropy b := by
+  unfold expectedCondEntropy
+  rw [List.foldl_append]
+  rw [foldl_add_acc b (a.foldl (· + ·) 0)]
+
+/-- Non-negativity of the expected conditional entropy when every per-observation
+    residual is non-negative -- conditional entropies are non-negative quantities. -/
+theorem expectedCondEntropy_nonneg (obs : List Int)
+    (h : ∀ x ∈ obs, 0 ≤ x) : 0 ≤ expectedCondEntropy obs := by
+  unfold expectedCondEntropy
+  induction obs with
+  | nil => simp
+  | cons x xs ih =>
+    simp only [List.foldl_cons]
+    rw [foldl_add_acc xs (0 + x)]
+    have hx : 0 ≤ x := h x (List.mem_cons_self x xs)
+    have hxs : 0 ≤ xs.foldl (· + ·) 0 := by
+      apply ih
+      intro y hy
+      exact h y (List.mem_cons_of_mem x hy)
+    omega
+
+/-- BOUND: `0 ≤ I(o;r) ≤ H(r)`. Under non-negative per-observation residuals and a
+    residual no larger than the prior entropy, the mutual information sits between
+    zero and the prior entropy -- the formal skeleton of "epistemic value is bounded
+    by the prior entropy", which the active-selection result exhibits (epistemic
+    value ranges over `0 .. H(r)`). -/
+theorem mi_bounded (priorEntropy : Int) (obs : List Int)
+    (hnn : ∀ x ∈ obs, 0 ≤ x)
+    (hle : expectedCondEntropy obs ≤ priorEntropy) :
+    0 ≤ mutualInformation priorEntropy obs ∧
+    mutualInformation priorEntropy obs ≤ priorEntropy := by
+  unfold mutualInformation
+  have hnn' : 0 ≤ expectedCondEntropy obs := expectedCondEntropy_nonneg obs hnn
+  omega
+
+/-- MONOTONICITY (antitone): a channel with a larger residual transfers no more
+    information -- `I` is antitone in the expected conditional entropy. -/
+theorem mi_antitone (priorEntropy : Int) (obs1 obs2 : List Int)
+    (h : expectedCondEntropy obs1 ≤ expectedCondEntropy obs2) :
+    mutualInformation priorEntropy obs2 ≤ mutualInformation priorEntropy obs1 := by
+  unfold mutualInformation
+  omega
+
+/-- STRICT MONOTONICITY: a strictly larger residual transfers strictly less
+    information -- the strict dual of `mi_antitone`. -/
+theorem mi_antitone_strict (priorEntropy : Int) (obs1 obs2 : List Int)
+    (h : expectedCondEntropy obs1 < expectedCondEntropy obs2) :
+    mutualInformation priorEntropy obs2 < mutualInformation priorEntropy obs1 := by
+  unfold mutualInformation
+  omega
+
+/-- BLIND CHANNEL: a residual equal to the prior entropy transfers nothing,
+    `I = 0` -- the dual of `cue_closes_gap` (a fully-uninformative observation
+    leaves the entire distillation gap open, like the blinded cue). -/
+theorem blind_channel (priorEntropy : Int) (obs : List Int)
+    (h : expectedCondEntropy obs = priorEntropy) :
+    mutualInformation priorEntropy obs = 0 := by
+  unfold mutualInformation
+  omega
+
+/-- Concrete blind witness, dual to `cueResolvesObs`: a single observation whose
+    residual is the full prior entropy transfers zero information. -/
+def blindObs (priorEntropy : Int) : List Int := [priorEntropy]
+
+theorem blind_witness (priorEntropy : Int) :
+    mutualInformation priorEntropy (blindObs priorEntropy) = 0 := by
+  unfold mutualInformation expectedCondEntropy blindObs
+  simp
 
 end OnPolicyDistillation
