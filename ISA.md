@@ -515,4 +515,14 @@ PDF render all green afterward.
   rows.
 - **Verification:** full chain `--render` green, `validate_outputs` ALL TRUE (new precision_ledger
   check + cross-read), PDF 68pp / 0 dangling crossrefs, claim ledger 145, fast-lane 488 passed,
-  figure tests 27, ruff+mypy clean. Opus-family RedTeam of the synthesis run post-build.
+  figure tests 27, ruff+mypy clean.
+- **RedTeam → HARDENED (commit `88dc7cc`):** the first Opus-family skeptic returned REFUTED on the
+  ledger (over-read on one point but two legitimate findings). Genuine fixes, not patches:
+  (1) tolerance was vacuous (1e-6, 28x headroom) → now TIER-AWARE (identities 1e-12, witnesses 1e-7,
+  ~2.8x headroom) with a degradation test that fails; (2) controls were trusted booleans (circular)
+  → now QUANTITATIVE MARGINS — the ledger reads each control's measured magnitude (0.019..1.0) and
+  requires > 1e-3, with the missing margins added to sequential_selection + si_bridge as top-level
+  fields and the cross-read checking them; (3) scope/honesty — prose + caption scoped to "the
+  quantitative identities and cross-checks", the wrong-measure gap the skeptic flagged is now IN the
+  ledger as a control margin, and direction/reduction results (sequential-shift) carved out. +5 tests
+  (degradation, collapsed-margin, lying-margin cross-read). fast-lane 489 passed; re-RedTeam run.
