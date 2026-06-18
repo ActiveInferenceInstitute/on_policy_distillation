@@ -1,2 +1,3 @@
 import OnPolicyDistillation.BernoulliToy
 import OnPolicyDistillation.SophisticatedInference
+import OnPolicyDistillation.InformationIdentity

@@ -11,7 +11,12 @@ from pathlib import Path
 # `native_decide`) -- means the proof is not closed by the kernel alone.
 _AXIOM_WHITELIST = frozenset({"propext", "Classical.choice", "Quot.sound"})
 
-_DEFAULT_AUDITED_DECLS = ("OnPolicyDistillation.sophisticated_requires_horizon",)
+_DEFAULT_AUDITED_DECLS = (
+    "OnPolicyDistillation.sophisticated_requires_horizon",
+    "OnPolicyDistillation.mi_chain_rule",
+    "OnPolicyDistillation.cue_closes_gap",
+    "OnPolicyDistillation.pragmatic_leaves_gap",
+)
 
 
 def lean_project_present(project_root: Path) -> bool:

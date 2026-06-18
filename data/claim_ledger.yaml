@@ -1579,3 +1579,30 @@ claims:
   evidence:
     field: match_is_validity_specific
     equals: true
+- id: sequential_horizon_regime_holds
+  statement: Over a planning horizon the cue's instrumental value scales linearly with remaining steps; myopic commits while every horizon of two or more cues, cost in the derived window.
+  path: output/data/firstprinciples/sequential_selection_demo.json
+  section: results_free_energy
+  tracks:
+  - analytical
+  evidence:
+    field: horizon_regime_holds
+    equals: true
+- id: si_bridge_trajectory_match
+  statement: The analytical belief-entropy trajectory matches the pymdp SI agent at every step (not only post-cue).
+  path: output/data/firstprinciples/si_bridge_demo.json
+  section: results_free_energy
+  tracks:
+  - analytical
+  evidence:
+    field: trajectory_match
+    equals: true
+- id: si_bridge_trajectory_error_tight
+  statement: The per-step belief-entropy trajectory match is tight (max error below 1e-6 nats).
+  path: output/data/firstprinciples/si_bridge_demo.json
+  section: results_free_energy
+  tracks:
+  - analytical
+  evidence:
+    field: max_trajectory_error_abs
+    max: 1.0e-06

@@ -491,6 +491,36 @@ figures:
           - "$.prior_entropy_nats"
         scope: "finite EFE active-selection toy"
         display_transform: full
+  si_belief_entropy_trajectory:
+    filename: si_belief_entropy_trajectory.png
+    alt: >-
+      Single-panel figure plotting belief entropy in nats against rollout step. A line shows the
+      closed-form running-Bayesian prediction and open circles show the pymdp sophisticated-
+      inference agent's measured belief entropy; the two coincide at every step, with an
+      annotation giving the maximum trajectory error.
+    caption: >-
+      The closed-form bridge predicts the pymdp sophisticated-inference agent's belief entropy at
+      every step, not only post-cue. The line is the analytical running-Bayesian belief entropy
+      over the reward-location latent (flat prior, sharpened by the cue observation, resolved by the
+      reward); the open circles are the agent's measured belief entropy. They agree across the whole
+      rollout to {{si_bridge_max_trajectory_error:.1e}} nats, and a wrong cue validity or shuffled
+      observation order breaks the match. Observable bridge, finite toy.
+      Source: `output/data/firstprinciples/si_bridge_demo.json`.
+    width: 0.8
+    claims:
+      - id: si_belief_entropy_trajectory_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "belief entropy"
+          - "every step"
+        sources:
+          - "output/data/firstprinciples/si_bridge_demo.json"
+        source_fields:
+          - "$.analytical_entropy_by_step"
+          - "$.belief_entropy_by_step"
+          - "$.max_trajectory_error_abs"
+        scope: "finite analytical<->pymdp per-step observable bridge"
+        display_transform: full
   si_bridge_match:
     filename: si_bridge_match.png
     alt: >-
@@ -1143,6 +1173,7 @@ section_figures:
     - id: energy_decomposition
     - id: active_selection_landscape
     - id: si_bridge_match
+    - id: si_belief_entropy_trajectory
   results_invariants:
     - id: invariant_dashboard
     - id: diversity_tradeoff

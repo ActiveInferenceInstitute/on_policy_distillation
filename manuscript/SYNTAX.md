@@ -48,6 +48,7 @@ Section figures are registry-backed via `figures.yaml` and `section_figures` ren
 | `{#fig:exposure_bias_recovery}` | `exposure_bias_recovery.png` | `figures.figure_exposure_bias_recovery` |
 | `{#fig:active_selection_landscape}` | `active_selection_landscape.png` | `figures.figure_active_selection_landscape` |
 | `{#fig:si_bridge_match}` | `si_bridge_match.png` | `figures.figure_si_bridge_match` |
+| `{#fig:si_belief_entropy_trajectory}` | `si_belief_entropy_trajectory.png` | `figures.figure_si_belief_entropy_trajectory` |
 | `{#fig:opd_reader_map}` | `opd_reader_map.png` | `figures_intro.figure_opd_reader_map` |
 | `{#fig:opd_situational_awareness}` | `opd_situational_awareness.png` | `figures_intro.figure_opd_situational_awareness` |
 | `{#fig:si_belief_entropy_curve}` | `si_belief_entropy_curve.png` | `figures.figure_si_belief_entropy_curve` |

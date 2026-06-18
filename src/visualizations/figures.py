@@ -37,6 +37,7 @@ from .figures_firstprinciples import (
     figure_sequential_shift_recovery,
     figure_sequential_shift_sensitivity,
     figure_si_bridge_match,
+    figure_si_belief_entropy_trajectory,
 )
 from .figures_abstract import figure_graphical_abstract
 from .figures_intro import figure_opd_reader_map, figure_opd_situational_awareness
@@ -64,6 +65,7 @@ __all__ = [
     "FIGURE_GENERATORS",
     "figure_active_selection_landscape",
     "figure_si_bridge_match",
+    "figure_si_belief_entropy_trajectory",
     "figure_causal_ablation_heatmap",
     "figure_classroom_distillation_signal",
     "figure_correspondence_map",
@@ -105,6 +107,7 @@ __all__ = [
 FIGURE_GENERATORS: dict[str, Callable[[Path], Path | None]] = {
     "active_selection_landscape": figure_active_selection_landscape,
     "si_bridge_match": figure_si_bridge_match,
+    "si_belief_entropy_trajectory": figure_si_belief_entropy_trajectory,
     "ising_mi_curve": figure_ising_mi_curve,
     "free_energy_curve": figure_free_energy_curve,
     "si_belief_entropy_curve": figure_si_belief_entropy_curve,

@@ -177,6 +177,47 @@ def figure_active_selection_landscape(project_root: Path) -> Path:
     return out
 
 
+def figure_si_belief_entropy_trajectory(project_root: Path) -> Path:
+    """Per-step bridge: analytical belief-entropy prediction overlaid on the pymdp SI trace.
+
+    The closed-form running-Bayesian belief entropy (line) is overlaid on the pymdp
+    sophisticated-inference agent's measured belief entropy at each step (points);
+    they coincide at every step, demonstrating the trajectory-level match.
+    """
+    root = project_root.resolve()
+    style = load_figure_style(root)
+    data = json.loads((root / "output" / "data" / "firstprinciples" / "si_bridge_demo.json").read_text(encoding="utf-8"))
+    analytical = [float(x) for x in data["analytical_entropy_by_step"]]
+    pymdp = [float(x) for x in data["belief_entropy_by_step"]]
+    max_err = float(data["max_trajectory_error_abs"])
+    steps = list(range(len(pymdp)))
+
+    out = figure_output_path(root, "si_belief_entropy_trajectory")
+    with apply_style(style):
+        fig, ax = plt.subplots(1, 1, figsize=(8.4, 5.3))
+        ax.plot(steps, analytical, color=style.color("secondary"), marker="o", markersize=4,
+                label="analytical running-Bayesian H(r)")
+        ax.scatter(steps, pymdp, s=90, zorder=5, facecolor="none",
+                   edgecolor=style.color("accent"), linewidths=1.8, label="pymdp SI belief entropy")
+        ax.set_xlabel("Rollout step")
+        ax.set_ylabel("Belief entropy (nats)")
+        ax.set_title("Closed-form prediction matches the SI agent at every step")
+        ax.set_xticks(steps)
+        style_grid(ax, style)
+        ax.legend(frameon=True, fontsize=style.font_size("legend"), loc="upper right")
+        ax.annotate(
+            f"max trajectory error: {max_err:.1e} nats",
+            xy=(0.04, 0.06), xycoords="axes fraction",
+            fontsize=style.font_size("annotation"), color=style.color("primary"),
+        )
+        fig.tight_layout(rect=(0.0, 0.03, 1.0, 1.0))
+        fig.text(0.01, 0.01,
+                 "Source: output/data/firstprinciples/si_bridge_demo.json; finite toy, observable bridge.",
+                 fontsize=style.font_size("source"), color=style.color("muted"))
+        save_styled_figure(fig, out, style)
+    return out
+
+
 def figure_si_bridge_match(project_root: Path) -> Path:
     """Analytical residual curve with the pymdp SI agent's post-cue entropy on it.
 

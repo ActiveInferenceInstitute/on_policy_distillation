@@ -382,7 +382,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `evidence_field_index` | `output/data/evidence_field_index.json` | `generate_sheaf_tracks.py` | validate_outputs, validate_manuscript |
 | `validation_dependency_graph` | `output/data/validation_dependency_graph.json` | `generate_sheaf_tracks.py` | validate_manuscript, validate_outputs |
 
-**Claim rows:** 139 typed evidence claims.
+**Claim rows:** 142 typed evidence claims.
 
 <!-- sheaf-layers:artifact-producers -->
 ## Artifact producer graph
