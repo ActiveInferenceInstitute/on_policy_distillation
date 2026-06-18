@@ -2,7 +2,7 @@
 
 **On-Policy Distillation as Active Inference in Finite Variational Models** — *reverse-KL free energy, student-induced sampling, and deterministic toy witnesses.*
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20747834.svg)](https://doi.org/10.5281/zenodo.20747834) — concept DOI (resolves to the latest version); v1.0.1 record: [10.5281/zenodo.20748663](https://doi.org/10.5281/zenodo.20748663).
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20747834.svg)](https://doi.org/10.5281/zenodo.20747834) — concept DOI (resolves to the latest version); v1.0.2 record: [10.5281/zenodo.20749817](https://doi.org/10.5281/zenodo.20749817).
 
 This project formalises a scoped active-inference reading from first principles and demonstrates it on auditable minimal models. The intellectual core is the [`firstprinciples`](src/firstprinciples/) package — an audited active-inference ↔ on-policy-distillation correspondence map, the shared divergence geometry (forward/reverse KL, JSD, skew, α-divergence, OPSD per-token clipping), the reward-tilted-target unification of RL-as-inference / active inference / distillation, the SDPG privileged-context self-distillation objective, an exposure-bias model, a deterministic sequential-shift witness with a correction-dose sensitivity sweep, a structured OPD-literature taxonomy, and a **two-agent pymdp classroom** that pits a privileged teacher against an on-policy student and measures the reverse-KL distillation signal. See the integrated [notation & formalism supplement](docs/reference/notation-supplement.md).
 

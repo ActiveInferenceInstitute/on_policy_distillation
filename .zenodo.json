@@ -20,5 +20,5 @@
   "license": "MIT",
   "title": "On-Policy Distillation as Active Inference in Finite Variational Models",
   "upload_type": "software",
-  "version": "1.0.1"
+  "version": "1.0.2"
 }

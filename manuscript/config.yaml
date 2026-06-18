@@ -1,8 +1,11 @@
 paper:
   title: "On-Policy Distillation as Active Inference in Finite Variational Models"
   subtitle: "Reverse-KL free energy, student-induced sampling, and deterministic toy witnesses"
-  version: "1.0.1"
+  version: "1.0.2"
   date: "June 2026"
+  cover:
+    image: output/figures/graphical_abstract.png
+    alt: "Cover: on-policy distillation as active inference in finite variational models — executable classroom and sequential-shift witnesses, energy decomposition, and Lean-backed validation gates."
 
 authors:
   - name: "Daniel Ari Friedman"
@@ -14,8 +17,8 @@ authors:
 publication:
   # Zenodo concept DOI (resolves to the latest version) + the current version DOI.
   doi: "10.5281/zenodo.20747834"
-  version_doi: "10.5281/zenodo.20748663"
-  version_record: "https://zenodo.org/records/20748663"
+  version_doi: "10.5281/zenodo.20749817"
+  version_record: "https://zenodo.org/records/20749817"
   github_repository: "ActiveInferenceInstitute/on_policy_distillation"
   transmission_bookends:
     enabled: true
