@@ -221,6 +221,7 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
     sequential_policies = sequential_data.get("policies") or {}
     sequential_horizon = sequential_data.get("horizon_curve") or {}
     si_bridge_data = _load_json(root / "output" / "data" / "firstprinciples" / "si_bridge_demo.json")
+    precision_ledger_data = _load_json(root / "output" / "data" / "firstprinciples" / "precision_ledger_demo.json")
     gkd_data = _load_json(root / "output" / "data" / "firstprinciples" / "gkd_demo.json")
     gkd_gap = gkd_data.get("reverse_kl") or {}
     diversity_data = _load_json(root / "output" / "data" / "firstprinciples" / "diversity_demo.json")
@@ -499,6 +500,9 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
         "sequential_break_even_horizon": float(sequential_horizon.get("break_even_horizon", 0.0)),
         "sequential_max_horizon": len(sequential_horizon.get("rows") or []),
         "si_bridge_max_trajectory_error": float(si_bridge_data.get("max_trajectory_error_abs", 0.0)),
+        "precision_ledger_result_count": len(precision_ledger_data.get("precision_rows") or []),
+        "precision_ledger_control_count": len(precision_ledger_data.get("control_rows") or []),
+        "precision_ledger_max_residual": float(precision_ledger_data.get("max_residual", 0.0)),
         "si_bridge_match_abs": float(si_bridge_data.get("residual_entropy_match_abs", 0.0)),
         "si_bridge_post_cue_entropy": float(si_bridge_data.get("post_cue_belief_entropy", 0.0)),
         "si_bridge_cue_validity": float(si_bridge_data.get("cue_validity", 0.0)),

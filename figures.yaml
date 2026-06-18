@@ -491,6 +491,37 @@ figures:
           - "$.prior_entropy_nats"
         scope: "finite EFE active-selection toy"
         display_transform: full
+  precision_ledger:
+    filename: precision_ledger.png
+    alt: >-
+      Single-panel lollipop chart on a logarithmic residual axis. Each row is one quantitative
+      correspondence in the paper; its residual or error is drawn as a horizontal stem ending in a
+      marker, coloured by claim tier (proved identity versus numerical witness), against a dashed
+      tolerance line. An annotation reports how many negative controls bite.
+    caption: >-
+      A synthesis over the result set: every quantitative correspondence in the paper plotted by its
+      residual or error against the tolerance line. All {{precision_ledger_result_count}} measured
+      correspondences -- the analytical mutual-information cross-check, the active-selection and
+      multi-state identities, the reverse-KL/free-energy convergence, and the post-cue and per-step
+      pymdp bridges -- fall below tolerance, with maximum residual {{precision_ledger_max_residual:.1e}}
+      nats, and all {{precision_ledger_control_count}} negative controls bite. Tier 1 rows are proved
+      closed-form identities; Tier 2 rows are numerical witnesses. Finite toys, exact in the declared
+      models. Source: `output/data/firstprinciples/precision_ledger_demo.json`.
+    width: 0.9
+    claims:
+      - id: precision_ledger_caption_claim
+        claim_type: local_deterministic
+        caption_terms:
+          - "residual"
+          - "negative controls"
+        sources:
+          - "output/data/firstprinciples/precision_ledger_demo.json"
+        source_fields:
+          - "$.precision_rows"
+          - "$.control_rows"
+          - "$.max_residual"
+        scope: "synthesis over the finite-model result set"
+        display_transform: full
   si_belief_entropy_trajectory:
     filename: si_belief_entropy_trajectory.png
     alt: >-
@@ -1174,6 +1205,7 @@ section_figures:
     - id: active_selection_landscape
     - id: si_bridge_match
     - id: si_belief_entropy_trajectory
+    - id: precision_ledger
   results_invariants:
     - id: invariant_dashboard
     - id: diversity_tradeoff

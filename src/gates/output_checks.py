@@ -32,6 +32,7 @@ SUPPORTED_SELECTED_OUTPUT_CHECKS = {
     "firstprinciples_active_selection_general_schema",
     "firstprinciples_sequential_selection_schema",
     "firstprinciples_si_bridge_schema",
+    "firstprinciples_precision_ledger_schema",
     "firstprinciples_benchmark_table_present",
     "toy_sweep_track_schemas",
     "formal_interop_track_schemas",
@@ -237,6 +238,14 @@ def _firstprinciples_si_bridge_ok(payload: dict) -> bool:
     from firstprinciples.si_bridge import validate_payload
 
     return bool(payload) and not validate_payload(payload)
+
+
+def _firstprinciples_precision_ledger_ok(root: Path, payload: dict) -> bool:
+    # Cross-reads each source artifact, so the ledger cannot claim a residual or
+    # control the source does not contain.
+    from firstprinciples.precision_ledger import validate_against_sources
+
+    return bool(payload) and not validate_against_sources(root, payload)
 
 
 def _firstprinciples_statistics_ok(root: Path, payload: dict) -> bool:
@@ -1284,6 +1293,9 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     )
     checks["firstprinciples_si_bridge_schema"] = _firstprinciples_si_bridge_ok(
         _read_json(fp_dir / "si_bridge_demo.json")
+    )
+    checks["firstprinciples_precision_ledger_schema"] = _firstprinciples_precision_ledger_ok(
+        root, _read_json(fp_dir / "precision_ledger_demo.json")
     )
     checks["firstprinciples_taxonomy_schema"] = _firstprinciples_taxonomy_ok(fp_taxonomy)
     checks["firstprinciples_empirical_benchmark_schema"] = _firstprinciples_empirical_benchmark_ok(fp_empirical)

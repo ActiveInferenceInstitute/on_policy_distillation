@@ -45,6 +45,15 @@ def main(argv: list[str] | None = None) -> int:
     )
     print(f"si_bridge_demo.json: {bridge_path}")
 
+    # The result-integrity ledger synthesises residuals + controls from every other
+    # firstprinciples artifact, so it is emitted last (after si_bridge above).
+    from firstprinciples import precision_ledger
+
+    ledger_path = artifacts.write_json(
+        PROJECT_ROOT, "precision_ledger_demo.json", precision_ledger.build_payload(PROJECT_ROOT)
+    )
+    print(f"precision_ledger_demo.json: {ledger_path}")
+
     if args.classroom:
         result = run_classroom(PROJECT_ROOT, ClassroomConfig())
         path = write_classroom_artifact(PROJECT_ROOT, result)

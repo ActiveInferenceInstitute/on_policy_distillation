@@ -1606,3 +1606,30 @@ claims:
   evidence:
     field: max_trajectory_error_abs
     max: 1.0e-06
+- id: precision_ledger_all_precise
+  statement: Every quantitative correspondence in the result set holds to within the precision tolerance.
+  path: output/data/firstprinciples/precision_ledger_demo.json
+  section: results_free_energy
+  tracks:
+  - analytical
+  evidence:
+    field: all_precise
+    equals: true
+- id: precision_ledger_all_controlled
+  statement: Every result in the set carries a negative control that bites (none is green-by-construction).
+  path: output/data/firstprinciples/precision_ledger_demo.json
+  section: results_free_energy
+  tracks:
+  - analytical
+  evidence:
+    field: all_controlled
+    equals: true
+- id: precision_ledger_max_residual_tight
+  statement: The largest residual across the whole result set stays below the precision tolerance.
+  path: output/data/firstprinciples/precision_ledger_demo.json
+  section: results_free_energy
+  tracks:
+  - analytical
+  evidence:
+    field: max_residual
+    max: 1.0e-06

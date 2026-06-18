@@ -187,6 +187,7 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         "active_selection_landscape": ["output/data/firstprinciples/active_selection_demo.json"],
         "si_bridge_match": ["output/data/firstprinciples/si_bridge_demo.json"],
         "si_belief_entropy_trajectory": ["output/data/firstprinciples/si_bridge_demo.json"],
+        "precision_ledger": ["output/data/firstprinciples/precision_ledger_demo.json"],
         "sheaf_layers_overview": ["output/data/sheaf_coverage_matrix.json"],
         "sheaf_coverage_heatmap": ["output/data/sheaf_coverage_matrix.json"],
         "invariant_dashboard": ["output/reports/invariants.json"],
@@ -349,6 +350,11 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
             "$.belief_entropy_by_step",
             "$.max_trajectory_error_abs",
         ],
+        "precision_ledger": [
+            "$.precision_rows",
+            "$.control_rows",
+            "$.max_residual",
+        ],
         "sheaf_layers_overview": ["$.tracks", "$.layers", "$.bound_cell_count", "$.validated_cell_count"],
         "sheaf_coverage_heatmap": ["$.tracks", "$.sections"],
         "invariant_dashboard": ["$.invariants", "$.simulation", "$.all_pass"],
@@ -467,6 +473,10 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         ],
         "si_belief_entropy_trajectory": [
             "validate_outputs.firstprinciples_si_bridge_schema",
+            "test_figures.nonblank_png",
+        ],
+        "precision_ledger": [
+            "validate_outputs.firstprinciples_precision_ledger_schema",
             "test_figures.nonblank_png",
         ],
         "sheaf_layers_overview": ["validate_outputs.canonical_sheaf_track_schemas", "test_figures.nonblank_png"],
@@ -655,6 +665,7 @@ _FIGURE_SCOPE_REQUIRED = {
     "active_selection_landscape",
     "si_bridge_match",
     "si_belief_entropy_trajectory",
+    "precision_ledger",
     "causal_ablation_heatmap",
     "scholarship_source_map",
     "graphical_abstract",

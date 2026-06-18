@@ -362,7 +362,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `coverage_matrix_built` | `sheaf.coverage` | `output/data/sheaf_coverage_matrix.json` | `ok` | 95 present cells |
 | `section_status_matrix_built` | `sheaf.status` | `output/data/sheaf_section_status_matrix.json` | `ok` | 561 section-track cells |
 | `layers_renderer_bound` | `sheaf.layers_report` | `manuscript/19_supplement_reproducibility.md` | `ok` | methods sheaf layer tables |
-| `semantic_artifacts_indexed` | `sheaf.semantic` | `output/data/validation_dependency_graph.json` | `ok` | 120 artifact producer rows |
+| `semantic_artifacts_indexed` | `sheaf.semantic` | `output/data/validation_dependency_graph.json` | `ok` | 121 artifact producer rows |
 | `validation_gates_indexed` | `gates` | `output/data/validation_gate_index.json` | `ok` | 3 gate groups |
 | `manuscript_sections_composed` | `sheaf.compose` | `manuscript/*.md` | `ok` | 16 composed markdown files |
 
@@ -382,7 +382,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `evidence_field_index` | `output/data/evidence_field_index.json` | `generate_sheaf_tracks.py` | validate_outputs, validate_manuscript |
 | `validation_dependency_graph` | `output/data/validation_dependency_graph.json` | `generate_sheaf_tracks.py` | validate_manuscript, validate_outputs |
 
-**Claim rows:** 142 typed evidence claims.
+**Claim rows:** 145 typed evidence claims.
 
 <!-- sheaf-layers:artifact-producers -->
 ## Artifact producer graph
@@ -408,6 +408,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `output/data/firstprinciples/empirical_benchmark.json` | `generate_firstprinciples.py` | Yes | discussion_outlook, appendix_full_sheaf |
 | `output/data/firstprinciples/exposure_bias_demo.json` | `generate_firstprinciples.py` | Yes | intro_motivation, methods_pymdp, discussion_outlook |
 | `output/data/firstprinciples/opd_taxonomy.json` | `generate_firstprinciples.py` | Yes | intro_motivation, methods_sheaf, discussion_outlook |
+| `output/data/firstprinciples/precision_ledger_demo.json` | `generate_firstprinciples.py` | Yes | results_free_energy |
 | `output/data/firstprinciples/privilege_sweep.json` | `generate_firstprinciples.py` | Yes | results_si_tmaze, appendix_full_sheaf |
 | `output/data/firstprinciples/reward_tilting_demo.json` | `generate_firstprinciples.py` | Yes | methods_analytical, discussion_outlook |
 | `output/data/firstprinciples/sdpg_demo.json` | `generate_firstprinciples.py` | Yes | methods_analytical, discussion_outlook |

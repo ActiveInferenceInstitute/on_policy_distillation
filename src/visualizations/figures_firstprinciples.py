@@ -177,6 +177,67 @@ def figure_active_selection_landscape(project_root: Path) -> Path:
     return out
 
 
+def figure_precision_ledger(project_root: Path) -> Path:
+    """Synthesis: every quantitative correspondence's residual on one log axis.
+
+    The result-integrity ledger laid out as a lollipop chart -- each result's
+    residual/error against the tolerance line, coloured by claim tier (proved
+    identity vs numerical witness), with the all-controls-bite count annotated.
+    The single view shows that every measured correspondence holds to machine
+    precision and every result carries a biting negative control.
+    """
+    root = project_root.resolve()
+    style = load_figure_style(root)
+    data = json.loads((root / "output" / "data" / "firstprinciples" / "precision_ledger_demo.json").read_text(encoding="utf-8"))
+    rows = list(data["precision_rows"])
+    controls = list(data["control_rows"])
+    tol = float(data["precision_tolerance"])
+    n_controls = len(controls)
+    n_bite = sum(1 for c in controls if c["bites"])
+
+    _floor = 1e-17  # exact-zero residuals plotted at the floor on the log axis
+    names = [str(r["name"]) for r in rows]
+    resid = [max(float(r["residual"]), _floor) for r in rows]
+    tiers = [int(r["tier"]) for r in rows]
+    tier_color = {1: style.color("accent"), 2: style.color("secondary")}
+    y = list(range(len(rows)))
+
+    out = figure_output_path(root, "precision_ledger")
+    with apply_style(style):
+        fig, ax = plt.subplots(1, 1, figsize=(9.6, 5.3))
+        for yi, xi, ti, raw in zip(y, resid, tiers, [float(r["residual"]) for r in rows], strict=True):
+            ax.hlines(yi, _floor, xi, color=tier_color.get(ti, style.color("muted")), lw=1.4, alpha=0.7)
+            ax.plot(xi, yi, "o", color=tier_color.get(ti, style.color("muted")), markersize=8)
+            ax.text(xi * 1.6, yi, "exact" if raw <= 0.0 else f"{raw:.1e}",
+                    va="center", fontsize=style.font_size("annotation"), color=style.color("primary"))
+        ax.axvline(tol, ls="--", color=style.color("fail"), lw=1.2, label=f"tolerance {tol:.0e}")
+        ax.set_xscale("log")
+        ax.set_xlim(_floor / 3, tol * 30)
+        ax.set_yticks(y, names, fontsize=style.font_size("dense"))
+        ax.set_xlabel("Residual / error (nats, log scale)")
+        ax.set_title(
+            "Every quantitative correspondence holds to machine precision\n"
+            f"all {len(rows)} below tolerance · {n_bite}/{n_controls} negative controls bite",
+            fontsize=style.font_size("label"),
+        )
+        style_grid(ax, style)
+        # tier + control legend
+        from matplotlib.lines import Line2D
+
+        handles = [
+            Line2D([0], [0], marker="o", color=tier_color[1], lw=0, label="Tier 1: proved identity"),
+            Line2D([0], [0], marker="o", color=tier_color[2], lw=0, label="Tier 2: numerical witness"),
+            Line2D([0], [0], ls="--", color=style.color("fail"), label=f"tolerance {tol:.0e}"),
+        ]
+        ax.legend(handles=handles, frameon=True, fontsize=style.font_size("legend"), loc="lower right")
+        fig.tight_layout(rect=(0.0, 0.03, 1.0, 1.0))
+        fig.text(0.01, 0.005,
+                 "Source: output/data/firstprinciples/precision_ledger_demo.json; synthesis over the result set.",
+                 fontsize=style.font_size("source"), color=style.color("muted"))
+        save_styled_figure(fig, out, style)
+    return out
+
+
 def figure_si_belief_entropy_trajectory(project_root: Path) -> Path:
     """Per-step bridge: analytical belief-entropy prediction overlaid on the pymdp SI trace.
 
