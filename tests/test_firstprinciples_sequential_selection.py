@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import copy
 
+import pytest
+
 from firstprinciples import sequential_selection as seq
 
 
@@ -62,6 +64,34 @@ def test_horizon_cost_in_derived_window_not_tuned() -> None:
     # a cost outside the derived window must NOT yield the regime
     below = seq.build_horizon_curve(cost=hz["window_lower"] - 0.1)
     assert below["myopic_prefers_commit_h1"] is False
+
+
+def test_horizon_window_endpoints_are_energy_derived() -> None:
+    # Pin the window endpoints to their INDEPENDENTLY-computed energy-derived values,
+    # so a future hardcoded endpoint (RedTeam green-by-construction surface) is caught.
+    p = seq.horizon_primitives()
+    g_r, g_f, g_e = p["g_exploit_resolved"], p["g_exploit_flat"], p["g_cue_epistemic"]
+    hz = seq.build_horizon_curve()
+    assert hz["window_lower"] == pytest.approx(g_f - g_e, abs=1e-12)
+    assert hz["window_upper"] == pytest.approx(2.0 * g_f - g_r - g_e, abs=1e-12)
+
+
+def test_horizon_cost_above_window_breaks_cue_win() -> None:
+    # A cost ABOVE the derived upper endpoint must make some H>=2 NOT prefer cue
+    # (the other side of the window; tests previously only pinned the lower side).
+    hz = seq.build_horizon_curve()
+    above = seq.build_horizon_curve(cost=hz["window_upper"] + 0.1)
+    assert above["cue_wins_for_all_horizon_ge_2"] is False
+
+
+def test_validate_catches_fabricated_policy_block() -> None:
+    # A policy block satisfying the inequalities but inconsistent with the energy
+    # functional must now be caught (RedTeam-found gap: relational-only check).
+    payload = copy.deepcopy(seq.build_payload())
+    payload["policies"]["cue_first"]["g1"] = 0.05
+    payload["policies"]["cue_first"]["g2"] = 0.05
+    payload["policies"]["cue_first"]["policy_efe"] = 0.1  # still lowest, but wrong energy
+    assert any("re-run energy" in i for i in seq.validate_payload(payload))
 
 
 def test_horizon_blind_cue_collapses_at_every_horizon() -> None:

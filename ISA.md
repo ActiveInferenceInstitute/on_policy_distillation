@@ -459,3 +459,33 @@ PDF render all green afterward.
 - **Verification:** full chain `--render` green, `validate_outputs` ALL TRUE, PDF 66pp / 0 dangling
   crossrefs, fast-lane 471 passed, no hardcoded numbers (tokens/math only), all citations pre-existing
   keys. Opus-family honesty cross-check of the tier assignments + new prose run post-edit.
+
+## Run-13 session record (2026-06-17) — three in-scope frontier deepenings (commits `1cbb7fa`, `9f106f9`, `c9e2cdb`)
+
+> Codex/cross-vendor still quota-blocked, so /workflows /Science feasibility-reconned all three
+> (prototyped before building) and /RedTeam (Opus-family) refuted each post-build.
+
+- **A — Multi-step sophisticated inference (`sequential_selection`):** extended the 2-step toy to an
+  EFE-over-horizon curve (H=1..6). gap(H) = (H-1)·δ + const with δ = g_exploit_flat − g_exploit_resolved
+  = 0.830366 nats (recomputed from the shared `energy.efe_report`): the cue's instrumental value is
+  constant PER REMAINING EXPLOIT STEP, so the cue/commit advantage grows linearly with the horizon.
+  Myopic (H=1) commits; every H≥2 cues (break-even 1.327). cost=1.3 asserted in the ANALYTICALLY-DERIVED
+  window (1.029, 1.859) — green-by-construction guard: a cost outside the window flips the verdict and is
+  caught. validate_payload re-derives the whole curve from the energy primitives. +5 tests.
+- **B — Per-step trajectory bridge (`si_bridge`):** extended the single post-cue scalar to the FULL
+  per-step belief-entropy trajectory. `analytical_entropy_trajectory` (running Bayesian update, reusing
+  shared `shannon_entropy`) predicts the pymdp SI agent's `belief_entropy_by_step` at every step to
+  **6.6e-9**; wrong-validity + shuffled-order controls break the whole-trajectory match. validate_payload
+  re-derives from the stored observation sequences (a lying analytical vector is harmless; a tampered obs
+  sequence is caught). New figure `si_belief_entropy_trajectory` (analytical curve + pymdp points). +5 tests.
+- **C — Lean (`InformationIdentity.lean`), HONESTLY SCOPED:** the Lean track is bare lean4:v4.14.0 with NO
+  Mathlib, so the real-valued `Real.log` identity is a rabbit-hole. A sorry-free **Int chain-rule SKELETON**
+  machine-checks the *algebraic structure* `I(o;r)+E_o[H(r|o)]=H(r)` (`mi_chain_rule` by `omega`;
+  `cue_closes_gap`; `pragmatic_leaves_gap` negative control); axioms ⊆ {propext, Quot.sound}; registered in
+  `_DEFAULT_AUDITED_DECLS` so `lean_axioms_clean` is non-vacuous; inventory 11→14. Framed in `methods_lean`
+  as the integer skeleton, **NOT** the real-valued entropy identity (which stays the two-route numerical
+  witness). This promotes the STRUCTURE to Tier-1-proved while the analytic content stays Tier-2 — honest.
+- **Integration:** results_free_energy prose documents all three (hydrated tokens); 4 typed claim rows;
+  figure on all 6 surfaces. Full chain `--render` green, `validate_outputs` ALL TRUE, PDF 67pp / 0 dangling
+  crossrefs, claim ledger 142, fast-lane 481 passed, figure+lean tests 30, `lake build` green, ruff+mypy clean.
+- **Cross-vendor (`OPD-ACTIVE-XVENDOR-1`) still deferred** to codex quota reset; now also covers A/B/C.

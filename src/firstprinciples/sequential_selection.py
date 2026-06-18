@@ -236,6 +236,15 @@ def validate_payload(payload: dict[str, object]) -> list[str]:
             issues.append("blind-cue advantage did not collapse (re-derived)")
         if not (float(cue["expected_reward"]) > float(commit["expected_reward"])):
             issues.append("cue-first not higher expected reward (re-derived)")
+        # Re-run the energy functional for the 2-step policies (not just relational
+        # consistency): a fabricated policy block is caught even if its inequalities hold.
+        for name, stored, recomp in (
+            ("cue", cue, policy_efe(cue_first=True, cue_resolves=True)),
+            ("commit", commit, policy_efe(cue_first=False, cue_resolves=True)),
+            ("blind", blind, policy_efe(cue_first=True, cue_resolves=False)),
+        ):
+            if abs(float(stored["policy_efe"]) - recomp["policy_efe"]) > 1e-9:
+                issues.append(f"{name} policy_efe disagrees with re-run energy functional")
     except (KeyError, TypeError, ValueError) as exc:
         return [*issues, f"malformed policy rows: {exc}"]
 
