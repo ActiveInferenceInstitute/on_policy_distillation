@@ -42,31 +42,53 @@ registry, project docs, generated certificates,
 `output/data/track_improvement_scope.json`, and output reports rather than as
 completed TODO work here.
 
-## What remains
+## Before first publication
 
-Everything below is **optional future deepening or externally-gated** — nothing
-is blocking. In priority order:
+The science is publication-grade: the full chain renders green, `validate_outputs`
+is ALL TRUE, every reported number is hydrated from an audited artifact, the result
+set is RedTeam-checked with no surviving overclaim, and the Lean layer is sorry-free
+with every theorem axiom-audited. **Nothing in the science blocks a first release.**
+What remains is release mechanics plus a few judgment calls.
 
-1. **Owed verification:** `OPD-ACTIVE-XVENDOR-1` — the GPT-5.4/codex cross-vendor
-   audit of the active-selection family (math + integration). Opus-family
-   adversarial probes have stood in (PASS, proven not green-by-construction), but
-   the cross-vendor blind-spot reduction is not yet present.
-2. **Optional formal deepening:** `OPD-LEAN-REAL-IDENTITY-1` — promote the Lean
-   witness from the integer chain-rule skeleton to the real-valued
-   `I + H_b(sigma) = log 2` entropy identity. Requires adding a Mathlib toolchain
-   (heavyweight; the current pinned Lean ships without it). Until then the
-   real-valued form remains the two-route numerical witness.
-3. **Human decision / external input (cannot proceed unilaterally):**
-   - *Publish decision* — this exemplar is LOCAL-ONLY by design; if publishing,
-     the release path is reserve-DOI-first → GitHub release → Zenodo.
-   - *Venue/submission decisions* → unblock `REVIEW-FIGURE-RELOCATION-1` and
-     `TMAZE-MATRIX-TABLE-1` (the paper is deliberately an auditable-artifact
-     paper, so these are deferred to a venue choice).
-4. **Environment-gated maintenance:** `AI-TEST-ISOLATION-1` — a fresh idle-host
-   isolation soak with `complete_soak: true`.
-5. **Intentionally blocked (do NOT build without the unblock artifacts + gates):**
-   everything under "Blocked scope" — empirical/biological, private data,
-   network-dependent, LLM-generated evidence, non-toy claims.
+**Metadata fixed in this pass (no longer open):**
+- `LICENSE` file added (MIT, matching `config.yaml`, `CITATION.cff`, `.zenodo.json`).
+- `CITATION.cff` + `.zenodo.json` version synced `0.4.0` → `1.0.0` to match
+  `pyproject.toml` and `config.yaml` (the M1 gate only checks pyproject↔config, so
+  this drift was real but un-gated).
+
+**Decisions only the author can make (do not set unilaterally):**
+- *Title* — `CITATION.cff` / `.zenodo.json` use the short "On-Policy Distillation is
+  Active Inference"; `config.yaml` / `README` use the full "On-Policy Distillation as
+  Active Inference in Finite Variational Models". Keep the short citation title or
+  align to the full paper title.
+- *License intent* — the project declares MIT in all three metadata files, but the
+  umbrella template repo is Apache-2.0. Confirm MIT is intended for the standalone
+  release.
+- *Target repo* — `config.yaml` `github_repository: docxology/on_policy` (CITATION /
+  .zenodo agree). Confirm owner + name (`docxology` vs `ActiveInferenceInstitute`)
+  before the repo is created.
+
+**Release mechanics (at publish time — needs credentials + an explicit go-ahead):**
+- Reserve a Zenodo DOI first, bake `publication.doi` + `publication.version_doi` +
+  the final `paper.date` into `config.yaml`, then **deterministically re-render** the
+  DOI-stamped PDF before deposit (`scripts/publish_project_release.py`, or
+  `09_archive_publication.py`). `CITATION.cff` `date-released` is re-stamped to the
+  real release date at deposit.
+- **Confidentiality:** this project lives under `projects/working/` — LOCAL-ONLY and
+  gitignored in the template repo. Publishing means its **own** public repo; it must
+  never be committed into the template (the `check_tracked_projects.py` gate enforces
+  this).
+
+**Recommended before tagging 1.0.0 (not a hard blocker):**
+- `OPD-ACTIVE-XVENDOR-1` — the GPT-5.4/codex cross-vendor audit of the
+  active-selection family (quota-gated; Opus-family adversarial probes have stood in
+  and PASSED, but the cross-vendor blind-spot reduction is not yet present).
+
+**Deferred to post-publication / venue time (not blockers):**
+`OPD-LEAN-REAL-IDENTITY-1` (real-valued Lean identity, needs Mathlib),
+`REVIEW-FIGURE-RELOCATION-1`, `TMAZE-MATRIX-TABLE-1` (venue-dependent figure
+choices), `AI-TEST-ISOLATION-1` (idle-host soak). Detail in the Active roadmap below.
+Everything under "Blocked scope" stays out of scope until its unblock gates exist.
 
 ## Promotion rule
 
@@ -98,31 +120,6 @@ implementation begins.
 `tasks.yaml` is the taskboard metadata surface. `scripts/audit_roadmap_tasks.py`
 keeps the open TODO rows, task status/progress, and blocked/deferred semantics in
 agreement without making completed proof claims active roadmap work again.
-
-## Completed and removed from active scope
-
-The following work is implemented, audited, and no longer active TODO. Its proof
-surface is the live artifact contract (`validate_outputs.py`,
-`compose_manuscript.py --validate-only --strict`, the generated
-semantic/provenance/dependency/evidence/release artifacts, the Lean inventory,
-and their negative-control tests). Do not re-open without a new failure, a
-changed venue requirement, or a changed artifact contract.
-
-- **Active-selection program (`OPD-ACTIVE-INTEGRATE-1` and follow-ons):** the
-  active/EFE half and its extensions — EFE rollout selection, precision posterior,
-  multi-state generality, sequential horizon scaling, the analytical↔pymdp bridge
-  (post-cue and per-step trajectory), the Lean chain-rule skeleton, and the
-  result-integrity ledger — all promoted to first-class audited artifacts with
-  figures, manuscript prose, typed claim rows, and biting controls.
-- **Prior canonical hardening IDs:** `AI-ANALYTICAL-OBS-4`, `AI-PYMDP-EFE-3`,
-  `AI-GRAPH-TOPOLOGY-3`, `AI-VIZ-PIXEL-2`, `AI-LEAN-BELIEF-3`, `AI-THEOREM-LINKS-1`,
-  `AI-STALE-LIVE-1`, `AI-PYMDP-POLICY-3`, `AI-PYMDP-RUNTIME-3`, `AI-GNN-SHAPE-3`,
-  `AI-ANIMATION-HASH-2`, `AI-CLAIM-PREDICATE-3`, `AI-SCOPE-ROWS-1`, `AI-GATE-INDEX-3`,
-  `AI-ONTOLOGY-PROFILE-3`, `AI-MANUSCRIPT-TOKEN-3`, `AI-SEMANTIC-CLASSIFIED-1`,
-  `AI-DEPENDENCY-FIELDS-1`, `AI-PROVENANCE-FIELDS-1`, `AI-RELEASE-PARITY-1`,
-  `AI-EVIDENCE-FIELDS-1`, `AI-SYMBOL-SPINE-3`, `AI-STALE-SUMMARY-1`,
-  `AI-EFE-NONVACUOUS-1`, `AI-STUB-DEPTH-1`, `AI-APPENDIX-HYDRATE-1`,
-  `AI-APPENDIX-FIGURES-1`, `AI-HYGIENE-1`, and `QWEN-TABLE-PIN-1`.
 
 ## Live canonical supplemental artifacts
 
