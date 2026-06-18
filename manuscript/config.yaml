@@ -1,7 +1,7 @@
 paper:
   title: "On-Policy Distillation as Active Inference in Finite Variational Models"
   subtitle: "Reverse-KL free energy, student-induced sampling, and deterministic toy witnesses"
-  version: "1.0.0"
+  version: "1.0.1"
   date: "June 2026"
 
 authors:
@@ -12,10 +12,10 @@ authors:
     corresponding: true
 
 publication:
-  # Zenodo concept DOI (resolves to the latest version) + the v1.0.0 version DOI.
+  # Zenodo concept DOI (resolves to the latest version) + the current version DOI.
   doi: "10.5281/zenodo.20747834"
-  version_doi: "10.5281/zenodo.20747835"
-  version_record: "https://zenodo.org/records/20747835"
+  version_doi: "10.5281/zenodo.20748663"
+  version_record: "https://zenodo.org/records/20748663"
   github_repository: "ActiveInferenceInstitute/on_policy_distillation"
   transmission_bookends:
     enabled: true

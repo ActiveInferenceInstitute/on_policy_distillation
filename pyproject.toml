@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "active_inference_on_policy_distillation"
-version = "1.0.0"
+version = "1.0.1"
 description = "On-Policy Distillation is Active Inference: a first-principles formalisation (correspondence map, divergence geometry, reward-tilted targets, SDPG, two-agent pymdp classroom) plus a sheaf-composed multi-track manuscript. Track/fragment counts are registry-backed (manuscript/sheaf/tracks.yaml); not hard-coded here."
 authors = [{ name = "Daniel Ari Friedman", email = "daniel@activeinference.institute" }]
 requires-python = ">=3.10"

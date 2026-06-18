@@ -596,7 +596,17 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
 
 
 _FIGURE_IMAGE_SUFFIXES = {".png", ".gif"}
-_DECLARED_NONREGISTRY_IMAGE_PATHS = {"output/figures/si_belief_trajectory.gif"}
+# Non-registry images that are legitimately present in output/figures/:
+#   - si_belief_trajectory.gif: animation emitted by render_animation.py
+#   - transmission_*.png: transmission-bookend artifacts the infra release
+#     workflow writes here at publish time (STRIP_FILENAME / FIGURE_NAME in
+#     infrastructure/publishing/transmission_*), then re-renders. They are not
+#     in the figure registry but are expected when bookends are enabled.
+_DECLARED_NONREGISTRY_IMAGE_PATHS = {
+    "output/figures/si_belief_trajectory.gif",
+    "output/figures/transmission_integrity_strip.png",
+    "output/figures/transmission_pairing.png",
+}
 
 
 def _actual_figure_image_paths(root: Path) -> set[str]:

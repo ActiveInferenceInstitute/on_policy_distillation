@@ -5,14 +5,14 @@ authors:
   orcid: 0000-0001-6232-9096
 cff-version: 1.2.0
 date-released: '2026-06-18'
-doi: 10.5281/zenodo.20747835
+doi: 10.5281/zenodo.20748663
 identifiers:
 - description: Concept DOI (resolves to the latest version)
   type: doi
   value: 10.5281/zenodo.20747834
-- description: Version DOI (v1.0.0)
+- description: Version DOI (v1.0.1)
   type: doi
-  value: 10.5281/zenodo.20747835
+  value: 10.5281/zenodo.20748663
 keywords:
 - active inference
 - on-policy distillation
@@ -27,4 +27,4 @@ message: If you use this software, please cite it using the metadata from this f
 repository-code: https://github.com/ActiveInferenceInstitute/on_policy_distillation
 title: 'On-Policy Distillation as Active Inference in Finite Variational Models'
 type: software
-version: 1.0.0
+version: 1.0.1
