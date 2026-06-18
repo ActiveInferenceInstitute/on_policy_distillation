@@ -37,6 +37,47 @@ def test_validate_payload_accepts_honest_and_catches_lie() -> None:
     assert seq.validate_payload(bad)
 
 
+def test_horizon_gap_scales_linearly_with_remaining_steps() -> None:
+    hz = seq.build_horizon_curve()
+    gaps = [r["gap"] for r in hz["rows"]]
+    delta = hz["per_step_instrumental_value"]
+    increments = [gaps[i] - gaps[i - 1] for i in range(1, len(gaps))]
+    # the cue's instrumental value is constant per remaining exploit step
+    assert all(abs(inc - delta) < 1e-9 for inc in increments)
+    assert hz["gap_strictly_increasing"] is True
+
+
+def test_horizon_myopic_commits_but_all_h_ge_2_cue() -> None:
+    hz = seq.build_horizon_curve()
+    rows = {int(r["horizon"]): r for r in hz["rows"]}
+    assert rows[1]["sequential_prefers_cue"] is False   # myopic commits
+    assert all(rows[h]["sequential_prefers_cue"] for h in range(2, 7))
+    assert 1.0 < hz["break_even_horizon"] < 2.0
+
+
+def test_horizon_cost_in_derived_window_not_tuned() -> None:
+    hz = seq.build_horizon_curve()
+    assert hz["cost_in_derived_window"] is True
+    assert hz["window_lower"] < hz["cost"] < hz["window_upper"]
+    # a cost outside the derived window must NOT yield the regime
+    below = seq.build_horizon_curve(cost=hz["window_lower"] - 0.1)
+    assert below["myopic_prefers_commit_h1"] is False
+
+
+def test_horizon_blind_cue_collapses_at_every_horizon() -> None:
+    hz = seq.build_horizon_curve()
+    assert hz["blind_collapses_all_horizons"] is True
+    assert all(r["blind_policy_efe"] >= r["commit_policy_efe"] - 1e-9 for r in hz["rows"])
+
+
+def test_validate_payload_catches_lying_horizon_cost() -> None:
+    import copy
+
+    payload = copy.deepcopy(seq.build_payload())
+    payload["horizon_curve"]["cost"] = 0.5  # below window -> myopic would not commit
+    assert seq.validate_payload(payload)
+
+
 def test_policy_efe_breakdown_is_consistent() -> None:
     row = seq.policy_efe(cue_first=True, cue_resolves=True)
     assert abs(row["policy_efe"] - (row["g1"] + row["g2"])) < 1e-12

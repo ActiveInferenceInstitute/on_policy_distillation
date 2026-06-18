@@ -2,7 +2,7 @@
 
 Generated documentation coverage for every Python `def` and `class` under `src/` and `scripts/`. Entries marked `inventory fallback` have no inline docstring yet, but remain documented here by path, line, kind, and qualified name.
 
-Total documented definitions: 993
+Total documented definitions: 998
 
 ## `src/analytical/bernoulli_toy.py`
 
@@ -327,10 +327,15 @@ Total documented definitions: 993
 
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
-| 56 | `function` | `step_efe` | docstring | Expected free energy of one step, via the shared energy.efe_report. |
-| 62 | `function` | `policy_efe` | docstring | Two-step policy EFE breakdown for a cue-first or commit-now policy. |
-| 81 | `function` | `build_payload` | docstring | Certify the horizon-dependent active-selection result with its controls. |
-| 116 | `function` | `validate_payload` | docstring | Re-derive the horizon-dependence verdict from the per-step G rows. |
+| 61 | `function` | `step_efe` | docstring | Expected free energy of one step, via the shared energy.efe_report. |
+| 67 | `function` | `policy_efe` | docstring | Two-step policy EFE breakdown for a cue-first or commit-now policy. |
+| 86 | `function` | `horizon_primitives` | docstring | The four single-step EFE primitives, recomputed from the shared functional. |
+| 102 | `function` | `build_horizon_curve` | docstring | Multi-step policy EFE over a planning horizon: cue-then-exploit vs commit. |
+| 120 | `function` | `build_horizon_curve.cue_efe` | inventory fallback | Inventory fallback for function `build_horizon_curve.cue_efe` defined at `src/firstprinciples/sequential_selection.py:120`. |
+| 123 | `function` | `build_horizon_curve.commit_efe` | inventory fallback | Inventory fallback for function `build_horizon_curve.commit_efe` defined at `src/firstprinciples/sequential_selection.py:123`. |
+| 126 | `function` | `build_horizon_curve.blind_efe` | inventory fallback | Inventory fallback for function `build_horizon_curve.blind_efe` defined at `src/firstprinciples/sequential_selection.py:126`. |
+| 169 | `function` | `build_payload` | docstring | Certify the horizon-dependent active-selection result with its controls. |
+| 216 | `function` | `validate_payload` | docstring | Re-derive the horizon-dependence verdict from the per-step G rows. |
 
 ## `src/firstprinciples/sequential_shift.py`
 
