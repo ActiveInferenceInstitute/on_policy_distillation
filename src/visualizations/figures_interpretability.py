@@ -58,7 +58,7 @@ def figure_correspondence_map(project_root: Path) -> Path:
         fig, ax = plt.subplots(figsize=(11.8, 1.6 + 0.215 * total_units))
         ax.set_axis_off()
         ax.set_xlim(0.0, 1.0)
-        ax.set_ylim(0.0, total_units + 2.4)
+        ax.set_ylim(-1.6, total_units + 2.4)
         header_size = style.font_size("subtitle")
         cell_size = max(style.font_size("dense"), 9.5)
         header_y = total_units + 1.4
@@ -93,7 +93,7 @@ def figure_correspondence_map(project_root: Path) -> Path:
         )
         ax.text(
             0.5,
-            0.28,
+            -0.9,
             "Source: output/data/firstprinciples/correspondence_map.json; every row is machine-validated.",
             ha="center",
             va="center",

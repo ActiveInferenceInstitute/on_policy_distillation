@@ -9,8 +9,14 @@ later pragmatic goal. A myopic one-step planner is not enough to demonstrate thi
 green-by-construction trap (flagged by the prototype sweep).
 
 The honest, horizon-dependent regime requires a declared **cue step-cost**: the
-cue costs something now and pays off later. With a cue step-cost in the open
-window ``(0.693, 1.524)`` nats (here ``cue_step_cost = 1.0``):
+cue costs something now and pays off later. Two commit models appear in this
+module, each with its own analytically-derived window. The two-step ``policy_efe``
+path compares cue-first against a *blind* step-1 commit, valid for a cost in the
+open window ``(0.693, 1.524)`` nats (here ``CUE_STEP_COST = 1.0``); the
+``build_horizon_curve`` path uses an *arm-commit-every-step* model whose window is
+``(1.029, 1.859)`` nats (here ``HORIZON_CUE_STEP_COST = 1.3``). Both windows are
+asserted live, neither is hand-tuned. With ``cue_step_cost = 1.0`` on the two-step
+path:
 
 * a **myopic** one-step planner prefers ``commit`` (the cue's immediate cost
   outweighs its immediate value), but
@@ -37,7 +43,10 @@ ArrayF = NDArray[np.float64]
 
 SCHEMA = "firstprinciples.sequential_selection_demo.v1"
 
-# Declared toy constants (the horizon-dependent regime; window ~ (0.693, 1.524)).
+# Declared toy constants. CUE_STEP_COST=1.0 drives the two-step policy_efe path
+# (blind-commit window ~(0.693, 1.524)); HORIZON_CUE_STEP_COST=1.3 drives
+# build_horizon_curve (arm-commit-every-step window ~(1.029, 1.859)). Both windows
+# are asserted live (cost_in_derived_window), neither is hand-tuned.
 CUE_STEP_COST = 1.0
 # Multi-step (sophisticated-inference) horizon: a single cue-then-exploit-for-the-
 # rest-of-the-horizon policy vs commit-every-step. The cost sits in an

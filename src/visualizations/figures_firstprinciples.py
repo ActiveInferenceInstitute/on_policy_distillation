@@ -51,7 +51,7 @@ def figure_distillation_divergence_geometry(project_root: Path) -> Path:
         mass_ax.set_xticks(x, [f"mode {idx + 1}" for idx in x])
         mass_ax.set_ylim(0.0, 1.0)
         mass_ax.set_ylabel("Probability mass")
-        mass_ax.set_title("Teacher/student mass on finite support")
+        mass_ax.set_title("Teacher/student mass", fontsize=style.font_size("subtitle"))
         style_grid(mass_ax, style)
         mass_ax.legend(frameon=True, fontsize=style.font_size("legend"))
 
@@ -59,9 +59,9 @@ def figure_distillation_divergence_geometry(project_root: Path) -> Path:
         values = [value for _name, value in measures]
         colors = [style.color("accent"), style.color("secondary"), "#7c3aed", "#b45309", style.color("fail")]
         bars = div_ax.bar(np.arange(len(values)), values, color=colors, alpha=0.88)
-        div_ax.set_xticks(np.arange(len(values)), [name.replace(" ", "\n") for name in names], fontsize=style.font_size("dense"))
+        div_ax.set_xticks(np.arange(len(values)), [name.replace(" ", "\n").replace("-", "-\n") for name in names], fontsize=style.font_size("dense"))
         div_ax.set_ylabel("Divergence (nats)")
-        div_ax.set_title("Objective choice changes the penalty")
+        div_ax.set_title("Objective changes penalty", fontsize=style.font_size("subtitle"))
         style_grid(div_ax, style)
         for bar, value in zip(bars, values, strict=True):
             div_ax.text(bar.get_x() + bar.get_width() / 2, value + 0.006, f"{value:.3f}", ha="center", fontsize=style.font_size("annotation"))
@@ -71,7 +71,7 @@ def figure_distillation_divergence_geometry(project_root: Path) -> Path:
         entropy_ax.barh(np.arange(len(entropy_values)), entropy_values, color=entropy_colors, alpha=0.88)
         entropy_ax.set_yticks(np.arange(len(entropy_values)), entropy_names, fontsize=style.font_size("dense"))
         entropy_ax.set_xlabel("Entropy (nats)")
-        entropy_ax.set_title("Entropy check is example-specific")
+        entropy_ax.set_title("Entropy is example-specific", fontsize=style.font_size("subtitle"))
         entropy_ax.set_xlim(0, max(1.0, max(entropy_values, default=0.0) * 1.28))
         style_grid(entropy_ax, style)
         for y, value in enumerate(entropy_values):

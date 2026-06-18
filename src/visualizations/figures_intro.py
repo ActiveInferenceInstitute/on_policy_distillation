@@ -208,7 +208,7 @@ def figure_opd_reader_map(project_root: Path) -> Path:
 
         ax.add_patch(
             FancyBboxPatch(
-                (0.80, 4.28),
+                (0.80, 3.66),
                 6.28,
                 0.50,
                 boxstyle="round,pad=0.04,rounding_size=0.06",
@@ -219,7 +219,7 @@ def figure_opd_reader_map(project_root: Path) -> Path:
         )
         ax.text(
             1.06,
-            4.59,
+            3.97,
             "VFE lane",
             fontsize=style.font_size("dense"),
             color=energy,
@@ -228,7 +228,7 @@ def figure_opd_reader_map(project_root: Path) -> Path:
         )
         ax.text(
             2.04,
-            4.59,
+            3.97,
             "posterior update / reverse-KL comparison on the student-induced measure",
             fontsize=style.font_size("dense"),
             color=ink,
@@ -236,7 +236,7 @@ def figure_opd_reader_map(project_root: Path) -> Path:
         )
         ax.add_patch(
             FancyBboxPatch(
-                (7.48, 4.28),
+                (7.48, 3.66),
                 6.72,
                 0.50,
                 boxstyle="round,pad=0.04,rounding_size=0.06",
@@ -247,7 +247,7 @@ def figure_opd_reader_map(project_root: Path) -> Path:
         )
         ax.text(
             7.74,
-            4.59,
+            3.97,
             "EFE lane",
             fontsize=style.font_size("dense"),
             color=validation,
@@ -256,7 +256,7 @@ def figure_opd_reader_map(project_root: Path) -> Path:
         )
         ax.text(
             8.72,
-            4.59,
+            3.97,
             "planning-side action selection; separated from the reverse-KL/VFE identity",
             fontsize=style.font_size("dense"),
             color=ink,
@@ -265,7 +265,7 @@ def figure_opd_reader_map(project_root: Path) -> Path:
 
         ax.add_patch(
             FancyBboxPatch(
-                (1.08, 2.00),
+                (1.08, 1.38),
                 12.84,
                 2.08,
                 boxstyle="round,pad=0.06,rounding_size=0.10",
@@ -276,7 +276,7 @@ def figure_opd_reader_map(project_root: Path) -> Path:
         )
         ax.text(
             1.36,
-            3.64,
+            3.02,
             "Validation boundary keeps the early picture finite",
             fontsize=style.font_size("subtitle"),
             color=validation,
@@ -293,7 +293,7 @@ def figure_opd_reader_map(project_root: Path) -> Path:
             x = 1.38 + idx * 3.05
             ax.add_patch(
                 FancyBboxPatch(
-                    (x, 2.40),
+                    (x, 1.78),
                     2.52,
                     0.74,
                     boxstyle="round,pad=0.04,rounding_size=0.06",
@@ -302,19 +302,19 @@ def figure_opd_reader_map(project_root: Path) -> Path:
                     facecolor=paper,
                 )
             )
-            ax.text(x + 0.12, 2.92, title, fontsize=style.font_size("dense"), color=ink, fontweight="bold")
+            ax.text(x + 0.12, 2.30, title, fontsize=style.font_size("dense"), color=ink, fontweight="bold")
             ax.text(
                 x + 0.12,
-                2.66,
+                2.04,
                 "\n".join(textwrap.wrap(body, width=29, break_long_words=False)),
                 fontsize=style.font_size("dense"),
                 color=muted,
                 va="top",
             )
             if idx < len(spine_steps) - 1:
-                arrow(ax, (x + 2.58, 2.77), (x + 2.95, 2.77), validation)
+                arrow(ax, (x + 2.58, 2.15), (x + 2.95, 2.15), validation)
         for x in (2.08, 5.48, 8.78, 12.20):
-            arrow(ax, (x, 4.96), (x, 4.14), validation)
+            arrow(ax, (x, 4.96), (x, 3.52), validation)
 
         ax.add_patch(Rectangle((0, 0), 15.0, 0.64, facecolor="#eff6ff", edgecolor="none"))
         ax.text(

@@ -236,8 +236,8 @@ def figure_graphical_abstract(project_root: Path) -> Path:
         ax.text(
             center_x,
             4.58,
-            "student-induced observations close the loop",
-            fontsize=style.font_size("annotation") * 0.96,
+            "student observations close the loop",
+            fontsize=style.font_size("annotation") * 0.84,
             fontweight="bold",
             color=energy,
             ha="center",

@@ -633,7 +633,7 @@ def test_graphical_abstract_represents_artifact_validation_spine(project_root: P
     assert "On-Policy Distillation as Active Inference" in source
     assert "Validation spine" in source
     assert "finite variational-model reading" in source
-    assert "student-induced observations close the loop" in source
+    assert "student observations close the loop" in source
     assert "reverse-KL loss as VFE" in source
     assert "EFE: planning-side action selection" in source
     assert "correspondence, not universal identity" in source

@@ -13,8 +13,9 @@ declared analysis artifacts, refreshes manuscript variables and validation
 certificates, validates the outputs, and renders the PDF:
 
 ```bash
-uv sync --directory working/active_inference_on_policy_distillation --extra dev
-cd working/active_inference_on_policy_distillation
+git clone https://github.com/ActiveInferenceInstitute/on_policy_distillation
+cd on_policy_distillation
+uv sync --extra dev
 uv run python scripts/run_full_chain.py --render
 ```
 

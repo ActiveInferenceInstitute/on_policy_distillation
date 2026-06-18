@@ -50,39 +50,31 @@ set is RedTeam-checked with no surviving overclaim, and the Lean layer is sorry-
 with every theorem axiom-audited. **Nothing in the science blocks a first release.**
 What remains is release mechanics plus a few judgment calls.
 
-**Metadata fixed in this pass (no longer open):**
-- `LICENSE` file added (MIT, matching `config.yaml`, `CITATION.cff`, `.zenodo.json`).
-- `CITATION.cff` + `.zenodo.json` version synced `0.4.0` → `1.0.0` to match
-  `pyproject.toml` and `config.yaml` (the M1 gate only checks pyproject↔config, so
-  this drift was real but un-gated).
+**Resolved for this release:**
+- Title aligned to the full paper title "On-Policy Distillation as Active Inference in
+  Finite Variational Models" across `config.yaml`, `CITATION.cff`, `.zenodo.json`,
+  `codemeta.json`. Version `1.0.0` unified across all surfaces.
+- License **MIT** confirmed for the standalone release (the umbrella template is
+  Apache-2.0; this project ships its own MIT `LICENSE`).
+- Target repo **`ActiveInferenceInstitute/on_policy_distillation`** (public) set across
+  all metadata surfaces.
+- `OPD-ACTIVE-XVENDOR-1` cross-vendor audit (GPT-5.4/codex) **complete — READY, no
+  blocking issues**: the active-selection identities are independently re-derived
+  correct, the negative controls are non-vacuous, and no manuscript claim overstates
+  the finite toy.
 
-**Decisions only the author can make (do not set unilaterally):**
-- *Title* — `CITATION.cff` / `.zenodo.json` use the short "On-Policy Distillation is
-  Active Inference"; `config.yaml` / `README` use the full "On-Policy Distillation as
-  Active Inference in Finite Variational Models". Keep the short citation title or
-  align to the full paper title.
-- *License intent* — the project declares MIT in all three metadata files, but the
-  umbrella template repo is Apache-2.0. Confirm MIT is intended for the standalone
-  release.
-- *Target repo* — `config.yaml` `github_repository: docxology/on_policy` (CITATION /
-  .zenodo agree). Confirm owner + name (`docxology` vs `ActiveInferenceInstitute`)
-  before the repo is created.
-
-**Release mechanics (at publish time — needs credentials + an explicit go-ahead):**
-- Reserve a Zenodo DOI first, bake `publication.doi` + `publication.version_doi` +
-  the final `paper.date` into `config.yaml`, then **deterministically re-render** the
-  DOI-stamped PDF before deposit (`scripts/publish_project_release.py`, or
-  `09_archive_publication.py`). `CITATION.cff` `date-released` is re-stamped to the
-  real release date at deposit.
+**Release mechanics (at publish time):**
+- `scripts/publish_project_release.py --project working/active_inference_on_policy_distillation
+  --tag v1.0.0 --repo ActiveInferenceInstitute/on_policy_distillation --production
+  --reserve-doi-first` reserves the Zenodo DOI, bakes `publication.doi` / `version_doi`
+  + the release date into `config.yaml`, deterministically re-renders the DOI-stamped
+  PDF, pushes/releases on GitHub, and deposits to Zenodo. `CITATION.cff` `date-released`,
+  `config.yaml` `paper.date`, and `codemeta.json` `dateModified` are set to the real
+  release date at tag time.
 - **Confidentiality:** this project lives under `projects/working/` — LOCAL-ONLY and
   gitignored in the template repo. Publishing means its **own** public repo; it must
   never be committed into the template (the `check_tracked_projects.py` gate enforces
   this).
-
-**Recommended before tagging 1.0.0 (not a hard blocker):**
-- `OPD-ACTIVE-XVENDOR-1` — the GPT-5.4/codex cross-vendor audit of the
-  active-selection family (quota-gated; Opus-family adversarial probes have stood in
-  and PASSED, but the cross-vendor blind-spot reduction is not yet present).
 
 **Deferred to post-publication / venue time (not blockers):**
 `OPD-LEAN-REAL-IDENTITY-1` (real-valued Lean identity, needs Mathlib),
