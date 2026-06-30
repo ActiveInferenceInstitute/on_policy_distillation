@@ -1,0 +1,47 @@
+# AII sidecar — InstituteOS metadata. Schema: instituteos.platform.aii_sidecar
+meta:
+  updated: '2026-06-30'
+repo:
+  name: on_policy_distillation
+  slug: on-policy-distillation
+  full_name: ActiveInferenceInstitute/on_policy_distillation
+  description: On Policy Distillation and Active Inference
+institute:
+  category: research-software
+  steward: Active Inference Institute
+ecosystem:
+  links:
+    github: https://github.com/ActiveInferenceInstitute/on_policy_distillation
+    website: https://www.activeinference.org
+artifacts:
+- path: README.md
+  kind: doc
+  description: Repository overview.
+- path: src
+  kind: code
+  description: Source tree.
+- path: pyproject.toml
+  kind: code
+  description: Python package config.
+- path: LICENSE
+  kind: doc
+  description: License.
+provenance:
+  license: MIT
+  citation:
+    doi: 10.5281/zenodo.20747834.svg
+instituteos:
+  tags:
+  - policy
+  - distillation
+  - inference
+  - python
+capabilities:
+- python-package
+- tested
+- documentation
+- dataset
+tasks:
+  test:
+    cmd: python -m pytest
+    description: Run the test suite.
