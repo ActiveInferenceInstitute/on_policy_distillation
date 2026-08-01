@@ -652,7 +652,13 @@ def _validate_outputs_selected(root: Path, selected: set[str]) -> dict[str, bool
         if "invariants_all_pass" in selected:
             checks["invariants_all_pass"] = inv.get("all_pass") is True
         if "simulation_invariants_all_pass" in selected:
-            checks["simulation_invariants_all_pass"] = all((inv.get("simulation") or {}).values())
+            # Fail closed: only True when the invariant report exists AND carries a
+            # non-empty "simulation" block whose every row passes. An absent file or
+            # an empty/missing simulation block must never vacuously pass (the full
+            # path already guards with `if inv_path.exists()`/`if sim:`); mirror that
+            # so the lazy/selected API cannot report PASS on missing evidence.
+            sim = inv.get("simulation")
+            checks["simulation_invariants_all_pass"] = bool(sim) and all(bool(v) for v in sim.values())
 
     if "si_trace_present" in selected or "si_summary_schema" in selected:
         summary = _read_json(root / "output" / "data" / "si_tmaze_summary.json")

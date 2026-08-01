@@ -415,10 +415,10 @@ Total documented definitions: 1007
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
 | 61 | `function` | `_eval_spec` | inventory fallback | Inventory fallback for function `_eval_spec` defined at `src/gates/aggregate_rederivation.py:61`. |
-| 277 | `function` | `rederive_aggregate` | docstring | Re-derive an aggregate from ``payload['rows']``; vacuous truth is False. |
-| 290 | `function` | `aggregate_rederivation_rows` | docstring | One row per covered (artifact, aggregate): stored vs re-derived. |
-| 329 | `function` | `aggregates_consistent` | docstring | True iff every covered stored aggregate equals its row-level re-derivation. |
-| 334 | `function` | `rule_count` | docstring | Number of (artifact, aggregate) pairs re-derived at validation time. |
+| 289 | `function` | `rederive_aggregate` | docstring | Re-derive an aggregate from ``payload['rows']``; vacuous truth is False. |
+| 302 | `function` | `aggregate_rederivation_rows` | docstring | One row per covered (artifact, aggregate): stored vs re-derived. |
+| 341 | `function` | `aggregates_consistent` | docstring | True iff every covered stored aggregate equals its row-level re-derivation. |
+| 346 | `function` | `rule_count` | docstring | Number of (artifact, aggregate) pairs re-derived at validation time. |
 
 ## `src/gates/claim_ledger.py`
 
@@ -515,9 +515,9 @@ Total documented definitions: 1007
 | 585 | `function` | `_cross_track_symbol_table_ok` | inventory fallback | Inventory fallback for function `_cross_track_symbol_table_ok` defined at `src/gates/output_checks.py:585`. |
 | 625 | `function` | `_firstprinciples_classroom_ok` | inventory fallback | Inventory fallback for function `_firstprinciples_classroom_ok` defined at `src/gates/output_checks.py:625`. |
 | 631 | `function` | `_validate_outputs_selected` | inventory fallback | Inventory fallback for function `_validate_outputs_selected` defined at `src/gates/output_checks.py:631`. |
-| 804 | `function` | `validate_outputs_selected_strict` | docstring | Validate selected output keys without falling back to the full gate. |
-| 823 | `function` | `validate_outputs` | inventory fallback | Inventory fallback for function `validate_outputs` defined at `src/gates/output_checks.py:823`. |
-| 838 | `function` | `_validate_outputs_full` | inventory fallback | Inventory fallback for function `_validate_outputs_full` defined at `src/gates/output_checks.py:838`. |
+| 810 | `function` | `validate_outputs_selected_strict` | docstring | Validate selected output keys without falling back to the full gate. |
+| 829 | `function` | `validate_outputs` | inventory fallback | Inventory fallback for function `validate_outputs` defined at `src/gates/output_checks.py:829`. |
+| 844 | `function` | `_validate_outputs_full` | inventory fallback | Inventory fallback for function `_validate_outputs_full` defined at `src/gates/output_checks.py:844`. |
 
 ## `src/gnn/concordance.py`
 
@@ -899,36 +899,36 @@ Total documented definitions: 1007
 | 98 | `function` | `build_release_notes_evidence` | docstring | Build the release_notes_evidence.v1 payload: three source-backed release notes (validation report, bundle sources, semantic certificate), deferring rows whose source artifact does not exist yet. |
 | 144 | `function` | `build_figure_source_map` | docstring | Build the figure_source_map.v1 payload: per-registry-figure sources, source fields, validation gates, caption/alt tokens, and image dimensions. |
 | 151 | `function` | `build_figure_source_map._image_dimensions` | inventory fallback | Inventory fallback for function `build_figure_source_map._image_dimensions` defined at `src/roadmap_tracks/integration_audit_artifacts.py:151`. |
-| 612 | `function` | `_actual_figure_image_paths` | inventory fallback | Inventory fallback for function `_actual_figure_image_paths` defined at `src/roadmap_tracks/integration_audit_artifacts.py:612`. |
-| 623 | `function` | `_expected_figure_image_paths` | inventory fallback | Inventory fallback for function `_expected_figure_image_paths` defined at `src/roadmap_tracks/integration_audit_artifacts.py:623`. |
-| 630 | `function` | `build_figure_hash_manifest` | docstring | Build the figure_hash_manifest.v1 payload for declared figure/animation images. |
-| 730 | `function` | `_caption_overclaim_free` | inventory fallback | Inventory fallback for function `_caption_overclaim_free` defined at `src/roadmap_tracks/integration_audit_artifacts.py:730`. |
-| 738 | `function` | `_figure_claim_wording_ok` | inventory fallback | Inventory fallback for function `_figure_claim_wording_ok` defined at `src/roadmap_tracks/integration_audit_artifacts.py:738`. |
-| 775 | `function` | `_cover_quantitative_free` | docstring | Reject metric-dashboard language only on the graphical abstract. |
-| 878 | `function` | `_asserts_complete_rows` | inventory fallback | Inventory fallback for function `_asserts_complete_rows` defined at `src/roadmap_tracks/integration_audit_artifacts.py:878`. |
-| 894 | `function` | `_normalize_claim_text` | inventory fallback | Inventory fallback for function `_normalize_claim_text` defined at `src/roadmap_tracks/integration_audit_artifacts.py:894`. |
-| 899 | `function` | `_term_in_text` | docstring | Word-boundary containment so an opposite-sense substring cannot satisfy a term |
-| 905 | `function` | `_figure_caption_claim_payloads` | inventory fallback | Inventory fallback for function `_figure_caption_claim_payloads` defined at `src/roadmap_tracks/integration_audit_artifacts.py:905`. |
-| 922 | `function` | `_caption_claims_source_bound` | inventory fallback | Inventory fallback for function `_caption_claims_source_bound` defined at `src/roadmap_tracks/integration_audit_artifacts.py:922`. |
-| 945 | `function` | `_load_structured_artifact` | inventory fallback | Inventory fallback for function `_load_structured_artifact` defined at `src/roadmap_tracks/integration_audit_artifacts.py:945`. |
-| 960 | `function` | `_nonempty_node` | docstring | A resolved node carries content iff it is not None and not an empty |
-| 968 | `function` | `_jsonpath_present` | docstring | Return True iff a `$.a.b[*].c` / `$.a[0].b` JSONPath resolves to ≥1 *non-empty* |
-| 1000 | `function` | `_nested_key_present` | inventory fallback | Inventory fallback for function `_nested_key_present` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1000`. |
-| 1010 | `function` | `_source_field_resolves` | docstring | Resolve a caption-claim ``source_field`` against the figure's artifacts. |
-| 1067 | `function` | `_caption_claim_fields_resolved` | inventory fallback | Inventory fallback for function `_caption_claim_fields_resolved` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1067`. |
-| 1081 | `function` | `_caption_claim_terms_present` | inventory fallback | Inventory fallback for function `_caption_claim_terms_present` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1081`. |
-| 1094 | `function` | `_caption_claim_scope_ok` | inventory fallback | Inventory fallback for function `_caption_claim_scope_ok` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1094`. |
-| 1123 | `function` | `_caption_claim_display_transform_ok` | inventory fallback | Inventory fallback for function `_caption_claim_display_transform_ok` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1123`. |
-| 1144 | `function` | `build_visualization_quality_audit` | docstring | Build a verifier-facing audit over figure readability, provenance, and caption scope. |
-| 1275 | `function` | `_figure_source_rows_complete` | inventory fallback | Inventory fallback for function `_figure_source_rows_complete` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1275`. |
-| 1395 | `function` | `_rederive_image_facts` | docstring | Re-open a figure PNG and recompute (readable, nonblank, width, height). |
-| 1415 | `function` | `_visualization_quality_caption_claims_rederived` | docstring | Re-derive the visualization audit's caption-claim AND image booleans from source. |
-| 1477 | `function` | `_figure_hash_rows_complete` | inventory fallback | Inventory fallback for function `_figure_hash_rows_complete` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1477`. |
-| 1549 | `function` | `_scope_forbidden_hits` | docstring | Return scoped-overclaim hits by line, preserving negated guardrail mentions. |
-| 1567 | `function` | `build_scope_boundary_audit` | docstring | Build the scope_boundary_audit.v1 payload scanning numbered manuscript sections for scope leaks. |
-| 1606 | `function` | `build_manuscript_evidence_tables` | docstring | Build the manuscript_evidence_tables.v1 payload: an id/row_count/source index over twenty evidence artifacts. |
-| 1739 | `function` | `build_adversarial_audit` | docstring | Return a copy of the canonical adversarial audit from roadmap_tracks.sheaf_tracks. |
-| 1746 | `function` | `build_integration_semantic_snapshot` | docstring | Build the integration_semantic_snapshot.v1 payload: ~30 boolean restrictions over the saved artifacts plus structural/semantic/artifact/manuscript section rollups. |
+| 621 | `function` | `_actual_figure_image_paths` | inventory fallback | Inventory fallback for function `_actual_figure_image_paths` defined at `src/roadmap_tracks/integration_audit_artifacts.py:621`. |
+| 632 | `function` | `_expected_figure_image_paths` | inventory fallback | Inventory fallback for function `_expected_figure_image_paths` defined at `src/roadmap_tracks/integration_audit_artifacts.py:632`. |
+| 639 | `function` | `build_figure_hash_manifest` | docstring | Build the figure_hash_manifest.v1 payload for declared figure/animation images. |
+| 749 | `function` | `_caption_overclaim_free` | inventory fallback | Inventory fallback for function `_caption_overclaim_free` defined at `src/roadmap_tracks/integration_audit_artifacts.py:749`. |
+| 757 | `function` | `_figure_claim_wording_ok` | inventory fallback | Inventory fallback for function `_figure_claim_wording_ok` defined at `src/roadmap_tracks/integration_audit_artifacts.py:757`. |
+| 794 | `function` | `_cover_quantitative_free` | docstring | Reject metric-dashboard language only on the graphical abstract. |
+| 897 | `function` | `_asserts_complete_rows` | inventory fallback | Inventory fallback for function `_asserts_complete_rows` defined at `src/roadmap_tracks/integration_audit_artifacts.py:897`. |
+| 913 | `function` | `_normalize_claim_text` | inventory fallback | Inventory fallback for function `_normalize_claim_text` defined at `src/roadmap_tracks/integration_audit_artifacts.py:913`. |
+| 918 | `function` | `_term_in_text` | docstring | Word-boundary containment so an opposite-sense substring cannot satisfy a term |
+| 924 | `function` | `_figure_caption_claim_payloads` | inventory fallback | Inventory fallback for function `_figure_caption_claim_payloads` defined at `src/roadmap_tracks/integration_audit_artifacts.py:924`. |
+| 941 | `function` | `_caption_claims_source_bound` | inventory fallback | Inventory fallback for function `_caption_claims_source_bound` defined at `src/roadmap_tracks/integration_audit_artifacts.py:941`. |
+| 964 | `function` | `_load_structured_artifact` | inventory fallback | Inventory fallback for function `_load_structured_artifact` defined at `src/roadmap_tracks/integration_audit_artifacts.py:964`. |
+| 979 | `function` | `_nonempty_node` | docstring | A resolved node carries content iff it is not None and not an empty |
+| 987 | `function` | `_jsonpath_present` | docstring | Return True iff a `$.a.b[*].c` / `$.a[0].b` JSONPath resolves to ≥1 *non-empty* |
+| 1019 | `function` | `_nested_key_present` | inventory fallback | Inventory fallback for function `_nested_key_present` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1019`. |
+| 1029 | `function` | `_source_field_resolves` | docstring | Resolve a caption-claim ``source_field`` against the figure's artifacts. |
+| 1086 | `function` | `_caption_claim_fields_resolved` | inventory fallback | Inventory fallback for function `_caption_claim_fields_resolved` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1086`. |
+| 1100 | `function` | `_caption_claim_terms_present` | inventory fallback | Inventory fallback for function `_caption_claim_terms_present` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1100`. |
+| 1113 | `function` | `_caption_claim_scope_ok` | inventory fallback | Inventory fallback for function `_caption_claim_scope_ok` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1113`. |
+| 1142 | `function` | `_caption_claim_display_transform_ok` | inventory fallback | Inventory fallback for function `_caption_claim_display_transform_ok` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1142`. |
+| 1163 | `function` | `build_visualization_quality_audit` | docstring | Build a verifier-facing audit over figure readability, provenance, and caption scope. |
+| 1294 | `function` | `_figure_source_rows_complete` | inventory fallback | Inventory fallback for function `_figure_source_rows_complete` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1294`. |
+| 1414 | `function` | `_rederive_image_facts` | docstring | Re-open a figure PNG and recompute (readable, nonblank, width, height). |
+| 1434 | `function` | `_visualization_quality_caption_claims_rederived` | docstring | Re-derive the visualization audit's caption-claim AND image booleans from source. |
+| 1496 | `function` | `_figure_hash_rows_complete` | inventory fallback | Inventory fallback for function `_figure_hash_rows_complete` defined at `src/roadmap_tracks/integration_audit_artifacts.py:1496`. |
+| 1573 | `function` | `_scope_forbidden_hits` | docstring | Return scoped-overclaim hits by line, preserving negated guardrail mentions. |
+| 1591 | `function` | `build_scope_boundary_audit` | docstring | Build the scope_boundary_audit.v1 payload scanning numbered manuscript sections for scope leaks. |
+| 1630 | `function` | `build_manuscript_evidence_tables` | docstring | Build the manuscript_evidence_tables.v1 payload: an id/row_count/source index over twenty evidence artifacts. |
+| 1763 | `function` | `build_adversarial_audit` | docstring | Return a copy of the canonical adversarial audit from roadmap_tracks.sheaf_tracks. |
+| 1770 | `function` | `build_integration_semantic_snapshot` | docstring | Build the integration_semantic_snapshot.v1 payload: ~30 boolean restrictions over the saved artifacts plus structural/semantic/artifact/manuscript section rollups. |
 
 ## `src/roadmap_tracks/integration_audit_builders.py`
 

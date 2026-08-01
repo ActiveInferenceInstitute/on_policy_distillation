@@ -134,65 +134,42 @@ implementation begins.
 | Validation gate | `validate_outputs`, `validate_manuscript`, `lake build`, or project test |
 | Negative control | Test that mutates artifact/config/claim text and proves the gate fails |
 
-## Major — Scoped (deferred) — NOT implemented this pass
+## Previously-scoped Majors — now implemented (this pass)
 
-These are validated, honest findings that are intentionally deferred. They are
-not blocked on science; they are architectural/reproducibility gates that need a
-design decision before a safe fix can land.
+Two MAJOR findings scoped during the 2026-08 review were subsequently implemented
+and are now closed. They had been deferred because each was a gate/reproducibility
+break that needed a design decision; a later "proceed with all TODO items" pass
+made them. Both ship with negative-control tests.
 
-### `OPD-CLEAN-CHECKOUT-1` — figure-hash gate requires publish-only transmission bookend PNGs; fresh `output/` cannot converge green (MAJOR)
-- **One line:** `build_figure_hash_manifest` (in
-  `src/roadmap_tracks/integration_audit_artifacts.py`,
-  `_DECLARED_NONREGISTRY_IMAGE_PATHS`) unconditionally expects
-  `output/figures/transmission_integrity_strip.png` and
-  `output/figures/transmission_pairing.png`, but nothing in this standalone repo
-  produces them (they are written by the sibling infra release workflow at
-  publish time), so `all_expected_images_present` is False and the
-  `integration_audit_artifacts` gate fails on a fully fresh `output/`.
-- **Why it matters:** `validate_outputs` / `z_generate_manuscript_variables`
-  (the attestation fixed point) can never go green from a clean checkout,
-  contradicting the README "canonical readiness command" (`run_full_chain.py`)
-  and the "green from clean" framing. It is the root cause of the red suite seen
-  on a fully regenerated tree and it also poisons the release-notes / gluing
-  certificate cascade (a stale red `validation_report.json` becomes a permanent
-  "unsupported note").
-- **Suggested fix (design decision required):** gate these two bookend images
-  behind `transmission_bookends.enabled` and treat them as publish/defer-only
-  (mirror the existing `deferred_until_render` semantics used for
-  `output/pdf/`/`output/web/` in `release_bundle_manifest`), or generate neutral
-  placeholders locally. Concretely: `_DECLARED_NONREGISTRY_IMAGE_PATHS` should be
-  computed from what the local pipeline actually emits, and
-  `_figure_hash_rows_complete` should accept render-deferred rows. Deciding
-  whether bookends remain an infra-only publish feature is the design choice this
-  item captures.
-- **Affected:** `src/roadmap_tracks/integration_audit_artifacts.py`,
-  `manuscript/config.yaml` (`transmission_bookends`), and the downstream
-  release-notes/gluing validators.
-- **Status:** scoped, NOT fixed. Any fix here must ship with a negative-control
-  test (fresh-tree gate tolerance + publish-tree still requires the bookends).
+### `OPD-CLEAN-CHECKOUT-1` (closed) — figure-hash gate now defers publish-only transmission bookend PNGs
+- **What:** `build_figure_hash_manifest` treated `transmission_integrity_strip.png`
+  and `transmission_pairing.png` as always-expected, but nothing in this
+  standalone repo emits them (they are publish-time infra artifacts), so a fully
+  fresh `output/` could never converge `validate_outputs` — the fixed point
+  failed on this gate and cascaded into release-notes/gluing.
+- **Fix:** mark these as `_PUBLISH_DEFERRED_IMAGE_PATHS`; a row is `deferred`
+  when its bookend is absent on the local tree, and `all_expected_images_present`
+  / `all_hashes_present` are computed over the non-deferred declared images
+  (registry figures + locally-generated animation). The `_figure_hash_rows_complete`
+  validator skips a deferred-absent row but still hard-verifies the bookend when
+  present, and the `aggregate_rederivation` rule for `figure_hash_manifest.json`
+  re-derives this via `any(deferred, hash+fresh)` per row so a registry row
+  without hashes still fails closed. Mirrors the existing `deferred_until_render`
+  semantics in `release_bundle_manifest`.
+- **Files:** `src/roadmap_tracks/integration_audit_artifacts.py`,
+  `src/gates/aggregate_rederivation.py`,
+  `tests/gates/test_output_gates.py` (+ new deferral negative/positive control).
 
-### `OPD-GATE-VACUOUS-PASS-1` — lazy/selected validation path returns vacuous-True for `simulation_invariants_all_pass` on missing evidence (MAJOR)
-- **One line:** in `_validate_outputs_selected`
-  (`src/gates/output_checks.py:650-655`),
-  `simulation_invariants_all_pass` is computed as
-  `all((inv.get("simulation") or {}).values())`, which is vacuously `True` when
-  `invariants.json` is missing or has no `simulation` block — so
-  `validate_outputs(..., only={"simulation_invariants_all_pass"})` reports PASS
-  on absent evidence, while the full gate (`_validate_outputs_full`,
-  `if inv_path.exists()`) fails closed. Verified by probe: empty root →
-  `{'invariants_all_pass': False, 'simulation_invariants_all_pass': True}`.
-- **Why it matters:** violates the repo's own gate law ("a missing, empty, or
-  inconsistent artifact is an error, never a silent pass"). A consumer of the
-  lazy/selected API for just that check could be misled into trusting
-  simulation invariants when no data exists — a data-integrity break.
-- **Suggested fix:** mirror the full path's guard — return `False` (not
-  vacuous `True`) when `invariants.json` is absent or its `simulation` block is
-  missing/empty, and add a negative control asserting the missing-file case is
-  `False`.
-- **Affected:** `src/gates/output_checks.py` `_validate_outputs_selected`
-  (line ~655).
-- **Status:** scoped, NOT fixed (MAJOR per hostile subagent; the fix is trivial
-  but classified as a data-integrity gate break, deferred per the pass rules).
+### `OPD-GATE-VACUOUS-PASS-1` (closed) — selected validation path no longer vacuously passes simulation invariants
+- **What:** `_validate_outputs_selected` returned `True` for
+  `simulation_invariants_all_pass` on a missing/empty `simulation` block
+  (`all(()) == True`), a data-integrity break against the repo's fail-closed law.
+- **Fix:** the selected path now returns `False` unless `invariants.json` exists,
+  carries a non-empty `simulation` block, and every row passes — mirroring the
+  full path's `if sim:` guard.
+- **Files:** `src/gates/output_checks.py`,
+  `tests/gates/test_output_gates.py` (+ negative control covering empty block,
+  failing row, and missing file).
 
 ## Active roadmap
 

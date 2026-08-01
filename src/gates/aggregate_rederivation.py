@@ -239,7 +239,19 @@ ARTIFACT_AGGREGATE_RULES: dict[str, tuple[tuple[str, Spec], ...]] = {
         ),
     ),
     "output/reports/figure_hash_manifest.json": (
-        ("all_hashes_present", ("all", ("nonempty", "sha256"), ("true", "fresh"))),
+        # `all_hashes_present` covers every NON-deferred declared image
+        # (registry figures + the locally-generated animation). Publish-deferred
+        # bookends (transmission_*.png) that are absent on a local tree are
+        # exempt; a row is OK iff it is deferred-True OR it carries a real hash
+        # and is fresh (strict per row — a missing `deferred` key is NOT exempt,
+        # so a registry row without hashes still fails closed).
+        (
+            "all_hashes_present",
+            (
+                "all",
+                ("any", ("equals", "deferred", True), ("all", ("nonempty", "sha256"), ("true", "fresh"))),
+            ),
+        ),
     ),
     "output/reports/gnn_lint_report.json": (
         ("all_variables_mapped_once", ("true", "ok")),

@@ -141,6 +141,47 @@ def test_validate_outputs_negative_analytical_invariants_fail(project_root: Path
         path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
 
 
+def test_validate_outputs_simulation_invariants_fails_closed_on_missing_block(project_root: Path, tmp_path: Path) -> None:
+    """The selected path must never vacuously pass simulation invariants.
+
+    `validate_outputs(only={"simulation_invariants_all_pass"})` reports True only
+    when `invariants.json` exists, carries a non-empty `simulation` block, and
+    every row passes. A removed file, an empty/absent simulation block, or a
+    failing row must each return False (fail closed), mirroring the full path's
+    `if sim:` guard.
+    """
+    path = project_root / "output" / "reports" / "invariants.json"
+    if not path.is_file():
+        pytest.skip("invariants report missing; run analysis first")
+    backup = tmp_path / "invariants.json.bak"
+    backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+
+    def _checks() -> bool:
+        return validate_outputs(project_root, only={"simulation_invariants_all_pass"})["simulation_invariants_all_pass"]
+
+    payload = json.loads(backup.read_text(encoding="utf-8"))
+    try:
+        # Honest baseline: the real merged report has a passing simulation block.
+        assert payload.get("simulation"), "expected a merged simulation block"
+        assert _checks() is True
+
+        # (1) Empty simulation block -> must NOT pass vacuously.
+        payload["simulation"] = {}
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        assert _checks() is False
+
+        # (2) A single failing simulation row -> False.
+        payload["simulation"] = {"goal_reached": True, "belief_entropy_finite": False}
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        assert _checks() is False
+
+        # (3) Missing file -> False (no silent vacuous pass on absent evidence).
+        path.unlink()
+        assert _checks() is False
+    finally:
+        path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+
+
 def test_write_invariants_report_preserves_simulation_merge(project_root: Path) -> None:
     from orchestration.analysis import write_invariants_report
 
@@ -550,19 +591,54 @@ def test_validate_outputs_negative_tmaze_schematic_requires_config_sources(
 @pytest.mark.timeout(300)
 @pytest.mark.artifact_slow
 @pytest.mark.mutates_artifacts
-def test_validate_outputs_negative_figure_hash_manifest_requires_hashes(
+def test_figure_hash_manifest_deferred_bookends_absent_ok_and_present_tamper_fails(
     project_root: Path,
     tmp_path: Path,
 ) -> None:
-    ensure_gate_artifacts_for(project_root, "output/reports/figure_hash_manifest.json")
+    """Publish-deferred transmission bookends must not block a fresh local tree.
+
+    (positive) A manifest with deferred-absent bookend rows and a True
+    `all_hashes_present` re-derives consistently through `aggregate_rederivation`
+    (the deferred rows are exempt, mirroring the builder).
+    (negative) Tampering a NON-deferred registry row (blank sha256 + claimed
+    `all_hashes_present=True`) still fails closed, and a manifest whose saved
+    aggregate disagrees with the row-level re-derivation is caught.
+    """
+    from roadmap_tracks.integration_audit_artifacts import (
+        _PUBLISH_DEFERRED_IMAGE_PATHS,
+        build_figure_hash_manifest,
+    )
+
+    for rel in _PUBLISH_DEFERRED_IMAGE_PATHS:
+        (project_root / rel).unlink(missing_ok=True)
+
     path = project_root / "output" / "reports" / "figure_hash_manifest.json"
+    if not path.is_file():
+        pytest.skip("figure_hash_manifest.json not generated yet")
     backup = tmp_path / "figure_hash_manifest.json.bak"
     backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
-    payload = json.loads(backup.read_text(encoding="utf-8"))
-    payload["rows"][0]["sha256"] = ""
-    payload["rows"][0]["size_bytes"] = 1
-    payload["all_hashes_present"] = True
+
+    # Positive: the freshly-built manifest marks absent bookends deferred and the
+    # saved aggregate matches the row-level re-derivation (deferred rows exempt).
+    fresh = build_figure_hash_manifest(project_root)
+    assert fresh["all_hashes_present"] is True
+    deferred_rows = [r for r in fresh["rows"] if r.get("deferred")]
+    assert {r["path"] for r in deferred_rows} == set(_PUBLISH_DEFERRED_IMAGE_PATHS)
+    assert all(not r["exists"] for r in deferred_rows)
+
+    from gates.aggregate_rederivation import rederive_aggregate
+    from gates.aggregate_rederivation import ARTIFACT_AGGREGATE_RULES
+
+    spec = ARTIFACT_AGGREGATE_RULES["output/reports/figure_hash_manifest.json"][0][1]
+    assert rederive_aggregate(fresh, spec) is True
+
     try:
+        # Negative: tampering a NON-deferred registry row must still fail closed.
+        payload = json.loads(backup.read_text(encoding="utf-8"))
+        nondeferred = next(row for row in payload["rows"] if not row.get("deferred"))
+        nondeferred["sha256"] = ""
+        nondeferred["size_bytes"] = 1
+        payload["all_hashes_present"] = True
         path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         checks = validate_outputs(project_root, only={"figure_hash_manifest_schema"})
         assert checks["figure_hash_manifest_schema"] is False

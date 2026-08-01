@@ -602,8 +602,17 @@ _FIGURE_IMAGE_SUFFIXES = {".png", ".gif"}
 #     workflow writes here at publish time (STRIP_FILENAME / FIGURE_NAME in
 #     infrastructure/publishing/transmission_*), then re-renders. They are not
 #     in the figure registry but are expected when bookends are enabled.
+# The transmission bookends are treated as publish-deferred: a fresh local
+# `output/` (which this standalone repo never itself emits) is allowed to lack
+# them without failing the gate, mirroring how `release_bundle_manifest`
+# defers `output/pdf/`/`output/web/`. When they ARE present they are hashed and
+# verified like any other declared image, so the publish-time requirement holds.
 _DECLARED_NONREGISTRY_IMAGE_PATHS = {
     "output/figures/si_belief_trajectory.gif",
+    "output/figures/transmission_integrity_strip.png",
+    "output/figures/transmission_pairing.png",
+}
+_PUBLISH_DEFERRED_IMAGE_PATHS = {
     "output/figures/transmission_integrity_strip.png",
     "output/figures/transmission_pairing.png",
 }
@@ -637,6 +646,8 @@ def build_figure_hash_manifest(project_root: Path) -> dict[str, Any]:
     for rel in sorted(expected_paths):
         path = root / rel
         exists = path.is_file()
+        # Publish-deferred bookends are permitted absent on a local run.
+        deferred = rel in _PUBLISH_DEFERRED_IMAGE_PATHS and not exists
         rows.append(
             {
                 "path": rel,
@@ -644,14 +655,22 @@ def build_figure_hash_manifest(project_root: Path) -> dict[str, Any]:
                 "sha256": _sha256(path) if exists else "",
                 "size_bytes": path.stat().st_size if exists else 0,
                 "fresh": exists,
+                "deferred": deferred,
             }
         )
-    all_expected_present = bool(rows) and all(row["exists"] and row["sha256"] for row in rows)
+    # `all_expected_images_present`/`all_hashes_present` cover the non-deferred
+    # declared images (all registry figures + the locally-generated animation).
+    # Deferred-absent bookends do not count against them; when present they are
+    # still verified below.
+    all_expected_present = bool(rows) and all(
+        row["exists"] and row["sha256"] for row in rows if not row.get("deferred")
+    )
     return {
         "schema": "template_active_inference.figure_hash_manifest.v1",
         "rows": rows,
         "figure_count": len(rows),
         "declared_nonregistry_image_paths": sorted(_DECLARED_NONREGISTRY_IMAGE_PATHS),
+        "publish_deferred_image_paths": sorted(_PUBLISH_DEFERRED_IMAGE_PATHS),
         "unexpected_image_paths": unexpected,
         "unexpected_image_count": len(unexpected),
         "all_expected_images_present": all_expected_present,
@@ -1493,6 +1512,11 @@ def _figure_hash_rows_complete(project_root: Path, payload: dict[str, Any]) -> b
     for row in rows:
         path = root / str(row.get("path", ""))
         digest = str(row.get("sha256", ""))
+        # A publish-deferred bookend that is absent on this tree is acceptable
+        # (matches the builder marking it `deferred`); if it is present it must
+        # be verified like any other declared image.
+        if row.get("deferred") is True and not path.is_file():
+            continue
         if not (
             path.is_file()
             and row.get("exists") is True
