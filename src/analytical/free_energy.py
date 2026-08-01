@@ -11,12 +11,22 @@ from .joint_dist import joint_marginal, joint_marginals, m_projection
 
 ArrayF = NDArray[np.float64]
 
-_LOG_FLOOR = 1e-300
 
+def _expected_log(q: ArrayF, x: ArrayF) -> float:
+    """``E_q[ln p]``, returning ``+inf`` free-energy contribution on zero support.
 
-def _safe_log(p: ArrayF) -> ArrayF:
-    pa = np.asarray(p, dtype=np.float64)
-    return np.log(np.where(pa > 0.0, pa, _LOG_FLOOR))
+    Mirrors :func:`firstprinciples.energy._expected_log`: when ``q`` places mass
+    where the reference density ``x`` is zero, the divergence is infinite rather
+    than silently floored to a large finite value. Keeps ``free_energy`` /
+    ``marginal_free_energy`` consistent with ``kl_divergence`` (which already
+    returns ``inf``) under structural zeros.
+    """
+    qa = np.asarray(q, dtype=np.float64)
+    xa = np.asarray(x, dtype=np.float64)
+    mask = qa > 0.0
+    if np.any(xa[mask] <= 0.0):
+        return float("-inf")
+    return float(np.sum(qa[mask] * np.log(xa[mask])))
 
 
 def shannon_entropy(p: ArrayF) -> float:
@@ -53,7 +63,9 @@ def free_energy(q: ArrayF, prior: ArrayF, g: ArrayF, gamma: float) -> float:
     if qa.shape != pa.shape or qa.shape != ga.shape:
         raise ValueError("q, prior, G must share a common shape")
     exp_g = float(np.sum(qa * ga))
-    exp_log_p = float(np.sum(qa * _safe_log(pa)))
+    exp_log_p = _expected_log(qa, pa)
+    if exp_log_p == float("-inf"):
+        return float("inf")
     return gamma * exp_g - exp_log_p - shannon_entropy(qa)
 
 
@@ -69,5 +81,7 @@ def marginal_free_energy(
     ek = np.asarray(mf_prior[k], dtype=np.float64)
     gk = np.asarray(per_stream_g[k], dtype=np.float64)
     exp_gk = float(np.sum(qk * gk))
-    exp_log_ek = float(np.sum(qk * _safe_log(ek)))
+    exp_log_ek = _expected_log(qk, ek)
+    if exp_log_ek == float("-inf"):
+        return float("inf")
     return gamma * exp_gk - exp_log_ek - shannon_entropy(qk)

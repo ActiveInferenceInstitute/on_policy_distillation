@@ -73,9 +73,9 @@ analysis:
     - simulate_si_tmaze.py
     - simulate_si_graph_world.py
     - compute_statistics.py
-    - generate_firstprinciples.py
     - generate_validation_spine.py
     - generate_toy_sweep_tracks.py
+    - generate_firstprinciples.py
     - generate_formal_interop_tracks.py
     - generate_integration_audit.py
     - generate_sheaf_tracks.py

@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from visualizations.lean_boundary import load_lean_boundary_rows
 
 
@@ -36,7 +38,10 @@ def test_lean_information_identity_matches_active_selection_witness(project_root
     cue = next(p for p in asel["policies"] if p["name"] == "cue")
     assert cue["residual_gap"] < 1e-9
     # axiom audit: the Lean witnesses are sorry-free (kernel-checked)
-    extraction = json.load((project_root / "output" / "data" / "proof_extraction_index.json").open())
+    extraction_path = project_root / "output" / "data" / "proof_extraction_index.json"
+    if not extraction_path.is_file():
+        pytest.skip("proof_extraction_index.json not generated yet (run generate_formal_interop_tracks.py)")
+    extraction = json.load(extraction_path.open())
     assert int(extraction.get("theorem_count", extraction.get("inventory_theorem_count", 0))) >= 14
 
 

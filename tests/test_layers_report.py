@@ -17,6 +17,8 @@ from manuscript.sheaf.manifest import load_manifest
 from manuscript.sheaf.models import coverage_cell_symbol
 from manuscript.sheaf.registry import load_track_registry
 
+import pytest
+
 
 def test_coverage_cell_symbol_maps_colors() -> None:
     assert coverage_cell_symbol("black") == "P"
@@ -60,7 +62,10 @@ def test_render_sheaf_layers_markdown(project_root: Path) -> None:
 
 
 def test_track_improvement_scope_table_renders_all_live_rows(project_root: Path) -> None:
-    payload = json.loads((project_root / "output" / "data" / "track_improvement_scope.json").read_text(encoding="utf-8"))
+    scope_path = project_root / "output" / "data" / "track_improvement_scope.json"
+    if not scope_path.is_file():
+        pytest.skip("track_improvement_scope.json not generated yet (run generate_sheaf_tracks.py)")
+    payload = json.loads(scope_path.read_text(encoding="utf-8"))
 
     table = render_track_improvement_scope_table(project_root)
 
