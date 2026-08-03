@@ -11,7 +11,7 @@ deepen canonical tracks such as `provenance`, `replay_matrix`, `sensitivity`,
 `causal_ablation`, `artifact_license`, and `release_notes` rather than adding
 `_vN` siblings.
 
-Status: ACTIVE — sustainable maintenance model | Owner: DAF | Last reviewed: 2026-08-01
+Status: ACTIVE — sustainable maintenance model | Owner: DAF | Last reviewed: 2026-08-02
 
 ## Current baseline
 
@@ -170,6 +170,83 @@ made them. Both ship with negative-control tests.
 - **Files:** `src/gates/output_checks.py`,
   `tests/gates/test_output_gates.py` (+ negative control covering empty block,
   failing row, and missing file).
+
+## Docs-deep review (2026-08-02)
+
+Mega-deep documentation pass over the full docs tree (240 tracked markdown
+files), cross-checked against the live tree (manifests, configs, script flags,
+Lean theorems, metadata). Method + full findings: `REVIEW_LOG_2026-08-02.md`.
+Severity guide: **Minor** = typo / broken link / wrong path / formatting;
+**Medium** = stale section rewrite, ledger update, cross-file inconsistency;
+**Major** = cross-cutting claim that was wrong in several docs at once.
+
+### Completed (this pass)
+
+- **MAJOR `OPD-DOCS-1`** — Documented producer order contradicted
+  `manuscript/config.yaml`: three pages listed `generate_firstprinciples.py`
+  before the validation spine / toy sweep and `generate_method_inventory.py`
+  as a pipeline stage. Reordered to the declared `analysis.scripts` exactly
+  and moved method-inventory out of the chain (README.md,
+  `docs/architecture/pipeline.md`, `docs/reference/rendering-reproducibility.md`).
+  ✓ commit `3e09402`
+- **MAJOR `OPD-DOCS-2`** — Appendix coverage claims overstated the manifest:
+  `appendix_full_sheaf` binds 22 of 33 registry tracks, not "all registered
+  fragment track types" / "the full proof row except `layers`"; `layers` binds
+  in `methods_sheaf` and the Lean/GNN/ontology/model-checking/animation tracks
+  in `results_invariants`. Corrected in AGENTS.md, README.md,
+  `docs/manuscript/section-guide.md` (supplement feeding-track lists marked
+  representative), `docs/architecture/sheaf-compose-contract.md`.
+  ✓ commit `0b744d7`
+- **MAJOR `OPD-DOCS-3`** — Bibliography count drift: docs claimed 117 entries;
+  `manuscript/references.bib` holds 133 (volatile). Replaced snapshot counts
+  with the live `grep -c '^@' manuscript/references.bib` verification
+  (`docs/manuscript/citation-map.md`, `docs/manuscript/README.md`); the
+  deep-review ledger keeps 117 as a review-time fact, qualified.
+  ✓ commit `e544747`
+- **MEDIUM `OPD-DOCS-4`** — Dead template-relative links in the public
+  standalone checkout (AGENTS.md parent docs + decision-records reference,
+  `manuscript/SYNTAX.md` overlay pointer). Reworded as descriptive references
+  to the sibling `template` checkout. ✓ commit `ad05833`
+- **MEDIUM `OPD-DOCS-5`** — Ledger staleness: the critical-review DOI row
+  claimed empty DOI fields while `manuscript/config.yaml` carries populated
+  DOIs and v1.0.2 is released; flipped DEFERRED → LANDED (2026-08-02) per the
+  ledger's own maintenance note with verified evidence (tags, resolving DOIs,
+  metadata surfaces). ✓ commit `16ad4a1`
+- **MEDIUM `OPD-DOCS-6`** — Sibling-template return paths never resolved
+  (`cd ../projects/working/...` after entering `../../../template`); the linked
+  copy lives at `projects/working/...` inside the template checkout. Fixed in
+  `docs/reproducibility/rendering.md` and
+  `docs/reference/rendering-reproducibility.md`. ✓ commit `ad05833`
+- **MINOR `OPD-DOCS-7`** — Wrong module/artifact paths: `manuscript/variables.py`
+  → `src/manuscript/variables.py`; `gnn/concordance.py` →
+  `src/gnn/concordance.py`; `src/gates/aggregate_rules.py` →
+  `src/gates/aggregate_rederivation.py`; `figures/parallel_convergence.png` →
+  `output/figures/...`; lean module list missing `InformationIdentity.lean`.
+  ✓ commit `ea0e345`
+- **MINOR `OPD-DOCS-8`** — Registry/metadata gaps: `gnn/README.md` omitted
+  `graph_world.gnn.md`; `.aii/config.yaml` carried a `.svg` badge suffix in the
+  DOI value; glossary heading "Reverse / forward KL" slugged differently under
+  pandoc vs GitHub (renamed to "Reverse and forward KL"; faq anchor updated).
+  ✓ commit `ab72197`
+- **MINOR `OPD-DOCS-9`** — Hard-coded generated measurements in
+  `docs/reference/notation-supplement.md` (teacher/student entropy 0.247/0.347,
+  signal 6.28 nats) violated the no-snapshot-numbers rule; now cites the
+  producing artifact `output/data/firstprinciples/classroom.json` + token
+  names. ✓ commit `16ad4a1`
+
+### Open / deferred
+
+- `ISA.md` historical session records (Run-9..14) left as written — they are a
+  dated system-of-record; only the D1 module path (a live-repo fact) was
+  corrected.
+- `docs/models/*.md` artifact tables keep `output/`-relative shorthand
+  (`data/...`, `figures/...`): the table headers explicitly establish the
+  `output/` base, so this is deliberate, not drift.
+- Full test suite, Lean `lake build`, and PDF render not run this pass (no
+  code touched; only docs + metadata). Targeted doc-contract tests pass — see
+  `REVIEW_LOG_2026-08-02.md`.
+- `OPD-CLEAN-CHECKOUT-1` residual stands (code-side; a fresh `output/` must be
+  regenerated before the pipeline is green).
 
 ## Active roadmap
 

@@ -12,7 +12,7 @@ produce the same manuscript.
 | `pipeline_track_count` | required tracks in `tracks.yaml` |
 | `sheaf_track_count` | `manuscript/sheaf/tracks.yaml` registry size |
 | `appendix_sheaf_track_count` | tracks bound in `appendix_full_sheaf` manifest row |
-| `imrad_manifest_rows`, `composed_section_count`, `imrad_group_count` | live manifest (`manuscript/sheaf/counts.py`) |
+| `imrad_manifest_rows`, `composed_section_count`, `imrad_group_count` | live manifest (`src/manuscript/sheaf/counts.py`) |
 | `coverage_present`, `coverage_bound`, `coverage_missing` | coverage matrix at variable generation |
 | `ising_mi_saturation` | max closed-form MI on `parameter_sweep.csv` |
 | `invariants_*`, `si_tmaze_*`, `sweep_*`, `pymdp_*` | analysis artifacts (`generate_variables`) |
