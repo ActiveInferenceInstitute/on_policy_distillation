@@ -41,10 +41,11 @@ uv run python -m infrastructure.orchestration link-projects
 uv run python scripts/03_render_pdf.py --project working/active_inference_on_policy_distillation
 ```
 
-After a root pipeline run, verify copied root output parity from both sides:
+After a root pipeline run, verify copied root output parity from both sides (the
+linked copy lives inside the template checkout):
 
 ```bash
-cd ../projects/working/active_inference_on_policy_distillation
+cd projects/working/active_inference_on_policy_distillation
 uv run python scripts/validate_outputs.py
 ```
 

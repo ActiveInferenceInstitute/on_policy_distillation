@@ -1,6 +1,6 @@
 # Manuscript Syntax Reference (active_inference_on_policy_distillation)
 
-Project overlay on [`docs/guides/manuscript-semantics.md`](../../../../template/docs/guides/manuscript-semantics.md). Composed sections come from `manuscript/sections/imrad/` via `scripts/compose_manuscript.py`; edit fragments and [`manuscript/sheaf/manifest.yaml`](sheaf/manifest.yaml), not numbered `02_*.md` … `16_*.md` outputs.
+Project overlay on the template's `docs/guides/manuscript-semantics.md` (sibling `template` checkout in the monorepo layout). Composed sections come from `manuscript/sections/imrad/` via `scripts/compose_manuscript.py`; edit fragments and [`manuscript/sheaf/manifest.yaml`](sheaf/manifest.yaml), not numbered `02_*.md` … `16_*.md` outputs.
 
 ## Equation labels
 
