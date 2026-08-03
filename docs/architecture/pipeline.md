@@ -35,17 +35,20 @@ uv run python scripts/run_analytical_sweep.py
 uv run python scripts/simulate_si_tmaze.py
 uv run python scripts/simulate_si_graph_world.py
 uv run python scripts/compute_statistics.py
-uv run python scripts/generate_firstprinciples.py
 uv run python scripts/generate_validation_spine.py
 uv run python scripts/generate_toy_sweep_tracks.py
+uv run python scripts/generate_firstprinciples.py
 uv run python scripts/generate_formal_interop_tracks.py
 uv run python scripts/generate_integration_audit.py
 uv run python scripts/generate_sheaf_tracks.py
 uv run python scripts/generate_figures.py
 uv run python scripts/render_animation.py
 uv run python scripts/z_generate_manuscript_variables.py
-uv run python scripts/generate_method_inventory.py
 ```
+
+Note: `generate_method_inventory.py` is a docs-maintenance step — it is not in
+`analysis.scripts` and `run_full_chain.py` does not run it (regenerate the
+method inventory after source changes; see the table below).
 
 Two ordering invariants matter most (from
 [`../../scripts/README.md`](../../scripts/README.md)):

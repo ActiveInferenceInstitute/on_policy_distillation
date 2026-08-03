@@ -31,17 +31,19 @@ uv run python scripts/run_analytical_sweep.py
 uv run python scripts/simulate_si_tmaze.py
 uv run python scripts/simulate_si_graph_world.py
 uv run python scripts/compute_statistics.py
-uv run python scripts/generate_firstprinciples.py        # OPD<->AI artifacts; classroom rollout runs by default (--no-classroom to skip)
 uv run python scripts/generate_validation_spine.py
 uv run python scripts/generate_toy_sweep_tracks.py
+uv run python scripts/generate_firstprinciples.py        # OPD<->AI artifacts; classroom rollout runs by default (--no-classroom to skip)
 uv run python scripts/generate_formal_interop_tracks.py
 uv run python scripts/generate_integration_audit.py
 uv run python scripts/generate_sheaf_tracks.py
 uv run python scripts/generate_figures.py
 uv run python scripts/render_animation.py
 uv run python scripts/z_generate_manuscript_variables.py
-uv run python scripts/generate_method_inventory.py
 ```
+
+(`generate_method_inventory.py` is a docs-maintenance step, not part of the
+analysis chain — see "Method inventory" below.)
 
 Validation and tests:
 
@@ -72,7 +74,7 @@ full artifact writes, fixed-point validation, and tests that mutate shared
 generated artifacts. `render_slow` covers read-only but expensive render,
 animation, rollout, and large-compose checks.
 
-From the sibling `../template` checkout after linking sidecar projects:
+In the monorepo layout, from the sibling `../../../template` checkout after linking sidecar projects:
 
 ```bash
 uv run python -m infrastructure.orchestration link-projects
@@ -110,7 +112,7 @@ track-improvement scope, and adversarial/scope audits. Live track IDs are stable
 canonical names; future work improves those tracks rather than adding `_vN`
 siblings.
 
-Section [`18_supplement_full_coverage.md`](manuscript/18_supplement_full_coverage.md) binds the appendix manifest row as a composability proof; live counts are injected through manuscript variables, not hand-authored in this README. Reproducibility methodology is now a standalone supplement at [`19_supplement_reproducibility.md`](manuscript/19_supplement_reproducibility.md), followed by validation statistics at [`20_supplement_validation_statistics.md`](manuscript/20_supplement_validation_statistics.md). Optional `layers` is bound in the reproducibility supplement; `animation` is bound in the full-coverage appendix row as a sheaf fragment.
+Section [`18_supplement_full_coverage.md`](manuscript/18_supplement_full_coverage.md) binds the appendix manifest row as a composability proof; live counts are injected through manuscript variables, not hand-authored in this README. Reproducibility methodology is now a standalone supplement at [`19_supplement_reproducibility.md`](manuscript/19_supplement_reproducibility.md), followed by validation statistics at [`20_supplement_validation_statistics.md`](manuscript/20_supplement_validation_statistics.md). Optional `layers` is bound in the reproducibility supplement; `animation` is bound in the validation-statistics supplement row.
 
 The reproducible rendering contract is documented in
 [`docs/reference/rendering-reproducibility.md`](docs/reference/rendering-reproducibility.md):
@@ -142,7 +144,7 @@ The pymdp anchor is the full TMaze `full_tmaze_sophisticated_inference` profile:
 
 ## Pipeline tracks
 
-See [`tracks.yaml`](tracks.yaml). **Pipeline:** required tracks are declared there, including the core analytical/pymdp/formal/notation/visual tracks, validation spine, and canonical promoted roadmap tracks. **Sheaf registry:** fragment types live in [`manuscript/sheaf/tracks.yaml`](manuscript/sheaf/tracks.yaml); the appendix binds the full proof row except `layers`, which is methods-only. **Deterministic extension artifacts** (thin scripts -> `src/`): `simulate_si_tmaze.py` writes policy comparison, posterior-grid, and runtime-diagnostic artifacts; `simulate_si_graph_world.py` writes graph-world summary/trace artifacts; `render_animation.py` writes a trace-derived multi-frame GIF plus frame-delta manifest; `generate_validation_spine.py`, `generate_toy_sweep_tracks.py`, `generate_formal_interop_tracks.py`, `generate_integration_audit.py`, and `generate_sheaf_tracks.py` write the canonical validation spine, semantic certificate, dependency graph, evidence-field index, release-bundle manifest, theorem traceability matrix, gate index, artifact diffoscope, proof extraction index, state-space catalog, causal-ablation matrix, artifact license audit, release-note evidence, and promoted audit artifacts.
+See [`tracks.yaml`](tracks.yaml). **Pipeline:** required tracks are declared there, including the core analytical/pymdp/formal/notation/visual tracks, validation spine, and canonical promoted roadmap tracks. **Sheaf registry:** fragment types live in [`manuscript/sheaf/tracks.yaml`](manuscript/sheaf/tracks.yaml); the appendix binds the manifest-declared proof row (22 of the 33 registered fragment types), `layers` is bound only in the reproducibility supplement, and the Lean/GNN/ontology/model-checking/animation tracks bind in the validation-statistics supplement row. **Deterministic extension artifacts** (thin scripts -> `src/`): `simulate_si_tmaze.py` writes policy comparison, posterior-grid, and runtime-diagnostic artifacts; `simulate_si_graph_world.py` writes graph-world summary/trace artifacts; `render_animation.py` writes a trace-derived multi-frame GIF plus frame-delta manifest; `generate_validation_spine.py`, `generate_toy_sweep_tracks.py`, `generate_formal_interop_tracks.py`, `generate_integration_audit.py`, and `generate_sheaf_tracks.py` write the canonical validation spine, semantic certificate, dependency graph, evidence-field index, release-bundle manifest, theorem traceability matrix, gate index, artifact diffoscope, proof extraction index, state-space catalog, causal-ablation matrix, artifact license audit, release-note evidence, and promoted audit artifacts.
 
 Non-blocking future work is tracked in [`TODO.md`](TODO.md); current publication claims remain confined to deterministic toy Active Inference artifacts.
 

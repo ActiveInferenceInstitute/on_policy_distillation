@@ -53,17 +53,20 @@ uv run python scripts/run_analytical_sweep.py
 uv run python scripts/simulate_si_tmaze.py
 uv run python scripts/simulate_si_graph_world.py
 uv run python scripts/compute_statistics.py
-uv run python scripts/generate_firstprinciples.py
 uv run python scripts/generate_validation_spine.py
 uv run python scripts/generate_toy_sweep_tracks.py
+uv run python scripts/generate_firstprinciples.py
 uv run python scripts/generate_formal_interop_tracks.py
 uv run python scripts/generate_integration_audit.py
 uv run python scripts/generate_sheaf_tracks.py
 uv run python scripts/generate_figures.py
 uv run python scripts/render_animation.py
 uv run python scripts/z_generate_manuscript_variables.py
-uv run python scripts/generate_method_inventory.py
 ```
+
+This mirrors `analysis.scripts` in `manuscript/config.yaml` exactly
+(`generate_method_inventory.py` is a docs-maintenance step, not a pipeline
+stage — see "Method inventory" below).
 
 `generate_sheaf_tracks.py` is the canonical consolidation pass. It rewrites the
 semantic certificate, dependency graph, provenance, replay, counterexample,
@@ -112,7 +115,7 @@ root output parity as well:
 cd ../../../template
 uv run python -m infrastructure.orchestration link-projects
 uv run python scripts/03_render_pdf.py --project working/active_inference_on_policy_distillation
-cd ../projects/working/active_inference_on_policy_distillation
+cd projects/working/active_inference_on_policy_distillation   # linked copy inside the template checkout
 uv run python scripts/validate_outputs.py
 ```
 
