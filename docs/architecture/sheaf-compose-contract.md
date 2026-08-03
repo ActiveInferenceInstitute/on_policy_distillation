@@ -110,6 +110,7 @@ Registry track count and appendix proof size are not hard-coded in prose.
 Composed sections use `{{sheaf_track_count}}` and
 `{{appendix_sheaf_track_count}}`; `z_generate_manuscript_variables.py` resolves
 them from the live manifest and registry before PDF rendering. The appendix proof
-section binds the full proof row — including the generated `layers` report and the
-optional-type `animation` track — so the appendix exercises every registered
-fragment renderer.
+section binds the manifest-declared appendix row; the optional-type `layers` and
+`animation` tracks bind in the supplement rows (`methods_sheaf` /
+`results_invariants`) instead, so the registry's generated renderers
+(`layers_report`, `section_figures`) are exercised across the composed set.

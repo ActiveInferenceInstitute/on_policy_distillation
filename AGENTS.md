@@ -2,7 +2,7 @@
 
 Research project: *On-Policy Distillation as Active Inference in Finite Variational Models* — a multi-track, sheaf-composed manuscript and code base built from the Active Inference multi-track exemplar. Manuscript sections follow an **IMRAD outline** composed from stable canonical sheaf fragment tracks (prose, formalism, simulation, assumption index, pymdp, interop, provenance, replay matrix, counterexample, adversarial audit, evidence fields, scholarship, release bundle, gate ergonomics, sensitivity, uncertainty, benchmark, manuscript staleness, visualization, Lean, model checking, theorem traceability, GNN, ontology, animation, animation delta).
 
-Decision memory and verifier hardening follow [`docs/rules/memory_and_decision_records.md`](../../../template/docs/rules/memory_and_decision_records.md): use nearby `WHY:` comments only for surprising local choices, keep volatile counts generated, and add negative controls for verifier-like gates.
+Decision memory and verifier hardening follow the template's `docs/rules/memory_and_decision_records.md` (sibling `template` checkout in the monorepo layout; not present in a standalone clone): use nearby `WHY:` comments only for surprising local choices, keep volatile counts generated, and add negative controls for verifier-like gates.
 
 ## Sheaf composition (registry-driven)
 
@@ -149,7 +149,7 @@ outputs are added and validated.
 
 **Visualizations** (`src/visualizations/`): `figure_registry.py` (YAML SSOT + `write_figure_registry_json`), `figure_helpers.py` (`styled_figure`), `figures_diagrams.py`, `lean_boundary.py`, `figures.py` (`FIGURE_GENERATORS`, current registry parity comes from `figures.yaml`), `figures_sheaf_{payload,draw}.py`. `generate_all_figures()` emits `output/figures/figure_registry.json` for validation; `generate_integration_audit.py` emits `output/data/figure_source_map.json`, `output/reports/figure_hash_manifest.json`, and `output/reports/visualization_quality_audit.json` so declared figures remain tied to source artifacts and scoped captions, while undeclared image leftovers fail the gate.
 
-**Appendix proof:** `appendix_full_sheaf` binds the registry tracks required for the full proof row (all except optional `layers`) → `18_supplement_full_coverage.md`. `methods_sheaf` is now the standalone reproducibility supplement → `19_supplement_reproducibility.md`; `results_invariants` follows it as the validation-statistics supplement → `20_supplement_validation_statistics.md`. Registry size is injected from live counts rather than hand-authored here.
+**Appendix proof:** `appendix_full_sheaf` binds the manifest-declared appendix proof row (`appendix_sheaf_track_count` of the `sheaf_track_count` registry tracks) → `18_supplement_full_coverage.md`; `layers` binds in `methods_sheaf`, and the Lean/GNN/ontology/model-checking/animation tracks bind in `results_invariants`. `methods_sheaf` is now the standalone reproducibility supplement → `19_supplement_reproducibility.md`; `results_invariants` follows it as the validation-statistics supplement → `20_supplement_validation_statistics.md`. Registry size is injected from live counts rather than hand-authored here.
 
 Edit fragments only under [`manuscript/sections/imrad/`](manuscript/sections/imrad/). Manual closing section: [`manuscript/17_conclusion.md`](manuscript/17_conclusion.md) (outside the matrix).
 
@@ -180,8 +180,8 @@ uv run python scripts/validate_outputs.py
 
 ## Parent docs
 
-- Root [`AGENTS.md`](../../AGENTS.md)
-- [Publishing guide](../../../template/docs/guides/publishing-guide.md) · [Zenodo DOI strategy](../../../template/docs/guides/zenodo-doi-strategy.md)
+- Root `AGENTS.md` (monorepo root)
+- Publishing guide (`docs/guides/publishing-guide.md`) · Zenodo DOI strategy (`docs/guides/zenodo-doi-strategy.md`) — both live in the sibling `template` checkout (monorepo layout)
 - [`tracks.yaml`](tracks.yaml)
 
 ## Orchestration

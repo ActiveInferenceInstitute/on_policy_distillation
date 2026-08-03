@@ -216,13 +216,14 @@ into each section.
 
 ### `18_supplement_full_coverage.md` — `{#sec:appendix_full_sheaf}`
 - **IMRAD role:** Appendix — full coverage and concordance (composability proof).
-- **Claim carried:** The maximal appendix row binds **all** registered fragment track
-  types into one flat section without per-section compose branches; tabulates the full
+- **Claim carried:** The maximal appendix row binds the manifest-declared appendix
+  track set into one flat section without per-section compose branches; tabulates the full
   VFE/EFE decomposition and supplemental concordance/benchmark tables.
 - **Key tokens:** `{{appendix_sheaf_track_count}}`, `{{sheaf_track_count}}`,
   plus the energy tokens shared with `results_free_energy`.
-- **Feeding tracks:** prose plus the full registered track set (the appendix is itself
-  the composability proof; equation [`{#eq:appendix_track_count}`]).
+- **Feeding tracks:** prose plus the appendix row's bound track set from
+  `manuscript/sheaf/manifest.yaml` (the appendix is itself the composability
+  proof; equation [`{#eq:appendix_track_count}`]).
 
 ### `19_supplement_reproducibility.md` — `{#sec:methods_sheaf}`
 - **IMRAD role:** Supplement — reproducibility methodology (the compose/hydration contract).
@@ -230,8 +231,9 @@ into each section.
   hydrated, which validators run, how failed gates block the PDF. Coverage cell semantics
   ([`{#eq:coverage_cell}`]: P present, — unbound, M missing). Records compose commands.
 - **Key tokens:** `{{sheaf_track_count}}`.
-- **Feeding tracks:** prose, layers (generated tables), visualization
-  (`sheaf_layers_overview`, `semantic_gluing_graph`, `scholarship_source_map`).
+- **Feeding tracks (representative):** prose, layers (generated tables), visualization
+  (`sheaf_layers_overview`, `semantic_gluing_graph`, `scholarship_source_map`); the full
+  binding is in `manuscript/sheaf/manifest.yaml`.
 
 ### `20_supplement_validation_statistics.md` — `{#sec:results_invariants}`
 - **IMRAD role:** Supplement — validation invariants and statistics.
@@ -245,8 +247,11 @@ into each section.
   `{{statistics_cohens_d:.2f}}`, `{{statistics_permutation_p:.3f}}`,
   `{{statistics_pair_deltas}}`, `{{statistics_claim_scope}}`,
   `{{replay_matrix_row_count}}`, `{{sensitivity_cell_count}}`.
-- **Feeding tracks:** prose, simulation, replay_matrix, sensitivity, uncertainty,
-  visualization (`invariant_dashboard`, `diversity_tradeoff`).
+- **Feeding tracks (representative):** prose, simulation, replay_matrix, sensitivity,
+  uncertainty, visualization (`invariant_dashboard`, `diversity_tradeoff`); the full
+  binding (including lean, model-checking, theorem-traceability, proof-extraction, GNN,
+  ontology, animation/animation-delta, manuscript-staleness, and release-notes tracks)
+  is in `manuscript/sheaf/manifest.yaml`.
 
 ### `99_references.md`
 - **IMRAD role:** References pointer (hand-authored). Points to
