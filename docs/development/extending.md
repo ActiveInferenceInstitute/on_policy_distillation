@@ -72,7 +72,7 @@ Pipeline tracks, gates, and extension artifacts are declared in
 or scripts (per [`../../AGENTS.md`](../../AGENTS.md)). Keep the analytical,
 first-principles, simulation/pymdp, GNN, ontology, Lean, visualization, and
 validation-spine tracks concordant — same objects, notation, and claims — using
-`gnn/concordance.py`, `src/validation_spine/`, and `src/gates/validation.py`.
+`src/gnn/concordance.py`, `src/validation_spine/`, and `src/gates/validation.py`.
 
 Do **not** add network calls or LLM calls to the default exemplar path, and do
 not claim non-toy graph-world SI or empirical biological behavior in prose.

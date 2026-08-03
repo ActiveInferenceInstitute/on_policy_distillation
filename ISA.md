@@ -91,7 +91,7 @@ PDF render all green afterward.
 ## Criteria
 
 ### D1 — Aggregate re-derivation layer
-- [x] ISC-1: `src/gates/aggregate_rules.py` (or equivalent single module) defines a declarative table mapping check keys → (rows field, aggregate field, row predicate).
+- [x] ISC-1: `src/gates/aggregate_rederivation.py` (or equivalent single module) defines a declarative table mapping check keys → (rows field, aggregate field, row predicate).
 - [x] ISC-2: A `aggregates_consistent(payload, rules)` helper returns False when rows are empty/missing while the stored flag is true.
 - [x] ISC-3: `_validate_outputs_full` consumes the helper for every rule-covered check (stored flag AND re-derived agree).
 - [x] ISC-4: Rules cover ≥25 of the trusting aggregates identified this session, prioritizing row-predicate-well-defined ones.

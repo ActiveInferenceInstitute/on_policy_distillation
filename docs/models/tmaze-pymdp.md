@@ -118,7 +118,7 @@ being optimized by gradient descent in this rollout, and no distillation loss
 being minimized here — that executable equivalence is shown separately in the
 "one scenario, two frameworks" jax demonstration
 (`output/data/firstprinciples/parallel_demo.json`,
-`figures/parallel_convergence.png`) and in the
+`output/figures/parallel_convergence.png`) and in the
 [classroom](classroom.md) two-agent run. The T-maze witnesses the *on-policy
 sampling structure* the correspondence relies on; the claims are limited to this
 pymdp model and its artifacts, not to production LLM systems.

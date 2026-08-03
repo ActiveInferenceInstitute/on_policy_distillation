@@ -11,7 +11,7 @@ gates.
 
 | Config file | Consumed by | What it controls | Status |
 | --- | --- | --- | --- |
-| `pymdp.yaml` | `src/simulation/pymdp_config.py::load_pymdp_config()` (used by `si_runner`, `si_loop`, `si_artifacts`, `manuscript/variables.py`, claim ledger) | Canonical planner/profile, SI search horizon, rollout timesteps, cue validity, agent gamma, seeds, graph-world topology, logging | **Live** — every key read |
+| `pymdp.yaml` | `src/simulation/pymdp_config.py::load_pymdp_config()` (used by `si_runner`, `si_loop`, `si_artifacts`, `src/manuscript/variables.py`, claim ledger) | Canonical planner/profile, SI search horizon, rollout timesteps, cue validity, agent gamma, seeds, graph-world topology, logging | **Live** — every key read |
 | `figures.yaml` | `src/visualizations/figure_registry.py::load_figure_registry()` / `load_section_figures()`; `figure_style.py` for the `style:` block | Figure captions, alt text, widths, filenames, per-section figure bindings, palette/DPI/font roles | **Live** |
 | `manuscript/sheaf/tracks.yaml` | `src/manuscript/sheaf/compose.py`, `status.py`, `laws.py` | Fragment-type registry: compose order, renderer, optional flag per track | **Live** |
 | `manuscript/sheaf/manifest.yaml` | `src/manuscript/sheaf/compose.py` | IMRAD section rows and their track→fragment-path bindings | **Live** |

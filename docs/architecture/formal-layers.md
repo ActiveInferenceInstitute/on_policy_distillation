@@ -16,7 +16,7 @@ also the most easily over-read. The governing caveat, stated up front:
 [`lean/`](../../lean/) is a Lean 4 project (`lakefile.lean`, pinned
 `lean-toolchain`) with proof modules under
 [`lean/OnPolicyDistillation/`](../../lean/OnPolicyDistillation/):
-`BernoulliToy.lean` and `SophisticatedInference.lean`. The theorems are small,
+`BernoulliToy.lean`, `InformationIdentity.lean`, and `SophisticatedInference.lean`. The theorems are small,
 decidable boundary facts about the toy models the Python harness uses — for
 example (verbatim from the sources):
 
