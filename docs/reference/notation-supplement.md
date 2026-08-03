@@ -161,9 +161,11 @@ so its policy posterior $q(\pi)$ commits confidently. The **student** sees an
 uninformative cue (`cue_validity` $\approx 0.5$) and must infer on-policy. The
 per-decision **reverse KL** between the student's and teacher's action
 distributions is the variational free energy the student descends to absorb the
-teacher's privileged belief. Measured: teacher belief entropy $0.247$ nats $<$
-student $0.347$ nats (privileged advantage), mean distillation signal $6.28$
-nats. The cue is the Markov blanket (@kirchhoff2018markov); the rollout is the
+teacher's privileged belief. Measured (in
+`output/data/firstprinciples/classroom.json`, hydrated into the composed
+sections as `{{classroom_*}}` tokens): teacher belief entropy below student
+belief entropy (privileged advantage), with the mean distillation signal
+recorded alongside. The cue is the Markov blanket (@kirchhoff2018markov); the rollout is the
 posterior generating its own observations; the reverse KL is the loss — the
 title, instantiated and measured. The teacher/student entropy gap is a local toy
 measurement, not a reproduction of entropy-aware OPD results (@jin2026entropy_opd).
