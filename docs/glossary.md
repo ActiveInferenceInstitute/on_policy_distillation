@@ -45,7 +45,7 @@ on-policy condition) rather than a fixed teacher-data distribution. In the activ
 inference reading, this is "a variational posterior generating its own
 observations under a generative model conditioned on privileged beliefs."
 
-### Reverse / forward KL
+### Reverse and forward KL
 
 The two divergence directions that organize the design space. The reverse-KL
 side concentrates on teacher-supported mass (mode-seeking); the forward-KL side
