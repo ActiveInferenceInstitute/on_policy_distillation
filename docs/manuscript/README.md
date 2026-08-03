@@ -16,7 +16,7 @@ governed by [`claims-and-scope.md`](claims-and-scope.md).
 | --- | --- |
 | [`section-guide.md`](section-guide.md) | Per-section map: file, IMRAD role, claim carried, key hydration tokens, feeding sheaf tracks. |
 | [`claims-and-scope.md`](claims-and-scope.md) | The scope contract: what is claimed, what is **not**, the VFE/EFE separation, and external-context handling. Quotes the scoped-correspondence Proposition (A1–A4). |
-| [`citation-map.md`](citation-map.md) | The 117-entry bibliography organized by function, with per-group role statements and per-key claim notes. |
+| [`citation-map.md`](citation-map.md) | The bibliography (`manuscript/references.bib`) organized by function, with per-group role statements and per-key claim notes. |
 | [`hydration-tokens.md`](hydration-tokens.md) | The `{{token}}` system: where tokens are defined, fail-closed behavior, format-spec syntax, and the no-hand-written-number rule. |
 | [`figures.md`](figures.md) | Figure inventory and provenance: source-map discipline, caption/alt-text discipline, output location, and the audit gates binding figures to data. |
 | [`AGENTS.md`](AGENTS.md) | Short agent guidance for editing the manuscript. |

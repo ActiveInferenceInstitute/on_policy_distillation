@@ -45,8 +45,9 @@ in the run that authored this ledger.
 ## 3. Priority citation additions
 
 All priority and recommended sources from the review are present in
-`manuscript/references.bib` (117 entries) and cited at the locations the
-review names. Verification: `grep -c '^@' manuscript/references.bib` and the
+`manuscript/references.bib` (117 entries at the time of this review; verify the
+current count with `grep -c '^@' manuscript/references.bib`) and cited at the
+locations the review names. Verification: `grep -c '^@' manuscript/references.bib` and the
 keys below.
 
 | Review source | Bib key | Cited at |

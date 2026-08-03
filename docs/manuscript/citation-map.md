@@ -1,7 +1,8 @@
 # Citation Map
 
-The bibliography ([`../../manuscript/references.bib`](../../manuscript/references.bib),
-117 entries) organized by **function** — what role each source plays in the argument —
+The bibliography ([`../../manuscript/references.bib`](../../manuscript/references.bib);
+entry count is verified at regeneration time with `grep -c '^@' manuscript/references.bib`)
+organized by **function** — what role each source plays in the argument —
 rather than alphabetically. Every key below is present in `references.bib`. The
 preprint/archival status of sources is tracked machine-readably in
 `output/data/scholarship_source_matrix.json` (see the `scholarship` track and
@@ -212,9 +213,10 @@ see [`claims-and-scope.md`](claims-and-scope.md) §(d). The Thinking Machines so
 
 ## Note on completeness
 
-`references.bib` contains 117 entries; this map groups the load-bearing keys cited
-across the abstract, introduction, methods, results, discussion, and conclusion. A
-handful of entries appear only inside generated supplemental tables
+`references.bib` holds the live entry set (audit with
+`grep -c '^@' manuscript/references.bib`); this map groups the load-bearing keys cited
+across the abstract, introduction, methods, results, discussion, and conclusion. Some
+entries appear only inside generated supplemental tables
 (`output/data/firstprinciples/*_table.md`) or the notation supplement; those carry no
 prose claim and are not tabulated here. To audit the live citation surface, render the
 manuscript and inspect the resolved bibliography rather than editing this page by hand.
