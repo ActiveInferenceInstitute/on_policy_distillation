@@ -95,7 +95,7 @@ theorem expectedCondEntropy_nonneg (obs : List Int)
   | cons x xs ih =>
     simp only [List.foldl_cons]
     rw [foldl_add_acc xs (0 + x)]
-    have hx : 0 ≤ x := h x (List.mem_cons_self x xs)
+    have hx : 0 ≤ x := h x (List.mem_cons_self)
     have hxs : 0 ≤ xs.foldl (· + ·) 0 := by
       apply ih
       intro y hy
