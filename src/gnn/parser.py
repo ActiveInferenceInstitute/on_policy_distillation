@@ -177,7 +177,9 @@ def parse_gnn(text: str, *, source: str = "<string>") -> GnnModel:
             raise GNNParseError(f"{source}: variable {name!r} size mismatch")
         variables[name] = var
 
-    ontology = _parse_kv(_section(sections, "ActInf Ontology Annotation", "ActInfOntologyAnnotation") or "")
+    # Canonical spelling first; the spaced variant is the historical alias the
+    # upstream parser normalizes (see gnn/AGENTS.md).
+    ontology = _parse_kv(_section(sections, "ActInfOntologyAnnotation", "ActInf Ontology Annotation") or "")
     return GnnModel(
         section=sections["GNNSection"].strip(),
         version=sections["GNNVersionAndFlags"].strip(),

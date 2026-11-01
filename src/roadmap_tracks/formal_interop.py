@@ -88,7 +88,7 @@ def _payload_to_gnn_text(payload: dict[str, Any]) -> str:
         if edge["label"]:
             line += f":{edge['label']}"
         lines.append(line)
-    lines += ["", "## ActInf Ontology Annotation"]
+    lines += ["", "## ActInfOntologyAnnotation"]
     for name, var in variables.items():
         if var["ontology"] is not None:
             lines.append(f"{name}={var['ontology']}")

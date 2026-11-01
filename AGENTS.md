@@ -161,12 +161,12 @@ Edit fragments only under [`manuscript/sections/imrad/`](manuscript/sections/imr
 | `src/analytical/` | Bernoulli K=2 closed form; `invariants.py` — analytical invariant registry |
 | `src/invariants.py` | Thin re-export facade → `analytical/invariants.py` |
 | `src/simulation/` | pymdp T-maze SI harness (`si_runner.py` facade + `si_*.py` modules) + JSONL logging |
-| `src/gnn/` | GNN parser + ontology concordance |
+| `src/gnn/` | GNN parser + ontology concordance; `upstream.py` holds the pinned-release conformance support |
 | `src/ontology/` | Section ontology YAML helpers (`load_section_ontology` flattens nested `terms:` blocks) |
 | `src/gates/` | `validation.py` facade; `output_checks`, `manuscript_checks`, `claim_ledger`, `lean` |
 | `src/validation_spine/` | Provenance hashes, deterministic replay, and counterexample matrix artifacts |
 | `src/roadmap_tracks/` | Promoted toy sweep, formal interop, integration-audit, and canonical sheaf-track artifacts |
-| `gnn/*.gnn.md` | GNN source files |
+| `gnn/*.gnn.md` | GNN source files; `gnn/upstream.json` pins the canonical upstream release (v5.0.3) checked by `tests/test_gnn_upstream_conformance.py` |
 | `lean/OnPolicyDistillation/` | Lean witnesses — `build_lean` gate runs `lake build` when `lean/lakefile.lean` exists; absent Lean tree skips cleanly |
 | `scripts/` | Thin orchestrators only (extension tracks delegate to `src/visualizations/animation.py`, `src/simulation/graph_world.py`) |
 
