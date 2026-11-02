@@ -10,3 +10,6 @@ same chain documented in the repository `README.md`: lock check, locked sync,
 byte-compile, the bounded artifact chain, and the release coverage gate. A
 workflow change is a release-gate change, so validate it in a pull request
 rather than on `main`.
+
+Dependency updates are configured in `dependabot.yml`: weekly, grouped pull
+requests for the pinned workflow actions and for the Python manifest.
