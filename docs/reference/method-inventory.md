@@ -2,7 +2,7 @@
 
 Generated documentation coverage for every Python `def` and `class` under `src/` and `scripts/`. Entries marked `inventory fallback` have no inline docstring yet, but remain documented here by path, line, kind, and qualified name.
 
-Total documented definitions: 1007
+Total documented definitions: 1026
 
 ## `src/analytical/bernoulli_toy.py`
 
@@ -551,7 +551,31 @@ Total documented definitions: 1007
 | 115 | `function` | `_parse_param_blocks` | inventory fallback | Inventory fallback for function `_parse_param_blocks` defined at `src/gnn/parser.py:115`. |
 | 148 | `function` | `_parse_kv` | inventory fallback | Inventory fallback for function `_parse_kv` defined at `src/gnn/parser.py:148`. |
 | 164 | `function` | `parse_gnn` | inventory fallback | Inventory fallback for function `parse_gnn` defined at `src/gnn/parser.py:164`. |
-| 195 | `function` | `parse_gnn_file` | inventory fallback | Inventory fallback for function `parse_gnn_file` defined at `src/gnn/parser.py:195`. |
+| 197 | `function` | `parse_gnn_file` | inventory fallback | Inventory fallback for function `parse_gnn_file` defined at `src/gnn/parser.py:197`. |
+
+## `src/gnn/upstream.py`
+
+| line | kind | name | documentation source | summary |
+| ---: | --- | --- | --- | --- |
+| 52 | `class` | `UpstreamPinError` | docstring | Raised when the pinned upstream release identity is malformed or unusable. |
+| 57 | `class` | `UpstreamPin` | docstring | The pinned upstream GNN release and the parser entry point to exercise. |
+| 75 | `function` | `load_upstream_pin` | docstring | Read and validate the pinned upstream GNN release identity. |
+| 82 | `function` | `load_upstream_pin.unique` | inventory fallback | Inventory fallback for function `load_upstream_pin.unique` defined at `src/gnn/upstream.py:82`. |
+| 117 | `function` | `default_gnn_root` | docstring | The conventional sibling checkout of the upstream GNN repository. |
+| 122 | `function` | `resolve_gnn_root` | docstring | Resolve the upstream checkout root. |
+| 140 | `function` | `gnn_checkout_python` | docstring | The checkout-local interpreter used to execute the pinned parser. |
+| 145 | `function` | `checkout_available` | docstring | Whether the checkout supplies both the upstream parser source and its interpreter. |
+| 150 | `function` | `_normalize_version` | docstring | Normalize ``GNN v1.1`` / ``1.1`` / ``v1.1`` to ``1.1``. |
+| 157 | `function` | `_normalize_time` | docstring | Classify a ``## Time`` section body the way upstream does. |
+| 175 | `function` | `_normalize_dtype` | docstring | Normalize a declared dtype (``float`` / ``DataType.FLOAT`` / ``INTEGER``). |
+| 183 | `function` | `_normalized_param_text` | docstring | Text-normalize a ModelParameters value (sequences and comma lists included). |
+| 193 | `function` | `_normalize_direction` | docstring | Normalize a connection direction token (``directed`` / ``ConnectionType.DIRECTED``). |
+| 201 | `function` | `_normalized_edges` | docstring | Connection edges as comparable 4-tuples, with the direction token normalized. |
+| 215 | `function` | `spec_digest` | docstring | Normalize a project-parsed :class:`~gnn.model.GnnModel` into a conformance digest. |
+| 248 | `function` | `normalize_upstream_digest` | docstring | Normalize the upstream driver's JSON digest into the project digest shape. |
+| 308 | `function` | `_parameters_differ` | inventory fallback | Inventory fallback for function `_parameters_differ` defined at `src/gnn/upstream.py:308`. |
+| 316 | `function` | `_mapping_field` | docstring | Read a digest field that must be a mapping. |
+| 328 | `function` | `digest_divergences` | docstring | Compare two conformance digests and describe every divergence. |
 
 ## `src/manuscript/hydrate.py`
 

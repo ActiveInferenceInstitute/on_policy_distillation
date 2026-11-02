@@ -12,6 +12,16 @@ GNN v1.1
 
 K=2 Bernoulli/Ising Policy-Entanglement Toy
 
+## ModelAnnotation
+
+Two binary policy streams with a centered 2x2 Ising coupling potential. The
+model is static: the entangled joint posterior `q_joint` is a closed-form
+function of the two stream policies, the coupling `J`, the deformation
+parameter `lam`, and the sophistication weight `gamma`. The Python harness in
+`../src/analytical/` evaluates this specification; `../src/gnn/concordance.py`
+and `../src/ontology/bindings.py` check that the declared variables keep their
+expected ontology terms.
+
 ## StateSpaceBlock
 
 pi1[2,1,type=float]
@@ -45,7 +55,11 @@ J={
 lam={(0.0)}
 gamma={(0.0)}
 
-## ActInf Ontology Annotation
+## Time
+
+Static
+
+## ActInfOntologyAnnotation
 
 pi1=Stream1PolicyVector
 pi2=Stream2PolicyVector
@@ -55,3 +69,7 @@ J=CrossStreamCouplingPotential
 lam=EntanglementDeformationParameter
 gamma=SophisticationWeight
 q_joint=EntangledJointPosterior
+
+## Footer
+
+K=2 Bernoulli/Ising policy-entanglement toy — GNN representation.

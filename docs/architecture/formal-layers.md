@@ -50,8 +50,8 @@ active-inference ↔ OPD correspondence, nor any non-toy or empirical claim.
 ## GNN specifications and concordance
 
 [`gnn/`](../../gnn/) holds the canonical, human- and machine-readable model
-specs: `bernoulli_toy.gnn.md` and `si_tmaze.gnn.md`. They are parsed by
-[`src/gnn/parser.py`](../../src/gnn/parser.py) and checked by
+specs: `bernoulli_toy.gnn.md`, `si_tmaze.gnn.md`, and `graph_world.gnn.md`. They
+are parsed by [`src/gnn/parser.py`](../../src/gnn/parser.py) and checked by
 [`src/gnn/concordance.py`](../../src/gnn/concordance.py).
 
 Concordance is a *correctness*, not merely *presence*, check. `parity_gaps`
@@ -63,6 +63,15 @@ pinned constants: `BERNOULLI_SYMBOL_MAP` / `BERNOULLI_EXPECTED_TERMS` in
 `concordance.py` and `SI_SYMBOL_MAP` / `SI_EXPECTED_TERMS` in
 [`src/ontology/bindings.py`](../../src/ontology/bindings.py).
 
+[`gnn/upstream.json`](../../gnn/upstream.json) is the custody pin for the
+specification language itself: it records the canonical upstream release
+(Generalized_Notation_Notation v5.0.3) and the parser entry point exercised by
+[`tests/test_gnn_upstream_conformance.py`](../../tests/test_gnn_upstream_conformance.py).
+That test runs the pinned upstream parser — with the pinned commit's `src/gnn`
+extracted from Git onto `PYTHONPATH`, so the bytes under test are the release's,
+not the live tree's — against every shipped spec and requires digest equality
+with the project parser; the spaced-heading mutant is the non-vacuity control.
+
 `generate_formal_interop_tracks.py` writes `gnn_roundtrip_report.json` (the
 parse → payload → re-emit → re-parse losslessness check) and
 `gnn_lint_report.json`. The round-trip writer deliberately re-emits only the
@@ -71,8 +80,9 @@ non-payload content (`InitialParameterization` values, `ModelParameters`,
 `Equations`) is outside the structural round-trip contract.
 
 **What GNN does not prove.** Round-trip losslessness proves the *notation* is
-internally consistent and faithfully serialized — not that the model is correct
-or that it matches the running pymdp harness's numerics.
+internally consistent and faithfully serialized, and upstream digest equality
+proves the notation conforms to the pinned release — neither proves the model is
+correct or that it matches the running pymdp harness's numerics.
 
 ## Ontology bindings
 
