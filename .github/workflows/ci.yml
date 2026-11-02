@@ -1,0 +1,32 @@
+name: on-policy-distillation-ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  release-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # The typography contract renders the combined .tex and fails closed when
+      # pandoc is absent; the hosted image does not ship it.
+      - run: sudo apt-get update && sudo apt-get install -y pandoc
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.13.6"
+          python-version: "3.14"
+      - run: uv lock --check
+      - run: uv sync --locked --extra dev
+      - run: uv run --extra dev python -m compileall -q src scripts tests
+      # The suite is not self-contained: the gate tests and the manuscript
+      # checks read the generated artifact tree, so a clean checkout has to
+      # build it first. The chain is bounded and convergent (it re-runs the
+      # attestation tail until `validate_outputs` is green and stable) and it is
+      # the repository's documented entry point.
+      - run: uv run --extra dev python scripts/run_full_chain.py --max-passes 4
+      # Documented release gate. `compileall` above plus `compose --validate-only
+      # --strict` (inside the chain) are the lightweight validators.
+      - run: uv run --extra dev python -m pytest tests/ --cov=src --cov-fail-under=90 -q

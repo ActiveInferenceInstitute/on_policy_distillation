@@ -7,9 +7,10 @@ human- and machine-readable description of each Active Inference model.
 - `si_tmaze.gnn.md` — the sophisticated-inference T-maze model.
 - `graph_world.gnn.md` — the deterministic four-node graph-world model
   (start → cue → choice → goal; see `../docs/models/graph-world.md`).
-- `upstream.json` — custody pin: canonical upstream release tag and commit
-  (Generalized_Notation_Notation v5.0.3), plus the upstream parser module and
-  class the conformance check exercises.
+- `upstream.json` — custody pin: the upstream repository, the exact commit, the
+  upstream `version` string from that revision's `pyproject.toml`, and the date
+  it was recorded, plus `tag` and the parser module/class the conformance check
+  exercises as convenience fields.
 
 Parsed by `../src/gnn/parser.py`; concordance with the other tracks is checked by
 `../src/gnn/concordance.py`. Use the canonical `## ActInfOntologyAnnotation`
