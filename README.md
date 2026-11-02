@@ -70,9 +70,11 @@ uv run --extra dev python -m pytest tests/ -m "not artifact_slow and not render_
 ```
 
 CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) byte-compiles
-`src scripts tests`, runs the full chain (the suite reads the generated artifact
+`src scripts tests`, provisions the GNN revision pinned in `gnn/upstream.json`
+(public repository, exact SHA), runs the full chain (the suite reads the generated artifact
 tree, so a clean checkout has to build it first), and then runs the release
-coverage gate above on Python 3.14. `scripts/validate_outputs.py` is not a
+coverage gate above on Python 3.14 with that checkout selected, so the GNN
+conformance check fails instead of skipping. `scripts/validate_outputs.py` is not a
 separate step; the chain already runs it and a workflow cannot validate a tree
 it never built.
 
