@@ -20,12 +20,13 @@ exercised in-process.
 
 from __future__ import annotations
 
+import datetime
 import json
 import os
 import re
 from collections import Counter
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -41,8 +42,11 @@ PIN_RELATIVE_PATH = "gnn/upstream.json"
 #: Checkout-relative path of the upstream markdown parser module.
 PARSER_RELATIVE_PATH = "src/gnn/parsers/markdown_parser.py"
 
-_PIN_KEYS = ("repository", "tag", "commit", "parser_module", "parser_class")
+_CORE_PIN_KEYS = ("repository", "commit", "version", "date_recorded")
+_OPTIONAL_PIN_KEYS = ("tag", "parser_module", "parser_class")
 _TAG_RE = re.compile(r"v\d+\.\d+\.\d+")
+_VERSION_RE = re.compile(r"\d+\.\d+\.\d+")
+_DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 _COMMIT_RE = re.compile(r"[0-9a-f]{40}")
 _MODULE_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)+")
 _CLASS_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
@@ -55,21 +59,34 @@ class UpstreamPinError(ValueError):
 
 @dataclass(frozen=True)
 class UpstreamPin:
-    """The pinned upstream GNN release and the parser entry point to exercise.
+    """The pinned upstream GNN release the specifications are checked against.
 
     Attributes:
         repository: Canonical HTTPS GitHub URL of the upstream repository.
-        tag: Stable release tag (``v<major>.<minor>.<patch>``).
-        commit: Full 40-hex commit identity the tag resolves to.
-        parser_module: Dotted import path of the upstream parser module.
-        parser_class: Parser class name inside ``parser_module``.
+        commit: Full 40-hex commit identity the release resolves to.
+        version: Upstream version string declared by that revision's pyproject.
+        date_recorded: ISO date the pin was recorded.
+        tag: Optional stable release tag (``v<major>.<minor>.<patch>``).
+        parser_module: Optional dotted import path of the upstream parser module.
+        parser_class: Optional parser class name inside ``parser_module``.
+        extras: Any additional pin fields, carried rather than refused so a
+            consumer can record digest maps or checkout hints.
     """
 
     repository: str
-    tag: str
     commit: str
-    parser_module: str
-    parser_class: str
+    version: str
+    date_recorded: str
+    tag: str | None = None
+    parser_module: str | None = None
+    parser_class: str | None = None
+    extras: Mapping[str, object] = field(default_factory=dict)
+
+    def parser_entry_point(self) -> tuple[str, str]:
+        """Return the pinned parser module and class, or raise when undeclared."""
+        if not self.parser_module or not self.parser_class:
+            raise UpstreamPinError("upstream pin does not declare a parser entry point")
+        return self.parser_module, self.parser_class
 
 
 def load_upstream_pin(path: Path) -> UpstreamPin:
@@ -91,26 +108,48 @@ def load_upstream_pin(path: Path) -> UpstreamPin:
         data = json.loads(Path(path).read_text(encoding="utf-8"), object_pairs_hook=unique)
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise UpstreamPinError(f"cannot read upstream pin {path}: {exc}") from exc
-    if not isinstance(data, dict) or set(data) != set(_PIN_KEYS):
-        raise UpstreamPinError(f"upstream pin must declare exactly {list(_PIN_KEYS)}")
-    if not all(isinstance(value, str) for value in data.values()):
+    if not isinstance(data, dict):
+        raise UpstreamPinError("upstream pin must be a JSON object")
+    missing = [key for key in _CORE_PIN_KEYS if key not in data]
+    if missing:
+        raise UpstreamPinError(
+            f"upstream pin must declare {list(_CORE_PIN_KEYS)}; missing {missing}"
+        )
+    declared = {key: data[key] for key in (*_CORE_PIN_KEYS, *_OPTIONAL_PIN_KEYS) if key in data}
+    if not all(isinstance(value, str) for value in declared.values()):
         raise UpstreamPinError("upstream pin fields must be strings")
     if not str(data["repository"]).startswith("https://github.com/"):
         raise UpstreamPinError("upstream repository must be an HTTPS GitHub URL")
-    if not _TAG_RE.fullmatch(str(data["tag"])):
-        raise UpstreamPinError("upstream tag must name a stable version (v<major>.<minor>.<patch>)")
     if not _COMMIT_RE.fullmatch(str(data["commit"])):
         raise UpstreamPinError("upstream commit must be a complete Git object identity")
-    if not _MODULE_RE.fullmatch(str(data["parser_module"])):
+    if not _VERSION_RE.fullmatch(str(data["version"])):
+        raise UpstreamPinError("upstream version must be a release version (major.minor.patch)")
+    try:
+        datetime.date.fromisoformat(str(data["date_recorded"]))
+    except ValueError as exc:
+        raise UpstreamPinError("upstream date_recorded must be an ISO date (YYYY-MM-DD)") from exc
+    tag = data.get("tag")
+    if tag is not None:
+        if not _TAG_RE.fullmatch(str(tag)):
+            raise UpstreamPinError("upstream tag must name a stable version (v<major>.<minor>.<patch>)")
+        if str(tag).removeprefix("v") != str(data["version"]):
+            raise UpstreamPinError("upstream tag and version must name the same release")
+    parser_module = data.get("parser_module")
+    if parser_module is not None and not _MODULE_RE.fullmatch(str(parser_module)):
         raise UpstreamPinError("upstream parser_module must be a dotted import path")
-    if not _CLASS_RE.fullmatch(str(data["parser_class"])):
+    parser_class = data.get("parser_class")
+    if parser_class is not None and not _CLASS_RE.fullmatch(str(parser_class)):
         raise UpstreamPinError("upstream parser_class must be a Python identifier")
+    extras = {key: value for key, value in data.items() if key not in declared}
     return UpstreamPin(
         repository=str(data["repository"]),
-        tag=str(data["tag"]),
         commit=str(data["commit"]),
-        parser_module=str(data["parser_module"]),
-        parser_class=str(data["parser_class"]),
+        version=str(data["version"]),
+        date_recorded=str(data["date_recorded"]),
+        tag=None if tag is None else str(tag),
+        parser_module=None if parser_module is None else str(parser_module),
+        parser_class=None if parser_class is None else str(parser_class),
+        extras=extras,
     )
 
 

@@ -64,8 +64,11 @@ pinned constants: `BERNOULLI_SYMBOL_MAP` / `BERNOULLI_EXPECTED_TERMS` in
 [`src/ontology/bindings.py`](../../src/ontology/bindings.py).
 
 [`gnn/upstream.json`](../../gnn/upstream.json) is the custody pin for the
-specification language itself: it records the canonical upstream release
-(Generalized_Notation_Notation v5.0.3) and the parser entry point exercised by
+specification language itself: it records the upstream repository, the exact
+release commit, the upstream `version` declared by that revision's
+`pyproject.toml`, and the date the pin was recorded, with the release `tag` and
+the parser entry point as optional convenience fields. The parser entry point is
+exercised by
 [`tests/test_gnn_upstream_conformance.py`](../../tests/test_gnn_upstream_conformance.py).
 That test runs the pinned upstream parser — with the pinned commit's `src/gnn`
 extracted from Git onto `PYTHONPATH`, so the bytes under test are the release's,
