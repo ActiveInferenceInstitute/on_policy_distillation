@@ -157,9 +157,23 @@ def test_validate_outputs_rejects_graph_world_summary_trace_mismatch(project_roo
 
 @pytest.mark.artifact_slow
 @pytest.mark.mutates_artifacts
-def test_pymdp_runtime_diagnostics_captures_known_warning_and_rejects_unexpected(
+def test_pymdp_runtime_diagnostics_classifies_known_sample_and_rejects_unexpected(
     project_root: Path,
 ) -> None:
+    """Exercise both halves of the runtime-diagnostics classifier.
+
+    Whether a construction emits a warning is upstream pymdp's property, so
+    "a known warning must appear" would assert someone else's release notes:
+    pymdp 1.0.4 stopped emitting the JAX static-field warning that 1.0.1-1.0.3
+    emitted, and the old ``known_warning_count >= 1`` assertion failed against a
+    correctly classified, warning-free run. The check therefore has two halves.
+    First, the classifier must classify a synthetic sample of the audited
+    upstream warning (a fixture this repository controls) as known, and must
+    still count an uncatalogued warning as unexpected and fail validation.
+    Second, a real construction in the installed environment must emit no
+    unknown/unclassified warning, so a *new* upstream warning still fails the
+    check instead of passing it.
+    """
     from simulation.pymdp_config import load_pymdp_config
     from simulation.pymdp_runtime import (
         construct_agent_with_diagnostics,
@@ -174,6 +188,15 @@ def test_pymdp_runtime_diagnostics_captures_known_warning_and_rejects_unexpected
     diagnostics_path = project_root / "output" / "reports" / "pymdp_runtime_diagnostics.json"
     original = diagnostics_path.read_text(encoding="utf-8") if diagnostics_path.is_file() else None
 
+    def known_sample_factory(**kwargs):
+        import warnings
+        from pymdp.agent import Agent
+
+        # The audited upstream warning text, replayed from a sample this test
+        # controls; the installed release may no longer emit it (see docstring).
+        warnings.warn("A JAX array is being set as static", UserWarning, stacklevel=2)
+        return Agent(**kwargs)
+
     def noisy_factory(**kwargs):
         import warnings
         from pymdp.agent import Agent
@@ -181,19 +204,29 @@ def test_pymdp_runtime_diagnostics_captures_known_warning_and_rejects_unexpected
         warnings.warn("unexpected agent construction warning", UserWarning, stacklevel=2)
         return Agent(**kwargs)
 
-    try:
+    def construct(context: str, agent_factory=None):
         _, record = construct_agent_with_diagnostics(
             project_root,
             config=cfg,
             model=model,
             policy_len=spec.policy_len,
-            context="negative_control",
-            agent_factory=noisy_factory,
+            context=context,
+            agent_factory=agent_factory,
         )
-        path = write_runtime_diagnostics(project_root, [record])
-        payload = json.loads(path.read_text(encoding="utf-8"))
+        return record
 
+    try:
+        known_sample = construct("known_sample", known_sample_factory)
+        environment = construct("environment")
+        payload = json.loads(
+            write_runtime_diagnostics(project_root, [known_sample, environment]).read_text(encoding="utf-8")
+        )
         assert payload["known_warning_count"] >= 1
+        assert payload["unexpected_warning_count"] == 0
+        assert validate_runtime_diagnostics(project_root) == []
+
+        unexpected = construct("negative_control", noisy_factory)
+        payload = json.loads(write_runtime_diagnostics(project_root, [unexpected]).read_text(encoding="utf-8"))
         assert payload["unexpected_warning_count"] == 1
         assert any("unexpected warning" in issue for issue in validate_runtime_diagnostics(project_root))
     finally:

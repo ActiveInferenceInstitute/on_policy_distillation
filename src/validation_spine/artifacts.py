@@ -379,7 +379,7 @@ def build_counterexample_matrix(project_root: Path) -> dict[str, Any]:
             "gate": "validate_outputs.pymdp_runtime_diagnostics_schema",
             "mutation": "emit an uncatalogued warning during pymdp Agent construction",
             "expected_failure": True,
-            "test": "tests/test_semantic_extensions.py::test_pymdp_runtime_diagnostics_captures_known_warning_and_rejects_unexpected",
+            "test": "tests/test_semantic_extensions.py::test_pymdp_runtime_diagnostics_classifies_known_sample_and_rejects_unexpected",
         },
         {
             "id": "unnormalized_policy_posterior",
