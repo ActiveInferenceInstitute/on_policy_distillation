@@ -6,7 +6,11 @@ on:
   pull_request:
 
 jobs:
+  # The workflow guide keeps one workflow and one job. This job both runs the
+  # release gate and enforces the GNN upstream conformance; the exact name makes
+  # that conformance visible in the check list instead of hiding it in steps.
   release-gate:
+    name: gnn conformance (pinned v5.0.3)
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
