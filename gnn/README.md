@@ -23,6 +23,9 @@ pinned commit's `src/gnn` extracted from Git onto `PYTHONPATH`, so the bytes
 under test are the pinned release's bytes rather than the live working tree's.
 When the sibling checkout is unavailable the test skips with an explicit
 reason; set `ON_POLICY_DISTILLATION_GNN_ROOT` to select a checkout explicitly.
+CI provisions the pinned revision into `$RUNNER_TEMP/gnn` and sets that
+variable, so an unavailable or divergent checkout fails the release gate
+instead of skipping the pinned-parser half.
 
 Model authoring starts from the GNN
 [template library](https://github.com/ActiveInferenceInstitute/Generalized_Notation_Notation/blob/main/docs/templates/README.md)
