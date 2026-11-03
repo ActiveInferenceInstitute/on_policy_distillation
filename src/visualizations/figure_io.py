@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING
 
 from pathlib import Path
@@ -46,7 +47,22 @@ def save_figure_png(
         if normalize_rgb:
             with Image.open(raw_path) as img:
                 rgb = img.convert("RGB")
-                rgb.save(path, format="PNG")
+                # Publish the normalized PNG atomically: an interrupted save (for
+                # example a pytest-timeout firing mid-write) must not leave a
+                # truncated file that later artifact checks read as an
+                # unreadable figure.
+                with NamedTemporaryFile(
+                    dir=path.parent,
+                    prefix=f".{path.stem}.",
+                    suffix=path.suffix,
+                    delete=False,
+                ) as normalized:
+                    publish_path = Path(normalized.name)
+                try:
+                    rgb.save(publish_path, format="PNG")
+                    os.replace(publish_path, path)
+                finally:
+                    publish_path.unlink(missing_ok=True)
     finally:
         plt.close(fig)
         if normalize_rgb and raw_path != path:

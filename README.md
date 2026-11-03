@@ -17,7 +17,7 @@ certificates, validates the outputs, and renders the PDF:
 ```bash
 git clone https://github.com/ActiveInferenceInstitute/on_policy_distillation
 cd on_policy_distillation
-uv sync --extra dev
+uv sync --locked --extra dev
 uv run python scripts/run_full_chain.py --render
 ```
 
@@ -50,7 +50,7 @@ Validation and tests:
 ```bash
 uv run python scripts/compose_manuscript.py --validate-only --strict
 uv run python scripts/validate_outputs.py
-uv run python -m pytest tests/ --cov=src --cov-fail-under=90
+uv run --extra dev python -m pytest tests/ --cov=src --cov-fail-under=90
 # On a loaded machine use scripts/run_tests_chunked.py — a single pytest process
 # can be killed under resource pressure (exit 144); chunks survive.
 ```

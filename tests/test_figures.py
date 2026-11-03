@@ -61,7 +61,12 @@ def test_figure_registry_fail_closed_on_unknown_token(project_root: Path) -> Non
         )
 
 
-@pytest.mark.timeout(30)
+# WHY 300 s: this test re-derives the whole figure input surface (analysis, the
+# pymdp rollout, then every registry figure). It measures 15-25 s warm on the
+# development machine but exceeded the old 30 s bound on the hosted runner under
+# `--cov=src`; 300 s matches the other artifact tests in this suite and still
+# fails a genuine hang.
+@pytest.mark.timeout(300)
 @pytest.mark.render_slow
 @pytest.mark.artifact_slow
 @pytest.mark.mutates_artifacts
@@ -102,7 +107,10 @@ def test_free_energy_figure_distinguishes_exact_target_from_mean_field_gap() -> 
     assert "Free energy against entangled prior" not in source
 
 
-@pytest.mark.timeout(30)
+# WHY 300 s: same re-derivation as test_all_generators_write_png (analysis, the
+# pymdp rollout, every registry figure) and the same hosted-runner measurement;
+# 300 s matches the other artifact tests in this suite.
+@pytest.mark.timeout(300)
 @pytest.mark.render_slow
 @pytest.mark.artifact_slow
 @pytest.mark.mutates_artifacts
