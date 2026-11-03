@@ -173,8 +173,9 @@ Edit fragments only under [`manuscript/sections/imrad/`](manuscript/sections/imr
 ## Commands
 
 ```bash
+uv sync --locked --extra dev
 uv run python scripts/compose_manuscript.py
-uv run python -m pytest tests/ --cov=src --cov-fail-under=90
+uv run --extra dev python -m pytest tests/ --cov=src --cov-fail-under=90
 uv run python scripts/validate_outputs.py
 ```
 
