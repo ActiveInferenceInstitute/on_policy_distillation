@@ -72,3 +72,4 @@ show_missing = true
 precision = 2
 
 [tool.uv]
+constraint-dependencies = ["pillow>=13.0.0"]
