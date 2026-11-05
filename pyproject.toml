@@ -7,7 +7,7 @@ name = "active_inference_on_policy_distillation"
 version = "1.0.2"
 description = "On-Policy Distillation is Active Inference: a first-principles formalisation (correspondence map, divergence geometry, reward-tilted targets, SDPG, two-agent pymdp classroom) plus a sheaf-composed multi-track manuscript. Track/fragment counts are registry-backed (manuscript/sheaf/tracks.yaml); not hard-coded here."
 authors = [{ name = "Daniel Ari Friedman", email = "daniel@activeinference.institute" }]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "numpy>=1.24.0",
     "matplotlib>=3.7.0",
@@ -72,3 +72,4 @@ show_missing = true
 precision = 2
 
 [tool.uv]
+constraint-dependencies = ["pillow>=13.0.0"]
