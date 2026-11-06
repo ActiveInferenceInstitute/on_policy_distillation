@@ -373,9 +373,9 @@ def digest_divergences(project: Mapping[str, object], upstream: Mapping[str, obj
     a conformance failure.
     """
     issues: list[str] = []
-    for field in ("model_name", "version", "time"):
-        if project.get(field) != upstream.get(field):
-            issues.append(f"{field}: project={project.get(field)!r} upstream={upstream.get(field)!r}")
+    for key in ("model_name", "version", "time"):
+        if project.get(key) != upstream.get(key):
+            issues.append(f"{key}: project={project.get(key)!r} upstream={upstream.get(key)!r}")
 
     project_variables = _mapping_field(project, "variables")
     upstream_variables = _mapping_field(upstream, "variables")
