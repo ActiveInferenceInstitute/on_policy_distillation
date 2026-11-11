@@ -1,11 +1,14 @@
-# AII sidecar — InstituteOS metadata. Schema: instituteos.platform.aii_sidecar
+# AII sidecar — InstituteOS metadata. Schema: aii_platform.aii_sidecar
 meta:
-  updated: '2026-06-30'
+  sidecar_version: 1.2.1
+  updated: '2026-11-10'
 repo:
   name: on_policy_distillation
   slug: on-policy-distillation
   full_name: ActiveInferenceInstitute/on_policy_distillation
-  description: On Policy Distillation and Active Inference
+  description: On-policy distillation formalized as active inference in finite variational
+    models, with reverse-KL free energy, a two-agent pymdp classroom, and machine-checked
+    manuscript artifacts.
 institute:
   category: research-software
   steward: Active Inference Institute
@@ -16,6 +19,11 @@ ecosystem:
     note: Federated via the InstituteOS .aii manifest.
   - repo: ActiveInferenceInstitute/Active_Inference_Ontology
     note: Uses Active Inference Ontology terms.
+  - repo: ActiveInferenceInstitute/pymdp
+    relation: depends-on
+    note: Consumes the pymdp active-inference library.
+  - repo: ActiveInferenceInstitute/Generalized_Notation_Notation
+    note: Uses Generalized Notation Notation (GNN) for model specifications.
   links:
     github: https://github.com/ActiveInferenceInstitute/on_policy_distillation
     website: https://www.activeinference.org
@@ -32,22 +40,48 @@ artifacts:
 - path: LICENSE
   kind: doc
   description: License.
+- path: AGENTS.md
+  kind: doc
+  description: Agent guidance.
+- path: CITATION.cff
+  kind: citation
+  description: Machine-readable citation metadata.
+- path: tests
+  kind: test
+  description: Test suite.
+- path: docs
+  kind: doc
+  description: Documentation tree.
+- path: manuscript
+  kind: publication
+  description: Manuscript sources and artifacts.
 provenance:
   license: MIT
   citation:
     doi: 10.5281/zenodo.20747834
+    text: Active Inference Institute — on_policy_distillation.
 instituteos:
   tags:
-  - policy
-  - distillation
-  - inference
-  - python
+  - on-policy-distillation
+  - active-inference
+  - pymdp
+  - research
 capabilities:
 - python-package
 - tested
 - documentation
 - dataset
+- ci
+- citation
+- manuscript-publication
 tasks:
   test:
     cmd: python -m pytest
     description: Run the test suite.
+docs:
+- README.md
+- AGENTS.md
+- docs/INTEGRATION.md
+- docs/README.md
+- docs/AGENTS.md
+schema: aii-sidecar/v1

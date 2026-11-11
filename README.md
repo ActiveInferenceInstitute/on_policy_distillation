@@ -184,3 +184,11 @@ uv run python scripts/generate_method_inventory.py
 
 The inventory distinguishes inline docstrings from inventory fallbacks, so missing
 docstrings remain visible without bloating internal helper code.
+
+## InstituteOS sidecar
+
+This repository carries a committed [`.aii/`](.aii/README.md) sidecar with curated
+InstituteOS metadata (`aii-sidecar/v1`): category, maturity, ecosystem relations,
+key artifacts, provenance, and portable tasks. It is read by
+[InstituteOS](https://github.com/ActiveInferenceInstitute/InstituteOS) tooling and
+does not affect the project's build or runtime.
