@@ -1,7 +1,7 @@
 # AII sidecar — InstituteOS metadata. Schema: aii_platform.aii_sidecar
 meta:
   sidecar_version: 1.2.1
-  updated: '2026-11-10'
+  updated: '2026-11-11'
 repo:
   name: on_policy_distillation
   slug: on-policy-distillation
@@ -76,8 +76,11 @@ capabilities:
 - manuscript-publication
 tasks:
   test:
-    cmd: python -m pytest
-    description: Run the test suite.
+    cmd: uv run --extra dev python -m pytest tests/ --cov=src --cov-fail-under=90
+    description: Run the documented release-gate test suite with the coverage floor.
+  lint:
+    cmd: uvx ruff check src tests scripts
+    description: Run the Ruff lint gate.
 docs:
 - README.md
 - AGENTS.md
