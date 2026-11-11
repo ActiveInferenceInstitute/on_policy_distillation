@@ -1,6 +1,6 @@
 # Agent Notes
 
-`working/active_inference_on_policy_distillation/docs/` is documentation only. Keep business
+`docs/` is documentation only. Keep business
 logic in `../src/`, orchestration in `../scripts/`, and generated artifacts
 under `../output/`.
 

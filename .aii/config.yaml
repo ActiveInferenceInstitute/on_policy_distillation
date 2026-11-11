@@ -11,6 +11,7 @@ repo:
     manuscript artifacts.
 institute:
   category: research-software
+  maturity: wip
   steward: Active Inference Institute
 ecosystem:
   relations:
