@@ -45,9 +45,10 @@ jobs:
       # Relative-link check over tracked Markdown plus the doc-contract tests.
       - run: uv run --extra dev python scripts/gate.py docs
       # Fetch the revision pinned in gnn/upstream.json, install the pinned
-      # parser's dependencies into its own Python 3.12 environment, and run the
-      # conformance + parser tests against it. A dead pin fails here, before the
-      # suite, and a green run is evidence the pin works.
+      # parser's dependencies into its own Python 3.12 environment, run the
+      # estate reader (gnn.importers) against that revision, and run the
+      # conformance + parser tests. A dead pin fails here, before the suite, and
+      # a green run is evidence the pin works.
       - run: uv run --extra dev python scripts/gate.py gnn
       # The suite is not self-contained: the gate tests and the manuscript
       # checks read the generated artifact tree, so a clean checkout has to

@@ -166,7 +166,7 @@ Edit fragments only under [`manuscript/sections/imrad/`](manuscript/sections/imr
 | `src/gates/` | `validation.py` facade; `output_checks`, `manuscript_checks`, `claim_ledger`, `lean` |
 | `src/validation_spine/` | Provenance hashes, deterministic replay, and counterexample matrix artifacts |
 | `src/roadmap_tracks/` | Promoted toy sweep, formal interop, integration-audit, and canonical sheaf-track artifacts |
-| `gnn/*.gnn.md` | GNN source files; `gnn/upstream.json` pins the canonical upstream release (v5.0.3) checked by `tests/test_gnn_upstream_conformance.py` |
+| `gnn/*.gnn.md` | GNN source files; `gnn/upstream.json` pins the canonical upstream release (v5.1.0), read by the shared `gnn.importers` checker checked by `tests/test_gnn_upstream_conformance.py` |
 | `lean/OnPolicyDistillation/` | Lean witnesses — `build_lean` gate runs `lake build` when `lean/lakefile.lean` exists; absent Lean tree skips cleanly |
 | `scripts/` | Thin orchestrators only (extension tracks delegate to `src/visualizations/animation.py`, `src/simulation/graph_world.py`) |
 

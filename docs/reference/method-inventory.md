@@ -2,7 +2,7 @@
 
 Generated documentation coverage for every Python `def` and `class` under `src/` and `scripts/`. Entries marked `inventory fallback` have no inline docstring yet, but remain documented here by path, line, kind, and qualified name.
 
-Total documented definitions: 1052
+Total documented definitions: 1051
 
 ## `src/analytical/bernoulli_toy.py`
 
@@ -557,26 +557,22 @@ Total documented definitions: 1052
 
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
-| 56 | `class` | `UpstreamPinError` | docstring | Raised when the pinned upstream release identity is malformed or unusable. |
-| 61 | `class` | `UpstreamPin` | docstring | The pinned upstream GNN release the specifications are checked against. |
-| 85 | `function` | `UpstreamPin.parser_entry_point` | docstring | Return the pinned parser module and class, or raise when undeclared. |
-| 92 | `function` | `load_upstream_pin` | docstring | Read and validate the pinned upstream GNN release identity. |
-| 99 | `function` | `load_upstream_pin.unique` | inventory fallback | Inventory fallback for function `load_upstream_pin.unique` defined at `src/gnn/upstream.py:99`. |
-| 158 | `function` | `default_gnn_root` | docstring | The conventional sibling checkout of the upstream GNN repository. |
-| 163 | `function` | `resolve_gnn_root` | docstring | Resolve the upstream checkout root. |
-| 181 | `function` | `gnn_checkout_python` | docstring | The checkout-local interpreter used to execute the pinned parser. |
-| 186 | `function` | `checkout_available` | docstring | Whether the checkout supplies both the upstream parser source and its interpreter. |
-| 191 | `function` | `_normalize_version` | docstring | Normalize ``GNN v1.1`` / ``1.1`` / ``v1.1`` to ``1.1``. |
-| 198 | `function` | `_normalize_time` | docstring | Classify a ``## Time`` section body the way upstream does. |
-| 216 | `function` | `_normalize_dtype` | docstring | Normalize a declared dtype (``float`` / ``DataType.FLOAT`` / ``INTEGER``). |
-| 224 | `function` | `_normalized_param_text` | docstring | Text-normalize a ModelParameters value (sequences and comma lists included). |
-| 234 | `function` | `_normalize_direction` | docstring | Normalize a connection direction token (``directed`` / ``ConnectionType.DIRECTED``). |
-| 242 | `function` | `_normalized_edges` | docstring | Connection edges as comparable 4-tuples, with the direction token normalized. |
-| 256 | `function` | `spec_digest` | docstring | Normalize a project-parsed :class:`~gnn.model.GnnModel` into a conformance digest. |
-| 289 | `function` | `normalize_upstream_digest` | docstring | Normalize the upstream driver's JSON digest into the project digest shape. |
-| 349 | `function` | `_parameters_differ` | inventory fallback | Inventory fallback for function `_parameters_differ` defined at `src/gnn/upstream.py:349`. |
-| 357 | `function` | `_mapping_field` | docstring | Read a digest field that must be a mapping. |
-| 369 | `function` | `digest_divergences` | docstring | Compare two conformance digests and describe every divergence. |
+| 47 | `class` | `UpstreamConformanceError` | docstring | Raised when conformance digests are malformed or cannot be compared. |
+| 51 | `function` | `default_gnn_root` | docstring | The conventional sibling checkout of the upstream GNN repository. |
+| 56 | `function` | `resolve_gnn_root` | docstring | Resolve the upstream checkout root. |
+| 74 | `function` | `gnn_checkout_python` | docstring | The checkout-local interpreter used to execute the pinned parser. |
+| 79 | `function` | `checkout_available` | docstring | Whether the checkout supplies both the upstream parser source and its interpreter. |
+| 84 | `function` | `_normalize_version` | docstring | Normalize ``GNN v1.1`` / ``1.1`` / ``v1.1`` to ``1.1``. |
+| 91 | `function` | `_normalize_time` | docstring | Classify a ``## Time`` section body the way upstream does. |
+| 109 | `function` | `_normalize_dtype` | docstring | Normalize a declared dtype (``float`` / ``DataType.FLOAT`` / ``INTEGER``). |
+| 117 | `function` | `_normalized_param_text` | docstring | Text-normalize a ModelParameters value (sequences and comma lists included). |
+| 127 | `function` | `_normalize_direction` | docstring | Normalize a connection direction token (``directed`` / ``ConnectionType.DIRECTED``). |
+| 135 | `function` | `_normalized_edges` | docstring | Connection edges as comparable 4-tuples, with the direction token normalized. |
+| 149 | `function` | `spec_digest` | docstring | Normalize a project-parsed :class:`~gnn.model.GnnModel` into a conformance digest. |
+| 182 | `function` | `normalize_upstream_digest` | docstring | Normalize the upstream driver's JSON digest into the project digest shape. |
+| 242 | `function` | `_parameters_differ` | inventory fallback | Inventory fallback for function `_parameters_differ` defined at `src/gnn/upstream.py:242`. |
+| 250 | `function` | `_mapping_field` | docstring | Read a digest field that must be a mapping. |
+| 262 | `function` | `digest_divergences` | docstring | Compare two conformance digests and describe every divergence. |
 
 ## `src/manuscript/hydrate.py`
 
@@ -1557,25 +1553,28 @@ Total documented definitions: 1052
 
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
-| 61 | `function` | `_python` | docstring | The interpreter running this gate, so every arm shares one environment. |
-| 66 | `function` | `_upstream` | docstring | The pin loader, imported lazily so only the `gnn` arm pays for it. |
-| 76 | `function` | `lint_commands` | docstring | Static checks: ruff, then a byte-compile of the shipped trees. |
-| 84 | `function` | `fast_commands` | docstring | The tightest documented edit loop (no coverage, no slow lanes). |
-| 89 | `function` | `full_commands` | docstring | The release gate: whole suite under coverage with the 90% floor. |
-| 94 | `function` | `docs_commands` | docstring | Documentation checks: relative links, then the doc-contract tests. |
-| 102 | `function` | `chain_commands` | docstring | The convergent artifact chain; `full` and `render` read its tree. |
-| 107 | `function` | `render_commands` | docstring | The canonical manuscript PDF render. |
-| 112 | `function` | `gnn_commands` | docstring | Conformance and parser tests, executed against the pinned checkout. |
-| 127 | `function` | `_git` | docstring | Run one Git command against a checkout, with stdin closed. |
-| 138 | `function` | `_pin_usable` | docstring | Whether a checkout supplies the pinned parser, interpreter, and commit. |
-| 150 | `function` | `_provision` | docstring | Fetch exactly the pinned release into `root` and install parser deps. |
-| 180 | `function` | `ensure_gnn_checkout` | docstring | Select the pinned upstream checkout, provisioning it when nothing usable exists. |
-| 209 | `function` | `_report_pin` | docstring | Print the resolved pin and, under GitHub Actions, add it to the summary. |
-| 220 | `function` | `run_commands` | docstring | Run one arm's commands in order, stopping at the first non-zero exit. |
-| 233 | `function` | `run_arm` | docstring | Dispatch one arm by name. |
-| 251 | `function` | `_display` | docstring | A command as a reader would type it: `python`, project-relative paths. |
-| 257 | `function` | `arm_table` | docstring | One documentation row per arm, listing the argv it runs. |
-| 272 | `function` | `main` | inventory fallback | Inventory fallback for function `main` defined at `scripts/gate.py:272`. |
+| 68 | `function` | `_python` | docstring | The interpreter running this gate, so every arm shares one environment. |
+| 73 | `function` | `_upstream` | docstring | Checkout selection and conformance support, imported only by the `gnn` arms. |
+| 83 | `function` | `lint_commands` | docstring | Static checks: ruff, then a byte-compile of the shipped trees. |
+| 91 | `function` | `fast_commands` | docstring | The tightest documented edit loop (no coverage, no slow lanes). |
+| 96 | `function` | `full_commands` | docstring | The release gate: whole suite under coverage with the 90% floor. |
+| 101 | `function` | `docs_commands` | docstring | Documentation checks: relative links, then the doc-contract tests. |
+| 109 | `function` | `chain_commands` | docstring | The convergent artifact chain; `full` and `render` read its tree. |
+| 114 | `function` | `render_commands` | docstring | The canonical manuscript PDF render. |
+| 119 | `function` | `gnn_commands` | docstring | Conformance and parser tests, executed against the pinned checkout. |
+| 134 | `function` | `_git` | docstring | Run one Git command against a checkout, with stdin closed. |
+| 145 | `function` | `_pin_usable` | docstring | Whether a checkout supplies the pinned parser, interpreter, and commit. |
+| 157 | `function` | `_provision` | docstring | Fetch exactly the pinned release into `root` and install parser deps. |
+| 187 | `function` | `_read_bootstrap_pin` | docstring | Read the pin fields the arm needs before a pinned environment exists. |
+| 218 | `function` | `ensure_gnn_checkout` | docstring | Select the pinned upstream checkout, provisioning it when nothing usable exists. |
+| 243 | `function` | `_report_pin` | docstring | Print the resolved pin and, under GitHub Actions, add it to the summary. |
+| 256 | `function` | `reader_command` | docstring | The estate's shared importer reader, run against this checkout. |
+| 273 | `function` | `run_reader` | docstring | Run `gnn.importers` from the pinned revision, in the pinned environment. |
+| 304 | `function` | `run_commands` | docstring | Run one arm's commands in order, stopping at the first non-zero exit. |
+| 317 | `function` | `run_arm` | docstring | Dispatch one arm by name. |
+| 341 | `function` | `_display` | docstring | A command as a reader would type it: `python`, project-relative paths. |
+| 349 | `function` | `arm_table` | docstring | One documentation row per arm, listing the argv it runs. |
+| 368 | `function` | `main` | inventory fallback | Inventory fallback for function `main` defined at `scripts/gate.py:368`. |
 
 ## `scripts/generate_figures.py`
 

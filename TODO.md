@@ -40,13 +40,15 @@ version-/DOI-consistent (v1.0.2).
 The following were genuinely fixed in source/tests/metadata during the 2026-08-01
 red-team pass. They no longer need open roadmap rows.
 
-- **GNN upstream custody and conformance (2026-11-01)** — `gnn/upstream.json`
-  now pins the canonical Generalized_Notation_Notation release (v5.0.3, commit
-  `8f293d9ba810e6eda5c09842d9c7ed9ffa5f92c1`), and
+- **GNN upstream custody and conformance (2026-11-12)** — `gnn/upstream.json`
+  pins the canonical Generalized_Notation_Notation release (v5.1.0, commit
+  `75c834bd8519dc7b5adc4d24f16bf393cfd1ecdf`; previously v5.0.3 at
+  `8f293d9ba810e6eda5c09842d9c7ed9ffa5f92c1`), the `gnn` arm validates it with
+  the estate's shared reader `gnn.importers` (GNN-FEP cutover), and
   `tests/test_gnn_upstream_conformance.py` requires digest equality between the
   project-owned parser and the pinned upstream parser (run out-of-process with
   the pinned commit's `src/gnn` extracted onto `PYTHONPATH`, with a
-  spaced-heading mutant as the non-vacuity control). The shipped specs now use
+  doubled-space-heading mutant as the non-vacuity control). The shipped specs now use
   the canonical `## ActInfOntologyAnnotation` heading and carry
   `ModelAnnotation` / `Time` / `Footer` sections; the round-trip writer emits
   the canonical heading too. Evidence: `uv run python -m pytest
