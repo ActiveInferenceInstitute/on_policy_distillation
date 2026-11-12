@@ -11,7 +11,7 @@ deepen canonical tracks such as `provenance`, `replay_matrix`, `sensitivity`,
 `causal_ablation`, `artifact_license`, and `release_notes` rather than adding
 `_vN` siblings.
 
-Status: ACTIVE — sustainable maintenance model | Owner: DAF | Last reviewed: 2026-08-02
+Status: ACTIVE — sustainable maintenance model | Owner: DAF | Last reviewed: 2026-11-12
 
 ## Current baseline
 
@@ -32,13 +32,15 @@ version-/DOI-consistent (v1.0.2).
 > integration-audit gate hard-requires publish-time `transmission_*.png` bookend
 > images that no script in this standalone repo produces, so a totally fresh
 > `output/` cannot converge `validate_outputs`/`z_generate_manuscript_variables`.
-> This second gap is scoped as **MAJOR `OPD-CLEAN-CHECKOUT-1`** below. A stale
-> red `validation_report.json` can additionally mask the fixed point; see that item.
+> This second gap was **MAJOR `OPD-CLEAN-CHECKOUT-1`** and is closed (see
+> "Previously-scoped Majors" below). A stale red `validation_report.json` can
+> still mask the fixed point: run the `chain` arm rather than reading one.
 
 ## Completed / Closed (this pass)
 
-The following were genuinely fixed in source/tests/metadata during the 2026-08-01
-red-team pass. They no longer need open roadmap rows.
+The following were genuinely fixed in source/tests/metadata across the 2026-08-01
+red-team pass and the later estate and dependency passes. They no longer need
+open roadmap rows.
 
 - **GNN upstream custody and conformance (2026-11-12)** — `gnn/upstream.json`
   pins the canonical Generalized_Notation_Notation release (v5.1.0, commit
@@ -51,8 +53,24 @@ red-team pass. They no longer need open roadmap rows.
   doubled-space-heading mutant as the non-vacuity control). The shipped specs now use
   the canonical `## ActInfOntologyAnnotation` heading and carry
   `ModelAnnotation` / `Time` / `Footer` sections; the round-trip writer emits
-  the canonical heading too. Evidence: `uv run python -m pytest
-  tests/test_gnn_upstream_conformance.py tests/test_gnn.py -q`. MINOR.
+  the canonical heading too. Evidence: `uv run --extra dev python scripts/gate.py gnn`
+  (`0745938`, #21; the pin pointer is recorded in `.github/GNN.md`). MINOR.
+
+- **`inferactively-pymdp` pin (2026-11-12)** — `pyproject.toml` pins
+  `inferactively-pymdp==1.0.5` (from 1.0.4) and `uv.lock` records the 1.0.5
+  sdist/wheel hashes; `pymdp.yaml` carries runtime planner settings only, so
+  this is the single live version literal, and `src/simulation/pymdp_runtime.py`
+  reads the installed version from package metadata at run time. #25 records
+  byte-identical pymdp-derived artifacts and a warning-free
+  `pymdp_runtime_diagnostics.json` under the new pin. Evidence:
+  `pyproject.toml`, `uv.lock` (`4e1195d`, #25). MINOR.
+
+- **Single gate entry point (2026-11-12)** — `scripts/gate.py` owns every
+  check's argv (`lint`, `fast`, `full`, `docs`, `gnn`, `chain`, `render`, `all`)
+  and CI calls those arms instead of restating commands, so the command this
+  file quotes and the command CI runs cannot drift; `--list` prints each arm's
+  argv. Evidence: `uv run --extra dev python scripts/gate.py --list`
+  (`258e86a`, #20). MINOR.
 
 - **Pipeline ordering** — `generate_firstprinciples.py` now runs after
   `generate_toy_sweep_tracks.py` in both `src/artifact_contracts.py`
@@ -259,10 +277,37 @@ Severity guide: **Minor** = typo / broken link / wrong path / formatting;
 - Full test suite, Lean `lake build`, and PDF render not run this pass (no
   code touched; only docs + metadata). Targeted doc-contract tests pass — see
   `REVIEW_LOG_2026-08-02.md`.
-- `OPD-CLEAN-CHECKOUT-1` residual stands (code-side; a fresh `output/` must be
-  regenerated before the pipeline is green).
+- The gitignored `output/` tree is still not committed, so any check that reads
+  it must first run the `chain` arm (`python scripts/gate.py chain`);
+  `OPD-CLEAN-CHECKOUT-1` itself is closed above.
+
+## Docs arm on a clean checkout (found 2026-11-12, open)
+
+`python scripts/gate.py docs` fails on a tree without `output/`: nine tracked
+documents link to the generated root — `docs/architecture/AGENTS.md:5`,
+`docs/architecture/README.md:21`, `docs/development/AGENTS.md:12`,
+`docs/development/README.md:39`, `docs/models/AGENTS.md:6`,
+`docs/reference/AGENTS.md:13`, `docs/reproducibility/AGENTS.md:13`,
+`docs/reproducibility/README.md:36`, `docs/reproducibility/artifacts.md:3` —
+and `output/` is gitignored, so it does not exist until the `chain` arm runs.
+
+- **Cause:** `scripts/check_docs_links.py` skips targets under
+  `GENERATED_PREFIXES`, which lists `"output/"`, but the resolved relative path
+  of the directory link itself is `"output"` with no trailing slash, so
+  `is_checkable` returns `True` for it and `broken_links` reports it missing.
+  CI runs `docs` before `chain` in the same job (`.github/workflows/ci.yml`),
+  so a clean runner fails the docs arm before anything generates `output/`.
+- **Fix:** compare the first path part against the generated roots (or test
+  `relative.as_posix() + "/"`), and add a negative-control test that a link to
+  the generated root is skipped on a tree without `output/`. Owner:
+  maintainers; not blocked, kept out of this docs-only refresh.
 
 ## Active roadmap
+
+All four rows remain open, and each waits on something outside the committed
+code: Mathlib for the real-valued Lean identity (the toolchain is bare lean4
+today), an idle host for five consecutive soak runs, and submission time for the
+two figure rows. Owner: DAF.
 
 | ID | Area | Remaining improvement | Proving artifact | Gate or predicate | Negative control |
 | --- | --- | --- | --- | --- | --- |
@@ -318,8 +363,8 @@ direction, not as work to start unilaterally here.
 
 1. Keep this roadmap limited to remaining work; completed live tracks belong in
    README, AGENTS, registries, generated outputs, and tests.
-2. Resolve `OPD-CLEAN-CHECKOUT-1` (decide transmission-bookend ownership) so the
-   documented `run_full_chain.py` genuinely goes green from a clean `output/`.
+2. Regenerate `output/` with the `chain` arm before trusting any gate that reads
+   it; `OPD-CLEAN-CHECKOUT-1` is closed, so a clean checkout now converges.
 3. Deepen canonical semantic/dependency/provenance/evidence-field rows before
    adding another live track.
 4. Prefer finite toy evidence, negative controls, and typed claim predicates
