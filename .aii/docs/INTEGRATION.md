@@ -24,7 +24,7 @@
 | Dashboard | `true` |
 | Sync policy | `pull` |
 | Registries | — |
-| Tags | policy, distillation, inference, python, on-policy-distillation, active-inference, pymdp, research |
+| Tags | on-policy-distillation, active-inference, pymdp, research |
 
 ## Ecosystem relations
 

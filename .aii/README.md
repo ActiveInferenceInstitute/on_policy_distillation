@@ -1,12 +1,65 @@
-# active_inference_on_policy_distillation (`.aii` sidecar)
+# .aii — InstituteOS sidecar
 
-InstituteOS metadata sidecar for this repository. It holds machine-readable
-project metadata (`config.yaml`) consumed by InstituteOS tooling; it is not part
-of the research pipeline, manuscript, or test surface. Keep only non-code,
-reproducibility-neutral metadata here — do not move source, tests, or generated
-artifacts into this directory.
+This folder is the committed [InstituteOS](https://github.com/ActiveInferenceInstitute/InstituteOS)
+sidecar for **`ActiveInferenceInstitute/on_policy_distillation`**. It records curated institutional metadata that the GitHub
+API cannot provide — identity, category, maturity, ecosystem relations, key artifacts,
+provenance, and portable tasks — so InstituteOS can federate a unified view across
+Institute repositories without touching this project's own content. The schema is
+`aii-sidecar/v1`.
 
-The folder also carries [`readiness.json`](readiness.json): this repository's
-tier, baseline commit and waivers for the organization's agent-readiness
-standard. It is read by that standard's checker and is not part of the research
-pipeline, manuscript, or test surface.
+## Contents
+
+| File | Purpose |
+| --- | --- |
+| [`config.yaml`](config.yaml) | Machine-readable metadata; the single source of truth. |
+| [`readiness.json`](readiness.json) | Declared tier, baseline commit, and waivers for the AII readiness standard. |
+| [`docs/`](docs/README.md) | Sidecar documents: the [`README.md`](docs/README.md) · [`AGENTS.md`](docs/AGENTS.md) folder guides, and [`INTEGRATION.md`](docs/INTEGRATION.md) — how this repository is federated, validated, and operated through InstituteOS. |
+| [`README.md`](README.md) · [`AGENTS.md`](AGENTS.md) | Human and agent guidance for this folder. |
+
+## Repository profile
+
+| Field | Value |
+| --- | --- |
+| Repository | `ActiveInferenceInstitute/on_policy_distillation` |
+| Category | `research-software` |
+| Status | `active` |
+| Maturity | `wip` |
+| License | `MIT` |
+| Default branch | `main` |
+| Homepage | — |
+| Tags | `on-policy-distillation`, `active-inference`, `pymdp`, `research` |
+
+## Capabilities
+
+- python-package
+- tested
+- documentation
+- dataset
+- ci
+- citation
+- manuscript-publication
+
+## Portable tasks
+
+| Task | Command | Working directory | Description |
+| --- | --- | --- | --- |
+| `test` | `uv run --extra dev python scripts/gate.py full` | `.` | Run the documented release-gate test suite with the coverage floor. |
+| `lint` | `uv run --extra dev python scripts/gate.py lint` | `.` | Run the Ruff lint arm (ruff plus a byte-compile). |
+
+## Links
+
+- **github:** https://github.com/ActiveInferenceInstitute/on_policy_distillation
+- **website:** https://www.activeinference.org
+
+## Validate
+
+The authoritative validator ships in the private `aii-platform` kernel:
+
+```bash
+python -m aii_platform.aii_sidecar.validate <repo> --completeness
+python -m aii_platform.aii_sidecar docs <repo> --overwrite
+python -m aii_platform.aii_sidecar.run <repo> --list
+```
+
+If the private environment is unavailable, review `config.yaml` as plain YAML and
+check that every declared path exists in the repository.
