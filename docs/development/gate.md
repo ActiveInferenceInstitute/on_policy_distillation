@@ -93,6 +93,15 @@ tripwire and reads the pin's values for its digest run; it no longer validates
 the pin's shape. `.github/GNN.md` names the pin path, the new revision, `ci.yml`
 and `release-gate`, which is what `--require-pointer` checks.
 
+No manuscript-variable change was needed. `scripts/z_generate_manuscript_variables.py`
+delegates to `hydrate_manuscript_fixed_point`, and the only GNN-derived variable
+it produces (`gnn_spec_version`) is parsed from the specification's
+`## GNNVersionAndFlags` header, not from the pin: no inline `gnn/upstream.json`
+read exists in the producer chain to replace with
+`gnn.importers.importer_variables`. After this change `scripts/gate.py` is the
+only Python file that reads the pin, and it reads three fields to locate the
+revision the reader then validates.
+
 The non-vacuity control was re-anchored rather than dropped: v5.1.0 collapses
 heading whitespace, so the previously spaced `## ActInf Ontology Annotation`
 mutant is now parsed upstream and would have been vacuous. The mutant is the
