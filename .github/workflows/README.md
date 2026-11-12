@@ -3,15 +3,18 @@
 `ci.yml` is the release gate. It runs on pushes to `main` and on every pull
 request, and it is the only workflow in this directory.
 
-The gate is deliberately one job: lock check, locked sync with the `dev` extra,
-byte-compile, the bounded artifact chain, and the release coverage gate. The
-suite reads generated artifacts, so the chain step is required on a clean
-checkout. `pandoc` is installed because the typography contract test renders the
-combined `.tex`.
+The gate is deliberately one job; its check steps invoke
+[`../../scripts/gate.py`](../../scripts/gate.py): one locked environment, then
+`lint`, `docs`, `gnn`, `chain`, and `full`. The suite reads generated artifacts,
+so the `chain` arm is required on a clean checkout. `pandoc` is installed because
+the typography contract test renders the combined `.tex`.
 
-Local equivalent (see the repository `README.md`):
+Local equivalent — the same arms, in the same order, in the same interpreter
+environment (`python scripts/gate.py --list` prints each arm's argv):
 
 ```bash
-uv run --extra dev python scripts/run_full_chain.py --max-passes 4
-uv run --extra dev python -m pytest tests/ --cov=src --cov-fail-under=90
+uv sync --locked --extra dev
+uv run --extra dev python scripts/gate.py all
 ```
+
+`all` is `lint, docs, gnn, chain, full`. The `render` arm is not part of CI.

@@ -33,28 +33,30 @@ This separation is what keeps the project copy-out-and-run standalone — see
 ## Type hints and docstrings
 
 - Public `src/` functions carry type hints; the project uses
-  `from __future__ import annotations` and targets `py310`.
+  `from __future__ import annotations` and targets `py311`.
 - Module and public-function docstrings state role and contract. Scripts open
   with a one-line purpose docstring and a `Usage:` block (see
   `run_tests_chunked.py`, `run_full_chain.py` for the house style).
 - Use nearby `WHY:` comments only for surprising local choices, per
   [`../../AGENTS.md`](../../AGENTS.md) — not as narration of obvious code.
 
-## ruff + mypy gates
+## Lint gate
 
 The project `[tool.ruff]` mirrors the template-root gate: `line-length = 120`,
-`select = ["E", "F"]`, `ignore = ["E741"]`, `target-version = "py310"`. Per-file
+`select = ["E", "F"]`, `ignore = ["E741"]`, `target-version = "py311"`. Per-file
 ignores match root semantics — `scripts/*` allow `E402`/`E501` (sys.path
 bootstrap before imports, long CLI strings), `tests/**` add `E712`,
 `src/**` allow `E501`, and `__init__.py` allows `F401` (re-exports).
 
 ```bash
-uvx ruff check src tests scripts          # mirrors the template-root gate
+uv run --extra dev python scripts/gate.py lint   # ruff + byte-compile of src/scripts/tests
 ```
 
-A bare `uvx ruff check src tests scripts` inside this project matches the root
-gate by design. mypy is run over the same source set in the template-root CI
-scope; keep public APIs typed so it stays green.
+The lint arm runs Ruff 0.17.4 from the project's locked `dev` environment,
+then byte-compiles the same trees. The project configures **no static type
+checker** — there is no `mypy` or `pyright` dependency, configuration, or CI
+step, and the gate has no `types` arm. Keep public APIs typed as part of
+their documented contract.
 
 ## Module size
 

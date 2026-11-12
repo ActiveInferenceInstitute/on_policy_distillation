@@ -172,11 +172,16 @@ Edit fragments only under [`manuscript/sections/imrad/`](manuscript/sections/imr
 
 ## Commands
 
+Every check is an arm of the gate entry point `scripts/gate.py`; `python
+scripts/gate.py --list` prints each arm's argv, and `docs/development/gate.md`
+records the arms and their measured wall times.
+
 ```bash
 uv sync --locked --extra dev
+uv run --extra dev python scripts/gate.py          # fast arm (default)
+uv run --extra dev python scripts/gate.py full     # release coverage gate
+uv run --extra dev python scripts/gate.py all      # the CI sequence
 uv run python scripts/compose_manuscript.py
-uv run --extra dev python -m pytest tests/ --cov=src --cov-fail-under=90
-uv run python scripts/validate_outputs.py
 ```
 
 ## Parent docs
@@ -195,7 +200,8 @@ converges it automatically. On loaded machines run tests via
 resource pressure. `--shuffle-seed N` shuffles test-file order
 deterministically (same seed = same order) for isolation soaks
 (AI-TEST-ISOLATION-1 chain B); a red shuffled run is a finding to report,
-never a seed to re-roll. Lint: `uvx ruff check src tests scripts` — the
+never a seed to re-roll. Lint: `uv run --extra dev python scripts/gate.py lint`
+(ruff over `src tests scripts`, then a byte-compile) — the
 project `pyproject.toml` carries a `[tool.ruff]` block mirroring the
 template root's E/F + line-length-120 semantics, so the bare in-project
 run matches the root gate.

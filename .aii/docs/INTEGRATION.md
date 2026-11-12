@@ -53,8 +53,8 @@
 
 | Task | Command | Working directory | Description |
 | --- | --- | --- | --- |
-| `test` | `uv run --extra dev python -m pytest tests/ --cov=src --cov-fail-under=90` | `.` | Run the documented release-gate test suite with the coverage floor. |
-| `lint` | `uvx ruff check src tests scripts` | `.` | Run the Ruff lint gate. |
+| `test` | `uv run --extra dev python scripts/gate.py full` | `.` | Run the documented release-gate test suite with the coverage floor. |
+| `lint` | `uv run --extra dev python scripts/gate.py lint` | `.` | Run the Ruff lint arm (ruff plus a byte-compile). |
 
 ## Validation
 

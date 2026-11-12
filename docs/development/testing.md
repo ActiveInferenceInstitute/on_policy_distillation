@@ -38,16 +38,16 @@ unregistered marker is an error). The marker contract is itself tested by
 
 The fast lanes (from [`../README.md`](../README.md)) trade coverage of slow
 paths for turnaround speed. They are *not* a substitute for the full gate.
+Every lane is an arm of the gate entry point [`../../scripts/gate.py`](../../scripts/gate.py);
+`python scripts/gate.py --list` prints the argv of each arm, so this page never
+restates a command.
 
 ```bash
-# tightest edit loop: no slow artifact writes, no expensive renders, no coverage
-uv run --extra dev python -m pytest tests/ -m "not artifact_slow and not render_slow" --no-cov
+# tightest edit loop (also the default arm): no slow artifact writes, no renders, no coverage
+uv run --extra dev python scripts/gate.py fast
 
-# wider lane: keeps render/compose checks, still no full fixed-point writes
-uv run --extra dev python -m pytest tests/ -m "not artifact_slow" --no-cov
-
-# authoritative gate: whole suite under coverage
-uv run python -m pytest tests -q
+# authoritative gate: whole suite under coverage with the 90% floor
+uv run --extra dev python scripts/gate.py full
 ```
 
 > The fast lane excludes tests that perform full fixed-point artifact writes or
@@ -70,8 +70,8 @@ nothing in the test path is faked (see
 `[tool.coverage.report]` sets `fail_under = 90` with `branch = true`,
 `source = ["src"]`, `show_missing = true`, and `precision = 2`; `[tool.coverage.run]`
 omits `tests/*` and `*/__init__.py`. The 90% floor applies to project `src/`
-and is enforced by the full gate (`uv run python -m pytest tests -q`). Do not
-quote a snapshot percentage in docs — quote the floor.
+and is enforced by the full arm (`uv run --extra dev python scripts/gate.py full`).
+Do not quote a snapshot percentage in docs — quote the floor.
 
 ## Chunked runner
 
