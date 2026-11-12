@@ -47,6 +47,23 @@ first_action_prob>loc:controlled_transition
 q_pi>belief_entropy:planning
 si_tree_nodes>q_pi:search_evidence
 
+## InitialParameterization
+
+# State priors (D) from `build_initial_state_priors`: the location prior is
+# deterministic at the centre (state 0); the reward location is uniform because
+# the trial start does not reveal which arm pays.
+loc={(1.0, 0.0, 0.0, 0.0, 0.0)}
+reward_loc={(0.5, 0.5)}
+
+# Likelihoods (A) and transitions (B) are pymdp's full `TMaze` matrices:
+# `obs_location` is the 5x5 identity, `obs_outcome` and `obs_cue` depend on the
+# reward location (cue_validity=0.95, dependent_outcomes=true), the location
+# transition is the adjacent T-maze walk, and the reward location never moves.
+# Preferences (C) from `build_preference_vectors`: outcome = (0.0, 2.0, -6.0),
+# cue = (0.0, -0.5, -0.5). Their shapes, dependencies and normalization
+# evidence are emitted to output/data/si_tmaze_model_matrices.json rather than
+# duplicated here.
+
 ## Time
 
 Dynamic

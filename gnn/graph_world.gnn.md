@@ -42,6 +42,17 @@ node>goal:goal_test
 node>trace_step:trace_emission
 goal>goal_reached:reachability_witness
 
+## InitialParameterization
+
+# Deterministic world: `src/simulation/graph_world.py:_graph_world_trace` fixes
+# the walk, so there are no fitted priors, likelihoods or transition
+# probabilities to declare. The initial state is node index 0 (`start`) of the
+# declared state block at step 0, where the goal test is false; the walk then
+# advances start -> cue -> choice -> goal with goal_probability step / 3. The
+# terminal `goal_reached` witness is emitted to
+# output/data/si_graph_world_summary.json, not declared as an initial value.
+goal={(0.0)}
+
 ## Time
 
 Dynamic

@@ -21,6 +21,26 @@ def test_parse_graph_world_gnn() -> None:
     assert model.has("node")
     assert model.ontology["goal_reached"] == "GraphWorldReachability"
     assert any(edge.label == "reachability_witness" for edge in model.connections)
+    assert model.variable("goal").value.ravel().tolist() == [0.0]
+    assert model.variable("goal_reached").value is None
+
+
+def test_spec_initial_parameterization_matches_model_builders() -> None:
+    """Declared values are the ones the builders set, not fitted or invented numbers."""
+    import numpy as np
+
+    from analytical.bernoulli_toy import ising_coupling, symmetric_mean_field_prior
+    from simulation.tmaze_model import build_initial_state_priors, build_tmaze_environment
+
+    toy = parse_gnn_file(TOY)
+    prior_e1, _ = symmetric_mean_field_prior()
+    assert np.array_equal(toy.variable("J").value, ising_coupling())
+    assert np.array_equal(np.ravel(toy.variable("E1").value), prior_e1)
+
+    tmaze = parse_gnn_file(TOY.parent / "si_tmaze.gnn.md")
+    d_loc, d_reward = build_initial_state_priors(build_tmaze_environment())
+    assert np.array_equal(np.ravel(tmaze.variable("loc").value), np.ravel(np.asarray(d_loc)))
+    assert np.array_equal(np.ravel(tmaze.variable("reward_loc").value), np.ravel(np.asarray(d_reward)))
 
 
 def test_concordance_holds_for_toy() -> None:
