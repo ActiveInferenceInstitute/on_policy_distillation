@@ -562,21 +562,21 @@ Total documented definitions: 1052
 | 85 | `function` | `UpstreamPin.parser_entry_point` | docstring | Return the pinned parser module and class, or raise when undeclared. |
 | 92 | `function` | `load_upstream_pin` | docstring | Read and validate the pinned upstream GNN release identity. |
 | 99 | `function` | `load_upstream_pin.unique` | inventory fallback | Inventory fallback for function `load_upstream_pin.unique` defined at `src/gnn/upstream.py:99`. |
-| 156 | `function` | `default_gnn_root` | docstring | The conventional sibling checkout of the upstream GNN repository. |
-| 161 | `function` | `resolve_gnn_root` | docstring | Resolve the upstream checkout root. |
-| 179 | `function` | `gnn_checkout_python` | docstring | The checkout-local interpreter used to execute the pinned parser. |
-| 184 | `function` | `checkout_available` | docstring | Whether the checkout supplies both the upstream parser source and its interpreter. |
-| 189 | `function` | `_normalize_version` | docstring | Normalize ``GNN v1.1`` / ``1.1`` / ``v1.1`` to ``1.1``. |
-| 196 | `function` | `_normalize_time` | docstring | Classify a ``## Time`` section body the way upstream does. |
-| 214 | `function` | `_normalize_dtype` | docstring | Normalize a declared dtype (``float`` / ``DataType.FLOAT`` / ``INTEGER``). |
-| 222 | `function` | `_normalized_param_text` | docstring | Text-normalize a ModelParameters value (sequences and comma lists included). |
-| 232 | `function` | `_normalize_direction` | docstring | Normalize a connection direction token (``directed`` / ``ConnectionType.DIRECTED``). |
-| 240 | `function` | `_normalized_edges` | docstring | Connection edges as comparable 4-tuples, with the direction token normalized. |
-| 254 | `function` | `spec_digest` | docstring | Normalize a project-parsed :class:`~gnn.model.GnnModel` into a conformance digest. |
-| 287 | `function` | `normalize_upstream_digest` | docstring | Normalize the upstream driver's JSON digest into the project digest shape. |
-| 347 | `function` | `_parameters_differ` | inventory fallback | Inventory fallback for function `_parameters_differ` defined at `src/gnn/upstream.py:347`. |
-| 355 | `function` | `_mapping_field` | docstring | Read a digest field that must be a mapping. |
-| 367 | `function` | `digest_divergences` | docstring | Compare two conformance digests and describe every divergence. |
+| 158 | `function` | `default_gnn_root` | docstring | The conventional sibling checkout of the upstream GNN repository. |
+| 163 | `function` | `resolve_gnn_root` | docstring | Resolve the upstream checkout root. |
+| 181 | `function` | `gnn_checkout_python` | docstring | The checkout-local interpreter used to execute the pinned parser. |
+| 186 | `function` | `checkout_available` | docstring | Whether the checkout supplies both the upstream parser source and its interpreter. |
+| 191 | `function` | `_normalize_version` | docstring | Normalize ``GNN v1.1`` / ``1.1`` / ``v1.1`` to ``1.1``. |
+| 198 | `function` | `_normalize_time` | docstring | Classify a ``## Time`` section body the way upstream does. |
+| 216 | `function` | `_normalize_dtype` | docstring | Normalize a declared dtype (``float`` / ``DataType.FLOAT`` / ``INTEGER``). |
+| 224 | `function` | `_normalized_param_text` | docstring | Text-normalize a ModelParameters value (sequences and comma lists included). |
+| 234 | `function` | `_normalize_direction` | docstring | Normalize a connection direction token (``directed`` / ``ConnectionType.DIRECTED``). |
+| 242 | `function` | `_normalized_edges` | docstring | Connection edges as comparable 4-tuples, with the direction token normalized. |
+| 256 | `function` | `spec_digest` | docstring | Normalize a project-parsed :class:`~gnn.model.GnnModel` into a conformance digest. |
+| 289 | `function` | `normalize_upstream_digest` | docstring | Normalize the upstream driver's JSON digest into the project digest shape. |
+| 349 | `function` | `_parameters_differ` | inventory fallback | Inventory fallback for function `_parameters_differ` defined at `src/gnn/upstream.py:349`. |
+| 357 | `function` | `_mapping_field` | docstring | Read a digest field that must be a mapping. |
+| 369 | `function` | `digest_divergences` | docstring | Compare two conformance digests and describe every divergence. |
 
 ## `src/manuscript/hydrate.py`
 
@@ -603,11 +603,11 @@ Total documented definitions: 1052
 
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
-| 19 | `function` | `_tex_escape` | docstring | Escape the LaTeX special characters that occur in metadata strings. |
-| 36 | `function` | `build_cover_tex` | docstring | Build a standalone title page: title, subtitle, author block, graphical abstract. |
-| 95 | `function` | `_combine_manuscript_markdown` | docstring | Compose + hydrate the sheaf sections into the combined manuscript markdown. |
-| 124 | `function` | `render_combined_tex` | docstring | Render the combined manuscript to standalone LaTeX (`_combined_manuscript.tex`). |
-| 164 | `function` | `render_pdf` | docstring | Compose, hydrate, and render the canonical manuscript PDF. |
+| 21 | `function` | `_tex_escape` | docstring | Escape the LaTeX special characters that occur in metadata strings. |
+| 38 | `function` | `build_cover_tex` | docstring | Build a standalone title page: title, subtitle, author block, graphical abstract. |
+| 97 | `function` | `_combine_manuscript_markdown` | docstring | Compose + hydrate the sheaf sections into the combined manuscript markdown. |
+| 126 | `function` | `render_combined_tex` | docstring | Render the combined manuscript to standalone LaTeX (`_combined_manuscript.tex`). |
+| 166 | `function` | `render_pdf` | docstring | Compose, hydrate, and render the canonical manuscript PDF. |
 
 ## `src/manuscript/render_helpers.py`
 

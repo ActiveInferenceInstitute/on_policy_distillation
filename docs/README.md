@@ -13,6 +13,9 @@ Start with the project root [`README.md`](../README.md) for the overview and
 
 ## Map
 
+For a flat list of every maintained page under `docs/`, including local
+instructions and section indexes, use the [documentation index](documentation-index.md).
+
 | Area | Pages | Read when you need |
 | --- | --- | --- |
 | [`architecture/`](architecture/README.md) | [overview](architecture/overview.md) · [pipeline](architecture/pipeline.md) · [sheaf compose contract](architecture/sheaf-compose-contract.md) · [gates & validation](architecture/gates-and-validation.md) · [formal layers](architecture/formal-layers.md) | how the system fits together; how a number travels generator → artifact → token → PDF; what the Lean/GNN/ontology layers do and do not prove |

@@ -6,6 +6,8 @@ assembly are testable source code, while the script name remains stable.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import shutil
 import subprocess
 import sys
@@ -230,7 +232,36 @@ def render_pdf(project_root: Path) -> int:
     if result.returncode != 0:
         print("error: pandoc render failed", file=sys.stderr)
         return result.returncode
-    print(f"canonical PDF: {pdf_out} ({pdf_out.stat().st_size} bytes)")
+    size_bytes = pdf_out.stat().st_size
+    print(f"canonical PDF: {pdf_out} ({size_bytes} bytes)")
+    receipt_path = root / "docs" / "reproducibility" / "render-receipt.json"
+    versions = {}
+    for tool in ("pandoc", "xelatex", *([crossref] if crossref else [])):
+        version = subprocess.run(
+            [tool, "--version"], cwd=root, check=True, capture_output=True, text=True
+        )
+        versions[Path(tool).name] = version.stdout.strip()
+    commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=root, check=True, capture_output=True, text=True
+    ).stdout.strip()
+    source_changes = subprocess.run(
+        ["git", "status", "--porcelain", "--untracked-files=no", "--", ".",
+         f":(exclude){receipt_path.relative_to(root).as_posix()}"],
+        cwd=root, check=True, capture_output=True, text=True,
+    ).stdout.splitlines()
+    with pdf_out.open("rb") as handle:
+        digest = hashlib.file_digest(handle, "sha256").hexdigest()
+    receipt = {
+        "pdf_path": pdf_out.relative_to(root).as_posix(),
+        "size_bytes": size_bytes,
+        "sha256": digest,
+        "source_commit": commit,
+        "source_worktree_changes": source_changes,
+        "renderer_versions": versions,
+    }
+    receipt_path.parent.mkdir(parents=True, exist_ok=True)
+    receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(f"render receipt: {receipt_path}")
     return 0
 
 

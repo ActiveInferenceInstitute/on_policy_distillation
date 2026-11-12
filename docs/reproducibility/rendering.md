@@ -24,6 +24,11 @@ uv run --extra dev python scripts/gate.py render
 artifact tree the `chain` arm builds, `pandoc`, and `xelatex` on `PATH`
 (`python scripts/gate.py --list` prints both arms' argv).
 
+A successful render also refreshes the tracked
+[`render-receipt.json`](render-receipt.json): PDF path, exact bytes, SHA-256,
+source commit, tracked worktree changes, and renderer versions. Commit this
+receipt rather than an approximate size or an ignored PDF.
+
 Typography is read from project-owned sources: margins from
 [`../../manuscript/config.yaml`](../../manuscript/config.yaml)
 (`metadata.geometry`), the dense 9 pt body from

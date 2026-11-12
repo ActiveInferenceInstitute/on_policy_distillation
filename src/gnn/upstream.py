@@ -42,7 +42,7 @@ PIN_RELATIVE_PATH = "gnn/upstream.json"
 #: Checkout-relative path of the upstream markdown parser module.
 PARSER_RELATIVE_PATH = "src/gnn/parsers/markdown_parser.py"
 
-_CORE_PIN_KEYS = ("repository", "commit", "version", "date_recorded")
+_CORE_PIN_KEYS = ("schema", "repository", "commit", "version", "date_recorded")
 _OPTIONAL_PIN_KEYS = ("tag", "parser_module", "parser_class")
 _TAG_RE = re.compile(r"v\d+\.\d+\.\d+")
 _VERSION_RE = re.compile(r"\d+\.\d+\.\d+")
@@ -118,6 +118,8 @@ def load_upstream_pin(path: Path) -> UpstreamPin:
     declared = {key: data[key] for key in (*_CORE_PIN_KEYS, *_OPTIONAL_PIN_KEYS) if key in data}
     if not all(isinstance(value, str) for value in declared.values()):
         raise UpstreamPinError("upstream pin fields must be strings")
+    if data["schema"] != "gnn-importer-pin/v1":
+        raise UpstreamPinError("upstream pin schema must be gnn-importer-pin/v1")
     if not str(data["repository"]).startswith("https://github.com/"):
         raise UpstreamPinError("upstream repository must be an HTTPS GitHub URL")
     if not _COMMIT_RE.fullmatch(str(data["commit"])):

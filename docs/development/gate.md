@@ -68,7 +68,7 @@ Before means the directly invoked existing command; after means the arm wrapper.
 | `docs` | — | 2.6 | New link checker plus then-current documentation tests; no pre-existing link-check command. |
 | `gnn` | — | 14.6 | New standalone arm: fresh provisioning plus 38 passing tests. No separate pre-change local arm. |
 | `chain` | 172.1 | 245.8 | Both green, zero convergence passes. |
-| `render` | 70.9 | 97.5 | Both exit 0 and produce the canonical PDF (~7.4 MB). |
+| `render` | 70.9 | 97.5 | Historical timing observations; current exact PDF identity and renderer versions are in the [tracked render receipt](../reproducibility/render-receipt.json). |
 | `full` | incomplete | not run | Attempt stopped after exceeding the requested ~10-minute bound; no completed coverage result. |
 
 The interrupted full command was:
@@ -108,8 +108,11 @@ Markdown under `manuscript/`, variables produced into
 `output/data/manuscript_variables.json`, a validated `figures.yaml` registry,
 and one authoritative `scripts/render_pdf.py` facade. No template or GNN
 registry changes were needed. Both direct and arm renders succeeded with
-pandoc, pandoc-crossref, and XeLaTeX (TeX Live 2026). Two nonfatal oversized-float
-warnings remain (approximately 65 pt); no PDF placeholder or fallback was used.
+pandoc, pandoc-crossref, and XeLaTeX; the current artifact path, exact bytes,
+SHA-256, source commit/worktree state, and tool version output are preserved in
+the [tracked render receipt](../reproducibility/render-receipt.json).
+Two nonfatal oversized-float warnings remain (approximately 65 pt); no PDF
+placeholder or fallback was used.
 
 ## Final bounded verification
 

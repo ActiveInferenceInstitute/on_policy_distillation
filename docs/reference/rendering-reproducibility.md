@@ -33,6 +33,15 @@ claim pass; regenerate the producer that owns the artifact.
 - Template-root `output/working/active_inference_on_policy_distillation/**` is
   copied from the project-local `output/**` by the root pipeline.
 
+After a successful standalone PDF render, `src/manuscript/pdf_render.py` writes
+[`../reproducibility/render-receipt.json`](../reproducibility/render-receipt.json)
+outside ignored `output/`. Commit that receipt with render evidence: it records
+the repository-relative PDF path, exact byte count, SHA-256, source `HEAD`, and
+the version output of pandoc, XeLaTeX, and pandoc-crossref when used. The
+`source_worktree_changes` field records tracked changes at render time (excluding
+the receipt itself), so `source_commit` is not misread as a clean-tree attestation.
+The PDF itself remains ignored; a later render replaces the receipt.
+
 ## Single hydration boundary
 
 The single hydration boundary is `scripts/z_generate_manuscript_variables.py`.

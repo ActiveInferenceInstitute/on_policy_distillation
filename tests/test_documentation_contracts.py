@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from visualizations.figure_registry import load_figure_registry
@@ -60,6 +61,19 @@ def test_meaningful_project_dirs_have_agents_and_readme(project_root: Path) -> N
                 missing.append(f"{prefix}{filename}")
 
     assert not missing, "missing local documentation contracts: " + ", ".join(missing)
+
+
+def test_flat_documentation_index_is_complete(project_root: Path) -> None:
+    docs = project_root / "docs"
+    index = docs / "documentation-index.md"
+    assert "(documentation-index.md)" in (docs / "README.md").read_text(encoding="utf-8")
+    linked = re.findall(r"\]\(([^)]+\.md)\)", index.read_text(encoding="utf-8"))
+    expected = {path.relative_to(docs).as_posix() for path in docs.rglob("*.md")}
+    assert len(linked) == len(set(linked)), "duplicate documentation index entries"
+    assert set(linked) == expected, (
+        f"documentation index missing {sorted(expected - set(linked))}; "
+        f"unexpected {sorted(set(linked) - expected)}"
+    )
 
 
 def test_lean_docs_and_config_use_current_module_name(project_root: Path) -> None:

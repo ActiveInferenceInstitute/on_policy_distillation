@@ -11,10 +11,14 @@ import path without exec_module gymnastics on the script.
 
 from __future__ import annotations
 
+import hashlib
+import json
+import subprocess
 import sys
 from types import SimpleNamespace
 from pathlib import Path
 
+import pytest
 import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -158,20 +162,33 @@ def _prepare_pdf_project(tmp_path: Path) -> Path:
     return resolved
 
 
-def test_render_pdf_builds_pandoc_command_without_shelling_out(monkeypatch, tmp_path: Path) -> None:
+@pytest.mark.render_slow
+def test_render_pdf_records_receipt_and_builds_pandoc_command(monkeypatch, tmp_path: Path) -> None:
     resolved = _prepare_pdf_project(tmp_path)
     calls: dict[str, object] = {}
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    subprocess.run(
+        ["git", "-c", "user.name=Receipt Test", "-c", "user.email=receipt@example.invalid",
+         "commit", "--allow-empty", "-qm", "receipt source"],
+        cwd=tmp_path, check=True,
+    )
+    source_commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=tmp_path, check=True, capture_output=True, text=True
+    ).stdout.strip()
+    run = subprocess.run
+    which = pdf_render.shutil.which
 
     import manuscript.hydrate
     import manuscript.sheaf
     import manuscript.variables
 
-    monkeypatch.setattr(pdf_render.shutil, "which", lambda tool: f"/bin/{tool}")
     monkeypatch.setattr(manuscript.sheaf, "compose_all_sections", lambda *args, **kwargs: None)
     monkeypatch.setattr(manuscript.variables, "generate_variables", lambda *args, **kwargs: {"x": 1})
     monkeypatch.setattr(manuscript.hydrate, "write_resolved_manuscript", lambda *args, **kwargs: resolved)
 
-    def fake_run(cmd: list[str], cwd: Path) -> SimpleNamespace:
+    def fake_run(cmd: list[str], cwd: Path, **kwargs) -> SimpleNamespace:
+        if cmd[0] != "pandoc" or "--version" in cmd:
+            return run(cmd, cwd=cwd, **kwargs)
         calls["cmd"] = cmd
         calls["cwd"] = cwd
         pdf_out = Path(cmd[cmd.index("-o") + 1])
@@ -185,8 +202,11 @@ def test_render_pdf_builds_pandoc_command_without_shelling_out(monkeypatch, tmp_
     assert isinstance(cmd, list)
     assert Path(cmd[1]).name == "_combined_manuscript.md"
     assert "--pdf-engine=xelatex" in cmd
-    assert "--filter" in cmd
-    assert "/bin/pandoc-crossref" in cmd
+    if which("pandoc-crossref"):
+        assert "--filter" in cmd
+        assert which("pandoc-crossref") in cmd
+    else:
+        assert "--filter" not in cmd
     assert "--citeproc" in cmd
     assert "--bibliography" in cmd
     assert "geometry:margin=0.6in" in cmd
@@ -195,6 +215,16 @@ def test_render_pdf_builds_pandoc_command_without_shelling_out(monkeypatch, tmp_
     legacy = tmp_path / "output" / "pdf" / "_standalone_combined.md"
     assert combined.read_text(encoding="utf-8") == "main\n\ncoverage"
     assert legacy.read_text(encoding="utf-8") == combined.read_text(encoding="utf-8")
+    receipt_path = tmp_path / "docs" / "reproducibility" / "render-receipt.json"
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    assert receipt["pdf_path"] == "output/pdf/on_policy_distillation.pdf"
+    assert receipt["size_bytes"] == 4
+    assert receipt["sha256"] == hashlib.sha256(b"%PDF").hexdigest()
+    assert receipt["source_commit"] == source_commit
+    assert receipt["source_worktree_changes"] == []
+    expected_tools = {"pandoc", "xelatex"} | ({"pandoc-crossref"} if which("pandoc-crossref") else set())
+    assert expected_tools == set(receipt["renderer_versions"])
+    assert all(receipt["renderer_versions"].values())
 
 
 def test_render_pdf_returns_pandoc_failure(monkeypatch, tmp_path: Path, capsys) -> None:
@@ -212,3 +242,4 @@ def test_render_pdf_returns_pandoc_failure(monkeypatch, tmp_path: Path, capsys) 
 
     assert pdf_render.render_pdf(tmp_path) == 7
     assert "pandoc render failed" in capsys.readouterr().err
+    assert not (tmp_path / "docs" / "reproducibility" / "render-receipt.json").exists()
