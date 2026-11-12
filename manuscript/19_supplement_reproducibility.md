@@ -1,3 +1,9 @@
+```{=latex}
+\phantomsection
+\addcontentsline{toc}{section}{Appendix}
+\section*{Appendix}
+```
+
 # Supplementary material: reproducibility methodology {#sec:methods_sheaf}
 
 <!-- sheaf-track:prose -->

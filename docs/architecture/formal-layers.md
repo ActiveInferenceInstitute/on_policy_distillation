@@ -67,13 +67,15 @@ pinned constants: `BERNOULLI_SYMBOL_MAP` / `BERNOULLI_EXPECTED_TERMS` in
 specification language itself: it records the upstream repository, the exact
 release commit, the upstream `version` declared by that revision's
 `pyproject.toml`, and the date the pin was recorded, with the release `tag` and
-the parser entry point as optional convenience fields. The parser entry point is
-exercised by
+the parser entry point as optional convenience fields. The pin, the pointer and
+the specifications are validated by the estate's shared reader,
+`gnn.importers`, which the `gnn` gate arm runs from the pinned revision. The
+parser entry point is exercised by
 [`tests/test_gnn_upstream_conformance.py`](../../tests/test_gnn_upstream_conformance.py).
 That test runs the pinned upstream parser — with the pinned commit's `src/gnn`
 extracted from Git onto `PYTHONPATH`, so the bytes under test are the release's,
 not the live tree's — against every shipped spec and requires digest equality
-with the project parser; the spaced-heading mutant is the non-vacuity control.
+with the project parser; the doubled-space-heading mutant is the non-vacuity control.
 
 `generate_formal_interop_tracks.py` writes `gnn_roundtrip_report.json` (the
 parse → payload → re-emit → re-parse losslessness check) and

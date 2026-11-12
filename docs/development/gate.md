@@ -18,7 +18,7 @@ uv run --extra dev python scripts/gate.py all      # CI sequence (includes the l
 | `fast` (default) | Existing `not artifact_slow and not render_slow` selection; no coverage. |
 | `full` | Whole-suite coverage gate, unchanged 90% floor. Requires generated artifacts and selects the pinned GNN checkout explicitly. |
 | `docs` | Relative Markdown path checks and documentation-contract tests. |
-| `gnn` | Provision/select the upstream pin, then run the conformance and project-parser tests. |
+| `gnn` | Provision/select the upstream pin, run the shared reader (`gnn.importers`) from that revision, then run the conformance and project-parser tests. |
 | `chain` | Existing convergent artifact runner, bounded to four convergence passes. |
 | `render` | Existing canonical `scripts/render_pdf.py` command. Requires generated artifacts, `pandoc`, and `xelatex`. |
 | `all` | `lint`, `docs`, `gnn`, `chain`, `full`, sequentially. Rendering remains separate. |
@@ -35,8 +35,8 @@ workflow. No contained/sibling repository is modified.
 ## GNN selection and CI
 
 The canonical pin is [`gnn/upstream.json`](../../gnn/upstream.json), schema
-`gnn-importer-pin/v1`: v5.0.3, commit
-`8f293d9ba810e6eda5c09842d9c7ed9ffa5f92c1`. See
+`gnn-importer-pin/v1`: v5.1.0, commit
+`75c834bd8519dc7b5adc4d24f16bf393cfd1ecdf`. See
 [`.github/GNN.md`](../../.github/GNN.md) for the exact parser and shipped models.
 
 An explicit `ON_POLICY_DISTILLATION_GNN_ROOT` selection is final; an empty value
@@ -53,6 +53,88 @@ invokes the arms. The redundant `uv lock --check`, inline provisioning/JSON
 parsing, and separate version-report step were removed. The arm supplies the
 version summary. The workflow still uses pinned `astral-sh/setup-uv`, not the
 estate `setup-python-uv` composite action.
+
+## GNN-FEP cutover — adopted
+
+The [GNN-FEP contract](https://github.com/ActiveInferenceInstitute/Generalized_Notation_Notation/blob/main/docs/workflows/gnn-fep.md)
+gives pin reading, pin and pointer validation, and specification validation one
+home: `src/gnn/importers.py` in the pinned GNN revision. This member now calls
+that reader instead of carrying its own.
+
+The pin moved from **v5.0.3 at `8f293d9ba810e6eda5c09842d9c7ed9ffa5f92c1`** to
+**v5.1.0 at `75c834bd8519dc7b5adc4d24f16bf393cfd1ecdf`**. The old revision
+predates `e6a9d3917` ("Make the downstream importer registry executable"), so
+`src/gnn/importers.py` is absent there and `python -m gnn.importers` cannot run
+against it; that absence was the recorded blocker in #21. The new revision
+contains the module.
+
+The `gnn` arm runs the reader from that pinned revision, before the conformance
+tests:
+
+```bash
+python -m gnn.importers check --repo . --require-pointer \
+    --workflow .github/workflows/ci.yml --job release-gate
+```
+
+The arm extracts `src/gnn` from the pinned commit with `git archive`, puts only
+that tree on `PYTHONPATH`, and executes the command with the selected
+checkout's own interpreter — the same pinned bytes and interpreter the
+conformance tests use. The pin's raw revision, repository and tag are read
+literally once before provisioning, because no pinned interpreter exists yet;
+everything the contract makes a finding is the reader's output.
+
+Removed in the same change: `load_upstream_pin`, `UpstreamPin`,
+`UpstreamPinError` (renamed `UpstreamConformanceError`, which now only reports
+malformed conformance digests), the pin regex/field tables in
+`src/gnn/upstream.py`, and the four tests whose only subject was pin shape
+(nineteen collected cases, including the parametrized malformed-shape matrix). The
+conformance test keeps `CANONICAL_TAG`/`CANONICAL_COMMIT` as a deliberate re-pin
+tripwire and reads the pin's values for its digest run; it no longer validates
+the pin's shape. `.github/GNN.md` names the pin path, the new revision, `ci.yml`
+and `release-gate`, which is what `--require-pointer` checks.
+
+The non-vacuity control was re-anchored rather than dropped: v5.1.0 collapses
+heading whitespace, so the previously spaced `## ActInf Ontology Annotation`
+mutant is now parsed upstream and would have been vacuous. The mutant is the
+doubled-space spelling, which upstream still normalizes into the ontology
+section and the project parser does not; measured on this change it produces
+exactly one `ontology:` divergence with the eight Bernoulli bindings populated
+upstream. The shipped specs themselves still produce equal digests, so no
+shipped dtype mapping (`binary` upstream versus `bool` here) diverges in this
+member.
+
+Observed when the arm was exercised on this change (this host, project Python
+3.14.10, sibling GNN checkout read-only):
+
+```text
+$ python -m gnn.importers check --repo . --require-pointer --workflow .github/workflows/ci.yml --job release-gate
+importer: <repository root>
+  pin: gnn/upstream.json -> v5.1.0 @ 75c834bd85 (schema gnn-importer-pin/v1)
+  specs: 3
+  pointer: .github/GNN.md -> ok
+  verdict: ok
+```
+
+That run selected an existing sibling checkout read-only; provisioning was not
+exercised in it. The `gnn` arm reported 23 passed
+(`tests/test_gnn_upstream_conformance.py` and `tests/test_gnn.py`, `[gnn] OK
+4.9s`), and the other arms were green on the same tree, all on 2026-11-12 with
+project Python 3.14.10:
+
+| Arm | Result |
+| --- | --- |
+| `python scripts/gate.py` (default `fast`) | exit 0, 500 passed, 6 skipped, 137 deselected, 52.0 s |
+| `lint` | exit 0, Ruff and compileall, 0.1 s |
+| `docs` | exit 0, 251 Markdown files, 0 broken links, 11 tests, 1.4 s |
+| `gnn` | exit 0, reader `verdict: ok`, 23 tests, 4.9 s |
+| `chain` | exit 0, `OK: chain green (convergence passes used: 0)`, 122.6 s |
+
+`chain` was run with an existing artifact tree carried over from this checkout's
+prior run. With an empty `output/` the same arm stops at manuscript hydration
+(`release_notes_evidence.json has unsupported notes`), because the release
+bundle comes from the separate `render` arm; that is the environment, not this
+change, and it is the reason the earlier `chain` attempt in this worktree
+failed. `full` (coverage) was not run.
 
 ## Measured wall time — 2026-11-12
 

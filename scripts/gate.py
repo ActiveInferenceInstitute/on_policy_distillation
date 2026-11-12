@@ -13,8 +13,8 @@ Arms
 ``docs``    relative-link check over tracked Markdown plus the documentation
             contract tests.
 ``gnn``     upstream conformance: provision/select the checkout pinned by
-            `gnn/upstream.json`, then run the conformance and parser tests
-            against it.
+            `gnn/upstream.json`, run the estate reader (`gnn.importers`) from
+            that revision, then run the conformance and parser tests.
 ``chain``   the convergent artifact chain (`scripts/run_full_chain.py`), which a
             clean checkout must run before `full` and `render`.
 ``render``  the canonical manuscript PDF (`scripts/render_pdf.py`); needs the
@@ -33,9 +33,13 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import io
+import json
 import os
 import subprocess
 import sys
+import tarfile
+import tempfile
 import time
 from pathlib import Path
 
@@ -44,6 +48,9 @@ SRC = PROJECT_ROOT / "src"
 
 #: Pin file whose revision the `gnn` arm provisions and tests.
 PIN_PATH = PROJECT_ROOT / "gnn" / "upstream.json"
+#: Conformance workflow and job key `.github/GNN.md` must name (estate registry).
+CONFORMANCE_WORKFLOW = ".github/workflows/ci.yml"
+CONFORMANCE_JOB = "release-gate"
 #: Checkout used when no explicit or sibling checkout is available. Gitignored.
 GNN_CACHE = PROJECT_ROOT / "output" / "gnn-pin"
 #: Parser dependencies, installed into the pinned checkout's own interpreter.
@@ -64,7 +71,7 @@ def _python() -> str:
 
 
 def _upstream():
-    """The pin loader, imported lazily so only the `gnn` arm pays for it."""
+    """Checkout selection and conformance support, imported only by the `gnn` arms."""
     if str(SRC) not in sys.path:
         sys.path.insert(0, str(SRC))
     # Lazy so the other arms do not pay numpy/pin-loader import cost.
@@ -177,44 +184,121 @@ def _provision(root: Path, repository: str, commit: str, tag: str | None) -> Non
             raise SystemExit(f"gnn arm: provisioning step failed (exit {code}): {' '.join(step)}")
 
 
-def ensure_gnn_checkout() -> Path:
+def _read_bootstrap_pin() -> dict[str, str]:
+    """Read the pin fields the arm needs before a pinned environment exists.
+
+    Provisioning has no interpreter yet that could import the shared reader, so
+    the revision, repository and tag are read literally. Everything the
+    GNN-FEP contract makes a finding — schema, repository identity, commit
+    shape, tag against version, pointer completeness and the specifications —
+    is `gnn.importers`' job in :func:`run_reader`, from the environment this
+    read enables.
+    """
+    try:
+        data = json.loads(PIN_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SystemExit(f"gnn arm: cannot read {PIN_PATH.relative_to(PROJECT_ROOT)}: {exc}") from exc
+    if not isinstance(data, dict):
+        raise SystemExit(f"gnn arm: {PIN_PATH.name} must be a JSON object")
+    missing = [
+        key for key in ("commit", "repository") if not isinstance(data.get(key), str) or not data[key]
+    ]
+    if missing:
+        raise SystemExit(f"gnn arm: {PIN_PATH.name} records no {missing}")
+    tag = data.get("tag")
+    version = data.get("version")
+    return {
+        "commit": data["commit"],
+        "repository": data["repository"],
+        "tag": tag if isinstance(tag, str) else "",
+        "version": version if isinstance(version, str) else "",
+    }
+
+
+def ensure_gnn_checkout(pin: dict[str, str]) -> Path:
     """Select the pinned upstream checkout, provisioning it when nothing usable exists."""
     upstream = _upstream()
-    try:
-        pin = upstream.load_upstream_pin(PIN_PATH)
-    except upstream.UpstreamPinError as exc:
-        raise SystemExit(f"gnn arm: {exc}") from exc
-
+    commit = pin["commit"]
     explicit = os.environ.get(upstream.ENV_UPSTREAM_ROOT)
     if explicit is not None and not explicit.strip():
         raise SystemExit(f"gnn arm: {upstream.ENV_UPSTREAM_ROOT} must not be empty")
     target = Path(explicit.strip()).resolve() if explicit is not None else GNN_CACHE
     candidates = [target] if explicit is not None else [upstream.default_gnn_root(PROJECT_ROOT), target]
     for candidate in candidates:
-        usable, reason = _pin_usable(candidate, pin.commit)
+        usable, reason = _pin_usable(candidate, commit)
         if usable:
             print(f"gnn arm: {reason}")
             return candidate
         if candidate == target and candidate.exists() and (not candidate.is_dir() or any(candidate.iterdir())):
             raise SystemExit(f"gnn arm: {reason}; refusing to provision into an occupied path")
-    print(f"gnn arm: provisioning {pin.tag or pin.version} ({pin.commit}) into {target}")
-    _provision(target, pin.repository, pin.commit, pin.tag)
-    usable, reason = _pin_usable(target, pin.commit)
+    print(f"gnn arm: provisioning {pin['tag'] or pin['version'] or commit} ({commit}) into {target}")
+    _provision(target, pin["repository"], commit, pin["tag"])
+    usable, reason = _pin_usable(target, commit)
     if not usable:
         raise SystemExit(f"gnn arm: provisioning did not produce a usable checkout: {reason}")
     print(f"gnn arm: {reason}")
     return target
 
 
-def _report_pin(checkout: Path) -> None:
+def _report_pin(pin: dict[str, str], checkout: Path) -> None:
     """Print the resolved pin and, under GitHub Actions, add it to the summary."""
-    pin = _upstream().load_upstream_pin(PIN_PATH)
-    version = pin.version.removeprefix("v")
-    print(f"gnn arm: {pin.tag or pin.version} version={version} commit={pin.commit} checkout={checkout}")
+    version = (pin["version"] or pin["tag"]).removeprefix("v")
+    print(
+        f"gnn arm: {pin['tag'] or pin['version']} version={version or '(unrecorded)'} "
+        f"commit={pin['commit']} checkout={checkout}"
+    )
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
         with Path(summary).open("a", encoding="utf-8") as handle:
             handle.write(f"gnn-version={version}\n")
+
+
+def reader_command(interpreter: str) -> list[str]:
+    """The estate's shared importer reader, run against this checkout."""
+    return [
+        interpreter,
+        "-m",
+        "gnn.importers",
+        "check",
+        "--repo",
+        ".",
+        "--require-pointer",
+        "--workflow",
+        CONFORMANCE_WORKFLOW,
+        "--job",
+        CONFORMANCE_JOB,
+    ]
+
+
+def run_reader(checkout: Path, commit: str) -> int:
+    """Run `gnn.importers` from the pinned revision, in the pinned environment.
+
+    The reader and the parser it validates must both be the pinned release's
+    bytes, so `src/gnn` is extracted from `commit` the way the conformance tests
+    extract the parser, and only that tree is placed on `PYTHONPATH`. The
+    interpreter is the checkout's own, so no live working tree is on the path.
+    """
+    command = reader_command(str(_upstream().gnn_checkout_python(checkout)))
+    print(f"[gnn] $ {_display(command)}", flush=True)
+    with tempfile.TemporaryDirectory(prefix="gnn-reader-") as name:
+        extract = Path(name)
+        archive = subprocess.run(
+            ["git", "-C", str(checkout), "archive", commit, "src/gnn"],
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            check=False,
+        )
+        if archive.returncode != 0:
+            message = archive.stderr.decode("utf-8", "replace").strip()
+            print(f"[gnn] cannot extract src/gnn at {commit} from {checkout}: {message}")
+            return archive.returncode
+        with tarfile.open(fileobj=io.BytesIO(archive.stdout)) as stream:
+            if sys.version_info >= (3, 12):
+                stream.extractall(extract, filter="data")
+            else:  # pragma: no cover - the documented gate runs a modern interpreter
+                stream.extractall(extract)
+        env = {**os.environ, "PYTHONPATH": str(extract / "src")}
+        return subprocess.run(command, cwd=PROJECT_ROOT, env=env, check=False).returncode
 
 
 def run_commands(label: str, commands: list[list[str]], env: dict[str, str] | None = None) -> int:
@@ -233,11 +317,17 @@ def run_commands(label: str, commands: list[list[str]], env: dict[str, str] | No
 def run_arm(arm: str) -> int:
     """Dispatch one arm by name."""
     if arm in ("gnn", "full"):
-        checkout = ensure_gnn_checkout()
-        _report_pin(checkout)
+        pin = _read_bootstrap_pin()
+        checkout = ensure_gnn_checkout(pin)
+        _report_pin(pin, checkout)
         env = {**os.environ, _upstream().ENV_UPSTREAM_ROOT: str(checkout)}
-        commands = gnn_commands() if arm == "gnn" else full_commands()
-        return run_commands(arm, commands, env=env)
+        if arm == "gnn":
+            code = run_reader(checkout, pin["commit"])
+            if code != 0:
+                print(f"[gnn] FAIL exit {code} at the shared importer reader")
+                return code
+            return run_commands(arm, gnn_commands(), env=env)
+        return run_commands(arm, full_commands(), env=env)
     commands = {
         "lint": lint_commands,
         "fast": fast_commands,
@@ -250,18 +340,24 @@ def run_arm(arm: str) -> int:
 
 def _display(command: list[str]) -> str:
     """A command as a reader would type it: `python`, project-relative paths."""
-    parts = ["python" if part == _python() else part for part in command]
+    parts = [
+        "python" if part == _python() or part.endswith("/.venv/bin/python") else part for part in command
+    ]
     return " ".join(part.removeprefix(str(PROJECT_ROOT) + os.sep) for part in parts)
 
 
 def arm_table() -> list[str]:
     """One documentation row per arm, listing the argv it runs."""
+    gnn_steps = [
+        _display(reader_command("python")),
+        *(_display(cmd) for cmd in gnn_commands()),
+    ]
     rows = [
         "lint   " + " | ".join(_display(cmd) for cmd in lint_commands()),
         "fast   " + " | ".join(_display(cmd) for cmd in fast_commands()),
         "full   " + " | ".join(_display(cmd) for cmd in full_commands()),
         "docs   " + " | ".join(_display(cmd) for cmd in docs_commands()),
-        "gnn    provision the pin in gnn/upstream.json, then " + " | ".join(_display(cmd) for cmd in gnn_commands()),
+        "gnn    provision the pin in gnn/upstream.json, then " + " | ".join(gnn_steps),
         "chain  " + " | ".join(_display(cmd) for cmd in chain_commands()),
         "render " + " | ".join(_display(cmd) for cmd in render_commands()),
         "all    " + ", ".join(CI_ARM_ORDER),

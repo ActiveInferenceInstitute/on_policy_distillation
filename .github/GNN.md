@@ -12,25 +12,42 @@ The canonical pin file is [`../gnn/upstream.json`](../gnn/upstream.json), schema
 | Field | Value |
 | --- | --- |
 | `repository` | `https://github.com/ActiveInferenceInstitute/Generalized_Notation_Notation` |
-| `commit` | `8f293d9ba810e6eda5c09842d9c7ed9ffa5f92c1` |
-| `tag` / `version` | `v5.0.3` / `5.0.3` |
+| `commit` | `75c834bd8519dc7b5adc4d24f16bf393cfd1ecdf` |
+| `tag` / `version` | `v5.1.0` / `5.1.0` |
 | `parser_module` / `parser_class` | `gnn.parsers.markdown_parser` / `MarkdownGNNParser` |
 
 `tests/test_gnn_upstream_conformance.py` pins the pin itself (`CANONICAL_TAG` /
 `CANONICAL_COMMIT`), so a silent re-pin fails instead of passing unnoticed.
 
-## What the job parses
+## What the job validates
 
-The conformance arm runs `tests/test_gnn_upstream_conformance.py` and
+The pin's shape, schema, repository identity, this pointer and the shipped
+specifications are validated by the estate's shared reader,
+`src/gnn/importers.py` in the pinned upstream release (the
+[GNN-FEP contract](https://github.com/ActiveInferenceInstitute/Generalized_Notation_Notation/blob/main/docs/workflows/gnn-fep.md)).
+The arm runs it from the pinned revision:
+
+```
+python -m gnn.importers check --repo . --require-pointer \
+    --workflow .github/workflows/ci.yml --job release-gate
+```
+
+The `src/gnn` tree is extracted from the pinned commit with `git archive` onto
+`PYTHONPATH` and executed by the pinned checkout's own interpreter, so the reader
+and the parser it validates are the pinned release's bytes rather than a live
+working tree's. `--require-pointer` makes this file checkable: it must name the
+pin file, the pinned revision, `ci.yml` and the `release-gate` job key.
+
+The arm then runs `tests/test_gnn_upstream_conformance.py` and
 `tests/test_gnn.py`. The first extracts `src/gnn` from the pinned commit with
 `git archive`, runs the pinned `gnn.parsers.markdown_parser.MarkdownGNNParser`
 under the pinned checkout's own interpreter, and compares normalized digests
 against the project-owned parser in [`../src/gnn/parser.py`](../src/gnn/parser.py)
 for every shipped `gnn/*.gnn.md` spec — `bernoulli_toy`, `graph_world`,
-`si_tmaze` — plus a leniency mutant (the spaced
-`## ActInf Ontology Annotation` heading) as the non-vacuity control. It does not
-scan the rest of the repository for `*.gnn.md`; the claim covers the three
-shipped specs and the pin, not any model added elsewhere.
+`si_tmaze` — plus a leniency mutant (the doubled-space
+`## ActInf  Ontology  Annotation` heading) as the non-vacuity control. The digest
+comparison is the member's own evidence: the shared reader validates the pin and
+the specification syntax, not digest equality with the project parser.
 
 ## How the job provisions it
 
@@ -54,7 +71,7 @@ The workflow sets `ON_POLICY_DISTILLATION_GNN_ROOT` at job level, so the `full`
 arm runs the conformance tests against the same checkout: an explicit selection
 makes an unavailable or divergent checkout a failure rather than a skip, and the
 90% coverage gate never silently loses the pinned-parser half. The arm also
-appends `gnn-version=5.0.3` to `$GITHUB_STEP_SUMMARY`, and prints the tag,
+appends `gnn-version=5.1.0` to `$GITHUB_STEP_SUMMARY`, and prints the tag,
 version, commit, and checkout path.
 
 ## Action pins
