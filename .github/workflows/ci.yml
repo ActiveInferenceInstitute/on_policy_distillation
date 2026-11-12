@@ -16,10 +16,18 @@ jobs:
   # The workflow guide keeps one workflow and one job. This job both runs the
   # release gate and enforces the GNN upstream conformance; the exact name makes
   # that conformance visible in the check list instead of hiding it in steps.
+  #
+  # Check steps invoke `scripts/gate.py`, which owns their command argv.
+  # `python scripts/gate.py all` runs the same arms in the same order locally.
   release-gate:
     name: gnn conformance (pinned)
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      # Job-level so the conformance tests inside the `full` arm resolve the same
+      # pinned checkout the `gnn` arm provisions. An explicit selection turns an
+      # unavailable or divergent checkout into a failure instead of a skip.
+      ON_POLICY_DISTILLATION_GNN_ROOT: ${{ runner.temp }}/gnn
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # The typography contract renders the combined .tex and fails closed when
@@ -29,48 +37,22 @@ jobs:
         with:
           version: "0.13.6"
           python-version: "3.14"
-      - run: uv lock --check
+      # One environment for every arm. `--locked` already refuses an out-of-date
+      # uv.lock, so no separate `uv lock --check` step is needed.
       - run: uv sync --locked --extra dev
-      - run: uv run --extra dev python -m compileall -q src scripts tests
-      # The GNN model specifications are validated against the upstream parser of
-      # the revision pinned in gnn/upstream.json. Provision that revision from the
-      # public repository at the recorded SHA and select it explicitly on the
-      # coverage gate below: an unavailable or divergent checkout then fails the
-      # suite instead of skipping the pinned-parser half, so a green run is
-      # evidence the pin works. Provisioning first fails fast on a dead pin.
-      - name: Provision the pinned GNN parser checkout
-        env:
-          GNN_ROOT: ${{ runner.temp }}/gnn
-        run: |
-          REVISION=$(uv run --extra dev python -c "import json; print(json.load(open('gnn/upstream.json'))['commit'])")
-          TAG=$(uv run --extra dev python -c "import json; print(json.load(open('gnn/upstream.json'))['tag'])")
-          URL=$(uv run --extra dev python -c "import json; print(json.load(open('gnn/upstream.json'))['repository'])")
-          git init --quiet "$GNN_ROOT"
-          git -C "$GNN_ROOT" remote add origin "$URL"
-          # A pin that no longer resolves upstream fails here rather than skipping.
-          git -C "$GNN_ROOT" fetch --depth 1 origin "$REVISION" "refs/tags/$TAG:refs/tags/$TAG"
-          git -C "$GNN_ROOT" checkout --quiet --detach "$REVISION"
-          uv venv --python 3.12 --no-project "$GNN_ROOT/.venv"
-          # The pinned parser needs numpy, defusedxml and psutil; a missing
-          # dependency fails the run loudly instead of degrading to a skip.
-          uv pip install --python "$GNN_ROOT/.venv/bin/python" numpy defusedxml psutil
+      # Static checks: ruff plus a byte-compile of src, scripts, and tests.
+      - run: uv run --extra dev python scripts/gate.py lint
+      # Relative-link check over tracked Markdown plus the doc-contract tests.
+      - run: uv run --extra dev python scripts/gate.py docs
+      # Fetch the revision pinned in gnn/upstream.json, install the pinned
+      # parser's dependencies into its own Python 3.12 environment, and run the
+      # conformance + parser tests against it. A dead pin fails here, before the
+      # suite, and a green run is evidence the pin works.
+      - run: uv run --extra dev python scripts/gate.py gnn
       # The suite is not self-contained: the gate tests and the manuscript
       # checks read the generated artifact tree, so a clean checkout has to
-      # build it first. The chain is bounded and convergent (it re-runs the
-      # attestation tail until `validate_outputs` is green and stable) and it is
-      # the repository's documented entry point.
-      - run: uv run --extra dev python scripts/run_full_chain.py --max-passes 4
-      # Documented release gate. `compileall` above plus `compose --validate-only
-      # --strict` (inside the chain) are the lightweight validators.
-      - run: uv run --extra dev python -m pytest tests/ --cov=src --cov-fail-under=90 -q
-        env:
-          ON_POLICY_DISTILLATION_GNN_ROOT: ${{ runner.temp }}/gnn
-
-      - name: Report the resolved GNN version
-        run: |
-          PIN=gnn/upstream.json
-          VERSION=$(python3 -c "import json;print(json.load(open('$PIN'))['version'].removeprefix('v'))")
-          test -n "$VERSION"
-          TAG=$(python3 -c "import json;print(json.load(open('$PIN'))['tag'])")
-          test "$VERSION" = "${TAG#v}"
-          echo "gnn-version=${VERSION}" >> "$GITHUB_STEP_SUMMARY"
+      # build it first. The chain is bounded and convergent and runs
+      # `scripts/validate_outputs.py` itself.
+      - run: uv run --extra dev python scripts/gate.py chain
+      # Release gate: the whole suite under coverage with the 90% floor.
+      - run: uv run --extra dev python scripts/gate.py full
