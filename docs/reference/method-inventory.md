@@ -2,7 +2,7 @@
 
 Generated documentation coverage for every Python `def` and `class` under `src/` and `scripts/`. Entries marked `inventory fallback` have no inline docstring yet, but remain documented here by path, line, kind, and qualified name.
 
-Total documented definitions: 1027
+Total documented definitions: 1052
 
 ## `src/analytical/bernoulli_toy.py`
 
@@ -1530,6 +1530,17 @@ Total documented definitions: 1027
 | 36 | `function` | `audit_roadmap_tasks` | docstring | Return task/TODO consistency issues. |
 | 103 | `function` | `main` | inventory fallback | Inventory fallback for function `main` defined at `scripts/audit_roadmap_tasks.py:103`. |
 
+## `scripts/check_docs_links.py`
+
+| line | kind | name | documentation source | summary |
+| ---: | --- | --- | --- | --- |
+| 38 | `function` | `tracked_markdown` | docstring | The Markdown files Git tracks under the project root. |
+| 62 | `function` | `iter_link_targets` | docstring | Every link target in one file, with its 1-based line number. |
+| 80 | `function` | `target_path` | docstring | The path part of a link target, without its `#fragment` or `?query`. |
+| 85 | `function` | `is_checkable` | docstring | Whether a link target names a repository-relative path this check owns. |
+| 103 | `function` | `broken_links` | docstring | Every unresolved relative target, as `file:line -> target` rows. |
+| 117 | `function` | `main` | inventory fallback | Inventory fallback for function `main` defined at `scripts/check_docs_links.py:117`. |
+
 ## `scripts/compose_manuscript.py`
 
 | line | kind | name | documentation source | summary |
@@ -1541,6 +1552,30 @@ Total documented definitions: 1027
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
 | 15 | `function` | `main` | inventory fallback | Inventory fallback for function `main` defined at `scripts/compute_statistics.py:15`. |
+
+## `scripts/gate.py`
+
+| line | kind | name | documentation source | summary |
+| ---: | --- | --- | --- | --- |
+| 61 | `function` | `_python` | docstring | The interpreter running this gate, so every arm shares one environment. |
+| 66 | `function` | `_upstream` | docstring | The pin loader, imported lazily so only the `gnn` arm pays for it. |
+| 76 | `function` | `lint_commands` | docstring | Static checks: ruff, then a byte-compile of the shipped trees. |
+| 84 | `function` | `fast_commands` | docstring | The tightest documented edit loop (no coverage, no slow lanes). |
+| 89 | `function` | `full_commands` | docstring | The release gate: whole suite under coverage with the 90% floor. |
+| 94 | `function` | `docs_commands` | docstring | Documentation checks: relative links, then the doc-contract tests. |
+| 102 | `function` | `chain_commands` | docstring | The convergent artifact chain; `full` and `render` read its tree. |
+| 107 | `function` | `render_commands` | docstring | The canonical manuscript PDF render. |
+| 112 | `function` | `gnn_commands` | docstring | Conformance and parser tests, executed against the pinned checkout. |
+| 127 | `function` | `_git` | docstring | Run one Git command against a checkout, with stdin closed. |
+| 138 | `function` | `_pin_usable` | docstring | Whether a checkout supplies the pinned parser, interpreter, and commit. |
+| 150 | `function` | `_provision` | docstring | Fetch exactly the pinned release into `root` and install parser deps. |
+| 180 | `function` | `ensure_gnn_checkout` | docstring | Select the pinned upstream checkout, provisioning it when nothing usable exists. |
+| 209 | `function` | `_report_pin` | docstring | Print the resolved pin and, under GitHub Actions, add it to the summary. |
+| 220 | `function` | `run_commands` | docstring | Run one arm's commands in order, stopping at the first non-zero exit. |
+| 233 | `function` | `run_arm` | docstring | Dispatch one arm by name. |
+| 251 | `function` | `_display` | docstring | A command as a reader would type it: `python`, project-relative paths. |
+| 257 | `function` | `arm_table` | docstring | One documentation row per arm, listing the argv it runs. |
+| 272 | `function` | `main` | inventory fallback | Inventory fallback for function `main` defined at `scripts/gate.py:272`. |
 
 ## `scripts/generate_figures.py`
 
