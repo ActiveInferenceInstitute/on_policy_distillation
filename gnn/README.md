@@ -12,6 +12,11 @@ human- and machine-readable description of each Active Inference model.
   it was recorded, plus `tag` and the parser module/class the conformance check
   exercises as convenience fields.
 
+The pin reader requires `schema: gnn-importer-pin/v1`; missing, non-string, or
+unsupported schema identifiers are rejected by the `gnn` gate. Extra metadata
+remains allowed. The estate pin predates `gnn.importers`, so validation stays
+in the existing local reader until an upstream release supplies the shared reader.
+
 Parsed by `../src/gnn/parser.py`; concordance with the other tracks is checked by
 `../src/gnn/concordance.py`. Use the canonical `## ActInfOntologyAnnotation`
 section heading (the spaced variant is accepted only as a historical alias).

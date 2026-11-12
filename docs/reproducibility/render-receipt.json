@@ -1,0 +1,12 @@
+{
+  "pdf_path": "output/pdf/on_policy_distillation.pdf",
+  "renderer_versions": {
+    "pandoc": "pandoc 3.13\nFeatures: +server +lua\nScripting engine: Lua 5.4\nUser data directory: /Users/friedman/.local/share/pandoc\nCopyright (C) 2006-2025 John MacFarlane. Web:  https://pandoc.org\nThis is free software; see the source for copying conditions. There is no\nwarranty, not even for merchantability or fitness for a particular purpose.",
+    "pandoc-crossref": "pandoc-crossref v0.3.26 git commit UNKNOWN (UNKNOWN) built with Pandoc v3.13, pandoc-types v1.23.1.2 and GHC 9.14.1",
+    "xelatex": "XeTeX 3.141592653-2.6-0.999998 (TeX Live 2026)\nkpathsea version 6.4.2\nCopyright 2026 SIL International, Jonathan Kew and Khaled Hosny.\nThere is NO warranty.  Redistribution of this software is\ncovered by the terms of both the XeTeX copyright and\nthe Lesser GNU General Public License.\nFor more information about these matters, see the file\nnamed COPYING and the XeTeX source.\nPrimary author of XeTeX: Jonathan Kew.\nCompiled with ICU version 78.2; using 78.2\nCompiled with zlib version 1.3.2; using 1.3.2\nCompiled with FreeType2 version 2.14.1; using 2.14.1\nCompiled with Graphite2 version 1.3.14; using 1.3.14\nCompiled with HarfBuzz version 12.3.2; using 12.3.2\nCompiled with libpng version 1.6.55; using 1.6.55\nCompiled with pplib version v2.2\nUsing Mac OS X Core Text and Cocoa frameworks"
+  },
+  "sha256": "6f769aefaf433e5adf8d59656f558145c9cfa04d5e3bb871d7c05d6feffd5a6c",
+  "size_bytes": 7387608,
+  "source_commit": "6061927da8e829215bcee150b8256154d660b5cf",
+  "source_worktree_changes": []
+}

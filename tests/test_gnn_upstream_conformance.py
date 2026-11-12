@@ -158,6 +158,10 @@ def test_pin_file_names_the_canonical_release() -> None:
 @pytest.mark.parametrize(
     "mutate, message",
     [
+        (lambda data: {k: v for k, v in data.items() if k != "schema"}, "must declare"),
+        (lambda data: {**data, "schema": "gnn-importer-pin/v2"}, "schema must be gnn-importer-pin/v1"),
+        (lambda data: {**data, "schema": ""}, "schema must be gnn-importer-pin/v1"),
+        (lambda data: {**data, "schema": None}, "fields must be strings"),
         (
             lambda data: {k: v for k, v in data.items() if k != "commit"},
             "complete Git object identity|must declare",
@@ -187,7 +191,7 @@ def test_pin_loader_rejects_malformed_pins(tmp_path: Path, mutate: Any, message:
 def test_pin_loader_keeps_extra_fields_and_accepts_a_tagless_core(tmp_path: Path) -> None:
     """Extra keys live in ``extras``; the parser entry point is optional."""
     data = json.loads(PIN_PATH.read_text(encoding="utf-8"))
-    minimal = {key: data[key] for key in ("repository", "commit", "version", "date_recorded")}
+    minimal = {key: data[key] for key in ("schema", "repository", "commit", "version", "date_recorded")}
     minimal["checkout_hint"] = {"sibling": "Generalized_Notation_Notation"}
     path = tmp_path / "upstream.json"
     path.write_text(json.dumps(minimal), encoding="utf-8")
