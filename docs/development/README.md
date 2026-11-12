@@ -7,8 +7,9 @@ pages are the developer's-eye companion to the reader-facing contracts under
 
 | Page | Read it when you need to |
 | --- | --- |
+| [`gate.md`](gate.md) | Run the gate: every arm (lint, fast, full, docs, gnn, chain, render), the measured wall times, and the CI mapping. |
 | [`testing.md`](testing.md) | Understand the suites, markers, fast lanes, the no-mocks policy, the 90% coverage floor, and the chunked runner. |
-| [`conventions.md`](conventions.md) | Follow the thin-orchestrator pattern, type-hint/docstring expectations, the ruff + mypy gates, and the writer/validator separation. |
+| [`conventions.md`](conventions.md) | Follow the thin-orchestrator pattern, type-hint/docstring expectations, the ruff lint arm, and the writer/validator separation. |
 | [`extending.md`](extending.md) | Add a new track, model, figure, or section (a quickstart that links to the full reference). |
 | [`AGENTS.md`](AGENTS.md) | Get the short agent rules for this directory. |
 
@@ -19,14 +20,16 @@ own (see [`../reproducibility/standalone-vs-template.md`](../reproducibility/sta
 From the project root:
 
 ```bash
-# fast edit-loop lane (no slow artifact/render tests, no coverage gate)
-uv run --extra dev python -m pytest tests/ -m "not artifact_slow and not render_slow" --no-cov
+uv sync --locked --extra dev
+
+# fast edit-loop arm (default): no slow artifact/render tests, no coverage gate
+uv run --extra dev python scripts/gate.py
 
 # regenerate everything in canonical order, then validate
-uv run python scripts/run_full_chain.py
+uv run --extra dev python scripts/gate.py chain
 
-# the authoritative coverage gate
-uv run python -m pytest tests -q
+# the authoritative coverage gate (after the chain has built the artifact tree)
+uv run --extra dev python scripts/gate.py full
 ```
 
 ## Where things live

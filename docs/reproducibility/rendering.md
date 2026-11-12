@@ -17,8 +17,12 @@ Render only after the analysis tree is generated and validated — see
 external `pandoc` and `xelatex` tools.
 
 ```bash
-uv run python scripts/render_pdf.py
+uv run --extra dev python scripts/gate.py render
 ```
+
+`render` is the gate arm that runs exactly `scripts/render_pdf.py`; it needs the
+artifact tree the `chain` arm builds, `pandoc`, and `xelatex` on `PATH`
+(`python scripts/gate.py --list` prints both arms' argv).
 
 Typography is read from project-owned sources: margins from
 [`../../manuscript/config.yaml`](../../manuscript/config.yaml)

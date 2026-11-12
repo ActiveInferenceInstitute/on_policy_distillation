@@ -10,13 +10,13 @@ clean-room import with `infrastructure` blocked).
 
 | Step | Command | Depends on |
 | --- | --- | --- |
-| Tests + coverage | `uv run python -m pytest tests/` | project `src/` only |
+| Tests + coverage | `uv run --extra dev python scripts/gate.py full` | project `src/` only |
 | Analytical sweep | `uv run python scripts/run_analytical_sweep.py` | numpy/scipy |
 | pymdp T-maze rollout | `uv run python scripts/simulate_si_tmaze.py` | inferactively-pymdp |
 | Statistics + figures | `uv run python scripts/compute_statistics.py && uv run python scripts/generate_figures.py` | matplotlib |
 | Compose manuscript | `uv run python scripts/compose_manuscript.py` | project sheaf engine |
-| Validate gates | `uv run python scripts/validate_outputs.py` | project `src/gates/` |
-| **Render PDF** | `uv run python scripts/render_pdf.py` | `pandoc`, `xelatex` (external CLIs) |
+| Build + validate the artifact tree | `uv run --extra dev python scripts/gate.py chain` | project `src/gates/` |
+| **Render PDF** | `uv run --extra dev python scripts/gate.py render` | `pandoc`, `xelatex` (external CLIs) |
 
 ## Self-contained rendering
 

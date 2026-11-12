@@ -21,6 +21,9 @@ uv sync --locked --extra dev
 uv run python scripts/run_full_chain.py --render
 ```
 
+`scripts/run_full_chain.py --render` is the one-command path; the gate arms
+below (`chain`, then `render`) are the same two steps, run separately.
+
 The individual scripts remain available for debugging or narrow development.
 Their order is declared in `manuscript/config.yaml` and should not be
 hand-reordered:
@@ -45,43 +48,40 @@ uv run python scripts/z_generate_manuscript_variables.py
 (`generate_method_inventory.py` is a docs-maintenance step, not part of the
 analysis chain — see "Method inventory" below.)
 
-Validation and tests:
+Validation and the gate share one entry point, [`scripts/gate.py`](scripts/gate.py):
+every check CI runs is an arm, and `python scripts/gate.py --list` prints each
+arm's argv. The arm table and the measured wall times are in
+[`docs/development/gate.md`](docs/development/gate.md).
 
 ```bash
-uv run python scripts/compose_manuscript.py --validate-only --strict
-uv run python scripts/validate_outputs.py
-uv run --extra dev python -m pytest tests/ --cov=src --cov-fail-under=90
-# On a loaded machine use scripts/run_tests_chunked.py — a single pytest process
-# can be killed under resource pressure (exit 144); chunks survive.
+uv run --extra dev python scripts/gate.py          # fast arm (default): no slow lanes, no coverage
+uv run --extra dev python scripts/gate.py lint     # ruff + byte-compile of src, scripts, tests
+uv run --extra dev python scripts/gate.py docs     # relative links + documentation contracts
+uv run --extra dev python scripts/gate.py gnn      # pinned GNN conformance
+uv run --extra dev python scripts/gate.py chain    # regenerate + validate the artifact tree
+uv run --extra dev python scripts/gate.py full     # release coverage gate (after the chain)
+uv run --extra dev python scripts/gate.py render   # canonical PDF (after the chain)
+uv run --extra dev python scripts/gate.py all      # the CI sequence: lint, docs, gnn, chain, full
 ```
 
-For local iteration that does not need the full fixed-point artifact writers,
-use the fast lane:
+`fast` is the tight daily edit loop: it skips `artifact_slow` (full artifact
+writes, fixed-point validation, and tests that mutate shared generated
+artifacts) and `render_slow` (read-only but expensive render, animation,
+rollout, and large-compose checks). `full` is the release gate and remains
+authoritative. On a loaded machine run `scripts/run_tests_chunked.py` instead of
+`full` — a single pytest process can be killed under resource pressure (exit
+144); chunks survive.
 
-```bash
-uv run --extra dev python -m pytest tests/ -m "not artifact_slow" --no-cov
-```
-
-For the tighter daily edit loop that also skips full figure rendering, animation,
-pymdp rollout, and large manuscript-compose checks:
-
-```bash
-uv run --extra dev python -m pytest tests/ -m "not artifact_slow and not render_slow" --no-cov
-```
-
-CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) byte-compiles
-`src scripts tests`, provisions the GNN revision pinned in `gnn/upstream.json`
-(public repository, exact SHA), runs the full chain (the suite reads the generated artifact
-tree, so a clean checkout has to build it first), and then runs the release
-coverage gate above on Python 3.14 with that checkout selected, so the GNN
-conformance check fails instead of skipping. `scripts/validate_outputs.py` is not a
+CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) is one job whose
+steps are those arms, after one locked environment (`uv sync --locked --extra
+dev`): `lint`, `docs`, `gnn`, `chain`, `full`. The workflow never restates a
+command. The `gnn` arm provisions the revision pinned in
+[`gnn/upstream.json`](gnn/upstream.json) (public repository, exact SHA) into the
+job-level `ON_POLICY_DISTILLATION_GNN_ROOT` selection, so the coverage gate fails
+instead of skipping the conformance half; what it parses is recorded in
+[`.github/GNN.md`](.github/GNN.md). `scripts/validate_outputs.py` is not a
 separate step; the chain already runs it and a workflow cannot validate a tree
 it never built.
-
-The coverage command above remains the release gate; `artifact_slow` covers
-full artifact writes, fixed-point validation, and tests that mutate shared
-generated artifacts. `render_slow` covers read-only but expensive render,
-animation, rollout, and large-compose checks.
 
 In the monorepo layout, from the sibling `../../../template` checkout after linking sidecar projects:
 

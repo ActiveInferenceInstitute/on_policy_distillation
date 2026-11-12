@@ -162,17 +162,24 @@ uv run --extra dev python -m pytest tests/test_figures.py --no-cov -q
 
 ## What to run after editing X
 
+Gate checks are arms of [`../../scripts/gate.py`](../../scripts/gate.py) —
+`python scripts/gate.py --list` prints each arm's argv, and
+[`../development/gate.md`](../development/gate.md) records the arms and their
+measured wall times. The rows below are the producer commands, which are not
+gate arms.
+
 | You edited | Run |
 | --- | --- |
-| `src/` methods or gates | `uv run --extra dev python -m pytest tests/ -m "not artifact_slow and not render_slow" --no-cov` |
-| any generated-artifact producer | `uv run python scripts/run_full_chain.py --tail-only` after tail-only edits, or `uv run python scripts/run_full_chain.py` when producer dependencies changed |
+| `src/` methods or gates | `uv run --extra dev python scripts/gate.py fast` |
+| any generated-artifact producer | `uv run --extra dev python scripts/gate.py chain`; for a tail-only repair run the arm's command directly with `--tail-only`: `uv run python scripts/run_full_chain.py --tail-only` |
 | manuscript fragments / manifest / figures.yaml | `uv run python scripts/compose_manuscript.py && uv run python scripts/z_generate_manuscript_variables.py` |
-| everything / unsure | `uv run python scripts/run_full_chain.py` (canonical convergent order with bounded retry) |
-| full release gate | `uv run python scripts/run_tests_chunked.py` then `uv run python scripts/run_full_chain.py --render` and `uv run python scripts/validate_outputs.py` |
+| everything / unsure | `uv run --extra dev python scripts/gate.py chain` (canonical convergent order with bounded retry) |
+| full release gate | `uv run --extra dev python scripts/gate.py full`, then `uv run --extra dev python scripts/gate.py render`; under load use `uv run python scripts/run_tests_chunked.py` in place of the full arm |
 | isolation soak (order coverage) | `uv run python scripts/run_tests_chunked.py --shuffle-seed N` (deterministic; report a red run, never re-roll the seed) |
 | saved isolation-soak report | `uv run python scripts/run_test_isolation_soak.py --validate-report output/reports/test_isolation_soak.json`; add `--require-complete` only for closure evidence |
 | roadmap or taskboard metadata | `uv run python scripts/audit_roadmap_tasks.py` |
-| lint | `uvx ruff check src tests scripts` (project `[tool.ruff]` mirrors the template root gate) |
+| lint | `uv run --extra dev python scripts/gate.py lint` (project `[tool.ruff]` mirrors the template root gate) |
+| documentation | `uv run --extra dev python scripts/gate.py docs` (relative links over tracked Markdown + doc-contract tests) |
 
 ## Troubleshooting
 
