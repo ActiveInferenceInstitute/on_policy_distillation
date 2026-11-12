@@ -85,7 +85,10 @@ non-payload content (`InitialParameterization` values, `ModelParameters`,
 **What GNN does not prove.** Round-trip losslessness proves the *notation* is
 internally consistent and faithfully serialized, and upstream digest equality
 proves the notation conforms to the pinned release — neither proves the model is
-correct or that it matches the running pymdp harness's numerics.
+scientifically correct. The declared state priors are cross-checked against the
+builders in `tests/test_gnn.py`; the T-maze likelihood, transition and
+preference matrices stay generated artifacts, so the specification is not a
+numeric duplicate of the running harness.
 
 ## Ontology bindings
 
