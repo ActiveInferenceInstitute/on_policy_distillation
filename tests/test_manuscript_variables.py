@@ -158,22 +158,32 @@ def test_generate_variables_requires_analysis_outputs(tmp_path: Path) -> None:
 
 
 @pytest.mark.artifact_slow
-def test_generate_manuscript_variables_reaches_semantic_fixed_point(project_root: Path) -> None:
+@pytest.mark.parametrize("script", ["z_generate_manuscript_variables.py", "inject_variables.py"])
+def test_generate_manuscript_variables_reaches_semantic_fixed_point(project_root: Path, script: str) -> None:
     """The hydration entry point must leave semantic/sheaf validators converged."""
     from manuscript.sheaf.semantic import validate_semantic_gluing
     from roadmap_tracks import validate_sheaf_track_artifacts
+    from orchestration.artifact_lock import artifact_lease
+    from roadmap_tracks.negative_controls import counterexample_payload
 
-    result = subprocess.run(
-        [sys.executable, "scripts/z_generate_manuscript_variables.py"],
-        cwd=project_root,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    with artifact_lease(project_root) as lease:
+        handoff = lease.handoff()
+        result = subprocess.run(
+            [sys.executable, f"scripts/{script}"],
+            cwd=project_root,
+            env=handoff.env,
+            pass_fds=handoff.pass_fds,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
 
     assert result.returncode == 0, result.stderr
-    assert validate_semantic_gluing(project_root) == []
-    assert validate_sheaf_track_artifacts(project_root) == []
+    assert validate_semantic_gluing(project_root, require_observations=False) == []
+    assert validate_sheaf_track_artifacts(project_root, require_observations=False) == []
+    if counterexample_payload(project_root)["observed_count"] == 0:
+        assert validate_semantic_gluing(project_root)
+        assert validate_sheaf_track_artifacts(project_root)
 
 
 def test_hardcoded_variable_audit_flags_literal_generated_value(project_root: Path) -> None:

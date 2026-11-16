@@ -61,7 +61,7 @@ def test_constructed_pinned_agent_infers_each_observation_format(tmp_path: Path,
     import pymdp.agent as pymdp_agent
 
     distribution = importlib.metadata.distribution("inferactively-pymdp")
-    assert distribution.version == "1.0.4"
+    assert distribution.version == "1.0.5"
     assert Path(pymdp_agent.__file__).resolve() == Path(distribution.locate_file("pymdp/agent.py")).resolve()
 
     base = default_pymdp_config()
@@ -86,7 +86,7 @@ def test_constructed_pinned_agent_infers_each_observation_format(tmp_path: Path,
         )
         assert isinstance(agent, pymdp_agent.Agent)
         assert agent.categorical_obs is categorical_obs
-        assert diagnostic["versions"]["inferactively_pymdp"] == "1.0.4"
+        assert diagnostic["versions"]["inferactively_pymdp"] == "1.0.5"
 
         indices = jnp.array([[outcome_id]], dtype=jnp.int32)
         observations = [jnp.eye(3, dtype=jnp.float32)[indices] if categorical_obs else indices]

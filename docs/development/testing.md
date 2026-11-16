@@ -26,6 +26,13 @@ reenter the same lease; child writers receive both the explicit `.env` and
 `.pass_fds` handoff. Inherited descriptors are closed, not unlocked, by the
 child. These invariants do not establish the separate five-run idle-host soak.
 
+Both hydration entry points (`z_generate_manuscript_variables.py` and
+`inject_variables.py`) preserve the explicit descriptor handoff when invoked
+under pytest or a parent producer. Their convergence tests require genuine
+structural consistency and retain strict rejection when observations are absent.
+The local observation-format regression targets main's released pymdp 1.0.5
+pin; historical 1.0.4 receipts do not certify that current runtime.
+
 ## Markers
 
 Declared in `pyproject.toml` (`addopts` includes `--strict-markers`, so an
