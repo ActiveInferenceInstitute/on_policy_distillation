@@ -94,14 +94,18 @@ source-derived manifest is accepted. Hosted delivery requires these exact
 independently published producer resources, not a mutable checkout-generated
 manifest. A local conformance receipt does not establish hosted delivery.
 
-The workflow acquires both resources into its own runner-temp directory before
-any verdict and verifies their exact SHA-256 identities. The repository Actions
-variables `GNN_BOOTSTRAP_URL` and `GNN_SOURCE_MANIFEST_URL` must be provisioned by
+The workflow acquires both resources into its own ignored workspace output
+directory before any verdict and verifies their exact SHA-256 identities.
+The repository Actions variables `GNN_BOOTSTRAP_URL` and
+`GNN_SOURCE_MANIFEST_URL` must be provisioned by
 the producer/repository owner with approved immutable HTTPS locators. They are
 required public-resource configuration, not ambient local paths or an alternate
 runtime. Unset locators or missing independently published assets remain an
 explicit owner prerequisite; the workflow does not generate replacements or
 turn that absence into a passing status.
+Job-level paths use the permitted `github.workspace` context; `runner` is not
+available in `jobs.<job_id>.env`. The checkout and both resource paths stay
+bound across all arms.
 
 Removed in the same change: `load_upstream_pin`, `UpstreamPin`,
 `UpstreamPinError` (renamed `UpstreamConformanceError`, which now only reports
