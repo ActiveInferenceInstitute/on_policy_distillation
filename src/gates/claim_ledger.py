@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -29,11 +30,98 @@ def _lookup_field(data: Any, field: str) -> Any:
     return value
 
 
+def _finite_float(value: Any) -> float:
+    number = float(value)
+    if not math.isfinite(number):
+        raise ValueError("numerical evidence must be finite")
+    return number
+
+
+def _numbers_are_finite(value: Any, *, numeric_strings: bool = False) -> bool:
+    if isinstance(value, float):
+        return math.isfinite(value)
+    if numeric_strings and isinstance(value, str):
+        try:
+            return math.isfinite(float(value))
+        except ValueError:
+            return True  # Preserve ordinary, nonnumeric text equality.
+        except OverflowError:
+            return False
+    if isinstance(value, dict):
+        return all(
+            _numbers_are_finite(key) and _numbers_are_finite(item, numeric_strings=numeric_strings)
+            for key, item in value.items()
+        )
+    if isinstance(value, list):
+        return all(_numbers_are_finite(item, numeric_strings=numeric_strings) for item in value)
+    return True
+
+
+def _evidence_parameters_are_finite(evidence: dict[str, Any]) -> bool:
+    if not _numbers_are_finite(evidence):
+        return False
+    try:
+        for key in ("tolerance", "min", "max", "len_equals", "len_min"):
+            if key in evidence:
+                _finite_float(evidence[key])
+    except (TypeError, ValueError, OverflowError):
+        return False
+    if "approx" in evidence and not _numbers_are_finite(evidence["approx"], numeric_strings=True):
+        return False
+    for key in ("all", "any"):
+        nested = evidence.get(key)
+        if isinstance(nested, dict) and not _evidence_parameters_are_finite(nested):
+            return False
+    return True
+
+
+def _evidence_has_nonfinite_operands(document: Any, evidence: dict[str, Any]) -> bool:
+    """Find nonfinite operands before ``any`` can hide a rejected numeric row."""
+    try:
+        value = _lookup_field(document, str(evidence["field"])) if "field" in evidence else document
+    except (KeyError, TypeError, ValueError, IndexError):
+        return False  # Missing fields remain ordinary predicate failures.
+    if not _numbers_are_finite(value):
+        return True
+    numerical = any(key in evidence for key in ("approx", "min", "max", "equals_difference", "leq_field"))
+    if numerical or evidence.get("predicate") in {"zero", "positive"}:
+        if not _numbers_are_finite(value, numeric_strings=True):
+            return True
+    for key in ("equals_difference", "leq_field"):
+        if key not in evidence:
+            continue
+        fields = evidence[key] if key == "equals_difference" else (evidence[key],)
+        if not isinstance(fields, (list, tuple, str)):
+            continue
+        for field in fields:
+            try:
+                operand = _lookup_field(document, str(field))
+            except (KeyError, TypeError, ValueError, IndexError):
+                continue
+            if not _numbers_are_finite(operand, numeric_strings=True):
+                return True
+    if isinstance(value, list):
+        for key in ("all", "any"):
+            nested = evidence.get(key)
+            if isinstance(nested, dict) and any(_evidence_has_nonfinite_operands(item, nested) for item in value):
+                return True
+    return False
+
+
 def _numbers_equal(left: Any, right: Any, tolerance: float) -> bool:
+    if not _numbers_are_finite(left) or not _numbers_are_finite(right):
+        return False
+    try:
+        tolerance = _finite_float(tolerance)
+    except (TypeError, ValueError, OverflowError):
+        return False
     if isinstance(left, bool) or isinstance(right, bool):
         return bool(left) is bool(right)
     if isinstance(left, (int, float)) and isinstance(right, (int, float)):
-        return abs(float(left) - float(right)) <= tolerance
+        try:
+            return abs(_finite_float(left) - _finite_float(right)) <= tolerance
+        except (TypeError, ValueError, OverflowError):
+            return False
     return bool(left == right)
 
 
@@ -56,6 +144,8 @@ SUBSTANTIVE_EVIDENCE_KEYS = {
 
 
 def _predicate_holds(value: Any, predicate: str, *, root: Path | None = None) -> bool:
+    if not _numbers_are_finite(value):
+        return False
     if predicate == "exists":
         return value is not None
     if predicate == "file_exists":
@@ -67,13 +157,13 @@ def _predicate_holds(value: Any, predicate: str, *, root: Path | None = None) ->
         return bool(value)
     if predicate == "zero":
         try:
-            return float(value) == 0.0
-        except (TypeError, ValueError):
+            return _finite_float(value) == 0.0
+        except (TypeError, ValueError, OverflowError):
             return False
     if predicate == "positive":
         try:
-            return float(value) > 0.0
-        except (TypeError, ValueError):
+            return _finite_float(value) > 0.0
+        except (TypeError, ValueError, OverflowError):
             return False
     if predicate == "all_true":
         if isinstance(value, dict):
@@ -88,25 +178,33 @@ def _predicate_holds(value: Any, predicate: str, *, root: Path | None = None) ->
 def _set_equals(left: Any, right: Any) -> bool:
     if not isinstance(left, list) or not isinstance(right, list):
         return False
+    if not _numbers_are_finite(left) or not _numbers_are_finite(right):
+        return False
     return {str(item) for item in left} == {str(item) for item in right}
 
 
 def _evidence_spec_holds(value: Any, evidence: dict[str, Any], *, root: Path | None = None) -> bool:
+    if not _evidence_parameters_are_finite(evidence):
+        return False
     document = value
     if "field" in evidence:
         try:
             value = _lookup_field(value, str(evidence["field"]))
         except (KeyError, TypeError, ValueError, IndexError):
             return False
-    tolerance = float(evidence.get("tolerance", 0.0))
+    if not _numbers_are_finite(value):
+        return False
+    tolerance = _finite_float(evidence.get("tolerance", 0.0))
     # --- re-derivation forms: check relations, not just stored scalars/flags ---
     if "equals_difference" in evidence:
         # value must equal lookup(document, A) - lookup(document, B): a stored
         # gap cannot silently disagree with the operands it claims to summarise.
         try:
             field_a, field_b = evidence["equals_difference"]
-            derived = float(_lookup_field(document, str(field_a))) - float(_lookup_field(document, str(field_b)))
-        except (KeyError, TypeError, ValueError, IndexError):
+            derived = _finite_float(_lookup_field(document, str(field_a))) - _finite_float(
+                _lookup_field(document, str(field_b))
+            )
+        except (KeyError, TypeError, ValueError, IndexError, OverflowError):
             return False
         if not _numbers_equal(value, derived, tolerance or 1e-9):
             return False
@@ -114,13 +212,13 @@ def _evidence_spec_holds(value: Any, evidence: dict[str, Any], *, root: Path | N
         # value must be <= the sibling field: orderings are re-derived, never
         # trusted from a producer-set flag.
         try:
-            bound = float(_lookup_field(document, str(evidence["leq_field"])))
-        except (KeyError, TypeError, ValueError, IndexError):
+            bound = _finite_float(_lookup_field(document, str(evidence["leq_field"])))
+        except (KeyError, TypeError, ValueError, IndexError, OverflowError):
             return False
         try:
-            if float(value) > bound + (tolerance or 1e-9):
+            if _finite_float(value) > bound + (tolerance or 1e-9):
                 return False
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, OverflowError):
             return False
     if "matches_artifact_field" in evidence:
         # Cross-artifact equality: this claim's value must be identical to a
@@ -134,6 +232,8 @@ def _evidence_spec_holds(value: Any, evidence: dict[str, Any], *, root: Path | N
             other_value = _lookup_field(_load_structured(other_path), str(spec.get("field", "")))
         except (OSError, ValueError, KeyError, TypeError, IndexError):
             return False
+        if not _numbers_are_finite(other_value):
+            return False
         if isinstance(value, list) or isinstance(other_value, list):
             if value != other_value:
                 return False
@@ -141,19 +241,28 @@ def _evidence_spec_holds(value: Any, evidence: dict[str, Any], *, root: Path | N
             return False
     if "equals" in evidence and not _numbers_equal(value, evidence["equals"], tolerance):
         return False
-    if "approx" in evidence and not _numbers_equal(value, evidence["approx"], tolerance):
-        return False
-    if "min" in evidence and float(value) < float(evidence["min"]):
-        return False
-    if "max" in evidence and float(value) > float(evidence["max"]):
+    if "approx" in evidence:
+        if not _numbers_are_finite(value, numeric_strings=True):
+            return False
+        if not _numbers_equal(value, evidence["approx"], tolerance):
+            return False
+    try:
+        if "min" in evidence and _finite_float(value) < _finite_float(evidence["min"]):
+            return False
+        if "max" in evidence and _finite_float(value) > _finite_float(evidence["max"]):
+            return False
+    except (TypeError, ValueError, OverflowError):
         return False
     if "contains" in evidence and evidence["contains"] not in value:
         return False
     if "set_equals" in evidence and not _set_equals(value, evidence["set_equals"]):
         return False
-    if "len_equals" in evidence and len(value) != int(evidence["len_equals"]):
-        return False
-    if "len_min" in evidence and len(value) < int(evidence["len_min"]):
+    try:
+        if "len_equals" in evidence and len(value) != int(evidence["len_equals"]):
+            return False
+        if "len_min" in evidence and len(value) < int(evidence["len_min"]):
+            return False
+    except (TypeError, ValueError, OverflowError):
         return False
     if "all" in evidence:
         nested = evidence["all"]
@@ -164,6 +273,8 @@ def _evidence_spec_holds(value: Any, evidence: dict[str, Any], *, root: Path | N
     if "any" in evidence:
         nested = evidence["any"]
         if not isinstance(value, list) or not isinstance(nested, dict):
+            return False
+        if any(_evidence_has_nonfinite_operands(item, nested) for item in value):
             return False
         if not any(_evidence_spec_holds(item, nested, root=root) for item in value):
             return False

@@ -54,6 +54,40 @@ GRAPH_WORLD_EXPECTED_TERMS: dict[str, str] = {
 }
 
 
+_MODEL_SECTIONS = {
+    "bernoulli_toy": "methods_analytical",
+    "si_tmaze": "methods_pymdp",
+    "graph_world": "results_invariants",
+}
+
+
+def resolve_model_ontology_path(project_root: Path, model_id: str) -> Path:
+    """Resolve a model's active ontology binding from the canonical live manifest.
+
+    Missing, ambiguous, or non-rendered bindings are errors; the historical
+    fragment location is never a fallback. File existence is checked by readers.
+    """
+    from manuscript.sheaf.manifest import default_manifest_path, load_manifest
+    from manuscript.sheaf.registry import track_order_for_section
+
+    root = project_root.resolve()
+    if model_id not in _MODEL_SECTIONS:
+        raise ValueError(f"unknown ontology model {model_id!r}")
+    section_id = _MODEL_SECTIONS[model_id]
+    manifest = load_manifest(default_manifest_path(root), project_root=root)
+    sections = [section for section in manifest.sections if section.id == section_id]
+    if len(sections) != 1:
+        raise ValueError(f"{model_id}: expected one manifest section {section_id!r}, found {len(sections)}")
+    section = sections[0]
+    binding = section.tracks.get("ontology", "")
+    if not section.should_compose() or not binding or "ontology" not in track_order_for_section(section, {}):
+        raise ValueError(f"{model_id}: missing active ontology binding in section {section_id!r}")
+    path = (root / binding).resolve()
+    if not path.is_relative_to(root):
+        raise ValueError(f"{model_id}: ontology binding leaves the project root: {binding!r}")
+    return path
+
+
 def load_section_ontology(path: Path) -> dict[str, str]:
     if not path.exists():
         return {}
@@ -107,28 +141,28 @@ def validate_all_gnn_ontology(project_root: Path) -> list[str]:
     checks = (
         (
             root / "gnn" / "bernoulli_toy.gnn.md",
-            root / "manuscript" / "sections" / "imrad" / "methods_analytical" / "ontology.yaml",
+            "bernoulli_toy",
             BERNOULLI_SYMBOL_MAP,
             BERNOULLI_EXPECTED_TERMS,
             "bernoulli_toy",
         ),
         (
             root / "gnn" / "si_tmaze.gnn.md",
-            root / "manuscript" / "sections" / "imrad" / "methods_pymdp" / "ontology.yaml",
+            "si_tmaze",
             SI_SYMBOL_MAP,
             SI_EXPECTED_TERMS,
             "si_tmaze",
         ),
         (
             root / "gnn" / "graph_world.gnn.md",
-            root / "manuscript" / "sections" / "imrad" / "results_invariants" / "ontology.yaml",
+            "graph_world",
             GRAPH_WORLD_SYMBOL_MAP,
             GRAPH_WORLD_EXPECTED_TERMS,
             "graph_world",
         ),
     )
     gaps: list[str] = []
-    for path, section_path, symbol_map, expected_terms, label in checks:
+    for path, model_id, symbol_map, expected_terms, label in checks:
         if not path.is_file():
             gaps.append(f"{label}: missing {path.relative_to(root)}")
             continue
@@ -140,6 +174,11 @@ def validate_all_gnn_ontology(project_root: Path) -> list[str]:
                 label=label,
             )
         )
+        try:
+            section_path = resolve_model_ontology_path(root, model_id)
+        except (ValueError, OSError, yaml.YAMLError) as exc:
+            gaps.append(f"{label}: cannot resolve canonical ontology binding: {exc}")
+            continue
         gaps.extend(
             _validate_section_ontology_exact(
                 section_path=section_path,

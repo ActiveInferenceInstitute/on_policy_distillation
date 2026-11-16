@@ -89,7 +89,10 @@ def _registry_tracks(root: Path) -> dict[str, dict[str, Any]]:
 
 
 def _manifest_sections(root: Path) -> list[dict[str, Any]]:
-    manifest = _load_yaml(root / "manuscript" / "sheaf" / "manifest.yaml")
+    from manuscript.sheaf.manifest import load_manifest_data
+
+    path = root / "manuscript" / "sheaf" / "manifest.yaml"
+    manifest = load_manifest_data(path) if path.is_file() else {}
     sections = manifest.get("sections") or []
     return [section for section in sections if isinstance(section, dict)]
 

@@ -78,6 +78,9 @@ def test_appendix_supplements_bind_all_registry_tracks() -> None:
     assert "layers" in reproducibility.tracks
     assert "model_checking" in validation.tracks
     assert appendix_tracks == set(registry.tracks)
+    assert full.tracks["ontology"] == "manuscript/sections/imrad/appendix_full_sheaf/ontology.yaml"
+    assert validation.tracks["ontology"] == "manuscript/sections/imrad/results_invariants/ontology.yaml"
+    assert full.tracks["ontology"] != validation.tracks["ontology"]
 
 
 def test_methods_sheaf_binds_layers_tracks() -> None:

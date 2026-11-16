@@ -6,6 +6,11 @@ or inconsistent artifact is an error, never a silent pass**, and every gate ship
 with a negative-control test proving it rejects bad input, not just accepts good
 input.
 
+Model ontology symbols follow the live manifest binding. A referenced file that
+is missing is an invalid binding, not an empty ontology or a fallback to the old
+path. Cold consumer tests produce their real artifact prerequisites; they retain
+strict rejection of claims that require absent observation or release evidence.
+
 The entry point is [`scripts/validate_outputs.py`](../../scripts/validate_outputs.py),
 which calls `validate_outputs` and `validate_manuscript`, writes
 `output/reports/validation_report.json`, and exits 1 if any check failed:
@@ -42,12 +47,11 @@ states the threat model precisely:
   exactly the green-wash this layer exists to stop. The re-derivation rules live
   in **one** module (no copy-drift), and only aggregates whose row-level
   predicate is unambiguous are covered.
-- **Trusted (out of scope here).** This layer proves *flag-vs-rows* consistency,
-  not row correctness. A payload whose rows were forged wholesale (rows and flag
-  rewritten together) passes here by construction; byte-level integrity of rows
-  is the provenance / hash-manifest layer's job (`artifact_provenance.json`,
-  `artifact_diffoscope`). The two layers compose: diffoscope pins the bytes, this
-  module pins the logic.
+- **Source-authenticated checks.** Generic aggregate rules prove flag-versus-row
+  consistency. Observation, figure-integrity, and manuscript-freshness rules
+  additionally authenticate current receipts, exact absent-bookend deferrals
+  and current present bytes, and complete live occurrence/section hydration
+  through shared validators. Consistent red evidence is not release acceptance.
 
 `aggregate_rederivation` is itself a supported check in `output_checks.py`'s
 `SUPPORTED_SELECTED_OUTPUT_CHECKS`.
@@ -97,23 +101,20 @@ contains every `sheaf-track:{id}` marker bound in the manifest).
 The canonical supplemental artifacts keep stable IDs and deepen their validation
 rules in place:
 
-- `proof_dependency_graph.json` must have linked theorem rows, resolved edges,
-  unique edge keys, all required edge types, and no orphan theorem/model-witness
-  targets. Negative controls live in
-  `tests/test_track_consolidation.py` by dropping links, duplicating edges, and
-  pointing an edge at an orphan target.
-- `state_transition_table.json` must have deterministic transitions, unique
-  transition keys, coverage for every required finite toy model, outgoing
-  transitions for every reachable state key, and terminal self-transition
-  coverage. Negative controls mutate missing models, duplicate keys, missing
-  outgoing coverage, and terminal self-transition coverage.
-- `ablation_sensitivity_report.json` must keep every effect source-backed, bind
-  each row by an explicit source join key, and agree with the causal-ablation
-  source row count. Negative controls remove source backing and join keys.
-- `release_attestation.json` must agree with its row pass/fail state, pin the
-  current validation-report hash, and expose attested source counts plus
-  validation check ids/counts. Negative controls flip a failed gate to passed or
-  stale the attested counts.
+- `proof_dependency_graph.json` binds live proof domains, current witness
+  targets, and logical edge identities; deleting an edge and its declaration
+  together still fails source authentication.
+- `state_transition_table.json` requires source-derived exact finite-state and
+  transition coverage, not a self-declared list of required models.
+- `ablation_sensitivity_report.json` joins actual numerical ablation rows and
+  their current hashes; a plausible join key is insufficient.
+- `release_attestation.json` binds exactly five required companions and the
+  current validation-report IDs/counts. A consistent failed report is not
+  release green.
+
+Disk and in-memory consumers use the same source-authenticating validator.
+Negative controls in `tests/test_track_consolidation.py` exercise coordinated
+payload edits as well as simple missing or changed rows.
 
 The idle-host isolation soak is intentionally not a release blocker. Its
 diagnostic/completion contract is enforced by
@@ -157,10 +158,33 @@ the Lean layer proves — and does not — is covered in
 
 ## Negative controls
 
-Per the AGENTS contract, gates are paired with negative controls in `tests/`,
-e.g. `test_validate_outputs_negative_missing_sweep`,
-`test_validate_outputs_negative_missing_sheaf_matrix`,
-`test_validate_outputs_negative_si_invariants_fail`,
-`test_validate_outputs_negative_analytical_invariants_fail`, and the manuscript
-and Lean negatives. A new gate without a negative control is incomplete by
-policy.
+Registered controls name exact parametrized test nodes and actual target
+validators. Ordinary generation reads receipts; it never executes tests.
+Explicitly invoked `scripts/record_negative_controls.py` records successful
+per-case baseline acceptance, mutation rejection, and test outcomes under
+artifact custody. Failed, skipped, missing, duplicate, unknown, or stale
+receipts cannot satisfy observation release gates.
+
+Structural fixed-point validation may accept authenticated unobserved state
+but retains every non-observation requirement. It may explicitly defer release
+evidence while validating exact live release-note contents; default integration
+and release checks still require that evidence. A cold structural success
+does not make a release note, observation, or publication claim green.
+
+Output validation's explicit `require_observations=False` mode propagates this
+structural contract to integration-audit checks in both selected and full
+evaluations, including `experiment_plan_metrics`. Default arguments still
+require release evidence; structural acceptance never supplies it.
+
+Cold test bootstrap applies this contract to manuscript integration audits with
+`validate_integration_audit_artifacts(root, require_release_evidence=False)`.
+The complete structural validator still checks source, schemas, and live
+contents; only the release-evidence requirement is deferred. The default
+`validate_manuscript` path remains strict.
+
+The hydration CLI adopts the full-chain runner's validated inherited artifact
+lease before entering the fixed-point producer; it does not contend with its
+own parent or release the parent's custody. Standalone hydration acquires the
+same lease itself. Shared-root structural tests accept either authentic observed
+or unobserved state. Receipt-free cold-root tests retain the strict rejection
+checks, so successful production alone cannot supply observation evidence.

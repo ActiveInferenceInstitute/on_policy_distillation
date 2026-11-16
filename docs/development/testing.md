@@ -20,6 +20,12 @@ The root [`../../conftest.py`](../../conftest.py) puts `src/` and `tests/` on
 project's `.venv` site-packages so a root pytest that delegates here still finds
 `inferactively-pymdp`.
 
+Before collection, artifact custody is acquired for the physical project root.
+The persistent `.artifact.lock` is never unlinked while active. Nested writers
+reenter the same lease; child writers receive both the explicit `.env` and
+`.pass_fds` handoff. Inherited descriptors are closed, not unlocked, by the
+child. These invariants do not establish the separate five-run idle-host soak.
+
 ## Markers
 
 Declared in `pyproject.toml` (`addopts` includes `--strict-markers`, so an
@@ -64,6 +70,19 @@ artifacts. This is the same discipline that lets the writer/validator boundary
 mean something: a validator that re-derives a result from rows is only honest if
 nothing in the test path is faked (see
 [`conventions.md`](conventions.md#writervalidator-separation)).
+
+## Finite numeric admission
+
+Typed-evidence numeric predicates reject booleans-as-numbers, NaN, infinities,
+and overflow before comparison. Existing finite boundaries/tolerances and
+text/boolean semantics remain unchanged. The focused acceptance selection is:
+
+```bash
+uv run --no-sync python -m pytest tests/gates/test_claim_ledger.py -k finite_admission --no-cov
+```
+
+Execute it only through the repository's admitted test manager when custody
+is governed; do not infer full release coverage from this selection.
 
 ## Coverage floor
 

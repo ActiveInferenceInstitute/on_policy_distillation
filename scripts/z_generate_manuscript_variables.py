@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -11,6 +12,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from orchestration.artifact_pipeline import hydrate_manuscript_fixed_point
+from orchestration.artifact_lock import ARTIFACT_LEASE_ENV, ArtifactLeaseError, artifact_lease
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -22,10 +24,15 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    paths = hydrate_manuscript_fixed_point(
-        PROJECT_ROOT,
-        require_analysis_outputs=not args.allow_draft,
-    )
+    try:
+        with artifact_lease(PROJECT_ROOT, inherited=os.environ.get(ARTIFACT_LEASE_ENV)):
+            paths = hydrate_manuscript_fixed_point(
+                PROJECT_ROOT,
+                require_analysis_outputs=not args.allow_draft,
+            )
+    except ArtifactLeaseError as exc:
+        print(f"artifact custody: {exc}", file=sys.stderr)
+        return 1
     for key in (
         "variables",
         "certificate",

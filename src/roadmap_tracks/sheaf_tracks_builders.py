@@ -10,6 +10,7 @@ re-exports every public name defined here.
 from __future__ import annotations
 
 import hashlib
+import math
 from itertools import product
 from pathlib import Path
 from typing import Any
@@ -17,7 +18,6 @@ from typing import Any
 from .sheaf_track_contracts import (
     CANONICAL_ARTIFACTS,
     CANONICAL_SCHEMA,
-    CANONICAL_TRACKS,
 )
 from .sheaf_tracks_support import (
     _analysis_scripts,
@@ -270,13 +270,14 @@ def build_replay_matrix(project_root: Path) -> dict[str, Any]:
 
 def build_sensitivity_sweep(project_root: Path) -> dict[str, Any]:
     root = project_root.resolve()
-    base = _load_json(root / CANONICAL_ARTIFACTS["sensitivity"])
-    if not base or base.get("schema") != "template_active_inference.sensitivity_sweep.v1":
-        from roadmap_tracks.toy_sweep import build_sensitivity_sweep as build_base_sensitivity
+    from roadmap_tracks.toy_sweep import build_sensitivity_sweep as build_base_sensitivity
 
-        base = build_base_sensitivity(root)
+    authoritative = build_base_sensitivity(root)
+    source_path = root / CANONICAL_ARTIFACTS["sensitivity"]
+    base = _load_json(source_path) if source_path.is_file() else authoritative
+    if base.get("schema") != authoritative["schema"]:
+        raise ValueError("sensitivity source schema is not authoritative")
     policy = _load_json(root / "output" / "data" / "si_policy_grid.json")
-    topology_traces = _load_json(root / "output" / "data" / "si_graph_world_topology_traces.json")
     planners = sorted(
         {
             str(row.get("planner") or row.get("mode"))
@@ -287,21 +288,27 @@ def build_sensitivity_sweep(project_root: Path) -> dict[str, Any]:
         "sophisticated_inference",
         "vanilla",
     ]
-    grid = base.get("grid") or {}
-    keyed = {
-        (
-            float(row.get("lambda")),
-            int(row.get("horizon")),
-            int(row.get("seed")),
-            str(row.get("topology")),
-        ): row
-        for row in base.get("rows") or []
-    }
-    topology_ids = sorted(
-        {str(row.get("topology")) for row in topology_traces.get("rows") or [] if row.get("topology")}
-    )
-    if not topology_ids:
-        topology_ids = [str(value) for value in grid.get("topologies", [])]
+    grid = authoritative["grid"]
+    fields = ("mi", "goal_reached", "belief_entropy_terminal")
+
+    def cell(row: dict[str, Any]) -> tuple[float, int, int, str]:
+        return float(row["lambda"]), int(row["horizon"]), int(row["seed"]), str(row["topology"])
+
+    required = {cell(row): row for row in authoritative["rows"]}
+    keyed: dict[tuple[float, int, int, str], dict[str, Any]] = {}
+    for row in base.get("rows") or []:
+        key = cell(row)
+        if key not in required or any(
+            type(row.get(field)) is not type(required[key][field]) or row.get(field) != required[key][field]
+            for field in fields
+        ):
+            raise ValueError("sensitivity source differs from the authoritative finite topology grid")
+        if key in keyed and any(row.get(field) != keyed[key][field] for field in fields):
+            raise ValueError("sensitivity source has conflicting duplicate cells")
+        keyed[key] = row
+    if set(keyed) != set(required):
+        raise ValueError("sensitivity source omits authoritative finite topology cells")
+    topology_ids = list(grid["topologies"])
     rows = []
     for lam, horizon, seed, topology, planner in product(
         [float(value) for value in grid.get("lambdas", [])],
@@ -310,7 +317,7 @@ def build_sensitivity_sweep(project_root: Path) -> dict[str, Any]:
         [str(value) for value in topology_ids or grid.get("topologies", [])],
         planners,
     ):
-        source = keyed.get((lam, horizon, seed, topology), {})
+        source = keyed[(lam, horizon, seed, topology)]
         rows.append(
             {
                 "lambda": lam,
@@ -319,11 +326,11 @@ def build_sensitivity_sweep(project_root: Path) -> dict[str, Any]:
                 "topology": topology,
                 "planner": planner,
                 "mode": planner,
-                "mi": source.get("mi", 0.0),
-                "goal_reached": source.get("goal_reached", True) is True,
-                "belief_entropy_terminal": source.get("belief_entropy_terminal", 0.0),
+                "mi": source["mi"],
+                "goal_reached": source["goal_reached"],
+                "belief_entropy_terminal": source["belief_entropy_terminal"],
                 "topology_parameter_id": f"{topology}_finite",
-                "finite_bound_ok": True,
+                "finite_bound_ok": all(math.isfinite(source[field]) for field in ("mi", "belief_entropy_terminal")),
                 "equation_link": "eq:ising_mi",
                 "assumption_link": "finite_discrete_toy_state_space",
                 "measured_source": "output/data/sensitivity_sweep.json",
@@ -424,70 +431,9 @@ def build_uncertainty_summary(project_root: Path) -> dict[str, Any]:
 
 
 def build_counterexample_matrix(project_root: Path) -> dict[str, Any]:
-    _ = project_root
-    rows = [
-        ("missing_sheaf_track_producer", "provenance", "validate_manuscript.canonical_sheaf_tracks_bound"),
-        ("missing_manuscript_binding", "sensitivity", "validate_manuscript.canonical_sheaf_tracks_bound"),
-        ("missing_typed_claim", "evidence_fields", "validate_outputs.canonical_sheaf_track_schemas"),
-        ("stale_semantic_certificate", "semantic", "validate_manuscript.semantic_sheaf_gluing"),
-        ("dependency_edge_loss", "dependency", "validate_outputs.validation_dependency_graph_schema"),
-        ("release_bundle_parity_failure", "release_bundle", "validate_outputs.release_bundle_manifest_schema"),
-        ("replay_mismatch", "replay_matrix", "validate_outputs.replay_matrix_schema"),
-        ("missing_sensitivity_cell", "sensitivity", "validate_outputs.sensitivity_sweep_schema"),
-        ("unnormalized_uncertainty_row", "uncertainty", "validate_outputs.uncertainty_summary_schema"),
-        ("known_bad_counterexample_passed", "counterexample", "validate_outputs.counterexample_matrix_schema"),
-        ("missed_model_checking_counterexample", "model_checking", "validate_outputs.model_checking_witnesses_schema"),
-        ("interop_shape_loss", "interop", "validate_outputs.interop_roundtrip_schema"),
-        ("adversarial_known_bad_passes", "adversarial_audit", "validate_outputs.adversarial_audit_schema"),
-        (
-            "theorem_traceability_unlinked",
-            "theorem_traceability",
-            "validate_outputs.theorem_traceability_matrix_schema",
-        ),
-        ("gate_ergonomics_unindexed", "gate_ergonomics", "validate_outputs.validation_gate_index_schema"),
-        ("artifact_diffoscope_missed_hash_drift", "artifact_diffoscope", "validate_outputs.artifact_diffoscope_schema"),
-        ("missing_scholarship_source_binding", "scholarship", "validate_outputs.scholarship_source_matrix_schema"),
-        ("proof_extraction_missing_statement", "proof_extraction", "validate_outputs.proof_extraction_index_schema"),
-        (
-            "state_space_catalog_missing_finite_space",
-            "state_space_catalog",
-            "validate_outputs.state_space_catalog_schema",
-        ),
-        ("causal_ablation_missing_cell", "causal_ablation", "validate_outputs.causal_ablation_matrix_schema"),
-        ("artifact_license_unsafe_artifact", "artifact_license", "validate_outputs.artifact_license_audit_schema"),
-        ("release_notes_claim_failed_gate_passed", "release_notes", "validate_outputs.release_notes_evidence_schema"),
-        ("empirical_adapter_live", "empirical_adapter", "validate_manuscript.blocked_empirical_adapter"),
-    ]
-    payload_rows = [
-        {
-            "id": row_id,
-            "promoted_track": track,
-            "gate": gate,
-            "target_gate": gate,
-            "mutation": row_id,
-            "fixture_payload": {"mutation": row_id, "scope": "deterministic_toy_audit"},
-            "expected_failure": True,
-            "observed": "expected_failure",
-            "fixture_replay_status": "expected_failure_observed",
-            "test": "tests/test_track_consolidation.py::test_canonical_sheaf_track_negative_controls",
-        }
-        for row_id, track, gate in rows
-    ]
-    return {
-        "schema": "template_active_inference.counterexample_matrix.v1",
-        "schema_version": CANONICAL_SCHEMA,
-        "rows": payload_rows,
-        "counterexample_count": len(payload_rows),
-        "covered_tracks": sorted(
-            {row["promoted_track"] for row in payload_rows if row["promoted_track"] in CANONICAL_TRACKS}
-        ),
-        "all_expected_failures_documented": all(
-            row["expected_failure"] and row["gate"] and row["test"] and row["mutation"] for row in payload_rows
-        ),
-        "all_expected_failures_observed": all(
-            row["fixture_replay_status"] == "expected_failure_observed" for row in payload_rows
-        ),
-    }
+    from .negative_controls import counterexample_payload
+
+    return counterexample_payload(project_root)
 
 
 def build_model_checking_witnesses(project_root: Path) -> dict[str, Any]:
@@ -627,34 +573,9 @@ def build_interop_roundtrip_report(project_root: Path) -> dict[str, Any]:
 
 
 def build_adversarial_audit(project_root: Path) -> dict[str, Any]:
-    counter = build_counterexample_matrix(project_root)
-    rows = [
-        {
-            "id": row["id"],
-            "track": row["promoted_track"],
-            "target_gate": row["target_gate"],
-            "gate": row["gate"],
-            "known_bad_should_fail": True,
-            "known_bad_passed": False,
-            "expected_failure": row["expected_failure"],
-            "observed": row["observed"],
-        }
-        for row in counter["rows"]
-    ]
-    return {
-        "schema": "template_active_inference.adversarial_audit.v1",
-        "schema_version": CANONICAL_SCHEMA,
-        "rows": rows,
-        "audit_count": len(rows),
-        "probe_count": len(rows),
-        "known_bad_rows_passed": sum(1 for row in rows if row["known_bad_passed"]),
-        "all_expected_failures_documented": all(
-            row["expected_failure"] and row["known_bad_should_fail"] for row in rows
-        ),
-        "all_expected_failures_observed": all(
-            row["expected_failure"] and row["observed"] == "expected_failure" for row in rows
-        ),
-    }
+    from .negative_controls import adversarial_payload
+
+    return adversarial_payload(build_counterexample_matrix(project_root))
 
 
 def build_blocked_scope_manifest(project_root: Path) -> dict[str, Any]:

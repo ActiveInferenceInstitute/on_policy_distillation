@@ -2,18 +2,22 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
+from orchestration.artifact_lock import artifact_lease
 from simulation.logging_utils import RunLogger
 from simulation.numerics import STEP_POSTERIOR_ATOL
 from simulation.pymdp_config import (
     ComparisonPlanner,
     PymdpConfig,
     apply_pymdp_overrides,
+    config_hash,
     config_snapshot,
     load_pymdp_config,
 )
@@ -63,17 +67,19 @@ def model_matrices_payload(config: PymdpConfig) -> dict[str, Any]:
         "preferences": model["preferences"],
         "environment": model["environment"],
         "transition_semantics": model["transition_semantics"],
+        "config_hash": config_hash(config),
         "config": config_snapshot(config),
     }
 
 
 def write_model_matrices(project_root: Path, *, config: PymdpConfig | None = None) -> Path:
     root = project_root.resolve()
-    cfg = config or load_pymdp_config(root)
-    out = root / "output" / "data" / "si_tmaze_model_matrices.json"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(model_matrices_payload(cfg), indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return out
+    with artifact_lease(root):
+        cfg = config or load_pymdp_config(root)
+        out = root / "output" / "data" / "si_tmaze_model_matrices.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(model_matrices_payload(cfg), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        return out
 
 
 def write_si_artifacts(
@@ -84,126 +90,128 @@ def write_si_artifacts(
     trace_steps: list[dict[str, Any]] | None = None,
 ) -> dict[str, Path]:
     root = project_root.resolve()
-    cfg = config or load_pymdp_config(root)
-    data_dir = root / "output" / "data"
-    reports_dir = root / "output" / "reports"
-    data_dir.mkdir(parents=True, exist_ok=True)
-    reports_dir.mkdir(parents=True, exist_ok=True)
+    with artifact_lease(root):
+        cfg = config or load_pymdp_config(root)
+        steps_payload = result.trace_steps if trace_steps is None else trace_steps
+        data_dir = root / "output" / "data"
+        reports_dir = root / "output" / "reports"
+        data_dir.mkdir(parents=True, exist_ok=True)
+        reports_dir.mkdir(parents=True, exist_ok=True)
 
-    snapshot = config_snapshot(cfg)
-    # Re-derive the belief-entropy decrease so the "the student that acts to observe
-    # the cue drives its posterior entropy down" claim is gated, not just summarised by
-    # a scalar mean. The series must be monotone non-increasing within tolerance.
-    _belief_entropy_series = [
-        float(step["belief_entropy"])
-        for step in (trace_steps or [])
-        if isinstance(step, dict) and step.get("belief_entropy") is not None
-    ]
-    belief_entropy_non_increasing = bool(
-        len(_belief_entropy_series) >= 2
-        and all(
-            _belief_entropy_series[i + 1] <= _belief_entropy_series[i] + 1e-9
-            for i in range(len(_belief_entropy_series) - 1)
+        snapshot = config_snapshot(cfg)
+        # Re-derive the belief-entropy decrease so the "the student that acts to observe
+        # the cue drives its posterior entropy down" claim is gated, not just summarised by
+        # a scalar mean. The series must be monotone non-increasing within tolerance.
+        _belief_entropy_series = [
+            float(step["belief_entropy"])
+            for step in steps_payload
+            if isinstance(step, dict) and step.get("belief_entropy") is not None
+        ]
+        belief_entropy_non_increasing = bool(
+            len(_belief_entropy_series) >= 2
+            and all(
+                _belief_entropy_series[i + 1] <= _belief_entropy_series[i] + 1e-9
+                for i in range(len(_belief_entropy_series) - 1)
+            )
         )
-    )
-    summary = {
-        "schema": "template_active_inference.si_tmaze_summary.v2",
-        "profile": result.profile,
-        "planner": result.planner,
-        "steps": result.steps,
-        "rollout_timestep_count": len(result.actions),
-        "planning_horizon": result.planning_horizon,
-        "policy_len": result.policy_len,
-        "num_policies": result.num_policies,
-        "mean_belief_entropy": result.mean_belief_entropy,
-        "belief_entropy_start": _belief_entropy_series[0] if _belief_entropy_series else None,
-        "belief_entropy_end": _belief_entropy_series[-1] if _belief_entropy_series else None,
-        "belief_entropy_non_increasing": belief_entropy_non_increasing,
-        "actions": result.actions,
-        "action_names": result.action_names,
-        "action_vectors": result.action_vectors,
-        "observations": result.observations,
-        "observations_by_modality": result.observations_by_modality,
-        "observation_names_by_modality": result.observation_names_by_modality,
-        "q_pi_by_step": result.q_pi_by_step,
-        "q_pi_entropy_by_step": result.q_pi_entropy_by_step,
-        "action_probabilities": result.action_probabilities,
-        "config_hash": result.config_hash,
-        "goal_reached": result.goal_reached,
-        "reward_observed": result.reward_observed,
-        "action_diversity": result.action_diversity,
-        "tree_available": result.tree_available,
-        "tree_stats": result.tree_stats,
-        "expected_known_warnings": {
-            "jax_static_array": int(result.runtime_diagnostics.get("known_warning_count", 0) or 0),
-            "tree_max_nodes": int(result.runtime_diagnostics.get("known_tree_warning_count", 0) or 0),
-        },
-        "validation_comparison": {
-            "enabled": cfg.validation_comparison.enabled,
-            "vanilla_role": "comparison_only",
-            "planners": list(cfg.validation_comparison.planners),
-        },
-        "config": snapshot,
-    }
-    summary_path = data_dir / "si_tmaze_summary.json"
-    summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-
-    steps_payload = trace_steps if trace_steps is not None else result.trace_steps
-    trace_path = data_dir / "si_tmaze_trace.json"
-    trace_path.write_text(
-        json.dumps(
-            {
-                "schema": "template_active_inference.si_tmaze_trace.v2",
-                "profile": result.profile,
-                "planner": result.planner,
-                "config_hash": result.config_hash,
-                "steps": steps_payload,
+        summary = {
+            "schema": "template_active_inference.si_tmaze_summary.v2",
+            "profile": result.profile,
+            "planner": result.planner,
+            "steps": result.steps,
+            "rollout_timestep_count": len(result.actions),
+            "planning_horizon": result.planning_horizon,
+            "policy_len": result.policy_len,
+            "num_policies": result.num_policies,
+            "mean_belief_entropy": result.mean_belief_entropy,
+            "belief_entropy_start": _belief_entropy_series[0] if _belief_entropy_series else None,
+            "belief_entropy_end": _belief_entropy_series[-1] if _belief_entropy_series else None,
+            "belief_entropy_non_increasing": belief_entropy_non_increasing,
+            "actions": result.actions,
+            "action_names": result.action_names,
+            "action_vectors": result.action_vectors,
+            "observations": result.observations,
+            "observations_by_modality": result.observations_by_modality,
+            "observation_names_by_modality": result.observation_names_by_modality,
+            "q_pi_by_step": result.q_pi_by_step,
+            "q_pi_entropy_by_step": result.q_pi_entropy_by_step,
+            "action_probabilities": result.action_probabilities,
+            "config_hash": result.config_hash,
+            "goal_reached": result.goal_reached,
+            "reward_observed": result.reward_observed,
+            "action_diversity": result.action_diversity,
+            "tree_available": result.tree_available,
+            "tree_stats": result.tree_stats,
+            "expected_known_warnings": {
+                "jax_static_array": int(result.runtime_diagnostics.get("known_warning_count", 0) or 0),
+                "tree_max_nodes": int(result.runtime_diagnostics.get("known_tree_warning_count", 0) or 0),
             },
-            indent=2,
-            sort_keys=True,
+            "validation_comparison": {
+                "enabled": cfg.validation_comparison.enabled,
+                "vanilla_role": "comparison_only",
+                "planners": list(cfg.validation_comparison.planners),
+                "seeds": list(cfg.validation_comparison.seeds),
+            },
+            "config": snapshot,
+        }
+        summary_path = data_dir / "si_tmaze_summary.json"
+        summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+        trace_path = data_dir / "si_tmaze_trace.json"
+        trace_path.write_text(
+            json.dumps(
+                {
+                    "schema": "template_active_inference.si_tmaze_trace.v2",
+                    "profile": result.profile,
+                    "planner": result.planner,
+                    "config_hash": result.config_hash,
+                    "steps": steps_payload,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
         )
-        + "\n",
-        encoding="utf-8",
-    )
 
-    matrices_path = write_model_matrices(root, config=cfg)
+        matrices_path = write_model_matrices(root, config=cfg)
 
-    log_path = root / cfg.logging.path
-    log_records = 0
-    if log_path.exists():
-        log_records = sum(1 for line in log_path.read_text(encoding="utf-8").splitlines() if line.strip())
-    run_report = {
-        "schema": "template_active_inference.si_tmaze_run_report.v2",
-        "config": snapshot,
-        "config_hash": result.config_hash,
-        "profile": result.profile,
-        "planner": result.planner,
-        "seed": cfg.random_seed,
-        "policy_len": result.policy_len,
-        "planning_horizon": result.planning_horizon,
-        "steps": result.steps,
-        "rollout_timestep_count": len(result.actions),
-        "log_path": str(cfg.logging.path),
-        "log_record_count": log_records,
-        "goal_reached": result.goal_reached,
-        "tree_available": result.tree_available,
-    }
-    report_path = reports_dir / "si_tmaze_run_report.json"
-    report_path.write_text(json.dumps(run_report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    if result.runtime_diagnostics:
-        write_runtime_diagnostics(root, [result.runtime_diagnostics])
+        log_path = root / cfg.logging.path
+        log_records = 0
+        if log_path.exists():
+            log_records = sum(1 for line in log_path.read_text(encoding="utf-8").splitlines() if line.strip())
+        run_report = {
+            "schema": "template_active_inference.si_tmaze_run_report.v2",
+            "config": snapshot,
+            "config_hash": result.config_hash,
+            "profile": result.profile,
+            "planner": result.planner,
+            "seed": cfg.random_seed,
+            "policy_len": result.policy_len,
+            "planning_horizon": result.planning_horizon,
+            "steps": result.steps,
+            "rollout_timestep_count": len(result.actions),
+            "log_path": str(cfg.logging.path),
+            "log_record_count": log_records,
+            "goal_reached": result.goal_reached,
+            "tree_available": result.tree_available,
+        }
+        report_path = reports_dir / "si_tmaze_run_report.json"
+        report_path.write_text(json.dumps(run_report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        if result.runtime_diagnostics:
+            write_runtime_diagnostics(root, [result.runtime_diagnostics])
 
-    from simulation.invariants import merge_simulation_into_invariants_report, write_simulation_invariants
+        from simulation.invariants import merge_simulation_into_invariants_report, write_simulation_invariants
 
-    write_simulation_invariants(root)
-    merge_simulation_into_invariants_report(root)
+        write_simulation_invariants(root)
+        merge_simulation_into_invariants_report(root)
 
-    return {
-        "summary": summary_path,
-        "trace": trace_path,
-        "model_matrices": matrices_path,
-        "run_report": report_path,
-    }
+        return {
+            "summary": summary_path,
+            "trace": trace_path,
+            "model_matrices": matrices_path,
+            "run_report": report_path,
+        }
 
 
 def run_and_persist(
@@ -211,19 +219,23 @@ def run_and_persist(
     *,
     config: PymdpConfig | None = None,
 ) -> dict[str, Any]:
-    cfg = config or load_pymdp_config(project_root)
-    logger = RunLogger.from_project_root(
-        project_root,
-        relative_path=cfg.logging.path,
-        enabled=cfg.logging.enabled,
-    )
-    logger.fresh()
-    result = run_si_tmaze(project_root, config=cfg, logger=logger)
-    paths = write_si_artifacts(project_root, result, config=cfg, trace_steps=result.trace_steps)
-    return {"result": result, "paths": paths, "log_records": len(logger.records())}
+    root = project_root.resolve()
+    with artifact_lease(root):
+        cfg = config or load_pymdp_config(root)
+        logger = RunLogger.from_project_root(
+            root,
+            relative_path=cfg.logging.path,
+            enabled=cfg.logging.enabled,
+        )
+        logger.fresh()
+        result = run_si_tmaze(root, config=cfg, logger=logger)
+        paths = write_si_artifacts(root, result, config=cfg, trace_steps=result.trace_steps)
+        return {"result": result, "paths": paths, "log_records": len(logger.records())}
 
 
-def _comparison_row(result: SIRunResult, *, planner: ComparisonPlanner, seed: int) -> dict[str, Any]:
+def _comparison_row(
+    result: SIRunResult, *, config: PymdpConfig, planner: ComparisonPlanner, seed: int
+) -> dict[str, Any]:
     posterior_steps = []
     for step in result.trace_steps:
         posterior_steps.append(
@@ -247,6 +259,8 @@ def _comparison_row(result: SIRunResult, *, planner: ComparisonPlanner, seed: in
         "role": "validation_comparison",
         "horizon": result.planning_horizon,
         "seed": seed,
+        "config": config_snapshot(config),
+        "config_hash": result.config_hash,
         "steps": result.steps,
         "rollout_timestep_count": len(result.actions),
         "policy_len": result.policy_len,
@@ -269,59 +283,72 @@ def _comparison_row(result: SIRunResult, *, planner: ComparisonPlanner, seed: in
 def write_policy_comparison(
     project_root: Path,
     *,
+    config: PymdpConfig | None = None,
     seeds: tuple[int, ...] | None = None,
     planners: tuple[ComparisonPlanner, ...] | None = None,
 ) -> Path:
-    """Write SI-vs-vanilla comparison rows without changing the canonical summary."""
+    """Write comparison-only runs and their grid using one effective base config.
+
+    The canonical seed does not override ``validation_comparison.seeds``.
+    Explicit ``seeds`` and ``planners`` select only the comparison grid.
+    """
     root = project_root.resolve()
-    base = load_pymdp_config(root)
-    configured_seeds = seeds if seeds is not None else base.validation_comparison.seeds
-    configured_planners = planners if planners is not None else base.validation_comparison.planners
-    rows: list[dict[str, Any]] = []
-    diagnostics: list[dict[str, Any]] = []
-    for seed in configured_seeds:
-        cfg = apply_pymdp_overrides(base, seed=seed, logging_enabled=False)
-        for planner in configured_planners:
-            logger = RunLogger(
-                root / "output" / "logs" / f"pymdp_compare_{planner}_{cfg.planning_horizon}_{seed}.jsonl"
+    with artifact_lease(root):
+        base = config or load_pymdp_config(root)
+        configured_seeds = seeds if seeds is not None else base.validation_comparison.seeds
+        configured_planners = planners if planners is not None else base.validation_comparison.planners
+        rows: list[dict[str, Any]] = []
+        diagnostics: list[dict[str, Any]] = []
+        for seed in configured_seeds:
+            seeded = apply_pymdp_overrides(base, seed=seed)
+            for planner in configured_planners:
+                log_path = Path(base.logging.path).parent / (
+                    f"pymdp_compare_{planner}_{seeded.planning_horizon}_{seed}.jsonl"
+                )
+                cfg = replace(seeded, logging=replace(seeded.logging, path=str(log_path)))
+                logger = RunLogger.from_project_root(
+                    root, relative_path=cfg.logging.path, enabled=cfg.logging.enabled
+                )
+                logger.fresh()
+                result = run_validation_comparison_tmaze(root, config=cfg, planner=planner, logger=logger)
+                diagnostics.append(result.runtime_diagnostics)
+                rows.append(_comparison_row(result, config=cfg, planner=planner, seed=seed))
+        expected_run_count = len(configured_planners) * len(configured_seeds)
+        all_efe_rows_explained = bool(rows) and all(
+            bool(row.get("policy_posterior_steps"))
+            and all(
+                step.get("posterior_available") is True or bool(step.get("fallback_reason"))
+                for step in row.get("policy_posterior_steps") or []
             )
-            result = run_validation_comparison_tmaze(root, config=cfg, planner=planner, logger=logger)
-            diagnostics.append(result.runtime_diagnostics)
-            rows.append(_comparison_row(result, planner=planner, seed=seed))
-    expected_run_count = len(configured_planners) * len(configured_seeds)
-    all_efe_rows_explained = bool(rows) and all(
-        bool(row.get("policy_posterior_steps"))
-        and all(
-            step.get("posterior_available") is True or bool(step.get("fallback_reason"))
-            for step in row.get("policy_posterior_steps") or []
+            for row in rows
         )
-        for row in rows
-    )
-    payload = {
-        "schema": "template_active_inference.si_policy_comparison.v2",
-        "scope": "comparison_only",
-        "canonical_planner": "sophisticated_inference",
-        "runs": rows,
-        "summary": {
-            "run_count": len(rows),
-            "planners": sorted({row["planner"] for row in rows}),
-            "horizons": sorted({row["horizon"] for row in rows}),
-            "seeds": sorted({row["seed"] for row in rows}),
-            "expected_run_count": expected_run_count,
-            "complete_grid": len(rows) == expected_run_count,
-            "vanilla_role": "comparison_only",
-            "goal_reached_count": sum(1 for row in rows if row["goal_reached"]),
-            "posterior_available_run_count": sum(1 for row in rows if row["policy_posterior_available_count"]),
-            "all_available_posteriors_normalized": all(row["policy_posterior_all_normalized"] for row in rows),
-            "all_efe_rows_explained": all_efe_rows_explained,
-        },
-    }
-    out = root / "output" / "data" / "si_policy_comparison.json"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    write_runtime_diagnostics(root, diagnostics)
-    write_policy_posterior_grid(root, comparison=payload)
-    return out
+        payload = {
+            "schema": "template_active_inference.si_policy_comparison.v2",
+            "scope": "comparison_only",
+            "canonical_planner": "sophisticated_inference",
+            "config": config_snapshot(base),
+            "config_hash": config_hash(base),
+            "runs": rows,
+            "summary": {
+                "run_count": len(rows),
+                "planners": sorted({row["planner"] for row in rows}),
+                "horizons": sorted({row["horizon"] for row in rows}),
+                "seeds": sorted({row["seed"] for row in rows}),
+                "expected_run_count": expected_run_count,
+                "complete_grid": len(rows) == expected_run_count,
+                "vanilla_role": "comparison_only",
+                "goal_reached_count": sum(1 for row in rows if row["goal_reached"]),
+                "posterior_available_run_count": sum(1 for row in rows if row["policy_posterior_available_count"]),
+                "all_available_posteriors_normalized": all(row["policy_posterior_all_normalized"] for row in rows),
+                "all_efe_rows_explained": all_efe_rows_explained,
+            },
+        }
+        out = root / "output" / "data" / "si_policy_comparison.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        write_runtime_diagnostics(root, diagnostics)
+        write_policy_posterior_grid(root, comparison=payload)
+        return out
 
 
 def write_policy_posterior_grid(
@@ -329,67 +356,78 @@ def write_policy_posterior_grid(
     *,
     comparison: dict[str, Any] | None = None,
 ) -> Path:
-    """Write step-level PyMDP policy posterior normalization evidence."""
+    """Write posterior evidence from a supplied comparison or the saved artifact."""
     root = project_root.resolve()
-    payload = comparison
-    if payload is None:
-        path = root / "output" / "data" / "si_policy_comparison.json"
-        payload = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
-    rows: list[dict[str, Any]] = []
-    for run_index, run in enumerate(payload.get("runs") or []):
-        for step in run.get("policy_posterior_steps") or []:
-            q_pi = [float(value) for value in step.get("q_pi", []) or []]
-            q_sum = float(sum(q_pi)) if q_pi else None
-            rows.append(
-                {
-                    "run_index": run_index,
-                    "step": step.get("step"),
-                    "planner": run.get("planner"),
-                    "role": run.get("role"),
-                    "horizon": run.get("horizon"),
-                    "seed": run.get("seed"),
-                    "posterior_available": step.get("posterior_available") is True,
-                    "posterior_source": step.get("posterior_source"),
-                    "q_pi": q_pi,
-                    "q_pi_sum": q_sum,
-                    "q_pi_entropy": step.get("q_pi_entropy"),
-                    "action_probabilities": step.get("action_probabilities", {}),
-                    "normalized": q_sum is not None and abs(q_sum - 1.0) <= STEP_POSTERIOR_ATOL,
-                    "fallback_reason": step.get("fallback_reason"),
-                }
-            )
-    available = [row for row in rows if row["posterior_available"]]
-    unavailable = [row for row in rows if not row["posterior_available"]]
+    with artifact_lease(root):
+        payload = comparison
+        source = "provided_comparison_payload"
+        if payload is None:
+            path = root / "output" / "data" / "si_policy_comparison.json"
+            source = "output/data/si_policy_comparison.json" if path.is_file() else None
+            payload = json.loads(path.read_text(encoding="utf-8")) if source is not None else {}
+        rows: list[dict[str, Any]] = []
+        for run_index, run in enumerate(payload.get("runs") or []):
+            for step in run.get("policy_posterior_steps") or []:
+                q_pi = [float(value) for value in step.get("q_pi", []) or []]
+                q_sum = float(sum(q_pi)) if q_pi else None
+                rows.append(
+                    {
+                        "run_index": run_index,
+                        "step": step.get("step"),
+                        "planner": run.get("planner"),
+                        "role": run.get("role"),
+                        "horizon": run.get("horizon"),
+                        "seed": run.get("seed"),
+                        "steps": run.get("steps"),
+                        "policy_len": run.get("policy_len"),
+                        "config_hash": run.get("config_hash"),
+                        "posterior_available": step.get("posterior_available") is True,
+                        "posterior_source": step.get("posterior_source"),
+                        "q_pi": q_pi,
+                        "q_pi_sum": q_sum,
+                        "q_pi_entropy": step.get("q_pi_entropy"),
+                        "action_probabilities": step.get("action_probabilities", {}),
+                        "normalized": q_sum is not None and abs(q_sum - 1.0) <= STEP_POSTERIOR_ATOL,
+                        "fallback_reason": step.get("fallback_reason"),
+                    }
+                )
+        available = [row for row in rows if row["posterior_available"]]
+        unavailable = [row for row in rows if not row["posterior_available"]]
 
-    # Re-derive the sophisticated-inference vs vanilla concentration contrast from the
-    # rows so the "SI concentrates / vanilla stays near-uniform" claim is a gated
-    # property, not a figure-only assertion. SI should place majority mass on one
-    # policy (peak >= 0.5) while the comparison-only vanilla evaluator stays diffuse
-    # (an order of magnitude less peaked).
-    def _peak_action_mass(planner: str) -> float:
-        masses = [max(row["q_pi"]) for row in available if row["planner"] == planner and row["q_pi"]]
-        return float(max(masses)) if masses else 0.0
+        # Re-derive the sophisticated-inference vs vanilla concentration contrast from the
+        # rows so the "SI concentrates / vanilla stays near-uniform" claim is a gated
+        # property, not a figure-only assertion. SI should place majority mass on one
+        # policy (peak >= 0.5) while the comparison-only vanilla evaluator stays diffuse
+        # (an order of magnitude less peaked).
+        def _peak_action_mass(planner: str) -> float:
+            masses = [max(row["q_pi"]) for row in available if row["planner"] == planner and row["q_pi"]]
+            return float(max(masses)) if masses else 0.0
 
-    si_peak_action_mass = _peak_action_mass("sophisticated_inference")
-    vanilla_peak_action_mass = _peak_action_mass("vanilla")
-    si_concentrates_vanilla_uniform = bool(
-        si_peak_action_mass >= 0.5 and si_peak_action_mass >= 10.0 * vanilla_peak_action_mass
-    )
-    grid = {
-        "schema": "template_active_inference.pymdp_policy_posterior_grid.v1",
-        "source": "output/data/si_policy_comparison.json",
-        "scope": "comparison_only",
-        "canonical_planner": payload.get("canonical_planner"),
-        "rows": rows,
-        "row_count": len(rows),
-        "available_row_count": len(available),
-        "all_available_posteriors_normalized": bool(available) and all(row["normalized"] for row in available),
-        "all_unavailable_rows_explained": all(bool(row["fallback_reason"]) for row in unavailable),
-        "si_peak_action_mass": si_peak_action_mass,
-        "vanilla_peak_action_mass": vanilla_peak_action_mass,
-        "si_concentrates_vanilla_uniform": si_concentrates_vanilla_uniform,
-    }
-    out = root / "output" / "data" / "pymdp_policy_posterior_grid.json"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(grid, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return out
+        si_peak_action_mass = _peak_action_mass("sophisticated_inference")
+        vanilla_peak_action_mass = _peak_action_mass("vanilla")
+        si_concentrates_vanilla_uniform = bool(
+            si_peak_action_mass >= 0.5 and si_peak_action_mass >= 10.0 * vanilla_peak_action_mass
+        )
+        grid = {
+            "schema": "template_active_inference.pymdp_policy_posterior_grid.v1",
+            "source": source,
+            "source_payload_sha256": hashlib.sha256(
+                json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest(),
+            "scope": "comparison_only",
+            "canonical_planner": payload.get("canonical_planner"),
+            "config": payload.get("config"),
+            "config_hash": payload.get("config_hash"),
+            "rows": rows,
+            "row_count": len(rows),
+            "available_row_count": len(available),
+            "all_available_posteriors_normalized": bool(available) and all(row["normalized"] for row in available),
+            "all_unavailable_rows_explained": all(bool(row["fallback_reason"]) for row in unavailable),
+            "si_peak_action_mass": si_peak_action_mass,
+            "vanilla_peak_action_mass": vanilla_peak_action_mass,
+            "si_concentrates_vanilla_uniform": si_concentrates_vanilla_uniform,
+        }
+        out = root / "output" / "data" / "pymdp_policy_posterior_grid.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(grid, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        return out

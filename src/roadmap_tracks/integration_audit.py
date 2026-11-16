@@ -15,6 +15,7 @@ Every builder and helper is re-exported here, so existing
 from __future__ import annotations
 
 from pathlib import Path
+from .negative_controls import validate_observation_payload
 
 from .integration_audit_artifacts import (
     _figure_hash_rows_complete,
@@ -89,6 +90,7 @@ __all__ = [
     "write_integration_audit_artifacts",
     "write_manuscript_staleness_report",
     "validate_integration_audit_artifacts",
+    "validate_manuscript_staleness_report",
 ]
 
 
@@ -99,6 +101,27 @@ def write_manuscript_staleness_report(project_root: Path) -> Path:
         root / "output" / "reports" / "manuscript_staleness_report.json",
         build_manuscript_staleness_report(root),
     )
+
+
+def validate_manuscript_staleness_report(
+    project_root: Path, payload: dict | None = None, *, require_fresh: bool = True
+) -> list[str]:
+    """Validate saved occurrence identities, content, and summaries against live hydration."""
+    root = project_root.resolve()
+    saved = (
+        _load_json(root / "output" / "reports" / "manuscript_staleness_report.json")
+        if payload is None
+        else payload
+    )
+    live = build_manuscript_staleness_report(root)
+    issues: list[str] = []
+    if saved.get("schema") != "template_active_inference.manuscript_staleness_report.v1":
+        issues.append("manuscript_staleness_report.json schema mismatch")
+    if require_fresh and (saved.get("all_fresh") is not True or live["all_fresh"] is not True):
+        issues.append("manuscript_staleness_report.json records stale manuscript tokens")
+    if saved != live:
+        issues.append("manuscript_staleness_report.json is stale relative to live manuscript tokens")
+    return issues
 
 
 def write_integration_audit_artifacts(project_root: Path) -> dict[str, Path]:
@@ -176,7 +199,9 @@ def write_integration_audit_artifacts(project_root: Path) -> dict[str, Path]:
     return paths
 
 
-def validate_integration_audit_artifacts(project_root: Path) -> list[str]:
+def validate_integration_audit_artifacts(
+    project_root: Path, *, require_release_evidence: bool = True
+) -> list[str]:
     root = project_root.resolve()
     issues: list[str] = []
     producer = _load_json(root / "output" / "reports" / "producer_completeness.json")
@@ -252,11 +277,11 @@ def validate_integration_audit_artifacts(project_root: Path) -> list[str]:
     if claim_audit.get("all_claims_typed") is not True or claim_audit.get("all_claims_typed") != claims_derived:
         issues.append("claim_evidence_audit.json has untyped claims")
     scope = _load_json(root / "output" / "reports" / "scope_boundary_audit.json")
-    if scope.get("all_current_claims_toy") is not True:
-        issues.append("scope_boundary_audit.json records empirical scope leakage")
+    live_scope = build_scope_boundary_audit(root)
+    if scope != live_scope or live_scope["all_current_claims_toy"] is not True:
+        issues.append("scope_boundary_audit.json records empirical scope leakage or stale clause evidence")
     adversarial = _load_json(root / "output" / "reports" / "adversarial_audit.json")
-    if adversarial.get("all_expected_failures_documented") is not True:
-        issues.append("adversarial_audit.json has undocumented expected failures")
+    issues.extend(validate_observation_payload(root, adversarial, adversarial=True, require_observations=False))
     figure_hash = _load_json(root / "output" / "reports" / "figure_hash_manifest.json")
     figure_hash_derived = _figure_hash_rows_complete(root, figure_hash)
     if (
@@ -285,20 +310,7 @@ def validate_integration_audit_artifacts(project_root: Path) -> list[str]:
     if tables.get("all_source_backed") is not True or tables.get("all_source_backed") != tables_derived:
         issues.append("manuscript_evidence_tables.json has unbacked tables")
     staleness = _load_json(root / "output" / "reports" / "manuscript_staleness_report.json")
-    if staleness.get("schema") != "template_active_inference.manuscript_staleness_report.v1":
-        issues.append("manuscript_staleness_report.json schema mismatch")
-    if staleness.get("all_fresh") is not True:
-        issues.append("manuscript_staleness_report.json records stale manuscript tokens")
-    live_staleness = build_manuscript_staleness_report(root)
-    saved_rows = [
-        {key: row.get(key) for key in ("section", "token", "expected", "fresh")} for row in staleness.get("rows") or []
-    ]
-    live_rows = [
-        {key: row.get(key) for key in ("section", "token", "expected", "fresh")}
-        for row in live_staleness.get("rows") or []
-    ]
-    if staleness and saved_rows != live_rows:
-        issues.append("manuscript_staleness_report.json is stale relative to live manuscript tokens")
+    issues.extend(validate_manuscript_staleness_report(root, staleness))
     symbols = _load_json(root / "output" / "data" / "cross_track_symbol_table.json")
     symbols_derived = bool(symbols.get("rows")) and all(row.get("consistent") for row in symbols.get("rows") or [])
     if symbols.get("all_consistent") is not True or symbols.get("all_consistent") != symbols_derived:
@@ -323,8 +335,10 @@ def validate_integration_audit_artifacts(project_root: Path) -> list[str]:
     notes_rows = release_notes.get("rows") or []
     notes_backed = bool(notes_rows) and all(row.get("source") and row.get("passed") for row in notes_rows)
     if (
-        release_notes.get("all_notes_source_backed") is not True
+        (require_release_evidence and release_notes.get("all_notes_source_backed") is not True)
         or release_notes.get("all_notes_source_backed") != notes_backed
     ):
         issues.append("release_notes_evidence.json has unsupported notes")
+    if release_notes != build_release_notes_evidence(root):
+        issues.append("release_notes_evidence.json is stale relative to its source artifacts")
     return issues

@@ -18,15 +18,16 @@ Design rules (FirstPrinciples deconstruction, Run-4):
   vacuous truth over ``[]`` is exactly the green-wash this layer exists to stop.
 - Rules live in ONE module (this one). Do not copy the table or the evaluator
   into other validators; import them (copy-drift hazard, see Run-3 changelog).
-- Only aggregates whose row-level predicate is unambiguous are covered.
-  Ambiguous aggregates (cross-artifact joins, deferred-conditional semantics)
-  stay with their bespoke validators.
+- Generic rules prove flag-versus-row consistency. Observation receipts, image
+  deferrals/current bytes, and manuscript hydration additionally delegate to
+  their shared source-authentication contracts using the physical project root.
+- Honest red state can be internally consistent. Neither a matching aggregate
+  nor structural acceptance is a substitute for the default observed-release
+  gates.
 
-Threat model: this layer proves FLAG-vs-ROWS consistency, not row correctness.
-A payload whose rows were forged wholesale (rows and flag rewritten together)
-passes here by construction; byte-level integrity of rows is the provenance /
-hash-manifest layer's job (`artifact_provenance.json`, `artifact_diffoscope`).
-The two layers compose: diffoscope pins the bytes, this module pins the logic.
+Most generic row predicates cannot authenticate a coordinated wholesale forgery;
+provenance and diffoscope remain necessary. The explicitly source-bound rules
+also reject stale or forged rows even when their stored aggregates agree.
 """
 
 from __future__ import annotations
@@ -209,11 +210,7 @@ ARTIFACT_AGGREGATE_RULES: dict[str, tuple[tuple[str, Spec], ...]] = {
             "all_expected_failures_documented",
             ("all", ("true", "expected_failure"), ("true", "known_bad_should_fail")),
         ),
-        # writer: expected_failure and observed == "expected_failure" (literal status string)
-        (
-            "all_expected_failures_observed",
-            ("all", ("true", "expected_failure"), ("equals", "observed", "expected_failure")),
-        ),
+        ("all_expected_failures_observed", ("observations_current", "adversarial_audit")),
     ),
     "output/reports/artifact_diffoscope.json": (("all_equal", ("true", "equal")),),
     "output/reports/artifact_license_audit.json": (("all_license_safe", ("true", "license_safe")),),
@@ -232,26 +229,10 @@ ARTIFACT_AGGREGATE_RULES: dict[str, tuple[tuple[str, Spec], ...]] = {
                 ("nonempty", "mutation"),
             ),
         ),
-        # writer: fixture replay actually reproduced the expected failure
-        (
-            "all_expected_failures_observed",
-            ("equals", "fixture_replay_status", "expected_failure_observed"),
-        ),
+        ("all_expected_failures_observed", ("observations_current", "counterexample")),
     ),
     "output/reports/figure_hash_manifest.json": (
-        # `all_hashes_present` covers every NON-deferred declared image
-        # (registry figures + the locally-generated animation). Publish-deferred
-        # bookends (transmission_*.png) that are absent on a local tree are
-        # exempt; a row is OK iff it is deferred-True OR it carries a real hash
-        # and is fresh (strict per row — a missing `deferred` key is NOT exempt,
-        # so a registry row without hashes still fails closed).
-        (
-            "all_hashes_present",
-            (
-                "all",
-                ("any", ("equals", "deferred", True), ("all", ("nonempty", "sha256"), ("true", "fresh"))),
-            ),
-        ),
+        ("all_hashes_present", ("figure_hash_current",)),
     ),
     "output/reports/gnn_lint_report.json": (
         ("all_variables_mapped_once", ("true", "ok")),
@@ -265,7 +246,7 @@ ARTIFACT_AGGREGATE_RULES: dict[str, tuple[tuple[str, Spec], ...]] = {
     "output/reports/manuscript_hardcoded_variable_audit.json": (
         ("all_values_auto_injected", ("true", "auto_injected")),
     ),
-    "output/reports/manuscript_staleness_report.json": (("all_fresh", ("true", "fresh")),),
+    "output/reports/manuscript_staleness_report.json": (("all_fresh", ("manuscript_fresh",)),),
     "output/reports/model_checking_witnesses.json": (
         ("all_passed", ("true", "passed")),
         ("all_exhaustive", ("true", "exhaustive")),
@@ -286,13 +267,36 @@ ARTIFACT_AGGREGATE_RULES: dict[str, tuple[tuple[str, Spec], ...]] = {
 }
 
 
-def rederive_aggregate(payload: dict[str, Any], spec: Spec) -> bool:
-    """Re-derive an aggregate from ``payload['rows']``; vacuous truth is False."""
+def rederive_aggregate(
+    payload: dict[str, Any], spec: Spec, *, project_root: Path | None = None
+) -> bool:
+    """Re-derive row and source-bound aggregates; vacuous truth is False."""
     rows = payload.get("rows")
     if not isinstance(rows, list) or not rows:
         return False
     if not all(isinstance(row, dict) for row in rows):
         return False
+    if spec[0] == "manuscript_fresh":
+        sections = payload.get("sections")
+        return (
+            all(row.get("fresh") is True for row in rows)
+            and isinstance(sections, list)
+            and all(isinstance(section, dict) and section.get("canonical_hydration_matches") is True
+                    for section in sections)
+        )
+    if spec[0] == "figure_hash_current":
+        if project_root is None:
+            return False
+        from roadmap_tracks.integration_audit_artifacts import figure_hash_row_current
+
+        return (not payload.get("unexpected_image_paths")
+                and all(figure_hash_row_current(project_root, row) for row in rows))
+    if spec[0] == "observations_current":
+        if project_root is None:
+            return False
+        from roadmap_tracks.negative_controls import counterexample_payload
+
+        return counterexample_payload(project_root)["all_expected_failures_observed"]
     if spec[0] == "unique":
         values = [row.get(spec[1]) for row in rows]
         return all(value not in (None, "") for value in values) and len(values) == len(set(values))
@@ -323,8 +327,23 @@ def aggregate_rederivation_rows(project_root: Path) -> list[dict[str, Any]]:
                 )
                 continue
             stored = payload.get(aggregate_field)
-            rederived = rederive_aggregate(payload, spec)
-            consistent = isinstance(stored, bool) and stored == rederived
+            rederived = rederive_aggregate(payload, spec, project_root=root)
+            authenticated = True
+            if spec[0] == "observations_current":
+                from roadmap_tracks.negative_controls import validate_observation_payload
+
+                authenticated = not validate_observation_payload(
+                    root, payload, adversarial=spec[1] == "adversarial_audit", require_observations=False
+                )
+            elif spec[0] == "figure_hash_current":
+                from roadmap_tracks.integration_audit_artifacts import build_figure_hash_manifest
+
+                authenticated = payload == build_figure_hash_manifest(root)
+            elif spec[0] == "manuscript_fresh":
+                from roadmap_tracks.integration_audit import validate_manuscript_staleness_report
+
+                authenticated = not validate_manuscript_staleness_report(root, payload, require_fresh=False)
+            consistent = isinstance(stored, bool) and stored == rederived and authenticated
             row: dict[str, Any] = {
                 "artifact": rel,
                 "aggregate": aggregate_field,
@@ -333,7 +352,10 @@ def aggregate_rederivation_rows(project_root: Path) -> list[dict[str, Any]]:
                 "consistent": consistent,
             }
             if not consistent:
-                row["reason"] = "stored flag disagrees with row-level re-derivation"
+                row["reason"] = (
+                    "stored flag disagrees with row-level re-derivation" if authenticated
+                    else "saved rows disagree with authoritative current sources"
+                )
             out.append(row)
     return out
 

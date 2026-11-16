@@ -96,7 +96,11 @@ tasks:
     state plus terminal self-transitions; `ablation_sensitivity_report` needs
     explicit source join keys and source row-count agreement; `release_attestation`
     needs attested validation check ids/counts while keeping idle-host soak evidence
-    outside release blocking.'
+    outside release blocking. Source-authenticated implementation now binds live
+    proof domains/witness targets, exact finite transitions, numerical ablation
+    joins/current hashes, and five attestation companions through shared validators.
+    Parent source-bound proof and current per-case receipts remain required;
+    status/progress are not automatically promoted.'
 - id: opsd-6
   title: Manuscript hydration + typed claim evidence
   status: todo
@@ -109,9 +113,12 @@ tasks:
   - opsd-4
   tags:
   - manuscript
-  notes: ''
+  notes: 'Existing hydration and typed evidence remain live. O4 adds exact occurrence,
+    resolved-span and whole-section freshness; O5 adds finite numeric admission.
+    Parent receipts distinguish authored source from accepted behavior; no scientific
+    or milestone closure is implied.'
 - id: opsd-7
-  title: Machine-verified sheaf-laws layer (ISA 0/41)
+  title: Finite sheaf-law and strict-compose acceptance
   status: todo
   start: '2026-06-18'
   end: '2026-07-05'
@@ -121,7 +128,9 @@ tasks:
   - opsd-2
   tags:
   - formal
-  notes: 'ISA phase=observe, 0/41: wire sheaf-axiom layer into strict compose/validation.'
+  notes: 'Historical starting point: ISA phase=observe, 0/41. Current work is
+    source-bound finite sheaf-law and strict-compose acceptance, not a claim that
+    the existing finite implementation is absent. Publication remains owner-gated.'
 - id: opsd-8
   title: Harden order/load-sensitive artifact-validation test isolation
   status: in_progress
@@ -175,7 +184,10 @@ tasks:
   notes: 'Added a lightweight audit tying active TODO rows to `tasks.yaml` status,
     progress, proof-artifact notes, and blocked/deferred semantics. The audit keeps
     `AI-TEST-ISOLATION-1` open until `complete_soak: true` and requires explicit
-    task rows for the soak-report validator and canonical-track deepening work.'
+    task rows for the soak-report validator and canonical-track deepening work.
+    O13 now parses active task membership without treating historical prose
+    mentions as live tasks; parent proof records its qualification separately
+    from this historical audit closure.'
 - id: opsd-m1
   title: OPSD≡AIF preprint
   status: todo

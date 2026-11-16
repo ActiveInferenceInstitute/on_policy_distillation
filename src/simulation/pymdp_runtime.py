@@ -154,6 +154,7 @@ def construct_agent_with_diagnostics(
             A_dependencies=model["A_dependencies"],
             B_dependencies=model["B_dependencies"],
             policy_len=policy_len,
+            categorical_obs=config.environment.categorical_obs,
             inference_algo=config.agent.inference_algo,
             action_selection=config.agent.action_selection,
             sampling_mode=config.agent.sampling_mode,

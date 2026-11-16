@@ -52,9 +52,10 @@ counts, run facts, semantic restrictions, and figure captions must enter through
 
 ## Producer order
 
-Run producers in this order when refreshing the full reproducible surface
-(or simply `uv run python scripts/run_full_chain.py`, which encodes this order
-and converges the attestation fixed point automatically):
+The following full-surface recipe requires its actual environment and scientific
+prerequisites. `scripts/run_full_chain.py` encodes producer order and structural
+fixed-point convergence; this is not proof of observed negative controls or
+release-green status:
 
 ```bash
 uv run python scripts/compose_manuscript.py
@@ -83,6 +84,26 @@ evidence-field, release-bundle, theorem-traceability, gate-index, diffoscope,
 proof-extraction, state-space, causal-ablation, license, release-note,
 proof-dependency, transition-table, ablation-sensitivity, release-attestation,
 track-improvement, blocked-scope, section-status, and render-log artifacts.
+
+The shared first-principles `write_complete` API/CLI requires genuine upstream
+inputs. It produces measured statistics and privilege artifacts before the final
+ledger. Primitive, validation-spine, toy, first-principles and promoted inputs
+precede the first full figure pass; later figure refresh and hydration consume
+those actual outputs. `--no-classroom` removes the stale classroom-dependent
+outputs rather than recycling a previous run.
+
+All writers hold physical-root artifact custody. Subprocess writers receive
+the explicit environment plus inherited-descriptor handoff; inherited leases
+are close-only. Ordinary generation never invokes receipt tests. Only the
+explicit recorder can create current per-case observation receipts, and
+neither structural convergence nor source-consistent deferred release notes
+satisfy default release acceptance.
+
+Hydration derives freshness from rendered bytes, then resolves its own freshness
+variable until the variable map agrees with the newly derived report. Repeated
+variable states are an explicit cycle error, not a forced `all_fresh` value.
+Semantic/provenance validation follows hydration; missing observation or release
+evidence remains red in the default acceptance gates.
 
 ## Figure rendering contract
 

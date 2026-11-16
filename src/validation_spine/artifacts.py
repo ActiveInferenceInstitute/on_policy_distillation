@@ -322,96 +322,10 @@ def build_reproducibility_replay(project_root: Path) -> dict[str, Any]:
 
 
 def build_counterexample_matrix(project_root: Path) -> dict[str, Any]:
-    """Document expected-failure fixtures that keep the gates falsifiable."""
-    _ = project_root
-    rows = [
-        {
-            "id": "stale_semantic_certificate",
-            "gate": "validate_manuscript.semantic_sheaf_gluing",
-            "mutation": "change a saved artifact producer in sheaf_gluing_certificate.json",
-            "expected_failure": True,
-            "test": "tests/test_semantic_sheaf.py::test_semantic_gluing_rejects_stale_saved_certificate",
-        },
-        {
-            "id": "wrong_si_ontology_term",
-            "gate": "validate_manuscript.gnn_concordance",
-            "mutation": "map pi to HiddenState instead of PolicyPosterior",
-            "expected_failure": True,
-            "test": "tests/test_semantic_sheaf.py::test_semantic_gluing_rejects_wrong_si_ontology",
-        },
-        {
-            "id": "graph_world_summary_trace_mismatch",
-            "gate": "validate_outputs.si_graph_world_schema",
-            "mutation": "change summary step count without changing trace rows",
-            "expected_failure": True,
-            "test": "tests/test_semantic_extensions.py::test_validate_outputs_rejects_graph_world_summary_trace_mismatch",
-        },
-        {
-            "id": "claim_expected_value_mismatch",
-            "gate": "validate_manuscript.claim_ledger_valid",
-            "mutation": "set typed claim expected value to an impossible number",
-            "expected_failure": True,
-            "test": "tests/test_semantic_sheaf.py::test_typed_claim_evidence_rejects_wrong_expected_value",
-        },
-        {
-            "id": "stale_provenance_hash",
-            "gate": "validate_outputs.artifact_provenance_schema",
-            "mutation": "replace a saved artifact sha256 with a fake digest",
-            "expected_failure": True,
-            "test": "tests/test_validation_spine.py::test_validation_spine_rejects_stale_provenance_hash",
-        },
-        {
-            "id": "stale_seed_config_provenance",
-            "gate": "validate_outputs.artifact_provenance_schema",
-            "mutation": "replace deterministic seed and config digest fields",
-            "expected_failure": True,
-            "test": "tests/test_validation_spine.py::test_validation_spine_rejects_stale_seed_config_provenance",
-        },
-        {
-            "id": "static_animation_delta_manifest",
-            "gate": "validate_outputs.animation_frame_deltas_schema",
-            "mutation": "mark an adjacent GIF frame delta as static",
-            "expected_failure": True,
-            "test": "tests/test_semantic_extensions.py::test_animation_frame_delta_manifest_rejects_static_manifest",
-        },
-        {
-            "id": "unexpected_pymdp_runtime_warning",
-            "gate": "validate_outputs.pymdp_runtime_diagnostics_schema",
-            "mutation": "emit an uncatalogued warning during pymdp Agent construction",
-            "expected_failure": True,
-            "test": "tests/test_semantic_extensions.py::test_pymdp_runtime_diagnostics_classifies_known_sample_and_rejects_unexpected",
-        },
-        {
-            "id": "unnormalized_policy_posterior",
-            "gate": "validate_outputs.pymdp_policy_posterior_grid_schema",
-            "mutation": "replace a measured q_pi row with an unnormalized vector",
-            "expected_failure": True,
-            "test": "tests/test_semantic_sheaf.py::test_semantic_gluing_rejects_mutated_policy_posterior",
-        },
-        {
-            "id": "graph_world_topology_trace_mismatch",
-            "gate": "validate_outputs.si_graph_world_topology_traces_schema",
-            "mutation": "change a topology trace length without changing its summary row",
-            "expected_failure": True,
-            "test": "tests/test_roadmap_promotion.py::test_toy_sweep_negative_controls",
-        },
-        {
-            "id": "stale_hydrated_manuscript_value",
-            "gate": "validate_manuscript.manuscript_staleness_report",
-            "mutation": "replace a saved hydrated token expectation",
-            "expected_failure": True,
-            "test": "tests/test_roadmap_promotion.py::test_integration_audit_negative_controls",
-        },
-    ]
-    return {
-        "schema": "template_active_inference.counterexample_matrix.v1",
-        "rows": rows,
-        "counterexample_count": len(rows),
-        "all_expected_failures_documented": all(
-            bool(row.get("expected_failure") and row.get("gate") and row.get("test") and row.get("mutation"))
-            for row in rows
-        ),
-    }
+    """Use the same registered, receipt-backed producer as the promoted track."""
+    from roadmap_tracks.negative_controls import counterexample_payload
+
+    return counterexample_payload(project_root)
 
 
 def write_validation_spine_artifacts(project_root: Path) -> dict[str, Path]:
@@ -561,28 +475,18 @@ def validate_reproducibility_replay(project_root: Path, *, rebuild: bool = False
     return issues
 
 
-def validate_counterexample_matrix(project_root: Path) -> list[str]:
+def validate_counterexample_matrix(
+    project_root: Path, *, require_observations: bool = True
+) -> list[str]:
+    from roadmap_tracks.negative_controls import validate_observation_payload
+
     root = project_root.resolve()
     path = root / "output" / "reports" / "counterexample_matrix.json"
     if not path.is_file():
         return ["missing output/reports/counterexample_matrix.json"]
-    payload = _load_json(path)
-    issues: list[str] = []
-    if payload.get("schema") != "template_active_inference.counterexample_matrix.v1":
-        issues.append("counterexample_matrix.json schema mismatch")
-    rows = payload.get("rows") or []
-    if not rows:
-        issues.append("counterexample_matrix.json has no rows")
-    for row in rows:
-        row_id = row.get("id", "<unknown>")
-        if row.get("expected_failure") is not True:
-            issues.append(f"{row_id}: expected_failure must be true")
-        for field in ("gate", "mutation", "test"):
-            if not row.get(field):
-                issues.append(f"{row_id}: missing {field}")
-    if payload.get("all_expected_failures_documented") is not True:
-        issues.append("counterexample_matrix.json does not record all expected failures")
-    return issues
+    return validate_observation_payload(
+        root, _load_json(path), require_observations=require_observations
+    )
 
 
 def validate_validation_spine(project_root: Path) -> list[str]:

@@ -46,7 +46,10 @@ def summarize_si_trace(trace: Mapping[str, Any], summary: Mapping[str, Any]) -> 
     action_names = list(summary.get("action_names") or [])
     observations_by_modality = summary.get("observations_by_modality") or {}
     cue_observed_step = _first_positive_step(list(observations_by_modality.get("cue") or []))
-    reward_observed_step = _first_positive_step(list(observations_by_modality.get("outcome") or []))
+    reward_observed_step = next(
+        (idx for idx, value in enumerate(observations_by_modality.get("outcome") or []) if int(value) == 1),
+        None,
+    )
     initial_action_probabilities = action_probabilities[0] if action_probabilities else {}
     goal_state = int((summary.get("config") or {}).get("tmaze", {}).get("num_obs", 2)) - 1
     goal_reached = bool(observations and int(observations[-1]) == goal_state)

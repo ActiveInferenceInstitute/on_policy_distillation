@@ -23,6 +23,12 @@ from gates.aggregate_rederivation import (
 
 def _spec_fields(spec: tuple) -> set[str]:
     kind = spec[0]
+    if kind == "manuscript_fresh":
+        return {"fresh"}
+    if kind == "figure_hash_current":
+        return {"path", "exists", "sha256", "size_bytes", "fresh", "deferred"}
+    if kind == "observations_current":
+        return {"observed", "receipt_sha256"}
     if kind in {"true", "nonempty", "empty", "positive", "unique"}:
         return {spec[1]}
     if kind == "equals":
@@ -274,3 +280,72 @@ def test_rederivation_logic_single_definition(project_root: Path) -> None:
         if "def rederive_aggregate" in text or "def _eval_spec" in text:
             hits.append(str(path))
     assert not hits, f"re-derivation logic duplicated outside canonical module: {hits}"
+
+
+def test_manuscript_aggregate_authenticates_honest_red_and_rejects_forgery(tmp_path: Path) -> None:
+    from copy import deepcopy
+    from gates.output_checks import validate_outputs_selected_strict
+    from manuscript.hydrate import write_resolved_manuscript
+    from manuscript.variables import generate_variables
+    from roadmap_tracks.integration_audit import build_manuscript_staleness_report, validate_manuscript_staleness_report
+    from test_manuscript_staleness_regressions import _project
+
+    root = _project(tmp_path, "Count {{pipeline_track_count}}.\n")
+    (root / "manuscript/01_plain.md").write_text("An authored token-free section.\n", encoding="utf-8")
+    write_resolved_manuscript(root, generate_variables(root, require_analysis_outputs=False))
+    path = root / "output/reports/manuscript_staleness_report.json"
+    path.parent.mkdir(parents=True)
+
+    def save(payload: dict) -> dict:
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        return next(row for row in aggregate_rederivation_rows(root) if row["artifact"] == path.relative_to(root).as_posix())
+
+    green = build_manuscript_staleness_report(root)
+    assert green["all_fresh"] is True
+    assert save(green)["consistent"] is True
+    assert validate_outputs_selected_strict(root, {"manuscript_staleness_report_schema"}) == {
+        "manuscript_staleness_report_schema": True,
+    }
+    hydrated = root / "output/manuscript/01_plain.md"
+    hydrated.write_text("An unauthorized token-free edit.\n", encoding="utf-8")
+    red = build_manuscript_staleness_report(root)
+    assert red["rows"] and all(row["fresh"] for row in red["rows"])
+    assert any(not section["canonical_hydration_matches"] for section in red["sections"])
+    assert red["all_fresh"] is False
+    spec = ARTIFACT_AGGREGATE_RULES["output/reports/manuscript_staleness_report.json"][0][1]
+    assert rederive_aggregate(red, spec, project_root=root) is False
+    row = save(red)
+    assert row["consistent"] is True and row["rederived"] is False
+    assert validate_manuscript_staleness_report(root, red, require_fresh=False) == []
+    assert validate_outputs_selected_strict(root, {"manuscript_staleness_report_schema"}) == {
+        "manuscript_staleness_report_schema": False,
+    }
+    for forge_sections in (False, True):
+        forged = deepcopy(red)
+        forged["all_fresh"] = True
+        if forge_sections:
+            for section in forged["sections"]:
+                section["canonical_hydration_matches"] = True
+        assert save(forged)["consistent"] is False
+        assert validate_manuscript_staleness_report(root, forged, require_fresh=False)
+
+
+def test_unobserved_aggregate_consistency_is_not_release_acceptance(tmp_path: Path) -> None:
+    from roadmap_tracks.negative_controls import adversarial_payload, counterexample_payload
+    from gates.output_checks import validate_output_payloads
+
+    counter = counterexample_payload(tmp_path)
+    adversarial = adversarial_payload(counter)
+    for relative, payload in (
+        ("output/reports/counterexample_matrix.json", counter),
+        ("output/reports/adversarial_audit.json", adversarial),
+    ):
+        path = tmp_path / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload), encoding="utf-8")
+    rows = [row for row in aggregate_rederivation_rows(tmp_path)
+            if row["aggregate"] == "all_expected_failures_observed"]
+    assert len(rows) == 2 and all(row["consistent"] and row["rederived"] is False for row in rows)
+    assert validate_output_payloads(tmp_path, only={"counterexample_matrix_schema", "adversarial_audit_schema"}) == {
+        "counterexample_matrix_schema": False, "adversarial_audit_schema": False,
+    }

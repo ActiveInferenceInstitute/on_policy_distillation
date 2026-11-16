@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import hashlib
 from pathlib import Path
-from roadmap_tracks.supplemental import release_attestation_consistent_and_current
+from roadmap_tracks.negative_controls import validate_observation_payload
 from typing import Any
 
 from .sheaf_track_contracts import (
@@ -263,8 +263,13 @@ def build_track_improvement_scope(project_root: Path) -> dict[str, Any]:
     claims = _claim_ids_by_track(root)
     producers, _, gates = _artifact_maps()
     scripts = set(_analysis_scripts(root))
-    negative_rows = build_counterexample_matrix(root).get("rows") or []
+    controls = build_counterexample_matrix(root)
+    negative_rows = controls["rows"]
     negative_by_track = {row["promoted_track"]: row["id"] for row in negative_rows}
+    observed_by_track = {
+        track: all(row["receipt"] is not None for row in negative_rows if row["promoted_track"] == track)
+        for track in negative_by_track
+    }
     promotion_matrix = []
     for track_id in sorted(registry):
         artifact = _track_artifact(track_id)
@@ -291,6 +296,10 @@ def build_track_improvement_scope(project_root: Path) -> dict[str, Any]:
             "has_semantic_restriction": True,
             "has_validation_gate": bool(gates.get(artifact)) or True,
             "has_negative_control": bool(negative_by_track.get(track_id)) or track_id not in CANONICAL_TRACKS,
+            "negative_control_observed": observed_by_track.get(track_id) if track_id in CANONICAL_TRACKS else None,
+            "negative_control_status": (
+                "observed" if observed_by_track.get(track_id) else "documented_unobserved"
+            ) if track_id in CANONICAL_TRACKS else "outside_registered_receipt_scope",
             "versioned_track_id": VERSIONED_TRACK_RE.search(track_id) is not None,
         }
         row["promotion_complete"] = not row["versioned_track_id"] and all(
@@ -342,8 +351,21 @@ def build_track_improvement_scope(project_root: Path) -> dict[str, Any]:
         "improvement_row_count": len(improvement_roadmap),
         "versioned_track_ids": sorted(row["track_id"] for row in promotion_matrix if row["versioned_track_id"]),
         "all_live_tracks_valid": bool(promotion_matrix) and all(row["promotion_complete"] for row in promotion_matrix),
+        "all_required_controls_observed": controls["all_expected_failures_observed"],
+        "observed_control_count": controls["observed_count"],
+        "unobserved_control_count": controls["unobserved_count"],
         "blocked_tracks": [row["id"] for row in blocked["rows"]],
     }
+
+
+def track_improvement_scope_consistent(project_root: Path, payload: dict[str, Any]) -> bool:
+    """Authenticate promotion definitions and observation state, not release greenness."""
+    from .negative_controls import canonical_bytes
+
+    try:
+        return canonical_bytes(payload) == canonical_bytes(build_track_improvement_scope(project_root))
+    except (OSError, TypeError, ValueError):
+        return False
 
 
 def build_validation_dependency_graph(project_root: Path) -> dict[str, Any]:
@@ -411,7 +433,10 @@ def build_validation_dependency_graph(project_root: Path) -> dict[str, Any]:
         field_level_edge_count += 1
     for row in build_counterexample_matrix(root).get("rows") or []:
         edges.append({"source": row["target_gate"], "target": row["id"], "kind": "validator_to_negative_control"})
-        edges.append({"source": row["id"], "target": row["observed"], "kind": "fixture_to_expected_failure"})
+        edges.append({"source": row["id"], "target": "expected_failure", "kind": "fixture_to_expected_failure"})
+        edges.append({"source": row["id"], "target": row["test"], "kind": "case_to_test_node"})
+        if row["receipt"] is not None:
+            edges.append({"source": row["id"], "target": row["receipt_sha256"], "kind": "fixture_to_observed_rejection"})
     for row in build_model_checking_witnesses(root).get("rows") or []:
         edges.append({"source": str(row.get("model")), "target": str(row.get("id")), "kind": "model_to_witness"})
     for row in build_interop_roundtrip_report(root).get("rows") or []:
@@ -459,38 +484,40 @@ def build_validation_dependency_graph(project_root: Path) -> dict[str, Any]:
     }
 
 
-def _canonical_restrictions(root: Path) -> dict[str, bool]:
+def _canonical_restrictions(root: Path, *, payloads: dict[str, dict] | None = None) -> dict[str, bool]:
     registry = _registry_tracks(root)
     bound = _bound_tracks(root)
-    provenance = _load_json(root / CANONICAL_ARTIFACTS["provenance"])
-    replay = _load_json(root / CANONICAL_ARTIFACTS["replay_matrix"])
-    sensitivity = _load_json(root / CANONICAL_ARTIFACTS["sensitivity"])
-    uncertainty = _load_json(root / CANONICAL_ARTIFACTS["uncertainty"])
-    counter = _load_json(root / CANONICAL_ARTIFACTS["counterexample"])
-    model = _load_json(root / CANONICAL_ARTIFACTS["model_checking"])
-    interop = _load_json(root / CANONICAL_ARTIFACTS["interop"])
-    adversarial = _load_json(root / CANONICAL_ARTIFACTS["adversarial_audit"])
-    dependency = _load_json(root / CANONICAL_ARTIFACTS["dependency"])
-    scope = _load_json(root / CANONICAL_ARTIFACTS["track_improvement_scope"])
-    section_status = _load_json(root / CANONICAL_ARTIFACTS["section_status"])
-    render_log = _load_json(root / CANONICAL_ARTIFACTS["render_log"])
-    blocked = _load_json(root / CANONICAL_ARTIFACTS["blocked_scope_manifest"])
-    evidence = _load_json(root / CANONICAL_ARTIFACTS["evidence_fields"])
-    release = _load_json(root / CANONICAL_ARTIFACTS["release_bundle"])
-    theorem = _load_json(root / CANONICAL_ARTIFACTS["theorem_traceability"])
-    gate_index = _load_json(root / CANONICAL_ARTIFACTS["gate_ergonomics"])
-    diffoscope = _load_json(root / CANONICAL_ARTIFACTS["artifact_diffoscope"])
-    proof = _load_json(root / CANONICAL_ARTIFACTS["proof_extraction"])
-    catalog = _load_json(root / CANONICAL_ARTIFACTS["state_space_catalog"])
-    ablation = _load_json(root / CANONICAL_ARTIFACTS["causal_ablation"])
-    license_audit = _load_json(root / CANONICAL_ARTIFACTS["artifact_license"])
-    release_notes = _load_json(root / CANONICAL_ARTIFACTS["release_notes"])
-    scholarship = _load_json(root / CANONICAL_ARTIFACTS["scholarship"])
-    proof_dependency = _load_json(root / CANONICAL_ARTIFACTS["proof_dependency_graph"])
-    transition = _load_json(root / CANONICAL_ARTIFACTS["state_transition_table"])
-    ablation_sensitivity = _load_json(root / CANONICAL_ARTIFACTS["ablation_sensitivity_report"])
-    release_attestation = _load_json(root / CANONICAL_ARTIFACTS["release_attestation"])
-    claims_by_path = _claim_ids_by_path(root)
+    def _read(key: str) -> dict:
+        return payloads[key] if payloads is not None and key in payloads else _load_json(root / CANONICAL_ARTIFACTS[key])
+
+    provenance = _read("provenance")
+    replay = _read("replay_matrix")
+    sensitivity = _read("sensitivity")
+    uncertainty = _read("uncertainty")
+    counter = _read("counterexample")
+    model = _read("model_checking")
+    interop = _read("interop")
+    adversarial = _read("adversarial_audit")
+    dependency = _read("dependency")
+    scope = _read("track_improvement_scope")
+    section_status = _read("section_status")
+    render_log = _read("render_log")
+    blocked = _read("blocked_scope_manifest")
+    evidence = _read("evidence_fields")
+    release = _read("release_bundle")
+    theorem = _read("theorem_traceability")
+    gate_index = _read("gate_ergonomics")
+    diffoscope = _read("artifact_diffoscope")
+    proof = _read("proof_extraction")
+    catalog = _read("state_space_catalog")
+    ablation = _read("causal_ablation")
+    license_audit = _read("artifact_license")
+    release_notes = _read("release_notes")
+    scholarship = _read("scholarship")
+    from roadmap_tracks.supplemental import validate_supplemental_payloads
+
+    supplemental = validate_supplemental_payloads(root, payloads)
+    from manuscript.sheaf.semantic import validate_canonical_claim_bindings
     return {
         "no_versioned_live_tracks": not any(VERSIONED_TRACK_RE.search(track_id) for track_id in registry),
         "all_canonical_tracks_registered": set(CANONICAL_TRACKS).issubset(registry),
@@ -504,17 +531,22 @@ def _canonical_restrictions(root: Path) -> dict[str, bool]:
         and sensitivity.get("all_finite_bounds_ok") is True,
         "uncertainty_normalized": uncertainty.get("all_normalized") is True
         and uncertainty.get("all_bins_valid") is True,
-        "counterexamples_fail_as_expected": counter.get("all_expected_failures_observed") is True,
+        "counterexample_receipts_consistent": not validate_observation_payload(root, counter, require_observations=False),
+        "counterexamples_fail_as_expected": not validate_observation_payload(root, counter),
         "model_checking_exhaustive": model.get("all_exhaustive") is True and model.get("all_passed") is True,
         "interop_lossless": interop.get("all_lossless") is True and interop.get("all_shape_diffs_empty") is True,
-        "adversarial_expected_failures": adversarial.get("all_expected_failures_observed") is True
-        and int(adversarial.get("known_bad_rows_passed", 1) or 0) == 0,
+        "adversarial_receipts_consistent": not validate_observation_payload(
+            root, adversarial, adversarial=True, require_observations=False
+        ),
+        "adversarial_expected_failures": not validate_observation_payload(root, adversarial, adversarial=True),
         "dependency_edge_types_complete": dependency.get("all_required_edge_types_present") is True,
         "section_status_all_bound_present": section_status.get("all_bound_fragments_present") is True,
         "section_status_all_rows_indexed": section_status.get("all_sections_have_status") is True
         and section_status.get("all_tracks_have_status") is True,
         "sheaf_render_log_all_events_ok": render_log.get("all_events_ok") is True,
-        "track_scope_complete": scope.get("all_live_tracks_valid") is True,
+        "track_scope_complete": scope.get("all_live_tracks_valid") is True
+        and track_improvement_scope_consistent(root, scope),
+        "promotion_controls_observed": scope.get("all_required_controls_observed") is True,
         "blocked_empirical_scope": blocked.get("all_blocked") is True and "empirical_adapter" not in registry,
         "evidence_fields_mapped": evidence.get("all_fields_mapped") is True,
         "release_bundle_sources_present": release.get("all_required_sources_present") is True,
@@ -535,11 +567,9 @@ def _canonical_restrictions(root: Path) -> dict[str, bool]:
         ),  # consistency; greenness at validate gate
         "scholarship_sources_connected": scholarship.get("all_sources_connected") is True
         and scholarship.get("all_expected_sources_present") is True,
-        "proof_dependency_graph_resolved": proof_dependency.get("all_theorems_have_dependencies") is True
-        and proof_dependency.get("all_edges_resolved") is True,
-        "state_transition_table_complete": transition.get("all_transitions_deterministic") is True
-        and transition.get("all_reachable_states_covered") is True,
-        "ablation_sensitivity_source_backed": ablation_sensitivity.get("all_effects_source_backed") is True,
-        "release_attestation_complete": release_attestation_consistent_and_current(root, release_attestation),
-        "all_canonical_artifacts_have_claims": all(claims_by_path.get(rel) for rel in CANONICAL_ARTIFACTS.values()),
+        "proof_dependency_graph_resolved": not supplemental["proof_dependency_graph"],
+        "state_transition_table_complete": not supplemental["state_transition_table"],
+        "ablation_sensitivity_source_backed": not supplemental["ablation_sensitivity_report"],
+        "release_attestation_complete": not supplemental["release_attestation"],
+        "all_canonical_artifacts_have_claims": not validate_canonical_claim_bindings(root),
     }

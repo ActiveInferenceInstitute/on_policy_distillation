@@ -3,13 +3,46 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import math
 from pathlib import Path
 
 from gates.artifact_manifest import REQUIRED_OUTPUTS
 
+_CANONICAL_OUTPUT_CHECKS = {
+    "validation_dependency_graph_schema": "dependency",
+    "release_bundle_manifest_schema": "release_bundle",
+    "replay_matrix_schema": "replay_matrix",
+    "sensitivity_sweep_schema": "sensitivity",
+    "uncertainty_summary_schema": "uncertainty",
+    "counterexample_matrix_schema": "counterexample",
+    "counterexample_receipts_consistent": "counterexample",
+    "model_checking_witnesses_schema": "model_checking",
+    "interop_roundtrip_schema": "interop",
+    "adversarial_audit_schema": "adversarial_audit",
+    "adversarial_receipts_consistent": "adversarial_audit",
+    "theorem_traceability_matrix_schema": "theorem_traceability",
+    "validation_gate_index_schema": "gate_ergonomics",
+    "artifact_diffoscope_schema": "artifact_diffoscope",
+    "scholarship_source_matrix_schema": "scholarship",
+    "proof_extraction_index_schema": "proof_extraction",
+    "state_space_catalog_schema": "state_space_catalog",
+    "causal_ablation_matrix_schema": "causal_ablation",
+    "artifact_license_audit_schema": "artifact_license",
+    "release_notes_evidence_schema": "release_notes",
+    "proof_dependency_graph_schema": "proof_dependency_graph",
+    "state_transition_table_schema": "state_transition_table",
+    "ablation_sensitivity_report_schema": "ablation_sensitivity_report",
+    "release_attestation_schema": "release_attestation",
+}
+
 SUPPORTED_SELECTED_OUTPUT_CHECKS = {
     *(str(Path(rel).as_posix()) for rel in REQUIRED_OUTPUTS),
+    *_CANONICAL_OUTPUT_CHECKS,
+    "manuscript_staleness_report_schema",
+    "si_policy_comparison_schema",
+    "scope_boundary_audit_schema",
+    "track_improvement_scope_schema",
     "si_invariants_all_pass",
     "invariants_all_pass",
     "simulation_invariants_all_pass",
@@ -548,6 +581,9 @@ def _proof_extraction_ok(proof_extraction: dict, lean_theorems: dict) -> bool:
         and int(proof_extraction.get("theorem_count", -1) or -1) == int(lean_theorems.get("theorem_count", -2) or -2)
         and int(proof_extraction.get("inventory_theorem_count", -1) or -1)
         == int(lean_theorems.get("theorem_count", -2) or -2)
+        and bool(proof_rows)
+        and all(row.get("statement") and row.get("extracted") is True and not row.get("forbidden_tokens")
+                for row in proof_rows)
         and bool(inventory)
         and extracted == inventory
     )
@@ -628,8 +664,326 @@ def _firstprinciples_classroom_ok(payload: dict) -> bool:
     return validate_classroom_payload(payload)
 
 
-def _validate_outputs_selected(root: Path, selected: set[str]) -> dict[str, bool]:
-    checks: dict[str, bool] = {}
+def _snapshot_digest(snapshot: dict) -> str:
+    return hashlib.sha256(
+        json.dumps(snapshot, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+    ).hexdigest()[:16]
+
+
+def _policy_comparison_ok(comparison: dict) -> bool:
+    """Authenticate the effective configuration and explicitly selected finite grid."""
+    try:
+        config = comparison["config"]
+        runs = comparison["runs"]
+        summary = comparison["summary"]
+        planners, seeds = summary["planners"], summary["seeds"]
+        if (
+            comparison.get("schema") != "template_active_inference.si_policy_comparison.v2"
+            or comparison.get("scope") != "comparison_only"
+            or comparison.get("canonical_planner") != "sophisticated_inference"
+            or not isinstance(config, dict) or comparison.get("config_hash") != _snapshot_digest(config)
+            or not planners or not seeds or len(planners) != len(set(planners)) or len(seeds) != len(set(seeds))
+            or not set(planners) <= {"sophisticated_inference", "vanilla"}
+            or not isinstance(runs, list) or not runs
+            or any(type(seed) is not int for seed in seeds)
+        ):
+            return False
+        cells = [(run["planner"], run["seed"]) for run in runs]
+        expected = {(planner, seed) for planner in planners for seed in seeds}
+        if (len(cells) != len(expected) or set(cells) != expected
+                or summary.get("expected_run_count") != len(expected) or summary.get("run_count") != len(runs)
+                or summary.get("complete_grid") is not True or summary.get("vanilla_role") != "comparison_only"
+                or summary.get("horizons") != [config["planning_horizon"]]):
+            return False
+        for run in runs:
+            effective = run["config"]
+            expected_config = {**config, "random_seed": run["seed"],
+                               "logging": {**config["logging"], "path": str(
+                                   Path(config["logging"]["path"]).parent /
+                                   f"pymdp_compare_{run['planner']}_{config['planning_horizon']}_{run['seed']}.jsonl"
+                               )}}
+            policy_len = config["agent"][
+                "si_policy_len" if run["planner"] == "sophisticated_inference" else "vanilla_policy_len"
+            ]
+            steps = run.get("policy_posterior_steps")
+            if (effective != expected_config or run.get("config_hash") != _snapshot_digest(effective)
+                    or run.get("role") != "validation_comparison"
+                    or run.get("horizon") != config["planning_horizon"] or run.get("steps") != config["timesteps"]
+                    or run.get("policy_len") != policy_len or "goal_reached" not in run
+                    or not isinstance(steps, list) or len(steps) != config["timesteps"] + 1
+                    or len({step["step"] for step in steps}) != len(steps)):
+                return False
+            for step in steps:
+                values = _finite_series(step.get("q_pi"))
+                if step.get("posterior_available") is True:
+                    if values is None or abs(sum(values) - 1.0) > 1e-9:
+                        return False
+                elif not step.get("fallback_reason"):
+                    return False
+        return (summary.get("all_efe_rows_explained") is True
+                and _si_efe_rows_explained(comparison)
+                and summary.get("all_available_posteriors_normalized") is True)
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return False
+
+
+def _policy_posterior_grid_ok(root: Path, posterior: dict) -> bool:
+    comparison = _read_json(root / "output/data/si_policy_comparison.json")
+    if not _policy_comparison_ok(comparison):
+        return False
+    try:
+        expected_rows = []
+        for run_index, run in enumerate(comparison["runs"]):
+            for step in run["policy_posterior_steps"]:
+                values = [float(value) for value in step.get("q_pi", []) or []]
+                total = sum(values) if values else None
+                expected_rows.append({
+                    "run_index": run_index, "step": step.get("step"), "planner": run.get("planner"),
+                    "role": run.get("role"), "horizon": run.get("horizon"), "seed": run.get("seed"),
+                    "steps": run.get("steps"), "policy_len": run.get("policy_len"), "config_hash": run.get("config_hash"),
+                    "posterior_available": step.get("posterior_available") is True,
+                    "posterior_source": step.get("posterior_source"), "q_pi": values, "q_pi_sum": total,
+                    "q_pi_entropy": step.get("q_pi_entropy"), "action_probabilities": step.get("action_probabilities", {}),
+                    "normalized": total is not None and abs(total - 1.0) <= 1e-9,
+                    "fallback_reason": step.get("fallback_reason"),
+                })
+        rows = posterior.get("rows")
+        available = [row for row in expected_rows if row["posterior_available"]]
+        unavailable = [row for row in expected_rows if not row["posterior_available"]]
+        digest = hashlib.sha256(
+            json.dumps(comparison, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+        ).hexdigest()
+        return (
+            posterior.get("schema") == "template_active_inference.pymdp_policy_posterior_grid.v1"
+            and posterior.get("scope") == "comparison_only" and bool(expected_rows)
+            and posterior.get("config") == comparison["config"]
+            and posterior.get("config_hash") == comparison["config_hash"]
+            and posterior.get("source_payload_sha256") == digest
+            and rows == expected_rows and posterior.get("row_count") == len(expected_rows)
+            and posterior.get("available_row_count") == len(available)
+            and posterior.get("all_available_posteriors_normalized") is (
+                bool(available) and all(row["normalized"] for row in available)
+            )
+            and posterior.get("all_available_posteriors_normalized") is True
+            and posterior.get("all_unavailable_rows_explained") is all(
+                bool(row["fallback_reason"]) for row in unavailable
+            )
+            and posterior.get("all_unavailable_rows_explained") is True
+        )
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return False
+
+
+def _track_scope_ok(root: Path, payload: dict, *, require_observations: bool) -> bool:
+    from roadmap_tracks.sheaf_tracks_reports import track_improvement_scope_consistent
+
+    return (
+        track_improvement_scope_consistent(root, payload) and payload.get("all_live_tracks_valid") is True
+        and (not require_observations or payload.get("all_required_controls_observed") is True)
+    )
+
+
+def _scope_boundary_ok(root: Path, payload: dict) -> bool:
+    from roadmap_tracks.integration_audit_artifacts import build_scope_boundary_audit
+
+    return payload == build_scope_boundary_audit(root) and payload.get("all_current_claims_toy") is True
+
+
+def _canonical_output_ok(
+    root: Path, key: str, payload: dict, payloads: dict[str, dict] | None, *, require_observations: bool
+) -> bool:
+    from roadmap_tracks.sheaf_track_contracts import REQUIRED_EDGE_TYPES
+
+    artifact = _CANONICAL_OUTPUT_CHECKS[key]
+    rows = payload.get("rows") or []
+    if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
+        return False
+    if artifact in {"counterexample", "adversarial_audit"}:
+        from roadmap_tracks.negative_controls import validate_observation_payload
+
+        return not validate_observation_payload(
+            root, payload, adversarial=artifact == "adversarial_audit",
+            require_observations=require_observations and not key.endswith("_receipts_consistent"),
+        )
+    schema = "template_active_inference." + {
+        "dependency": "validation_dependency_graph",
+        "release_bundle": "release_bundle_manifest",
+        "sensitivity": "sensitivity_sweep",
+        "uncertainty": "uncertainty_summary",
+        "model_checking": "model_checking_witnesses",
+        "interop": "interop_roundtrip_report",
+        "theorem_traceability": "theorem_traceability_matrix",
+        "gate_ergonomics": "validation_gate_index",
+        "scholarship": "scholarship_source_matrix",
+        "state_space_catalog": "state_space_catalog",
+        "causal_ablation": "causal_ablation_matrix",
+        "artifact_license": "artifact_license_audit",
+        "release_notes": "release_notes_evidence",
+        "proof_extraction": "proof_extraction_index",
+    }.get(artifact, artifact) + ".v1"
+    if payload.get("schema") != schema:
+        return False
+    if artifact == "release_notes" and not require_observations:
+        from roadmap_tracks.integration_audit_artifacts import build_release_notes_evidence
+
+        return payload == build_release_notes_evidence(root)
+    if artifact == "dependency":
+        edges = payload.get("edges") or []
+        return (
+            bool(edges) and all(isinstance(edge, dict) and edge.get("source") and edge.get("target")
+                                and edge.get("kind") for edge in edges)
+            and set(REQUIRED_EDGE_TYPES) <= {edge["kind"] for edge in edges}
+            and payload.get("all_required_edge_types_present") is True
+        )
+    if not rows:
+        return False
+    if artifact == "release_bundle":
+        parity = (payload.get("copied_output_parity") or {}).get("rows") or []
+        return (
+            payload.get("all_required_sources_present") is True
+            and all(row.get("source_exists") is True or row.get("deferred_until_render") is True for row in rows)
+            and payload.get("all_copied_outputs_match_or_deferred") is True
+            and bool(parity) and all(row.get("matches_when_copied") is True for row in parity)
+        )
+    if artifact == "replay_matrix":
+        return (
+            payload.get("all_replay_rows_matched") is True and all(row.get("matched") is True for row in rows)
+            and payload.get("all_configured_producers_represented") is True
+            and {row.get("producer_script") for row in rows} == set(payload.get("configured_scripts") or [])
+        )
+    if artifact in {"sensitivity", "causal_ablation"}:
+        flag = "all_finite_bounds_ok" if artifact == "sensitivity" else "all_deterministic"
+        field = "finite_bound_ok" if artifact == "sensitivity" else "deterministic"
+        return (payload.get("complete_grid") is True and type(payload.get("expected_cells")) is int
+                and payload.get("row_count") == len(rows) == payload["expected_cells"]
+                and payload.get(flag) is True and all(row.get(field) is True for row in rows))
+    if artifact == "uncertainty":
+        for row in rows:
+            posterior = _finite_series(row.get("distribution", row.get("posterior")))
+            if posterior is None or not posterior or abs(sum(posterior) - 1.0) > 1e-9:
+                return False
+            if row.get("normalized") is not True or (
+                "distribution_sum" in row and not _close_float(row["distribution_sum"], sum(posterior), atol=1e-9)
+            ):
+                return False
+        return (payload.get("all_normalized") is True and payload.get("all_bins_valid") is True
+                and all(row.get("bin") in (payload.get("bins") or {}) for row in rows))
+    if artifact == "model_checking":
+        return (payload.get("all_passed") is True and payload.get("all_exhaustive") is True
+                and all(row.get("passed") is True and row.get("exhaustive") is True
+                        and not row.get("counterexamples") for row in rows))
+    if artifact == "interop":
+        return (payload.get("all_lossless") is True and payload.get("all_shape_diffs_empty") is True
+                and all(row.get("lossless") is True and not row.get("shape_diff") for row in rows))
+    if artifact == "gate_ergonomics":
+        from roadmap_tracks.integration_audit_builders import _rows_fully_specified
+
+        return (payload.get("all_indexed") is True and payload.get("all_rows_fully_specified") is True
+                and all(row.get("indexed") is True for row in rows) and _rows_fully_specified(rows))
+    if artifact == "scholarship":
+        fields = ("bib_has_entry", "bib_has_locator", "cited_in_manuscript", "artifact_exists",
+                  "tracks_registered", "sections_bound", "claim_boundary", "connected")
+        return (payload.get("all_sources_connected") is True
+                and payload.get("all_expected_sources_present") is True
+                and all(all(row.get(field) for field in fields) for row in rows))
+    if artifact == "proof_extraction":
+        inventory = (payloads or {}).get("lean_theorems")
+        if inventory is None:
+            inventory = _read_json(root / "output/reports/lean_theorem_inventory.json")
+        return _proof_extraction_ok(payload, inventory)
+    if artifact == "state_space_catalog":
+        return (payload.get("all_finite") is True and payload.get("all_counts_positive") is True
+                and all(row.get("finite") is True and type(row.get("state_count")) is int
+                        and row["state_count"] > 0 and type(row.get("policy_count")) is int
+                        and row["policy_count"] >= 1 for row in rows))
+    aggregate, field = {
+        "theorem_traceability": ("all_theorems_linked", "linked"),
+        "artifact_diffoscope": ("all_equal", "equal"),
+        "artifact_license": ("all_license_safe", "license_safe"),
+        "release_notes": ("all_notes_source_backed", "passed"),
+    }[artifact]
+    if payload.get(aggregate) is not True or not all(row.get(field) is True for row in rows):
+        return False
+    if artifact == "artifact_diffoscope":
+        return all(row.get("saved_sha256") and row["saved_sha256"] == row.get("live_sha256") for row in rows)
+    if artifact == "artifact_license":
+        return all(row.get("license") for row in rows)
+    return artifact != "release_notes" or all(row.get("source") for row in rows)
+
+
+def validate_output_payloads(
+    project_root: Path, payloads: dict[str, dict] | None = None, *, only: set[str] | None = None,
+    require_observations: bool = True,
+) -> dict[str, bool]:
+    """Validate canonical disk or in-memory payloads through the same selected gates.
+
+    Supplemental overrides never replace their authoritative upstream sources.
+    Consistent-red attestations remain structurally valid, but this release gate
+    additionally requires actual green attestation rows.
+    """
+    from roadmap_tracks.sheaf_track_contracts import CANONICAL_ARTIFACTS
+    from roadmap_tracks.supplemental import SUPPLEMENTAL_ARTIFACTS, validate_supplemental_payloads
+
+    root = project_root.resolve()
+    selected = set(_CANONICAL_OUTPUT_CHECKS) if only is None else set(only)
+    unknown = selected - _CANONICAL_OUTPUT_CHECKS.keys()
+    if unknown:
+        raise KeyError(f"unsupported canonical output keys: {sorted(unknown)}")
+    supplemental = (
+        validate_supplemental_payloads(root, payloads)
+        if any(_CANONICAL_OUTPUT_CHECKS[key] in SUPPLEMENTAL_ARTIFACTS for key in selected) else {}
+    )
+    checks = {}
+    for key in sorted(selected):
+        artifact = _CANONICAL_OUTPUT_CHECKS[key]
+        payload = (
+            payloads[artifact] if payloads is not None and artifact in payloads
+            else _read_json(root / CANONICAL_ARTIFACTS[artifact])
+        )
+        if artifact in supplemental:
+            checks[key] = not supplemental[artifact] and (
+                artifact != "release_attestation" or not require_observations or payload.get("all_attested") is True
+            )
+        elif not isinstance(payload, dict):
+            checks[key] = False
+        else:
+            try:
+                checks[key] = _canonical_output_ok(root, key, payload, payloads, require_observations=require_observations)
+            except (TypeError, ValueError, KeyError, OverflowError):
+                checks[key] = False
+    return checks
+
+
+def _validate_outputs_selected(
+    root: Path, selected: set[str], payloads: dict[str, dict] | None = None, *, require_observations: bool = True
+) -> dict[str, bool]:
+    checks = validate_output_payloads(
+        root, payloads, only=selected & _CANONICAL_OUTPUT_CHECKS.keys(), require_observations=require_observations
+    )
+    if "manuscript_staleness_report_schema" in selected:
+        from roadmap_tracks.integration_audit import validate_manuscript_staleness_report
+
+        checks["manuscript_staleness_report_schema"] = not validate_manuscript_staleness_report(
+            root, (payloads or {}).get("manuscript_staleness")
+        )
+    if "si_policy_comparison_schema" in selected:
+        checks["si_policy_comparison_schema"] = _policy_comparison_ok(
+            _read_json(root / "output/data/si_policy_comparison.json")
+        )
+    if "scope_boundary_audit_schema" in selected:
+        scope = (
+            payloads["scope_boundary"] if payloads is not None and "scope_boundary" in payloads
+            else _read_json(root / "output/reports/scope_boundary_audit.json")
+        )
+        checks["scope_boundary_audit_schema"] = isinstance(scope, dict) and _scope_boundary_ok(root, scope)
+    if "track_improvement_scope_schema" in selected:
+        promotion = (
+            payloads["track_improvement_scope"] if payloads is not None and "track_improvement_scope" in payloads
+            else _read_json(root / "output/data/track_improvement_scope.json")
+        )
+        checks["track_improvement_scope_schema"] = isinstance(promotion, dict) and _track_scope_ok(
+            root, promotion, require_observations=require_observations
+        )
     required_by_key = {str(Path(rel).as_posix()): root / rel for rel in REQUIRED_OUTPUTS}
     for key in selected & set(required_by_key):
         checks[key] = required_by_key[key].exists()
@@ -697,24 +1051,8 @@ def _validate_outputs_selected(root: Path, selected: set[str]) -> dict[str, bool
         )
 
     if "pymdp_policy_posterior_grid_schema" in selected:
-        from simulation.pymdp_config import load_pymdp_config
-
-        cfg = load_pymdp_config(root)
-        posterior = _read_json(root / "output" / "data" / "pymdp_policy_posterior_grid.json")
-        rows = posterior.get("rows") or []
-        actual_cells = {(row.get("planner"), row.get("seed")) for row in rows}
-        checks["pymdp_policy_posterior_grid_schema"] = (
-            posterior.get("schema") == "template_active_inference.pymdp_policy_posterior_grid.v1"
-            and bool(rows)
-            and posterior.get("scope") == "comparison_only"
-            and posterior.get("all_available_posteriors_normalized") is True
-            and posterior.get("all_unavailable_rows_explained") is True
-            and actual_cells == {(planner, seed) for planner in cfg.validation_comparison.planners for seed in cfg.validation_comparison.seeds}
-            and all(row.get("horizon") == cfg.planning_horizon for row in rows)
-            and all(
-                (not row.get("posterior_available")) or abs(float(sum(row.get("q_pi") or [])) - 1.0) <= 1e-9
-                for row in rows
-            )
+        checks["pymdp_policy_posterior_grid_schema"] = _policy_posterior_grid_ok(
+            root, _read_json(root / "output/data/pymdp_policy_posterior_grid.json")
         )
 
     if "figure_source_map_schema" in selected:
@@ -794,7 +1132,9 @@ def _validate_outputs_selected(root: Path, selected: set[str]) -> dict[str, bool
     if "integration_audit_track_schemas" in selected:
         from roadmap_tracks import validate_integration_audit_artifacts
 
-        checks["integration_audit_track_schemas"] = not validate_integration_audit_artifacts(root)
+        checks["integration_audit_track_schemas"] = not validate_integration_audit_artifacts(
+            root, require_release_evidence=require_observations
+        )
     if "cross_track_symbol_table_schema" in selected:
         checks["cross_track_symbol_table_schema"] = _cross_track_symbol_table_ok(
             _read_json(root / "output" / "data" / "cross_track_symbol_table.json")
@@ -802,12 +1142,16 @@ def _validate_outputs_selected(root: Path, selected: set[str]) -> dict[str, bool
     if "canonical_sheaf_track_schemas" in selected:
         from roadmap_tracks import validate_sheaf_track_artifacts
 
-        checks["canonical_sheaf_track_schemas"] = not validate_sheaf_track_artifacts(root)
+        checks["canonical_sheaf_track_schemas"] = not validate_sheaf_track_artifacts(
+            root, require_observations=require_observations
+        )
 
     return checks
 
 
-def validate_outputs_selected_strict(project_root: Path, only: set[str]) -> dict[str, bool]:
+def validate_outputs_selected_strict(
+    project_root: Path, only: set[str], *, payloads: dict[str, dict] | None = None, require_observations: bool = True
+) -> dict[str, bool]:
     """Validate selected output keys without falling back to the full gate.
 
     Public ``validate_outputs(..., only=...)`` keeps compatibility by falling
@@ -819,29 +1163,33 @@ def validate_outputs_selected_strict(project_root: Path, only: set[str]) -> dict
     unsupported = selected - SUPPORTED_SELECTED_OUTPUT_CHECKS
     if unsupported:
         raise KeyError(f"unsupported lazy output check keys: {sorted(unsupported)}")
-    checks = _validate_outputs_selected(project_root.resolve(), selected)
+    checks = _validate_outputs_selected(
+        project_root.resolve(), selected, payloads, require_observations=require_observations
+    )
     missing = selected - set(checks)
     if missing:
         raise AssertionError(f"lazy output checks did not return requested keys: {sorted(missing)}")
     return checks
 
 
-def validate_outputs(project_root: Path, *, only: set[str] | None = None) -> dict[str, bool]:
+def validate_outputs(
+    project_root: Path, *, only: set[str] | None = None, require_observations: bool = True
+) -> dict[str, bool]:
     root = project_root.resolve()
     if only is not None:
         selected = set(only)
-        selected_checks = _validate_outputs_selected(root, selected)
+        selected_checks = _validate_outputs_selected(root, selected, require_observations=require_observations)
         if selected <= set(selected_checks):
             return selected_checks
-        full = _validate_outputs_full(root)
+        full = _validate_outputs_full(root, require_observations=require_observations)
         unsupported = selected - set(full) - set(selected_checks)
         if unsupported:
             raise KeyError(f"unsupported output check keys: {sorted(unsupported)}")
         return {key: full.get(key, selected_checks.get(key, False)) for key in selected}
-    return _validate_outputs_full(root)
+    return _validate_outputs_full(root, require_observations=require_observations)
 
 
-def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
+def _validate_outputs_full(project_root: Path, *, require_observations: bool = True) -> dict[str, bool]:
     root = project_root.resolve()
     required = [root / rel for rel in REQUIRED_OUTPUTS]
     checks = {str(p.relative_to(root)): p.exists() for p in required}
@@ -902,46 +1250,10 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
 
     comparison_path = root / "output" / "data" / "si_policy_comparison.json"
     if comparison_path.exists():
-        comparison = json.loads(comparison_path.read_text(encoding="utf-8"))
-        runs = comparison.get("runs") or []
-        checks["si_policy_comparison_schema"] = (
-            bool(runs)
-            and comparison.get("scope") == "comparison_only"
-            and comparison.get("canonical_planner") == "sophisticated_inference"
-            and {row.get("planner") for row in runs} == {"sophisticated_inference", "vanilla"}
-            and all(row.get("role") == "validation_comparison" for row in runs)
-            and all("horizon" in row and "goal_reached" in row for row in runs)
-            and (comparison.get("summary") or {}).get("complete_grid") is True
-            and (comparison.get("summary") or {}).get("vanilla_role") == "comparison_only"
-            and (comparison.get("summary") or {}).get("all_efe_rows_explained") is True
-            and (comparison.get("summary") or {}).get("all_efe_rows_explained") == _si_efe_rows_explained(comparison)
-        )
+        checks["si_policy_comparison_schema"] = _policy_comparison_ok(_read_json(comparison_path))
     posterior_path = root / "output" / "data" / "pymdp_policy_posterior_grid.json"
     if posterior_path.exists():
-        from simulation.pymdp_config import load_pymdp_config
-
-        cfg = load_pymdp_config(root)
-        posterior = json.loads(posterior_path.read_text(encoding="utf-8"))
-        rows = posterior.get("rows") or []
-        actual_cells = {(row.get("planner"), row.get("seed")) for row in rows}
-        checks["pymdp_policy_posterior_grid_schema"] = (
-            posterior.get("schema") == "template_active_inference.pymdp_policy_posterior_grid.v1"
-            and bool(rows)
-            and posterior.get("scope") == "comparison_only"
-            and posterior.get("all_available_posteriors_normalized") is True
-            and posterior.get("all_unavailable_rows_explained") is True
-            and actual_cells
-            == {
-                (planner, seed)
-                for planner in cfg.validation_comparison.planners
-                for seed in cfg.validation_comparison.seeds
-            }
-            and all(row.get("horizon") == cfg.planning_horizon for row in rows)
-            and all(
-                (not row.get("posterior_available")) or abs(float(sum(row.get("q_pi") or [])) - 1.0) <= 1e-9
-                for row in rows
-            )
-        )
+        checks["pymdp_policy_posterior_grid_schema"] = _policy_posterior_grid_ok(root, _read_json(posterior_path))
     runtime_path = root / "output" / "reports" / "pymdp_runtime_diagnostics.json"
     if runtime_path.exists():
         from simulation.pymdp_runtime import _runtime_rows_explained, validate_runtime_diagnostics
@@ -980,15 +1292,7 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
         ) == "template_active_inference.evidence_crosswalk.v1" and int(crosswalk.get("claim_count", 0)) == len(
             crosswalk.get("claims") or []
         )
-    if dependency_path.exists():
-        dependency = json.loads(dependency_path.read_text(encoding="utf-8"))
-        artifacts = dependency.get("artifacts") or {}
-        checks["validation_dependency_graph_schema"] = (
-            dependency.get("schema") == "template_active_inference.validation_dependency_graph.v1"
-            and not dependency.get("issues")
-            and bool(artifacts.get("output/data/sheaf_gluing_certificate.json"))
-            and bool(artifacts.get("output/figures/si_belief_trajectory.gif"))
-        )
+    # Canonical dependency and observation checks use validate_output_payloads below.
 
     provenance_path = root / "output" / "data" / "artifact_provenance.json"
     replay_path = root / "output" / "reports" / "reproducibility_replay.json"
@@ -1019,15 +1323,6 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
             and replay.get("all_passed") is True
             and not validate_reproducibility_replay(root)
         )
-    if counterexample_path.exists():
-        from validation_spine import validate_counterexample_matrix
-
-        counterexamples = json.loads(counterexample_path.read_text(encoding="utf-8"))
-        checks["counterexample_matrix_schema"] = (
-            counterexamples.get("schema") == "template_active_inference.counterexample_matrix.v1"
-            and counterexamples.get("all_expected_failures_documented") is True
-            and not validate_counterexample_matrix(root)
-        )
 
     from roadmap_tracks import (
         validate_formal_interop_artifacts,
@@ -1036,8 +1331,6 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
         validate_toy_sweep_artifacts,
     )
 
-    sensitivity = _read_json(root / "output" / "data" / "sensitivity_sweep.json")
-    uncertainty = _read_json(root / "output" / "data" / "uncertainty_summary.json")
     benchmark = _read_json(root / "output" / "data" / "toy_benchmark_matrix.json")
     policy_grid = _read_json(root / "output" / "data" / "si_policy_grid.json")
     efe_terms = _read_json(root / "output" / "data" / "si_efe_terms.json")
@@ -1045,8 +1338,6 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     topology_traces = _read_json(root / "output" / "data" / "si_graph_world_topology_traces.json")
     graph_invariants = _read_json(root / "output" / "reports" / "graph_world_invariants.json")
     observable = _read_json(root / "output" / "data" / "analytical_observable_sweep.json")
-    model_checking = _read_json(root / "output" / "reports" / "model_checking_witnesses.json")
-    interop = _read_json(root / "output" / "data" / "interop_roundtrip_report.json")
     gnn_roundtrip = _read_json(root / "output" / "data" / "gnn_roundtrip_report.json")
     gnn_lint = _read_json(root / "output" / "reports" / "gnn_lint_report.json")
     ontology_alias = _read_json(root / "output" / "data" / "ontology_alias_index.json")
@@ -1068,22 +1359,11 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     figure_hash = _read_json(root / "output" / "reports" / "figure_hash_manifest.json")
     visualization_quality = _read_json(root / "output" / "reports" / "visualization_quality_audit.json")
     scope = _read_json(root / "output" / "reports" / "scope_boundary_audit.json")
-    adversarial = _read_json(root / "output" / "reports" / "adversarial_audit.json")
     assumptions = _read_json(root / "output" / "data" / "analytical_assumption_index.json")
     animation_deltas = _read_json(root / "output" / "data" / "animation_frame_deltas.json")
-    replay_matrix = _read_json(root / "output" / "reports" / "replay_matrix.json")
     track_scope = _read_json(root / "output" / "data" / "track_improvement_scope.json")
     blocked_scope = _read_json(root / "output" / "reports" / "blocked_scope_manifest.json")
     evidence_fields = _read_json(root / "output" / "data" / "evidence_field_index.json")
-    release_bundle = _read_json(root / "output" / "reports" / "release_bundle_manifest.json")
-    theorem_traceability = _read_json(root / "output" / "data" / "theorem_traceability_matrix.json")
-    artifact_diffoscope = _read_json(root / "output" / "reports" / "artifact_diffoscope.json")
-    proof_extraction = _read_json(root / "output" / "data" / "proof_extraction_index.json")
-    state_space_catalog = _read_json(root / "output" / "data" / "state_space_catalog.json")
-    causal_ablation = _read_json(root / "output" / "data" / "causal_ablation_matrix.json")
-    artifact_license = _read_json(root / "output" / "reports" / "artifact_license_audit.json")
-    release_notes = _read_json(root / "output" / "reports" / "release_notes_evidence.json")
-    scholarship = _read_json(root / "output" / "data" / "scholarship_source_matrix.json")
     fp_divergence = _read_json(root / "output" / "data" / "firstprinciples" / "divergence_demo.json")
     fp_exposure = _read_json(root / "output" / "data" / "firstprinciples" / "exposure_bias_demo.json")
     fp_classroom = _read_json(root / "output" / "data" / "firstprinciples" / "classroom.json")
@@ -1096,10 +1376,6 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     fp_statistics = _read_json(root / "output" / "data" / "firstprinciples" / "statistics_demo.json")
     fp_empirical = _read_json(root / "output" / "data" / "firstprinciples" / "empirical_benchmark.json")
     fp_benchmark_table_path = root / "output" / "data" / "firstprinciples" / "benchmark_table.md"
-    proof_dependency = _read_json(root / "output" / "data" / "proof_dependency_graph.json")
-    transition_table = _read_json(root / "output" / "data" / "state_transition_table.json")
-    ablation_sensitivity = _read_json(root / "output" / "reports" / "ablation_sensitivity_report.json")
-    release_attestation = _read_json(root / "output" / "reports" / "release_attestation.json")
 
     checks["analytical_observable_sweep_schema"] = (
         observable.get("schema") == "template_active_inference.analytical_observable_sweep.v1"
@@ -1108,14 +1384,6 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     checks["analytical_assumption_index_schema"] = (
         assumptions.get("schema") == "template_active_inference.analytical_assumption_index.v1"
         and assumptions.get("all_equations_indexed") is True
-    )
-    checks["sensitivity_sweep_schema"] = (
-        sensitivity.get("schema") == "template_active_inference.sensitivity_sweep.v1"
-        and sensitivity.get("complete_grid") is True
-    )
-    checks["uncertainty_summary_schema"] = (
-        uncertainty.get("schema") == "template_active_inference.uncertainty_summary.v1"
-        and uncertainty.get("all_normalized") is True
     )
     checks["toy_benchmark_matrix_schema"] = (
         benchmark.get("schema") == "template_active_inference.toy_benchmark_matrix.v1"
@@ -1134,14 +1402,6 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
         and topology_traces.get("topology_count") == topology.get("topology_count")
     )
     checks["graph_world_invariants_schema"] = graph_invariants.get("all_passed") is True
-    checks["model_checking_witnesses_schema"] = (
-        model_checking.get("schema") == "template_active_inference.model_checking_witnesses.v1"
-        and model_checking.get("all_passed") is True
-    )
-    checks["interop_roundtrip_schema"] = (
-        interop.get("schema") == "template_active_inference.interop_roundtrip_report.v1"
-        and interop.get("all_lossless") is True
-    )
     checks["gnn_roundtrip_schema"] = gnn_roundtrip.get("all_lossless") is True
     _gnn_lint_rows = gnn_lint.get("rows") or []
     checks["gnn_lint_schema"] = (
@@ -1163,10 +1423,9 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     )
     checks["producer_completeness_schema"] = producer_completeness.get("all_complete") is True
     checks["stale_artifact_report_schema"] = stale_report.get("all_fresh") is True
-    checks["manuscript_staleness_report_schema"] = (
-        manuscript_staleness.get("schema") == "template_active_inference.manuscript_staleness_report.v1"
-        and manuscript_staleness.get("all_fresh") is True
-    )
+    from roadmap_tracks.integration_audit import validate_manuscript_staleness_report
+
+    checks["manuscript_staleness_report_schema"] = not validate_manuscript_staleness_report(root, manuscript_staleness)
     checks["cross_track_symbol_table_schema"] = _cross_track_symbol_table_ok(cross_symbols)
     checks["manuscript_evidence_tables_schema"] = evidence_tables.get("all_source_backed") is True
     checks["manuscript_token_provenance_schema"] = token_provenance.get("all_tokens_mapped") is True
@@ -1176,16 +1435,6 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
         and int(hardcoded_variables.get("issue_count", 0) or 0) == 0
     )
     checks["claim_evidence_audit_schema"] = claim_audit.get("all_claims_typed") is True
-    from roadmap_tracks.integration_audit_builders import _rows_fully_specified as _gi_rows_fully_specified
-
-    _gi_rows = gate_index.get("rows") or []
-    checks["validation_gate_index_schema"] = (
-        gate_index.get("all_indexed") is True
-        and gate_index.get("all_rows_fully_specified") is True
-        # Re-derive at gate time from the rows, never trust the stored flag: a
-        # blanked command/output/negative_control with the flag left true is caught.
-        and gate_index.get("all_rows_fully_specified") == _gi_rows_fully_specified(_gi_rows)
-    )
     checks["sheaf_section_status_matrix_schema"] = (
         section_status.get("schema") == "template_active_inference.sheaf_section_status_matrix.v1"
         and section_status.get("all_bound_fragments_present") is True
@@ -1202,20 +1451,9 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     checks["figure_hash_manifest_schema"] = _figure_hash_manifest_ok(root, figure_hash)
     checks["visualization_quality_audit_schema"] = _visualization_quality_audit_ok(root, visualization_quality)
     checks["figure_output_integrity"] = _figure_output_integrity_ok(root)
-    checks["scope_boundary_audit_schema"] = scope.get("scope_boundary_status") == "toy_only_pass"
-    checks["adversarial_audit_schema"] = (
-        adversarial.get("all_expected_failures_documented") is True
-        and adversarial.get("all_expected_failures_observed") is True
-        and int(adversarial.get("known_bad_rows_passed", 0) or 0) == 0
-    )
-    checks["replay_matrix_schema"] = (
-        replay_matrix.get("schema") == "template_active_inference.replay_matrix.v1"
-        and replay_matrix.get("all_replay_rows_matched") is True
-        and replay_matrix.get("all_configured_producers_represented") is True
-    )
-    checks["track_improvement_scope_schema"] = (
-        track_scope.get("schema") == "template_active_inference.track_improvement_scope.v1"
-        and track_scope.get("all_live_tracks_valid") is True
+    checks["scope_boundary_audit_schema"] = _scope_boundary_ok(root, scope)
+    checks["track_improvement_scope_schema"] = _track_scope_ok(
+        root, track_scope, require_observations=require_observations
     )
     checks["blocked_scope_manifest_schema"] = (
         blocked_scope.get("schema") == "template_active_inference.blocked_scope_manifest.v1"
@@ -1224,52 +1462,6 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     checks["evidence_field_index_schema"] = (
         evidence_fields.get("schema") == "template_active_inference.evidence_field_index.v1"
         and evidence_fields.get("all_fields_mapped") is True
-    )
-    # Parity flag re-derived from its (nested) rows at read time — the
-    # aggregate_rederivation table only addresses top-level `rows`, so the
-    # copied-output parity aggregate gets its flag↔rows check here (Run-6,
-    # AI-RELEASE-PARITY-1).
-    _parity_rows = (release_bundle.get("copied_output_parity") or {}).get("rows") or []
-    _parity_rederived = bool(_parity_rows) and all(row.get("matches_when_copied") is True for row in _parity_rows)
-    checks["release_bundle_manifest_schema"] = (
-        release_bundle.get("schema") == "template_active_inference.release_bundle_manifest.v1"
-        and release_bundle.get("all_required_sources_present") is True
-        and release_bundle.get("all_copied_outputs_match_or_deferred") is True
-        and _parity_rederived
-    )
-    checks["theorem_traceability_matrix_schema"] = (
-        theorem_traceability.get("schema") == "template_active_inference.theorem_traceability_matrix.v1"
-        and theorem_traceability.get("all_theorems_linked") is True
-    )
-    checks["artifact_diffoscope_schema"] = (
-        artifact_diffoscope.get("schema") == "template_active_inference.artifact_diffoscope.v1"
-        and artifact_diffoscope.get("all_equal") is True
-    )
-    checks["proof_extraction_index_schema"] = (
-        _proof_extraction_ok(proof_extraction, lean_theorems)
-    )
-    checks["state_space_catalog_schema"] = (
-        state_space_catalog.get("schema") == "template_active_inference.state_space_catalog.v1"
-        and state_space_catalog.get("all_finite") is True
-        and state_space_catalog.get("all_counts_positive") is True
-    )
-    checks["causal_ablation_matrix_schema"] = (
-        causal_ablation.get("schema") == "template_active_inference.causal_ablation_matrix.v1"
-        and causal_ablation.get("complete_grid") is True
-        and causal_ablation.get("all_deterministic") is True
-    )
-    checks["artifact_license_audit_schema"] = (
-        artifact_license.get("schema") == "template_active_inference.artifact_license_audit.v1"
-        and artifact_license.get("all_license_safe") is True
-    )
-    checks["release_notes_evidence_schema"] = (
-        release_notes.get("schema") == "template_active_inference.release_notes_evidence.v1"
-        and release_notes.get("all_notes_source_backed") is True
-    )
-    checks["scholarship_source_matrix_schema"] = (
-        scholarship.get("schema") == "template_active_inference.scholarship_source_matrix.v1"
-        and scholarship.get("all_sources_connected") is True
-        and scholarship.get("all_expected_sources_present") is True
     )
     checks["firstprinciples_divergence_schema"] = (
         fp_divergence.get("schema") == "firstprinciples.divergence_demo.v1"
@@ -1323,55 +1515,6 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
         and "thinkingmachines2025opd" in fp_benchmark_table
         and "AIME'24" in fp_benchmark_table
     )
-    checks["proof_dependency_graph_schema"] = (
-        proof_dependency.get("schema") == "template_active_inference.proof_dependency_graph.v1"
-        and proof_dependency.get("all_theorems_have_dependencies") is True
-        and proof_dependency.get("all_edges_resolved") is True
-        and proof_dependency.get("all_edge_keys_unique") is True
-        and proof_dependency.get("duplicate_edge_keys") == []
-        and proof_dependency.get("all_required_edge_types_present") is True
-        and proof_dependency.get("all_edge_targets_resolved") is True
-        and proof_dependency.get("orphan_edge_targets") == []
-    )
-    checks["state_transition_table_schema"] = (
-        transition_table.get("schema") == "template_active_inference.state_transition_table.v1"
-        and transition_table.get("all_transitions_deterministic") is True
-        and transition_table.get("all_transition_keys_unique") is True
-        and transition_table.get("duplicate_transition_keys") == []
-        and transition_table.get("all_reachable_states_covered") is True
-        and transition_table.get("all_reachable_states_have_outgoing") is True
-        and transition_table.get("missing_outgoing_state_keys") == []
-        and transition_table.get("all_terminal_states_have_self_transition") is True
-        and transition_table.get("models_without_terminal_self_transition") == []
-    )
-    checks["ablation_sensitivity_report_schema"] = (
-        ablation_sensitivity.get("schema") == "template_active_inference.ablation_sensitivity_report.v1"
-        and ablation_sensitivity.get("all_effects_source_backed") is True
-        and ablation_sensitivity.get("all_ablation_rows_joined") is True
-        and ablation_sensitivity.get("source_row_count_agreement") is True
-        and ablation_sensitivity.get("row_count") == ablation_sensitivity.get("ablation_source_row_count")
-    )
-    _attest_rows = {str(row.get("id")): row for row in release_attestation.get("rows") or []}
-    _validation_row = _attest_rows.get("validation_report") or {}
-    _report_path = root / "output" / "reports" / "validation_report.json"
-    if _report_path.is_file() and _validation_row and not _validation_row.get("deferred_until_validation"):
-        import hashlib as _hashlib
-
-        # Hash currency: the attestation must refer to the validation report
-        # actually on disk — a stale attested report cannot certify this tree.
-        _attestation_current = _validation_row.get("report_sha256") == _hashlib.sha256(
-            _report_path.read_bytes()
-        ).hexdigest()
-    else:
-        # Before the first-ever validate the row is deferred; currency is moot.
-        _attestation_current = bool(_validation_row.get("deferred_until_validation", not _attest_rows))
-    checks["release_attestation_schema"] = (
-        release_attestation.get("schema") == "template_active_inference.release_attestation.v1"
-        and release_attestation.get("all_attested") is True
-        and release_attestation.get("attested_source_count") == len(_attest_rows)
-        and release_attestation.get("attested_validation_check_count", 0) > 0
-        and _attestation_current
-    )
     from visualizations.animation import validate_animation_frame_deltas
 
     _animation_rows = animation_deltas.get("rows") or []
@@ -1387,8 +1530,13 @@ def _validate_outputs_full(project_root: Path) -> dict[str, bool]:
     )
     checks["toy_sweep_track_schemas"] = not validate_toy_sweep_artifacts(root)
     checks["formal_interop_track_schemas"] = not validate_formal_interop_artifacts(root)
-    checks["integration_audit_track_schemas"] = not validate_integration_audit_artifacts(root)
-    checks["canonical_sheaf_track_schemas"] = not validate_sheaf_track_artifacts(root)
+    checks["integration_audit_track_schemas"] = not validate_integration_audit_artifacts(
+        root, require_release_evidence=require_observations
+    )
+    checks["canonical_sheaf_track_schemas"] = not validate_sheaf_track_artifacts(
+        root, require_observations=require_observations
+    )
+    checks.update(validate_output_payloads(root, require_observations=require_observations))
 
     # Read-time honesty: every covered stored all_* aggregate must equal its
     # row-level re-derivation (gates.aggregate_rederivation — AI-STALE-SUMMARY-1).

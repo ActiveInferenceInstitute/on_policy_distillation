@@ -23,3 +23,23 @@ if VENV_SITE.is_dir():
         site_str = str(site)
         if site_str not in sys.path:
             sys.path.insert(0, site_str)
+
+
+import pytest  # noqa: E402
+
+from orchestration.artifact_lock import (  # noqa: E402
+    ARTIFACT_LEASE_ENV,
+    ArtifactLeaseError,
+    artifact_lease,
+)
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_configure(config: pytest.Config) -> None:
+    """Hold custody before test collection, including import-time bootstrap."""
+    context = artifact_lease(PROJECT_ROOT, inherited=os.environ.get(ARTIFACT_LEASE_ENV))
+    try:
+        context.__enter__()
+    except ArtifactLeaseError as exc:
+        raise pytest.UsageError(f"cannot collect tests without artifact custody: {exc}") from exc
+    config.add_cleanup(lambda: context.__exit__(None, None, None))

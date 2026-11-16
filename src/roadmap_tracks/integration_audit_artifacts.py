@@ -13,6 +13,7 @@ import json
 import re
 from pathlib import Path
 from typing import Any
+from .negative_controls import validate_observation_payload
 
 from .integration_audit_builders import (
     LATE_HYDRATION_PRODUCER,
@@ -1493,15 +1494,44 @@ def _visualization_quality_caption_claims_rederived(project_root: Path, payload:
     return True
 
 
+def figure_hash_row_current(project_root: Path, row: dict[str, Any]) -> bool:
+    """Authenticate the two exact absent publish bookends, or current image bytes."""
+    root = project_root.resolve()
+    rel = row.get("path")
+    if not isinstance(rel, str):
+        return False
+    path = root / rel
+    absent = not path.exists() and not path.is_symlink()
+    if row.get("deferred") is True:
+        return (
+            rel in _PUBLISH_DEFERRED_IMAGE_PATHS and absent
+            and row.get("exists") is False and row.get("fresh") is False
+            and row.get("sha256") == "" and type(row.get("size_bytes")) is int and row["size_bytes"] == 0
+        )
+    if row.get("deferred") is not False or not path.is_file():
+        return False
+    digest = row.get("sha256")
+    return (
+        row.get("exists") is True and row.get("fresh") is True
+        and isinstance(digest, str) and len(digest) == 64 and digest == _sha256(path)
+        and type(row.get("size_bytes")) is int and row["size_bytes"] == path.stat().st_size
+    )
+
+
 def _figure_hash_rows_complete(project_root: Path, payload: dict[str, Any]) -> bool:
     root = project_root.resolve()
     expected_paths = _expected_figure_image_paths(root)
     unexpected_paths = sorted(_actual_figure_image_paths(root) - expected_paths)
     rows = payload.get("rows") or []
+    if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
+        return False
     row_paths = {str(row.get("path", "")) for row in rows}
     if (
         not rows
         or row_paths != expected_paths
+        or len(rows) != len(expected_paths)
+        or payload.get("publish_deferred_image_paths") != sorted(_PUBLISH_DEFERRED_IMAGE_PATHS)
+        or payload.get("declared_nonregistry_image_paths") != sorted(_DECLARED_NONREGISTRY_IMAGE_PATHS)
         or unexpected_paths
         or payload.get("unexpected_image_paths") not in ([], None)
         or int(payload.get("unexpected_image_count", 0) or 0) != 0
@@ -1509,24 +1539,7 @@ def _figure_hash_rows_complete(project_root: Path, payload: dict[str, Any]) -> b
         or payload.get("all_expected_images_present") is not True
     ):
         return False
-    for row in rows:
-        path = root / str(row.get("path", ""))
-        digest = str(row.get("sha256", ""))
-        # A publish-deferred bookend that is absent on this tree is acceptable
-        # (matches the builder marking it `deferred`); if it is present it must
-        # be verified like any other declared image.
-        if row.get("deferred") is True and not path.is_file():
-            continue
-        if not (
-            path.is_file()
-            and row.get("exists") is True
-            and len(digest) == 64
-            and digest == _sha256(path)
-            and int(row.get("size_bytes", 0) or 0) == path.stat().st_size
-            and row.get("fresh") is True
-        ):
-            return False
-    return True
+    return all(isinstance(row, dict) and figure_hash_row_current(root, row) for row in rows)
 
 
 _SCOPE_FORBIDDEN_PATTERNS: dict[str, re.Pattern[str]] = {
@@ -1537,54 +1550,65 @@ _SCOPE_FORBIDDEN_PATTERNS: dict[str, re.Pattern[str]] = {
     ),
     "production_llm_result": re.compile(
         r"\b(qwen|thinking machines|production[- ](?:llms?|language models?|opd)|llms?)\b"
-        r"[^.\n;:]{0,120}\b(reproduce[sd]?|measure[sd]?|benchmark(?:ed)?|validate[sd]?|confirm(?:ed)?)\b|"
+        r"[^.\n;:]{0,120}?\b(reproduce[sd]?|measure[sd]?|benchmark(?:ed)?|validate[sd]?|confirm(?:ed)?)\b|"
         r"\b(reproduce[sd]?|measure[sd]?|benchmark(?:ed)?|validate[sd]?|confirm(?:ed)?)\b"
-        r"[^.\n;:]{0,120}\b(qwen|thinking machines|production[- ](?:llms?|language models?|opd)|llms?)\b"
+        r"[^.\n;:]{0,120}?\b(qwen|thinking machines|production[- ](?:llms?|language models?|opd)|llms?)\b"
     ),
     "biological_markov_blanket": re.compile(
-        r"\b(markov blanket|blanket)\b[^.\n;:]{0,120}\b(biological|cortical|physical)\b|"
-        r"\b(biological|cortical|physical)\b[^.\n;:]{0,120}\b(markov blanket|blanket|boundary)\b"
+        r"\b(markov blanket|blanket)\b[^.\n;:]{0,120}?\b(biological|cortical|physical)\b|"
+        r"\b(biological|cortical|physical)\b[^.\n;:]{0,120}?\b(markov blanket|blanket|boundary)\b"
     ),
     "empirical_biological": re.compile(r"\b(empirical biological|biological data)\b"),
 }
 
-_SCOPE_NEGATION_TERMS = (
-    "not ",
-    "no ",
-    "never ",
-    "rather than",
-    "external context",
-    "not reproduced",
-    "not a",
-    "not an",
-    "without claiming",
-    "does not",
-    "do not",
-    "outside",
-    "future",
-    "blocked",
-    "scope",
-    "limited",
-    "toy",
-    "finite",
+_SCOPE_NEGATION_RE = re.compile(
+    r"\b(?:not(?!\s+only\b)|no|never|nor|neither)\b|rather than|without claiming|external context|"
+    r"outside\s+(?:(?:the|our|this)\s+)?scope"
+)
+_SCOPE_CLAUSE_BREAK = re.compile(
+    r"[.;:!?]|\b(?:but|yet|however|whereas|nevertheless)\b|"
+    r",\s*(?=(?:we|our|this|they|it|the paper)\b)|"
+    r"\b(?:and|or)\s+(?=(?:we|our|this|they|it|the paper)\b)|"
+    r"\band\s+(?=(?:measured?|reproduced?|benchmarked?|validated?|confirmed?|proves?|establishes?)\b)"
 )
 
 
 def _scope_forbidden_hits(text: str) -> list[dict[str, Any]]:
-    """Return scoped-overclaim hits by line, preserving negated guardrail mentions."""
+    """Classify every forbidden assertion in its own clause, not its whole line."""
     hits: list[dict[str, Any]] = []
     for line_no, line in enumerate(text.splitlines(), start=1):
-        lowered = line.lower()
-        for rule, pattern in _SCOPE_FORBIDDEN_PATTERNS.items():
-            if pattern.search(lowered):
-                hits.append(
-                    {
-                        "line": line_no,
-                        "rule": rule,
-                        "negated": any(term in lowered for term in _SCOPE_NEGATION_TERMS),
-                        "excerpt": line.strip()[:240],
-                    }
+        for clause in _SCOPE_CLAUSE_BREAK.split(line.lower()):
+            matches = sorted(
+                (match.start(), match.end(), rule)
+                for rule, pattern in _SCOPE_FORBIDDEN_PATTERNS.items()
+                for match in pattern.finditer(clause)
+            )
+            previous_end = 0
+            previous_negated = False
+            for start, end, rule in matches:
+                prefix = clause[previous_end:start]
+                # Carry a negation across a noun-list, never across a new
+                # affirmative subject/predicate (those are clause boundaries).
+                list_continuation = bool(re.fullmatch(r"\s*(?:or|nor|and)\s+(?:a\s+|an\s+)?", prefix))
+                next_start = next((left for left, _, _ in matches if left > start), len(clause))
+                local = clause[previous_end:end]
+                suffix = clause[end:next_start]
+                postposed_guardrail = bool(re.match(
+                    r"^\s*(?:(?:is|are|was|were)\s+(?:explicitly\s+)?not\b|"
+                    r"(?:results?\s+)?(?:as|are|is)\s+external context\b)", suffix
+                ))
+                independent_predicate = bool(re.search(
+                    r"\b(?:is|are|was|were|has|have|measured?|reproduced?|benchmarked?|validated?|confirmed?)\b",
+                    clause[start:end],
+                ))
+                negated = bool(_SCOPE_NEGATION_RE.search(local)) or postposed_guardrail or (
+                    previous_negated and (start < previous_end or (list_continuation and not independent_predicate))
                 )
+                hits.append({"line": line_no, "rule": rule, "negated": negated,
+                             "clause": clause.strip(), "start": start, "end": end,
+                             "excerpt": clause.strip()[:240]})
+                previous_end = end
+                previous_negated = negated
     return hits
 
 
@@ -1818,6 +1842,9 @@ def build_integration_semantic_snapshot(project_root: Path) -> dict[str, Any]:
         "adversarial_expected_failures_documented": adversarial["all_expected_failures_documented"],
         "dependency_edge_types_ok": dependency["all_required_edge_types_present"],
         "stale_flags_clear": stale["all_fresh"],
+        "adversarial_receipts_consistent": not validate_observation_payload(
+            root, adversarial, adversarial=True, require_observations=False
+        ),
         "token_provenance_complete": tokens["all_tokens_mapped"],
         "figure_source_coverage": figures["all_figures_mapped"],
         "animation_deltas_nonzero": animation.get("all_nonzero") is True,
@@ -1843,6 +1870,11 @@ def build_integration_semantic_snapshot(project_root: Path) -> dict[str, Any]:
         "schema": "template_active_inference.integration_semantic_snapshot.v1",
         "ok": all(restrictions.values()),
         "restrictions": restrictions,
+        "observations": {
+            "all_expected_failures_observed": adversarial["all_expected_failures_observed"],
+            "observed_count": adversarial["observed_count"],
+            "unobserved_count": adversarial["unobserved_count"],
+        },
         "sections": {
             "structural": {"ok": dependency["all_required_edge_types_present"]},
             "semantic": {"ok": restrictions["interop_lossless"] and restrictions["scope_boundary_toy_only"]},

@@ -1,246 +1,130 @@
-"""Focused tests for the artifact refresh orchestrator."""
+"""Real cold-root and fixed-point artifact producer regressions."""
 
 from __future__ import annotations
 
+import json
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
+import yaml
+from PIL import Image
 
-from orchestration import artifact_pipeline
-from orchestration.artifact_pipeline import hydrate_manuscript_fixed_point
+from artifact_fixtures import stage_source_project
+from firstprinciples import precision_ledger, si_bridge
+from manuscript.sheaf.semantic import validate_semantic_gluing
+from ontology.bindings import GRAPH_WORLD_EXPECTED_TERMS, resolve_model_ontology_path
+from orchestration.artifact_pipeline import hydrate_manuscript_fixed_point, refresh_gate_artifacts
+from orchestration.artifact_lock import artifact_lease
+from roadmap_tracks import validate_integration_audit_artifacts, validate_sheaf_track_artifacts
+from roadmap_tracks.integration_audit import validate_manuscript_staleness_report
+
+pytestmark = [pytest.mark.requires_pymdp, pytest.mark.render_slow, pytest.mark.timeout(1800)]
 
 
-def test_hydrate_manuscript_fixed_point_clears_stale_figure_source_map(
-    monkeypatch,
-    tmp_path: Path,
+def _load(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+@pytest.fixture(scope="module")
+def cold_production(tmp_path_factory: pytest.TempPathFactory) -> tuple[Path, dict[str, Path]]:
+    root = stage_source_project(
+        Path(__file__).resolve().parents[1],
+        tmp_path_factory.mktemp("cold-artifact-pipeline") / "project",
+    )
+    assert not (root / "output").exists()
+    return root, refresh_gate_artifacts(root)
+
+
+def test_full_pipeline_produces_current_cold_inputs_and_real_figures_without_receipts(
+    cold_production: tuple[Path, dict[str, Path]],
 ) -> None:
-    from manuscript import hydrate, variables
-    from manuscript import sheaf
-    from manuscript.sheaf import semantic
-    import roadmap_tracks
-    import roadmap_tracks.sheaf_tracks as sheaf_tracks
+    root, paths = cold_production
+    fp = root / "output" / "data" / "firstprinciples"
+    assert si_bridge.validate_payload(_load(fp / "si_bridge_demo.json")) == []
+    assert precision_ledger.validate_against_sources(root, _load(fp / "precision_ledger_demo.json")) == []
+    measured = _load(fp / "classroom.json")
+    statistics = _load(fp / "statistics_demo.json")
+    assert statistics["teacher_entropy"] == measured["teacher_belief_entropies"]
+    assert statistics["student_entropy"] == measured["student_belief_entropies"]
+    assert _load(fp / "privilege_sweep.json")["levels"]
+    figures = [
+        path for key, path in paths.items()
+        if key.startswith("figure:") and path.suffix == ".png"
+    ]
+    assert figures
+    assert all(path.read_bytes().startswith(b"\x89PNG\r\n\x1a\n") for path in figures)
 
-    state = {"audit_writes": 0, "semantic_writes": 0, "sheaf_writes": 0}
-
-    def fake_compose(root: Path) -> None:
-        (root / "manuscript").mkdir(parents=True, exist_ok=True)
-
-    def fake_generate(root: Path, *, require_analysis_outputs: bool) -> dict[str, object]:
-        assert require_analysis_outputs is False
-        return {"pipeline_track_count": 1}
-
-    def fake_resolve(root: Path, data: dict[str, object]) -> Path:
-        out = root / "output" / "manuscript"
-        out.mkdir(parents=True, exist_ok=True)
-        return out
-
-    def fake_staleness(root: Path) -> Path:
-        path = root / "output" / "reports" / "manuscript_staleness_report.json"
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text("{}\n", encoding="utf-8")
-        return path
-
-    def fake_audit(root: Path) -> dict[str, Path]:
-        state["audit_writes"] += 1
-        path = root / "output" / "data" / "figure_source_map.json"
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text("{}\n", encoding="utf-8")
-        return {"figure_source_map": path}
-
-    def fake_sheaf_tracks(root: Path, **_: object) -> dict[str, Path]:
-        state["sheaf_writes"] += 1
-        path = root / "output" / "data" / "sheaf_gluing_certificate.json"
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text("{}\n", encoding="utf-8")
-        return {"semantic": path}
-
-    def fake_semantic(root: Path, **_: object) -> dict[str, Path]:
-        state["semantic_writes"] += 1
-        path = root / "output" / "data" / "validation_dependency_graph.json"
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text("{}\n", encoding="utf-8")
-        return {"dependency_graph": path}
-
-    def validate_audit(root: Path) -> list[str]:
-        if state["audit_writes"] < 2 or state["semantic_writes"] < 1:
-            return ["figure_source_map stale"]
-        return []
-
-    monkeypatch.setattr(sheaf, "compose_all_sections", fake_compose)
-    monkeypatch.setattr(variables, "generate_variables", fake_generate)
-    monkeypatch.setattr(hydrate, "write_resolved_manuscript", fake_resolve)
-    monkeypatch.setattr(roadmap_tracks, "write_manuscript_staleness_report", fake_staleness)
-    monkeypatch.setattr(roadmap_tracks, "write_integration_audit_artifacts", fake_audit)
-    monkeypatch.setattr(roadmap_tracks, "write_sheaf_track_artifacts", fake_sheaf_tracks)
-    monkeypatch.setattr(semantic, "write_semantic_gluing_outputs", fake_semantic)
-
-    monkeypatch.setattr(sheaf_tracks, "build_artifact_provenance", lambda root: {"schema": "test"})
-    monkeypatch.setattr(roadmap_tracks, "validate_integration_audit_artifacts", validate_audit)
-    monkeypatch.setattr(roadmap_tracks, "validate_sheaf_track_artifacts", lambda root: [])
-    monkeypatch.setattr(semantic, "validate_semantic_gluing", lambda root: [])
-
-    paths = hydrate_manuscript_fixed_point(tmp_path, require_analysis_outputs=False, max_passes=2)
-
-    assert state == {"audit_writes": 2, "semantic_writes": 2, "sheaf_writes": 1}
-    assert paths["variables"] == tmp_path / "output" / "data" / "manuscript_variables.json"
-    assert paths["resolved_manuscript"] == tmp_path / "output" / "manuscript"
-    assert paths["figure_source_map"] == tmp_path / "output" / "data" / "figure_source_map.json"
+    assert validate_integration_audit_artifacts(root, require_release_evidence=False) == []
+    assert validate_integration_audit_artifacts(root)
+    assert validate_manuscript_staleness_report(root) == []
+    assert validate_sheaf_track_artifacts(root, require_observations=False) == []
+    assert validate_semantic_gluing(root, require_observations=False) == []
+    # A structurally complete cold surface cannot invent execution receipts.
+    assert validate_sheaf_track_artifacts(root)
+    assert validate_semantic_gluing(root)
 
 
-def test_hydrate_manuscript_fixed_point_fails_closed_when_still_stale(
-    monkeypatch,
-    tmp_path: Path,
+def test_fixed_point_refreshes_real_figure_source_currency(
+    cold_production: tuple[Path, dict[str, Path]], tmp_path: Path,
 ) -> None:
-    from manuscript import hydrate, variables
-    from manuscript import sheaf
-    from manuscript.sheaf import semantic
-    import roadmap_tracks
-    import roadmap_tracks.sheaf_tracks as sheaf_tracks
-
-    monkeypatch.setattr(sheaf, "compose_all_sections", lambda root: None)
-    monkeypatch.setattr(
-        variables,
-        "generate_variables",
-        lambda root, *, require_analysis_outputs: {"pipeline_track_count": 1},
+    produced_root, paths = cold_production
+    root = tmp_path / "project"
+    shutil.copytree(produced_root, root)
+    relative_figure = next(
+        path.relative_to(produced_root) for key, path in paths.items()
+        if key.startswith("figure:") and path.suffix == ".png"
     )
-    monkeypatch.setattr(hydrate, "write_resolved_manuscript", lambda root, data: root / "output" / "manuscript")
-    monkeypatch.setattr(
-        roadmap_tracks,
-        "write_manuscript_staleness_report",
-        lambda root: root / "output" / "reports" / "manuscript_staleness_report.json",
+    figure = root / relative_figure
+    source_map = root / "output" / "data" / "figure_source_map.json"
+    old_row = next(
+        row for row in _load(source_map)["rows"] if row["output"] == relative_figure.as_posix()
     )
-    monkeypatch.setattr(roadmap_tracks, "write_integration_audit_artifacts", lambda root: {})
-    monkeypatch.setattr(roadmap_tracks, "write_sheaf_track_artifacts", lambda root, **_: {})
-    monkeypatch.setattr(semantic, "write_semantic_gluing_outputs", lambda root, **_: {})
+    with Image.open(figure) as image:
+        new_width = image.width + 1
+        with image.resize((new_width, image.height)) as resized:
+            resized.save(figure)
+    assert old_row["image_width_px"] != new_width
+    assert validate_integration_audit_artifacts(root, require_release_evidence=False)
 
-    monkeypatch.setattr(sheaf_tracks, "build_artifact_provenance", lambda root: {"schema": "test"})
-    monkeypatch.setattr(
-        roadmap_tracks,
-        "validate_integration_audit_artifacts",
-        lambda root: ["figure_source_map stale"],
+    with artifact_lease(root) as lease:
+        handoff = lease.handoff()
+        completed = subprocess.run(
+            [sys.executable, str(root / "scripts" / "z_generate_manuscript_variables.py")],
+            cwd=root,
+            env=handoff.env,
+            pass_fds=handoff.pass_fds,
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    current_row = next(
+        row for row in _load(source_map)["rows"] if row["output"] == relative_figure.as_posix()
     )
-    monkeypatch.setattr(roadmap_tracks, "validate_sheaf_track_artifacts", lambda root: [])
-    monkeypatch.setattr(semantic, "validate_semantic_gluing", lambda root: [])
+    assert current_row["image_width_px"] == new_width
 
-    with pytest.raises(RuntimeError, match="artifact fixed point did not converge"):
-        hydrate_manuscript_fixed_point(tmp_path, require_analysis_outputs=False, max_passes=1)
+    assert validate_integration_audit_artifacts(root, require_release_evidence=False) == []
+    assert validate_integration_audit_artifacts(root)
+    assert validate_manuscript_staleness_report(root) == []
+    assert validate_semantic_gluing(root, require_observations=False) == []
+    assert validate_semantic_gluing(root)
 
 
-def test_hydrate_manuscript_fixed_point_stops_on_unchanged_hashes(
-    monkeypatch,
-    tmp_path: Path,
+def test_structural_fixed_point_does_not_exempt_non_observation_failures(
+    cold_production: tuple[Path, dict[str, Path]], tmp_path: Path,
 ) -> None:
-    from manuscript import hydrate, variables
-    from manuscript import sheaf
-    from manuscript.sheaf import semantic
-    import roadmap_tracks
-    import roadmap_tracks.sheaf_tracks as sheaf_tracks
+    root = tmp_path / "project"
+    shutil.copytree(cold_production[0], root)
+    ontology_path = resolve_model_ontology_path(root, "graph_world")
+    ontology = yaml.safe_load(ontology_path.read_text(encoding="utf-8"))
+    terms = ontology.get("terms", ontology)
+    terms[next(iter(GRAPH_WORLD_EXPECTED_TERMS))] = "not-the-declared-model-term"
+    ontology_path.write_text(yaml.safe_dump(ontology, sort_keys=False), encoding="utf-8")
 
-    state = {"audit_writes": 0, "semantic_writes": 0, "sheaf_writes": 0}
+    with pytest.raises(RuntimeError):
+        hydrate_manuscript_fixed_point(root, max_passes=2)
 
-    def write_constant(path: Path) -> Path:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text('{"stable": true}\n', encoding="utf-8")
-        return path
-
-    monkeypatch.setattr(sheaf, "compose_all_sections", lambda root: None)
-    monkeypatch.setattr(
-        variables,
-        "generate_variables",
-        lambda root, *, require_analysis_outputs: {"pipeline_track_count": 1},
-    )
-    monkeypatch.setattr(hydrate, "write_resolved_manuscript", lambda root, data: root / "output" / "manuscript")
-    monkeypatch.setattr(
-        roadmap_tracks,
-        "write_manuscript_staleness_report",
-        lambda root: write_constant(root / "output" / "reports" / "manuscript_staleness_report.json"),
-    )
-
-    def fake_audit(root: Path) -> dict[str, Path]:
-        state["audit_writes"] += 1
-        return {"figure_source_map": write_constant(root / "output" / "data" / "figure_source_map.json")}
-
-    def fake_sheaf_tracks(root: Path, **_: object) -> dict[str, Path]:
-        state["sheaf_writes"] += 1
-        return {"semantic": write_constant(root / "output" / "data" / "sheaf_gluing_certificate.json")}
-
-    def fake_semantic(root: Path, **_: object) -> dict[str, Path]:
-        state["semantic_writes"] += 1
-        return {"dependency_graph": write_constant(root / "output" / "data" / "validation_dependency_graph.json")}
-
-    monkeypatch.setattr(roadmap_tracks, "write_integration_audit_artifacts", fake_audit)
-    monkeypatch.setattr(roadmap_tracks, "write_sheaf_track_artifacts", fake_sheaf_tracks)
-    monkeypatch.setattr(semantic, "write_semantic_gluing_outputs", fake_semantic)
-    monkeypatch.setattr(sheaf_tracks, "build_artifact_provenance", lambda root: {"schema": "test"})
-    monkeypatch.setattr(
-        roadmap_tracks,
-        "validate_integration_audit_artifacts",
-        lambda root: ["figure_source_map stale"],
-    )
-    monkeypatch.setattr(roadmap_tracks, "validate_sheaf_track_artifacts", lambda root: [])
-    monkeypatch.setattr(semantic, "validate_semantic_gluing", lambda root: [])
-
-    with pytest.raises(RuntimeError, match="unchanged artifact hashes"):
-        hydrate_manuscript_fixed_point(tmp_path, require_analysis_outputs=False, max_passes=4)
-
-    assert state == {"audit_writes": 4, "semantic_writes": 4, "sheaf_writes": 2}
-
-
-def test_refresh_promoted_track_artifacts_runs_canonical_order(monkeypatch, tmp_path: Path) -> None:
-    import roadmap_tracks
-    import roadmap_tracks.supplemental as supplemental
-    import validation_spine
-
-    calls: list[str] = []
-
-    def writer(name: str):
-        def _write(root: Path) -> dict[str, Path]:
-            calls.append(name)
-            path = root / "output" / "data" / f"{name}.json"
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text("{}\n", encoding="utf-8")
-            return {name: path}
-
-        return _write
-
-    monkeypatch.setattr(validation_spine, "write_validation_spine_artifacts", writer("validation"))
-    monkeypatch.setattr(roadmap_tracks, "write_toy_sweep_artifacts", writer("toy"))
-    monkeypatch.setattr(roadmap_tracks, "write_formal_interop_artifacts", writer("formal"))
-    monkeypatch.setattr(roadmap_tracks, "write_integration_audit_artifacts", writer("audit"))
-    monkeypatch.setattr(supplemental, "write_supplemental_artifacts", writer("supplemental"))
-    monkeypatch.setattr(roadmap_tracks, "write_sheaf_track_artifacts", writer("sheaf"))
-
-    paths = artifact_pipeline.refresh_promoted_track_artifacts(tmp_path)
-
-    assert calls == ["validation", "toy", "formal", "audit", "supplemental", "sheaf"]
-    assert set(paths) == set(calls)
-
-
-def test_refresh_gate_artifacts_refreshes_figures_after_fixed_point(monkeypatch, tmp_path: Path) -> None:
-    import roadmap_tracks
-    from visualizations import figures
-
-    calls: list[str] = []
-
-    def phase(name: str):
-        def _run(root: Path, **kwargs: object) -> dict[str, Path]:
-            calls.append(name)
-            return {name: root / f"{name}.json"}
-
-        return _run
-
-    figure_path = tmp_path / "output" / "figures" / "semantic_gluing_graph.png"
-    figure_path.parent.mkdir(parents=True, exist_ok=True)
-    figure_path.write_text("png placeholder\n", encoding="utf-8")
-
-    monkeypatch.setattr(artifact_pipeline, "refresh_analysis_artifacts", phase("analysis"))
-    monkeypatch.setattr(artifact_pipeline, "refresh_promoted_track_artifacts", phase("promoted"))
-    monkeypatch.setattr(artifact_pipeline, "hydrate_manuscript_fixed_point", phase("fixed_point"))
-    monkeypatch.setattr(figures, "generate_all_figures", lambda root: [figure_path])
-    monkeypatch.setattr(roadmap_tracks, "write_integration_audit_artifacts", phase("audit"))
-
-    paths = artifact_pipeline.refresh_gate_artifacts(tmp_path, require_analysis_outputs=False)
-
-    assert calls == ["analysis", "promoted", "fixed_point", "audit", "fixed_point"]
-    assert paths["figure:semantic_gluing_graph"] == figure_path
-    assert paths["audit"] == tmp_path / "audit.json"
+    assert validate_semantic_gluing(root, require_observations=False)

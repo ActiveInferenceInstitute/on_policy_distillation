@@ -13,7 +13,25 @@ deepen canonical tracks such as `provenance`, `replay_matrix`, `sensitivity`,
 
 Status: ACTIVE — sustainable maintenance model | Owner: DAF | Last reviewed: 2026-11-12
 
-## Current baseline
+### 2026-11-13 source-only qualification
+
+Preserved correctness repairs are being qualified through parent-admitted
+GitVault executions, not by treating authored regressions as executed proof.
+The complete source/receipt/failure inventory is returned in
+`resume-qualification-rl-result.json`. Initial execution exposed validator
+facade forwarding, manuscript-config receipt binding, and cold hydration/release
+ordering defects; their corrections retain strict default release acceptance.
+Ordinary artifact production does not manufacture observations.
+
+The four active roadmap rows below remain open for their actual evidence or
+owner decisions. Original qualification used released pymdp 1.0.4 and retains
+its categorical-SI producer failure. Main subsequently adopted 1.0.5 in #25;
+that dependency change alone is not acceptance of the categorical-SI repair.
+Lean/Mathlib research, the five-run idle-host soak, venue decisions, and future
+empirical scope are not closed by focused source qualification. Historical
+closures remain dated records rather than fresh publication approval.
+
+## Historical baseline (2026-08-02)
 
 The project is a mature, validated multi-track toy Active Inference exemplar. Its
 science is publication-grade and its committed source, tests, and metadata are
@@ -112,7 +130,7 @@ open roadmap rows.
   case. Live toy priors are full-support, so no manuscript numbers change.
   MEDIUM.
 
-## Release status
+## Historical release status (v1.0.2)
 
 **Resolved for this release (v1.0.2):**
 - Title aligned to the full paper title across `config.yaml`, `CITATION.cff`,
@@ -326,12 +344,12 @@ The IDs below are live canonical artifacts. They are intentionally not versioned
 `_vN` tracks; future work should deepen these stable surfaces and keep the
 promotion rule intact.
 
-| Canonical id | Purpose | Artifact | Manuscript binding | Gate | Negative control |
-| --- | --- | --- | --- | --- | --- |
-| `proof_dependency_graph` | Expand extracted Lean proof dependencies into theorem-to-definition and witness edges | `output/data/proof_dependency_graph.json` | `methods_lean/proof_dependency_graph.md` | proof dependency validator plus `lake build`; requires unique edges, required edge types, and no orphan targets | Theorem dependency edge is dropped, duplicated, or pointed at an orphan target |
-| `state_transition_table` | Emit explicit finite transition tables for every toy topology and T-maze action | `output/data/state_transition_table.json` | `results_invariants/state_transition_table.md` | transition-table validator; requires unique transition keys, outgoing coverage for every reachable state, and terminal self-transition coverage | Transition table omits a reachable state, duplicate key, outgoing transition, or terminal self-transition |
-| `ablation_sensitivity_report` | Summarize causal-ablation effects against sensitivity and uncertainty rows | `output/reports/ablation_sensitivity_report.json` | `results_invariants/ablation_sensitivity_report.md` | ablation-sensitivity validator; requires explicit source join keys and source row-count agreement | Ablation effect is reported without source row or join key |
-| `release_attestation` | Generate a compact attestation over validation report, bundle hash, license audit, and blocked scope | `output/reports/release_attestation.json` | `discussion_outlook/release_attestation.md` | release-attestation validator; requires attested source counts and validation check ids/counts to match the current report | Attestation claims a failed gate passed or reports stale attestation counts |
+| Canonical id | Status | Purpose | Artifact | Manuscript binding | Gate | Negative control |
+| --- | --- | --- | --- | --- | --- | --- |
+| `proof_dependency_graph` | in_progress | Deepen stable proof dependencies | `output/data/proof_dependency_graph.json` | `methods_lean/proof_dependency_graph.md` | Source-derived proof domains, witness targets and logical edge identity; separate Lean acceptance remains required | Remove an edge and its declared requirement together, or forge a live witness target |
+| `state_transition_table` | in_progress | Authenticate finite transitions | `output/data/state_transition_table.json` | `results_invariants/state_transition_table.md` | Exact source-derived state/transition coverage through the shared disk/in-memory validator | Remove a model and its declared coverage together, or alter an actual transition |
+| `ablation_sensitivity_report` | in_progress | Bind numerical ablation effects | `output/reports/ablation_sensitivity_report.json` | `results_invariants/ablation_sensitivity_report.md` | Actual numerical joins and current source hashes through the shared validator | Forge a join key, effect, or source hash |
+| `release_attestation` | in_progress | Authenticate release evidence | `output/reports/release_attestation.json` | `discussion_outlook/release_attestation.md` | Exactly five companions with current report IDs/counts; consistent red is not release green | Replace a same-count check ID, omit a companion, or turn a failed report green |
 
 ## Future sheaf tracks
 
@@ -363,8 +381,11 @@ direction, not as work to start unilaterally here.
 
 1. Keep this roadmap limited to remaining work; completed live tracks belong in
    README, AGENTS, registries, generated outputs, and tests.
-2. Regenerate `output/` with the `chain` arm before trusting any gate that reads
-   it; `OPD-CLEAN-CHECKOUT-1` is closed, so a clean checkout now converges.
+2. Regenerate `output/` with the `chain` arm before trusting generated evidence.
+   Retain the authorized absent-only deferral for exactly
+   `transmission_integrity_strip.png` and `transmission_pairing.png`; present
+   bytes are still authenticated. Structural production and strict release
+   acceptance are distinct obligations; missing observations remain red.
 3. Deepen canonical semantic/dependency/provenance/evidence-field rows before
    adding another live track.
 4. Prefer finite toy evidence, negative controls, and typed claim predicates

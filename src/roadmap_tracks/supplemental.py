@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import re
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -47,9 +48,29 @@ def _load_json(path: Path) -> dict[str, Any]:
     return data if isinstance(data, dict) else {}
 
 
+def _validation_report_snapshot(path: Path) -> tuple[dict[str, Any], bytes | None]:
+    """Parse exactly the report bytes whose digest the attestation records."""
+    try:
+        raw = path.read_bytes()
+    except FileNotFoundError:
+        return {}, None
+    try:
+        payload = json.loads(raw)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return {}, raw
+    return (payload if isinstance(payload, dict) else {}), raw
+
+
 def _validation_failures_within_fixed_point(validation: dict[str, Any]) -> bool:
-    """Return whether a red report contains only release fixed-point checks."""
-    failed = set(validation.get("failed_checks") or ([] if validation.get("all_passed") else ["<unknown>"]))
+    """Allow only the declared fixed-point failures, derived from actual checks."""
+    if not _validation_report_valid(validation):
+        return False
+    failed = {
+        key
+        for section in ("outputs", "manuscript")
+        for key, passed in validation[section].items()
+        if passed is False
+    }
     return failed <= VALIDATION_FIXED_POINT_CHECKS
 
 
@@ -62,6 +83,66 @@ def _validation_check_ids(validation: dict[str, Any]) -> list[str]:
             continue
         check_ids.extend(f"{section}.{key}" for key in sorted(checks))
     return check_ids
+
+
+def _validation_report_valid(validation: dict[str, Any]) -> bool:
+    """Check report summaries against its nonempty, boolean check maps."""
+    if validation.get("schema") != "template_active_inference.validation_report.v1":
+        return False
+    sections = [validation.get(section) for section in ("outputs", "manuscript")]
+    if not all(isinstance(checks, dict) for checks in sections):
+        return False
+    if not any(sections) or any(
+        not isinstance(key, str) or not key or type(passed) is not bool
+        for checks in sections
+        for key, passed in checks.items()
+    ):
+        return False
+    failed = sorted({key for checks in sections for key, passed in checks.items() if passed is False})
+    return validation.get("failed_checks") == failed and validation.get("all_passed") is (not failed)
+
+
+def _rows(payload: dict[str, Any], field: str = "rows") -> list[dict[str, Any]]:
+    rows = payload.get(field, [])
+    if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
+        raise ValueError(f"{field} must be a list of objects")
+    return rows
+
+
+def _finite_number(value: Any) -> float:
+    if type(value) not in (int, float) or not math.isfinite(value):
+        raise ValueError("source numerical values must be finite numbers")
+    return float(value)
+
+
+def _source_hashes(root: Path, paths: list[str]) -> dict[str, str]:
+    return {path: _sha256(root / path) for path in sorted(set(paths))}
+
+
+def _same_value(actual: Any, expected: Any) -> bool:
+    """Compare typed payload fields without treating True as the count one."""
+    if isinstance(expected, dict):
+        return (
+            isinstance(actual, dict)
+            and actual.keys() == expected.keys()
+            and all(_same_value(actual[key], value) for key, value in expected.items())
+        )
+    if isinstance(expected, list):
+        return (
+            isinstance(actual, list)
+            and len(actual) == len(expected)
+            and all(_same_value(left, right) for left, right in zip(actual, expected, strict=True))
+        )
+    if type(expected) in (int, float):
+        return type(actual) in (int, float) and math.isfinite(actual) and actual == expected
+    return type(actual) is type(expected) and actual == expected
+
+
+def _same_rows(actual: list[dict[str, Any]], expected: list[dict[str, Any]]) -> bool:
+    """Compare row multisets, keeping logical duplicates and boolean types visible."""
+    return Counter(json.dumps(row, sort_keys=True, allow_nan=False) for row in actual) == Counter(
+        json.dumps(row, sort_keys=True, allow_nan=False) for row in expected
+    )
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> Path:
@@ -103,19 +184,33 @@ def _statement_symbols(statement: str) -> list[str]:
 def build_proof_dependency_graph(project_root: Path) -> dict[str, Any]:
     """Build theorem-to-source, theorem-to-symbol, and theorem-to-witness edges."""
     root = project_root.resolve()
-    proof = _load_json(root / "output" / "data" / "proof_extraction_index.json")
+    from .formal_interop import build_proof_extraction_index
+
+    # The Lean source inventory, not a saved theorem counter, owns the domain.
+    proof = build_proof_extraction_index(root)
     theorem_trace = _load_json(root / "output" / "data" / "theorem_traceability_matrix.json")
-    trace_by_theorem = {row.get("theorem"): row for row in theorem_trace.get("rows") or []}
+    trace_rows = _rows(theorem_trace)
+    trace_by_theorem = {row.get("theorem"): row for row in trace_rows}
+    trace_counts = Counter(row.get("theorem") for row in trace_rows)
+    model = _load_json(root / "output" / "reports" / "model_checking_witnesses.json")
+    witness_ids = [str(row.get("id", row.get("model")) or "") for row in _rows(model)]
     rows: list[dict[str, Any]] = []
     edges: list[dict[str, str]] = []
-    for proof_row in proof.get("rows") or []:
+    for proof_row in _rows(proof):
         theorem = str(proof_row.get("theorem") or "")
         source = str(proof_row.get("source") or "")
         statement = str(proof_row.get("statement") or "")
         tactic = str(proof_row.get("leading_tactic") or "no_leading_tactic")
         symbols = _statement_symbols(statement)
         trace_row = trace_by_theorem.get(theorem, {})
-        witnesses = [str(value) for value in trace_row.get("model_witnesses") or [] if value]
+        witnesses = list(witness_ids)
+        trace_witnesses = trace_row.get("model_witnesses")
+        trace_linked = (
+            trace_counts[theorem] == 1
+            and trace_row.get("linked") is True
+            and isinstance(trace_witnesses, list)
+            and Counter(trace_witnesses) == Counter(witnesses)
+        )
         rows.append(
             {
                 "theorem": theorem,
@@ -125,7 +220,17 @@ def build_proof_dependency_graph(project_root: Path) -> dict[str, Any]:
                 "statement_symbols": symbols,
                 "witness_count": len(witnesses),
                 "model_witnesses": witnesses,
-                "linked": bool(source and statement and symbols and trace_row.get("linked") is True),
+                "linked": bool(
+                    source
+                    and statement
+                    and symbols
+                    and witnesses
+                    and all(witnesses)
+                    and len(witnesses) == len(set(witnesses))
+                    and proof.get("all_inventory_theorems_extracted") is True
+                    and proof.get("all_constructive") is True
+                    and trace_linked
+                ),
             }
         )
         edges.append({"source": theorem, "target": source, "kind": "theorem_to_source"})
@@ -178,6 +283,15 @@ def build_proof_dependency_graph(project_root: Path) -> dict[str, Any]:
         "duplicate_edge_keys": duplicate_edge_keys,
         "orphan_edge_targets": orphan_edge_targets,
         "required_edge_types": required_edge_types,
+        "source_hashes": _source_hashes(
+            root,
+            [str(row["source"]) for row in rows]
+            + [
+                "output/data/proof_extraction_index.json",
+                "output/data/theorem_traceability_matrix.json",
+                "output/reports/model_checking_witnesses.json",
+            ],
+        ),
         "all_theorems_have_dependencies": bool(rows) and all(row["linked"] for row in rows),
         "all_edge_keys_unique": bool(edges) and not duplicate_edge_keys,
         "all_required_edge_types_present": bool(edges) and set(required_edge_types).issubset(set(edge_types)),
@@ -189,9 +303,9 @@ def build_proof_dependency_graph(project_root: Path) -> dict[str, Any]:
 def _graph_world_transition_rows(root: Path) -> list[dict[str, Any]]:
     traces = _load_json(root / "output" / "data" / "si_graph_world_topology_traces.json")
     rows: list[dict[str, Any]] = []
-    for topology in traces.get("rows") or []:
+    for topology in _rows(traces):
         topology_id = str(topology.get("topology") or "")
-        trace = topology.get("trace") or []
+        trace = _rows(topology, "trace")
         for current, nxt in zip(trace, trace[1:], strict=False):
             rows.append(
                 {
@@ -272,7 +386,7 @@ def build_state_transition_table(project_root: Path) -> dict[str, Any]:
     models_with_rows = {row["model"] for row in rows}
     required_models = {
         str(row.get("model"))
-        for row in catalog.get("rows") or []
+        for row in _rows(catalog)
         if str(row.get("model") or "").startswith(("graph_world_", "si_tmaze"))
     }
     reachable_state_keys = {
@@ -301,6 +415,14 @@ def build_state_transition_table(project_root: Path) -> dict[str, Any]:
         "missing_outgoing_state_keys": missing_outgoing_state_keys,
         "terminal_self_transition_models": sorted(terminal_models),
         "models_without_terminal_self_transition": models_without_terminal_self_transition,
+        "source_hashes": _source_hashes(
+            root,
+            [
+                "output/data/state_space_catalog.json",
+                "output/data/si_graph_world_topology_traces.json",
+                "output/data/si_tmaze_summary.json",
+            ],
+        ),
         "all_transitions_deterministic": bool(rows) and all(row["deterministic"] for row in rows),
         "all_transition_keys_unique": bool(rows) and not duplicate_transition_keys,
         "all_reachable_states_covered": bool(required_models) and required_models.issubset(models_with_rows),
@@ -317,14 +439,27 @@ def build_ablation_sensitivity_report(project_root: Path) -> dict[str, Any]:
     sensitivity = _load_json(root / "output" / "data" / "sensitivity_sweep.json")
     uncertainty = _load_json(root / "output" / "data" / "uncertainty_summary.json")
     sensitivity_by_key: dict[tuple[str, float], list[dict[str, Any]]] = defaultdict(list)
-    for row in sensitivity.get("rows") or []:
-        sensitivity_by_key[(str(row.get("topology") or ""), float(row.get("lambda", 0.0) or 0.0))].append(row)
-    uncertainty_rows = uncertainty.get("rows") or []
+    for row in _rows(sensitivity):
+        sensitivity_by_key[(str(row.get("topology") or ""), _finite_number(row.get("lambda")))].append(row)
+        _finite_number(row.get("mi"))
+    uncertainty_rows = _rows(uncertainty)
+    for row in uncertainty_rows:
+        # Canonical uncertainty includes both belief rows and policy-grid rows.
+        _finite_number(row.get("belief_entropy") if "belief_entropy" in row else row.get("entropy"))
+        for field in ("entropy", "distribution_sum", "posterior_concentration"):
+            if field in row:
+                _finite_number(row[field])
+        _finite_number(row.get("posterior_sum"))
+        posterior = row.get("posterior")
+        if not isinstance(posterior, list) or not posterior:
+            raise ValueError("uncertainty source posterior is missing")
+        for value in posterior:
+            _finite_number(value)
     rows: list[dict[str, Any]] = []
-    for row in ablation.get("rows") or []:
-        key = (str(row.get("topology") or ""), float(row.get("lambda", 0.0) or 0.0))
+    for row in _rows(ablation):
+        key = (str(row.get("topology") or ""), _finite_number(row.get("lambda")))
         linked = sensitivity_by_key.get(key, [])
-        mi_values = [float(item.get("mi", 0.0) or 0.0) for item in linked]
+        mi_values = [_finite_number(item.get("mi")) for item in linked]
         source_join_key = f"{key[0]}::{key[1]:.6g}"
         rows.append(
             {
@@ -333,7 +468,7 @@ def build_ablation_sensitivity_report(project_root: Path) -> dict[str, Any]:
                 "lambda": key[1],
                 "perturbation": row.get("perturbation", ""),
                 "metric": row.get("metric", ""),
-                "effect": float(row.get("effect", 0.0) or 0.0),
+                "effect": _finite_number(row.get("effect")),
                 "sensitivity_row_count": len(linked),
                 "mean_sensitivity_mi": sum(mi_values) / len(mi_values) if mi_values else 0.0,
                 "uncertainty_row_count": len(uncertainty_rows),
@@ -344,7 +479,7 @@ def build_ablation_sensitivity_report(project_root: Path) -> dict[str, Any]:
             }
         )
     max_abs_effect = max((abs(row["effect"]) for row in rows), default=0.0)
-    source_row_count_agreement = len(rows) == len(ablation.get("rows") or [])
+    source_row_count_agreement = len(rows) == len(_rows(ablation))
     joined = bool(rows) and all(
         row.get("source_join_key")
         and row.get("source_backed")
@@ -356,7 +491,7 @@ def build_ablation_sensitivity_report(project_root: Path) -> dict[str, Any]:
         "schema": "template_active_inference.ablation_sensitivity_report.v1",
         "rows": rows,
         "row_count": len(rows),
-        "ablation_source_row_count": len(ablation.get("rows") or []),
+        "ablation_source_row_count": len(_rows(ablation)),
         "sensitivity_source_join_key_count": len(sensitivity_by_key),
         "source_row_count_agreement": source_row_count_agreement,
         "max_abs_effect": max_abs_effect,
@@ -365,6 +500,14 @@ def build_ablation_sensitivity_report(project_root: Path) -> dict[str, Any]:
             "output/data/sensitivity_sweep.json",
             "output/data/uncertainty_summary.json",
         ],
+        "source_hashes": _source_hashes(
+            root,
+            [
+                "output/data/causal_ablation_matrix.json",
+                "output/data/sensitivity_sweep.json",
+                "output/data/uncertainty_summary.json",
+            ],
+        ),
         "all_effects_source_backed": bool(rows) and all(row["source_backed"] for row in rows),
         "all_ablation_rows_joined": joined,
     }
@@ -376,7 +519,7 @@ def build_release_attestation(project_root: Path) -> dict[str, Any]:
     validation_path = root / "output" / "reports" / "validation_report.json"
     release_path = root / "output" / "reports" / "release_bundle_manifest.json"
     semantic_path = root / "output" / "data" / "sheaf_gluing_certificate.json"
-    validation = _load_json(validation_path)
+    validation, validation_bytes = _validation_report_snapshot(validation_path)
     release = _load_json(release_path)
     license_audit = _load_json(root / "output" / "reports" / "artifact_license_audit.json")
     blocked = _load_json(root / "output" / "reports" / "blocked_scope_manifest.json")
@@ -387,9 +530,14 @@ def build_release_attestation(project_root: Path) -> dict[str, Any]:
     # permanently deferred in normal chain order; binding is by CONTENT and
     # the attested report is sha256-pinned so the validate gate can verify
     # the attestation refers to the report it is looking at.
-    validation_deferred = not validation_path.is_file()
-    semantic_false_restrictions = [key for key, value in (semantic.get("restrictions") or {}).items() if value is False]
-    semantic_passed = semantic.get("ok") is True or semantic_false_restrictions == ["release_attestation_complete"]
+    validation_deferred = validation_bytes is None
+    semantic_restrictions = semantic.get("restrictions", {})
+    if not isinstance(semantic_restrictions, dict):
+        raise ValueError("semantic source restrictions must be an object")
+    semantic_false_restrictions = [key for key, value in semantic_restrictions.items() if value is False]
+    semantic_passed = (
+        semantic.get("ok") is True and not semantic_false_restrictions
+    ) or semantic_false_restrictions == ["release_attestation_complete"]
     rows = [
         {
             "id": "validation_report",
@@ -408,7 +556,7 @@ def build_release_attestation(project_root: Path) -> dict[str, Any]:
             "validation_check_count": len(validation_check_ids),
             "attested_validation_check_ids": validation_check_ids,
             "report_sha256": (
-                hashlib.sha256(validation_path.read_bytes()).hexdigest() if validation_path.is_file() else ""
+                hashlib.sha256(validation_bytes).hexdigest() if validation_bytes is not None else ""
             ),
         },
         {
@@ -482,187 +630,264 @@ def write_supplemental_artifacts(project_root: Path) -> dict[str, Path]:
     }
 
 
-def validate_supplemental_artifacts(project_root: Path) -> list[str]:
-    """Validate supplemental artifacts from row-derived conditions."""
-    root = project_root.resolve()
-    issues: list[str] = []
-    proof = _load_json(root / SUPPLEMENTAL_ARTIFACTS["proof_dependency_graph"])
-    if proof.get("schema") != "template_active_inference.proof_dependency_graph.v1":
-        issues.append("proof_dependency_graph.json schema mismatch")
-    proof_rows = proof.get("rows") or []
-    proof_edges = proof.get("edges") or []
-    proof_rows_ok = bool(proof_rows) and all(row.get("linked") for row in proof_rows)
-    proof_edges_ok = bool(proof_edges) and all(
-        edge.get("source") and edge.get("target") and edge.get("kind") for edge in proof_edges
-    )
-    proof_edge_keys = [str(edge.get("edge_key") or "") for edge in proof_edges]
-    proof_edges_unique = bool(proof_edge_keys) and all(proof_edge_keys) and len(proof_edge_keys) == len(set(proof_edge_keys))
-    proof_edge_types = {str(edge.get("kind") or "") for edge in proof_edges}
-    proof_required_edge_types = set(proof.get("required_edge_types") or [])
-    proof_required_types_present = bool(proof_edges) and proof_required_edge_types.issubset(proof_edge_types)
-    theorem_ids = {str(row.get("theorem") or "") for row in proof_rows}
-    known_targets = {
-        str(row.get("source") or "")
-        for row in proof_rows
-        if row.get("source")
-    } | {
-        f"lean_tactic:{row.get('leading_tactic')}"
-        for row in proof_rows
-        if row.get("leading_tactic")
-    }
-    for row in proof_rows:
-        known_targets.update(str(symbol) for symbol in row.get("statement_symbols") or [] if symbol)
-        known_targets.update(str(witness) for witness in row.get("model_witnesses") or [] if witness)
-    orphan_edge_targets = sorted(
-        {
-            str(edge.get("edge_key") or "")
-            for edge in proof_edges
-            if edge.get("source") not in theorem_ids or edge.get("target") not in known_targets
-        }
-    )
-    if (
-        proof.get("all_theorems_have_dependencies") is not True
-        or proof.get("all_theorems_have_dependencies") != proof_rows_ok
-    ):
-        issues.append("proof_dependency_graph.json has unlinked theorem dependencies")
-    if proof.get("all_edges_resolved") is not True or proof.get("all_edges_resolved") != proof_edges_ok:
-        issues.append("proof_dependency_graph.json has unresolved edges")
-    if (
-        proof.get("all_edge_keys_unique") is not True
-        or proof.get("all_edge_keys_unique") != proof_edges_unique
-        or proof.get("duplicate_edge_keys")
-    ):
-        issues.append("proof_dependency_graph.json has duplicate dependency edges")
-    if (
-        proof.get("all_required_edge_types_present") is not True
-        or proof.get("all_required_edge_types_present") != proof_required_types_present
-    ):
-        issues.append("proof_dependency_graph.json lacks required theorem edge types")
-    if (
-        proof.get("all_edge_targets_resolved") is not True
-        or proof.get("all_edge_targets_resolved") != (not orphan_edge_targets)
-        or proof.get("orphan_edge_targets")
-    ):
-        issues.append("proof_dependency_graph.json has orphan theorem dependency targets")
-
-    transitions = _load_json(root / SUPPLEMENTAL_ARTIFACTS["state_transition_table"])
-    if transitions.get("schema") != "template_active_inference.state_transition_table.v1":
-        issues.append("state_transition_table.json schema mismatch")
-    transition_rows = transitions.get("rows") or []
-    deterministic = bool(transition_rows) and all(
-        row.get("deterministic") and row.get("next_state") for row in transition_rows
-    )
-    keys = [str(row.get("transition_key") or "") for row in transition_rows]
-    unique_keys = bool(keys) and all(keys) and len(keys) == len(set(keys))
-    covered = set(transitions.get("required_models") or []).issubset(set(transitions.get("covered_models") or []))
-    reachable_state_keys = {
-        str(row.get("state_key") or "")
-        for row in transition_rows
-        if row.get("reachable") and row.get("state_key")
-    } | {
-        str(row.get("next_state_key") or "")
-        for row in transition_rows
-        if row.get("reachable") and row.get("next_state_key")
-    }
-    outgoing_state_keys = {str(row.get("state_key") or "") for row in transition_rows if row.get("state_key")}
-    missing_outgoing_state_keys = sorted(reachable_state_keys - outgoing_state_keys)
-    models_with_rows = {str(row.get("model") or "") for row in transition_rows if row.get("model")}
-    terminal_models = {str(row.get("model") or "") for row in transition_rows if row.get("terminal_self_transition")}
-    missing_terminal_models = sorted(models_with_rows - terminal_models)
-    if (
-        transitions.get("all_transitions_deterministic") is not True
-        or transitions.get("all_transitions_deterministic") != deterministic
-    ):
-        issues.append("state_transition_table.json has nondeterministic or incomplete transitions")
-    if (
-        transitions.get("all_transition_keys_unique") is not True
-        or transitions.get("all_transition_keys_unique") != unique_keys
-        or transitions.get("duplicate_transition_keys")
-    ):
-        issues.append("state_transition_table.json has duplicate transition keys")
-    if (
-        transitions.get("all_reachable_states_covered") is not True
-        or transitions.get("all_reachable_states_covered") != covered
-    ):
-        issues.append("state_transition_table.json omits a reachable finite model")
-    if (
-        transitions.get("all_reachable_states_have_outgoing") is not True
-        or transitions.get("all_reachable_states_have_outgoing") != (bool(reachable_state_keys) and not missing_outgoing_state_keys)
-        or transitions.get("missing_outgoing_state_keys")
-    ):
-        issues.append("state_transition_table.json omits outgoing transitions for a reachable toy state")
-    if (
-        transitions.get("all_terminal_states_have_self_transition") is not True
-        or transitions.get("all_terminal_states_have_self_transition") != (bool(models_with_rows) and not missing_terminal_models)
-        or transitions.get("models_without_terminal_self_transition")
-    ):
-        issues.append("state_transition_table.json omits terminal self-transition coverage")
-
-    ablation = _load_json(root / SUPPLEMENTAL_ARTIFACTS["ablation_sensitivity_report"])
-    if ablation.get("schema") != "template_active_inference.ablation_sensitivity_report.v1":
-        issues.append("ablation_sensitivity_report.json schema mismatch")
-    ablation_rows = ablation.get("rows") or []
-    ablation_backed = bool(ablation_rows) and all(row.get("source_backed") for row in ablation_rows)
-    ablation_joined = bool(ablation_rows) and all(
-        row.get("source_join_key")
-        and row.get("source_backed")
-        and int(row.get("sensitivity_row_count", 0) or 0) > 0
-        and int(row.get("uncertainty_row_count", 0) or 0) > 0
-        for row in ablation_rows
-    )
-    ablation_row_count_agreement = ablation.get("row_count") == ablation.get("ablation_source_row_count")
-    if (
-        ablation.get("all_effects_source_backed") is not True
-        or ablation.get("all_effects_source_backed") != ablation_backed
-    ):
-        issues.append("ablation_sensitivity_report.json has unsupported ablation effects")
-    if (
-        ablation.get("all_ablation_rows_joined") is not True
-        or ablation.get("all_ablation_rows_joined") != ablation_joined
-        or ablation.get("source_row_count_agreement") is not True
-        or not ablation_row_count_agreement
-    ):
-        issues.append("ablation_sensitivity_report.json has stale source joins or row counts")
-
-    attestation = _load_json(root / SUPPLEMENTAL_ARTIFACTS["release_attestation"])
-    if attestation.get("schema") != "template_active_inference.release_attestation.v1":
-        issues.append("release_attestation.json schema mismatch")
-    attestation_rows = attestation.get("rows") or []
-    # Strict + consistency-only: the flag must agree with its rows (deferred
-    # is not attested); greenness is the validate gate's job.
-    attested = bool(attestation_rows) and all(row.get("passed") for row in attestation_rows)
-    if attestation.get("all_attested") != attested:
-        issues.append("release_attestation.json claims a failed gate passed")
-    if attestation.get("attested_source_count") != len(attestation_rows):
-        issues.append("release_attestation.json attested source count is stale")
-    validation_row = next((row for row in attestation_rows if row.get("id") == "validation_report"), {})
-    validation_check_ids = validation_row.get("attested_validation_check_ids") or []
-    if (
-        validation_row
-        and attestation.get("attested_validation_check_count") != len(validation_check_ids)
-    ):
-        issues.append("release_attestation.json validation check count is stale")
+def _metadata_issues(payload: dict[str, Any], expected: dict[str, Any], filename: str) -> list[str]:
+    issues = []
+    if payload.get("schema") != expected["schema"]:
+        issues.append(f"{filename} schema mismatch")
+    stale = [
+        key for key, value in expected.items()
+        if key not in {"schema", "rows", "edges"} and not _same_value(payload.get(key), value)
+    ]
+    if stale:
+        issues.append(f"{filename} has stale source-derived metadata: {', '.join(stale)}")
+    hashes = expected.get("source_hashes")
+    if hashes is not None and (not hashes or not all(hashes.values())):
+        issues.append(f"{filename} is missing required source artifacts")
     return issues
 
 
-def release_attestation_consistent_and_current(root: Path, release_attestation: dict[str, Any]) -> bool:
-    """Attestation is internally consistent and refers to the on-disk report.
+def _validate_proof_dependency_graph(root: Path, proof: dict[str, Any]) -> list[str]:
+    expected = build_proof_dependency_graph(root)
+    filename = "proof_dependency_graph.json"
+    issues = _metadata_issues(proof, expected, filename)
+    rows = _rows(proof)
+    edges = _rows(proof, "edges")
+    logical_edges = [tuple(str(edge.get(field) or "") for field in ("source", "target", "kind")) for edge in edges]
+    required_edges = {
+        tuple(str(edge[field]) for field in ("source", "target", "kind")) for edge in expected["edges"]
+    }
+    edge_keys = [str(edge.get("edge_key") or "") for edge in edges]
+    if (
+        not rows
+        or not expected["all_theorems_have_dependencies"]
+        or not _same_rows(rows, expected["rows"])
+        or proof.get("all_theorems_have_dependencies") is not True
+        or set(logical_edges) != required_edges
+    ):
+        issues.append(f"{filename} has unlinked theorem dependencies")
+    if not edges or set(logical_edges) != required_edges or proof.get("all_edges_resolved") is not True:
+        issues.append(f"{filename} has unresolved edges")
+    if (
+        not edges
+        or len(logical_edges) != len(set(logical_edges))
+        or len(edge_keys) != len(set(edge_keys))
+        or any(key != "::".join(logical) for key, logical in zip(edge_keys, logical_edges, strict=True))
+        or proof.get("all_edge_keys_unique") is not True
+        or proof.get("duplicate_edge_keys") != []
+    ):
+        issues.append(f"{filename} has duplicate dependency edges or invalid canonical edge keys")
+    kinds = {edge[2] for edge in logical_edges}
+    if (
+        not set(expected["required_edge_types"]).issubset(kinds)
+        or proof.get("required_edge_types") != expected["required_edge_types"]
+        or proof.get("all_required_edge_types_present") is not True
+    ):
+        issues.append(f"{filename} lacks required theorem edge types")
+    if (
+        any(edge not in required_edges for edge in logical_edges)
+        or proof.get("all_edge_targets_resolved") is not True
+        or proof.get("orphan_edge_targets") != []
+    ):
+        issues.append(f"{filename} has orphan theorem dependency targets")
+    return issues
 
-    GREENNESS (all rows passed) is deliberately NOT required here: it is
-    enforced by the validate gate (``output_checks``). Requiring green inside
-    the inner fixed point made convergence impossible — the attestation cannot
-    be green until validation has been seen, and validation runs after the
-    fixed point. Mid-convergence the honest state is "consistent, current,
-    not yet green".
-    """
-    import hashlib as _hashlib
 
-    rows = release_attestation.get("rows") or []
-    strict = bool(rows) and all(row.get("passed") for row in rows)
-    if release_attestation.get("all_attested") != strict:
-        return False
+def _validate_state_transition_table(root: Path, transitions: dict[str, Any]) -> list[str]:
+    from .toy_sweep import build_graph_world_topology_traces, build_state_space_catalog
+
+    filename = "state_transition_table.json"
+    expected = build_state_transition_table(root)
+    issues = _metadata_issues(transitions, expected, filename)
+    declared_traces = build_graph_world_topology_traces(root)
+    saved_traces = _load_json(root / "output/data/si_graph_world_topology_traces.json")
+    trace_fields = ("topology", "trace")
+    if not _same_rows(
+        [{key: row.get(key) for key in trace_fields} for row in _rows(saved_traces)],
+        [{key: row.get(key) for key in trace_fields} for row in _rows(declared_traces)],
+    ):
+        issues.append(f"{filename} source traces omit or change declared finite toy states or transitions")
+    declared_catalog = build_state_space_catalog(root)
+    saved_catalog = _load_json(root / "output/data/state_space_catalog.json")
+    if not _same_rows(_rows(saved_catalog), _rows(declared_catalog)):
+        issues.append(f"{filename} source catalog omits or changes required finite models")
+    required_models = {
+        row["model"] for row in declared_catalog["rows"]
+        if row["model"].startswith(("graph_world_", "si_tmaze"))
+    }
+    rows = _rows(transitions)
+    models = {str(row.get("model") or "") for row in rows}
+    logical_keys = [_transition_key(row) for row in rows]
+    saved_keys = [str(row.get("transition_key") or "") for row in rows]
+    if not rows or not _same_rows(rows, expected["rows"]) or transitions.get("all_transitions_deterministic") is not True:
+        issues.append(f"{filename} has nondeterministic or incomplete transitions")
+    if (
+        not rows
+        or len(logical_keys) != len(set(logical_keys))
+        or len(saved_keys) != len(set(saved_keys))
+        or saved_keys != logical_keys
+        or transitions.get("all_transition_keys_unique") is not True
+        or transitions.get("duplicate_transition_keys") != []
+    ):
+        issues.append(f"{filename} has duplicate transition keys")
+    if (
+        models != required_models
+        or transitions.get("required_models") != sorted(required_models)
+        or transitions.get("covered_models") != sorted(models)
+        or transitions.get("all_reachable_states_covered") is not True
+    ):
+        issues.append(f"{filename} omits a reachable finite model")
+    outgoing = {_state_key(str(row.get("model") or ""), str(row.get("state") or "")) for row in rows}
+    required_states = {str(row["state_key"]) for row in expected["rows"]}
+    if (
+        not required_states
+        or not required_states.issubset(outgoing)
+        or any(
+            row.get("state_key") != _state_key(str(row.get("model") or ""), str(row.get("state") or ""))
+            or row.get("next_state_key") != _state_key(str(row.get("model") or ""), str(row.get("next_state") or ""))
+            for row in rows
+        )
+        or transitions.get("all_reachable_states_have_outgoing") is not True
+        or transitions.get("missing_outgoing_state_keys") != []
+    ):
+        issues.append(f"{filename} omits outgoing transitions for a reachable toy state")
+    required_terminal_keys = {
+        _transition_key(row) for row in expected["rows"] if row["state"] == row["next_state"]
+    }
+    terminal_keys = {
+        _transition_key(row) for row in rows
+        if row.get("state") and row.get("state") == row.get("next_state")
+    }
+    if (
+        not required_terminal_keys
+        or not required_terminal_keys.issubset(terminal_keys)
+        or any(
+            row.get("terminal_self_transition") is not bool(row.get("state") and row.get("state") == row.get("next_state"))
+            for row in rows
+        )
+        or transitions.get("all_terminal_states_have_self_transition") is not True
+        or transitions.get("models_without_terminal_self_transition") != []
+    ):
+        issues.append(f"{filename} omits terminal self-transition coverage")
+    return issues
+
+
+def _validate_ablation_sensitivity_report(root: Path, ablation: dict[str, Any]) -> list[str]:
+    filename = "ablation_sensitivity_report.json"
+    expected = build_ablation_sensitivity_report(root)
+    issues = _metadata_issues(ablation, expected, filename)
+    rows = _rows(ablation)
+    if (
+        not rows
+        or not _same_rows(rows, expected["rows"])
+        or not expected["all_effects_source_backed"]
+        or ablation.get("all_effects_source_backed") is not True
+    ):
+        issues.append(f"{filename} has unsupported ablation effects")
+    source_counts_current = all(
+        type(source.get("row_count")) is int and source["row_count"] == len(_rows(source))
+        for source in (_load_json(root / path) for path in expected["source_artifacts"])
+    )
+    if (
+        not rows
+        or not _same_rows(rows, expected["rows"])
+        or not expected["all_ablation_rows_joined"]
+        or not source_counts_current
+        or ablation.get("all_ablation_rows_joined") is not True
+        or ablation.get("source_row_count_agreement") is not True
+        or not _same_value(ablation.get("row_count"), expected["row_count"])
+        or not _same_value(ablation.get("ablation_source_row_count"), expected["ablation_source_row_count"])
+    ):
+        issues.append(f"{filename} has stale source joins or row counts")
+    return issues
+
+
+def _validate_release_attestation(root: Path, attestation: dict[str, Any]) -> list[str]:
+    filename = "release_attestation.json"
+    expected = build_release_attestation(root)
+    issues = _metadata_issues(attestation, expected, filename)
+    rows = _rows(attestation)
+    expected_by_id = {row["id"]: row for row in expected["rows"]}
+    ids = [str(row.get("id") or "") for row in rows]
+    if len(ids) != len(set(ids)) or set(ids) != set(expected_by_id):
+        issues.append(f"{filename} omits or duplicates required attestation rows")
+    attested = bool(rows) and all(row.get("passed") is True for row in rows)
+    if (
+        attestation.get("all_attested") is not attested
+        or attestation.get("all_attested") is not expected["all_attested"]
+        or any(row.get("passed") is not expected_by_id.get(row.get("id"), {}).get("passed") for row in rows)
+    ):
+        issues.append(f"{filename} claims a failed gate passed")
+    if (
+        not _same_value(attestation.get("attested_source_count"), len(expected["rows"]))
+        or not _same_value(attestation.get("row_count"), len(expected["rows"]))
+    ):
+        issues.append(f"{filename} attested source count is stale")
     validation_row = next((row for row in rows if row.get("id") == "validation_report"), {})
-    report_path = Path(root) / "output" / "reports" / "validation_report.json"
-    if not report_path.is_file():
-        return bool(validation_row.get("deferred_until_validation"))
-    return validation_row.get("report_sha256") == _hashlib.sha256(report_path.read_bytes()).hexdigest()
+    required_validation = expected_by_id["validation_report"]
+    if (
+        validation_row.get("attested_validation_check_ids") != required_validation["attested_validation_check_ids"]
+        or not _same_value(validation_row.get("validation_check_count"), required_validation["validation_check_count"])
+        or not _same_value(
+            attestation.get("attested_validation_check_count"), expected["attested_validation_check_count"]
+        )
+    ):
+        issues.append(f"{filename} validation check IDs or count are stale relative to the hashed report")
+    if not _same_rows(rows, expected["rows"]):
+        issues.append(f"{filename} rows are stale relative to current source artifacts or report hash")
+    report_path = root / "output/reports/validation_report.json"
+    if report_path.exists() and not _validation_report_valid(_load_json(report_path)):
+        issues.append(f"{filename} validation report has invalid check maps or summaries")
+    return issues
+
+
+def _validate_supplemental_payload(root: Path, artifact_id: str, payload: dict[str, Any]) -> list[str]:
+    validators = {
+        "proof_dependency_graph": _validate_proof_dependency_graph,
+        "state_transition_table": _validate_state_transition_table,
+        "ablation_sensitivity_report": _validate_ablation_sensitivity_report,
+        "release_attestation": _validate_release_attestation,
+    }
+    filename = Path(SUPPLEMENTAL_ARTIFACTS[artifact_id]).name
+    if not isinstance(payload, dict):
+        return [f"{filename} must be an object"]
+    try:
+        return validators[artifact_id](root, payload)
+    except (OSError, ValueError, TypeError, OverflowError) as exc:
+        return [f"{filename} has invalid payload or source artifacts: {exc}"]
+
+
+def validate_supplemental_payloads(
+    project_root: Path, payloads: dict[str, dict[str, Any]] | None = None
+) -> dict[str, list[str]]:
+    """Return source-authenticated issues by canonical supplemental artifact key.
+
+    Overrides replace only the supplemental payloads being validated; all source
+    artifacts, Lean declarations and finite toy definitions remain authoritative.
+    Missing override keys read their canonical disk payload. Neither path executes
+    tests, simulations, Lean or any evidence recorder.
+    """
+    root = project_root.resolve()
+    return {
+        key: _validate_supplemental_payload(
+            root, key,
+            payloads[key] if payloads is not None and key in payloads else _load_json(root / relative_path),
+        )
+        for key, relative_path in SUPPLEMENTAL_ARTIFACTS.items()
+    }
+
+
+def validate_supplemental_artifacts(
+    project_root: Path, payloads: dict[str, dict[str, Any]] | None = None
+) -> list[str]:
+    """Validate disk artifacts or in-memory overrides through the same contract."""
+    return [issue for issues in validate_supplemental_payloads(project_root, payloads).values() for issue in issues]
+
+
+def release_attestation_consistent_and_current(root: Path, release_attestation: dict[str, Any]) -> bool:
+    """Require source consistency and currency, not release greenness.
+
+    An honestly red or first-validation-deferred attestation can be consistent.
+    The outer release gate must separately require ``all_attested is True``;
+    this inner fixed-point check never certifies observation or scientific success.
+    """
+    return not _validate_supplemental_payload(Path(root).resolve(), "release_attestation", release_attestation)

@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from artifact_contracts import REQUIRED_OUTPUT_CHECK_KEYS
+from orchestration.artifact_lock import artifact_lease
 from orchestration.artifact_pipeline import refresh_gate_artifacts
 
 _BOOTSTRAPPED_ROOTS: set[Path] = set()
@@ -52,14 +53,15 @@ def refresh_generated_gate_artifacts(project_root: Path) -> None:
     stale (e.g. a test that mutated a generated ``output/`` artifact in place).
     """
     root = project_root.resolve()
-    if _gate_artifacts_present(root) and _gate_artifacts_ready(root, include_manuscript=True):
+    with artifact_lease(root):
+        if _gate_artifacts_present(root) and _gate_artifacts_ready(root, include_manuscript=True):
+            _mark_bootstrapped(root)
+            return
+        try:
+            refresh_gate_artifacts(root, require_analysis_outputs=False)
+        except RuntimeError as exc:
+            _skip_or_fail(exc)
         _mark_bootstrapped(root)
-        return
-    try:
-        refresh_gate_artifacts(root, require_analysis_outputs=False)
-    except RuntimeError as exc:
-        _skip_or_fail(exc)
-    _mark_bootstrapped(root)
 
 
 def _gate_artifacts_present(project_root: Path) -> bool:
@@ -110,23 +112,95 @@ def _bootstrap_current(project_root: Path) -> bool:
 
 
 def _gate_artifacts_ready(project_root: Path, *, include_manuscript: bool = False) -> bool:
-    """Return whether present artifacts satisfy the aggregate output gates."""
+    """Require structural currency without inventing observation/release success."""
+    import json
+    import yaml
+
+    from gates.claim_ledger import typed_claim_evidence_issues
+    from gates.validation import validate_manuscript, validate_outputs
+    from manuscript.sheaf.semantic import validate_semantic_gluing
+    from roadmap_tracks import validate_integration_audit_artifacts, validate_sheaf_track_artifacts
+    from roadmap_tracks.integration_audit_artifacts import build_release_notes_evidence
+    from roadmap_tracks.negative_controls import validate_observation_payload
+    from roadmap_tracks.sheaf_tracks_reports import track_improvement_scope_consistent
+    from roadmap_tracks.supplemental import release_attestation_consistent_and_current
+
     root = project_root.resolve()
     if not (root / "manuscript" / "config.yaml").is_file():
         return True
-
-    from gates.validation import validate_manuscript, validate_outputs
-
     try:
-        checks = validate_outputs(root, only=set(_READY_CHECK_KEYS))
+        # Mixed experiment_plan_metrics is re-evaluated with structural leaf
+        # predicates; no entire science, provenance, or render gate is skipped.
+        checks = validate_outputs(root, only=set(_READY_CHECK_KEYS), require_observations=False)
         if not all(checks.get(key) is True for key in _READY_CHECK_KEYS):
             return False
-        if include_manuscript:
-            manuscript_checks = validate_manuscript(root, only=set(_READY_MANUSCRIPT_CHECK_KEYS))
-            return all(manuscript_checks.get(key) is True for key in _READY_MANUSCRIPT_CHECK_KEYS)
+        if not include_manuscript:
+            return True
+        if validate_sheaf_track_artifacts(root, require_observations=False):
+            return False
+        if validate_semantic_gluing(root, require_observations=False):
+            return False
+        if validate_integration_audit_artifacts(root, require_release_evidence=False):
+            return False
+        plain_keys = set(_READY_MANUSCRIPT_CHECK_KEYS) - {
+            "claim_ledger_valid", "semantic_sheaf_gluing", "canonical_sheaf_tracks",
+            "integration_audit_artifacts",
+        }
+        plain_keys.update({"coverage_matrix_valid", "claim_bindings_satisfied"})
+        manuscript_checks = validate_manuscript(root, only=plain_keys)
+        if not all(manuscript_checks.get(key) is True for key in plain_keys):
+            return False
+
+        # The existing typed validator still checks EVERY claim and operand.
+        # Only a failed literal green requirement for an authenticated honest
+        # red field is structurally admissible. Other fields on those same
+        # artifacts, extra predicates, missing data, or malformed claims fail.
+        counter_path = "output/reports/counterexample_matrix.json"
+        adversarial_path = "output/reports/adversarial_audit.json"
+        semantic_path = "output/data/sheaf_gluing_certificate.json"
+        notes_path = "output/reports/release_notes_evidence.json"
+        attestation_path = "output/reports/release_attestation.json"
+        promotion_path = "output/data/track_improvement_scope.json"
+        documents = {
+            relative: json.loads((root / relative).read_bytes())
+            for relative in (counter_path, adversarial_path, semantic_path, notes_path, attestation_path, promotion_path)
+        }
+        authenticated = {
+            (counter_path, "all_expected_failures_observed"): not validate_observation_payload(
+                root, documents[counter_path], require_observations=False
+            ),
+            (adversarial_path, "all_expected_failures_observed"): not validate_observation_payload(
+                root, documents[adversarial_path], adversarial=True, require_observations=False
+            ),
+            (semantic_path, "ok"): True,  # full structural semantic validation above
+            (notes_path, "all_notes_source_backed"): documents[notes_path] == build_release_notes_evidence(root),
+            (attestation_path, "all_attested"): release_attestation_consistent_and_current(
+                root, documents[attestation_path]
+            ),
+            (promotion_path, "all_required_controls_observed"): track_improvement_scope_consistent(
+                root, documents[promotion_path]
+            ),
+        }
+        ledger = yaml.safe_load((root / "data/claim_ledger.yaml").read_text(encoding="utf-8"))
+        allowed: set[str] = set()
+        denied: set[str] = set()
+        for claim in ledger.get("claims") or []:
+            relative = str(claim.get("path") or "")
+            evidence = claim.get("evidence")
+            field = evidence.get("field") if isinstance(evidence, dict) else None
+            message = f"{claim.get('id') or '<unknown>'}: evidence predicate failed for {relative}"
+            if (
+                isinstance(evidence, dict) and set(evidence) == {"field", "equals"}
+                and isinstance(field, str) and evidence["equals"] is True
+                and authenticated.get((relative, field)) is True
+                and documents[relative].get(field) is False
+            ):
+                allowed.add(message)
+            else:
+                denied.add(message)
+        return all(issue in allowed - denied for issue in typed_claim_evidence_issues(root))
     except Exception:
         return False
-    return True
 
 
 def _skip_or_fail(exc: RuntimeError) -> None:
@@ -144,21 +218,22 @@ def _skip_or_fail(exc: RuntimeError) -> None:
 def ensure_gate_artifacts(project_root: Path, *, verify: bool = False) -> None:
     """Rebuild analysis, simulation, sheaf, and figure outputs for gate checks."""
     root = project_root.resolve()
-    if _gate_artifacts_present(root):
-        if _bootstrap_current(root) and not verify:
-            return
-        if _gate_artifacts_ready(root, include_manuscript=True):
+    with artifact_lease(root):
+        if _gate_artifacts_present(root):
+            if _bootstrap_current(root) and not verify:
+                return
+            if _gate_artifacts_ready(root, include_manuscript=True):
+                _mark_bootstrapped(root)
+                return
+            try:
+                refresh_gate_artifacts(root, require_analysis_outputs=False)
+            except RuntimeError as exc:
+                _skip_or_fail(exc)
             _mark_bootstrapped(root)
             return
+
         try:
-            refresh_gate_artifacts(root, require_analysis_outputs=False)
+            refresh_gate_artifacts(root)
         except RuntimeError as exc:
             _skip_or_fail(exc)
         _mark_bootstrapped(root)
-        return
-
-    try:
-        refresh_gate_artifacts(project_root)
-    except RuntimeError as exc:
-        _skip_or_fail(exc)
-    _mark_bootstrapped(root)
