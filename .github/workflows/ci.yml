@@ -28,6 +28,8 @@ jobs:
       # pinned checkout the `gnn` arm provisions. An explicit selection turns an
       # unavailable or divergent checkout into a failure instead of a skip.
       ON_POLICY_DISTILLATION_GNN_ROOT: ${{ runner.temp }}/gnn
+      GNN_BOOTSTRAP: ${{ runner.temp }}/gnn-custody/gnn_bootstrap.py
+      GNN_SOURCE_MANIFEST: ${{ runner.temp }}/gnn-custody/v5.1.0-source-manifest.json
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # The typography contract renders the combined .tex and fails closed when
@@ -40,6 +42,18 @@ jobs:
       # One environment for every arm. `--locked` already refuses an out-of-date
       # uv.lock, so no separate `uv lock --check` step is needed.
       - run: uv sync --locked --extra dev
+      - name: Acquire independently frozen GNN producer resources
+        env:
+          GNN_BOOTSTRAP_URL: ${{ vars.GNN_BOOTSTRAP_URL }}
+          GNN_SOURCE_MANIFEST_URL: ${{ vars.GNN_SOURCE_MANIFEST_URL }}
+        run: |
+          : "${GNN_BOOTSTRAP_URL:?Set the approved immutable producer bootstrap URL}"
+          : "${GNN_SOURCE_MANIFEST_URL:?Set the approved immutable complete source-manifest URL}"
+          mkdir -p "$RUNNER_TEMP/gnn-custody"
+          curl --fail --location --proto '=https' --proto-redir '=https' --max-time 60 --max-filesize 1048576 --output "$GNN_BOOTSTRAP" "$GNN_BOOTSTRAP_URL"
+          curl --fail --location --proto '=https' --proto-redir '=https' --max-time 60 --max-filesize 1048576 --output "$GNN_SOURCE_MANIFEST" "$GNN_SOURCE_MANIFEST_URL"
+          printf '%s  %s\n' 'f638d4c01fe7de31e43d793e59bf382d0c3d1a82f365c59238334a2b40adfb37' "$GNN_BOOTSTRAP" | sha256sum --check --strict
+          printf '%s  %s\n' '43b33c0b2b40386afa3f306fec4cc13bc1fd7c3b570fbf11d5008bad5c8e6b51' "$GNN_SOURCE_MANIFEST" | sha256sum --check --strict
       # Static checks: ruff plus a byte-compile of src, scripts, and tests.
       - run: uv run --extra dev python scripts/gate.py lint
       # Relative-link check over tracked Markdown plus the doc-contract tests.

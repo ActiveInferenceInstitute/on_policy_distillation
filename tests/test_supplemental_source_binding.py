@@ -14,7 +14,6 @@ from roadmap_tracks.formal_interop import build_proof_extraction_index
 from roadmap_tracks.supplemental import (
     SUPPLEMENTAL_ARTIFACTS,
     build_ablation_sensitivity_report,
-    build_proof_dependency_graph,
     build_release_attestation,
     build_state_transition_table,
     release_attestation_consistent_and_current,
