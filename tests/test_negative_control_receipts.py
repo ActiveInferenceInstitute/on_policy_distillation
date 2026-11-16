@@ -307,7 +307,7 @@ def test_strict_integration_audit_rejects_removed_current_observation(
 
     root = tmp_path / "source"
     shutil.copytree(recorded_root, root)
-    ensure_gate_artifacts(root, include_manuscript=True)
+    ensure_gate_artifacts(root)
     observation_issue = "adversarial_audit.json requires successful current per-case observations"
     assert counterexample_payload(root)["observed_count"] == len(CASES)
     assert observation_issue not in validate_integration_audit_artifacts(root)
