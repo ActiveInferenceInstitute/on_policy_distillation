@@ -253,33 +253,23 @@ def _report_pin(pin: dict[str, str], checkout: Path) -> None:
             handle.write(f"gnn-version={version}\n")
 
 
-def reader_command(interpreter: str) -> list[str]:
-    """The estate's shared importer reader, run against this checkout."""
+def reader_command(interpreter: str, source: Path | str) -> list[str]:
+    """Run the producer's reader inside full pinned-source admission."""
     return [
-        interpreter,
-        "-m",
-        "gnn.importers",
-        "check",
-        "--repo",
-        ".",
-        "--require-pointer",
-        "--workflow",
-        CONFORMANCE_WORKFLOW,
-        "--job",
-        CONFORMANCE_JOB,
+        interpreter, "-I", "-B", str(PROJECT_ROOT / "scripts/qualified_gnn.py"),
+        "check", "--repo", str(PROJECT_ROOT), "--source", str(source),
+        "--workflow", CONFORMANCE_WORKFLOW, "--job", CONFORMANCE_JOB,
     ]
 
 
 def run_reader(checkout: Path, commit: str) -> int:
     """Run `gnn.importers` from the pinned revision, in the pinned environment.
 
-    The reader and the parser it validates must both be the pinned release's
-    bytes, so `src/gnn` is extracted from `commit` the way the conformance tests
-    extract the parser, and only that tree is placed on `PYTHONPATH`. The
-    interpreter is the checkout's own, so no live working tree is on the path.
+    The reader and parser use complete `src/gnn` extracted from `commit` as in
+    the conformance tests. The isolated worker admits that tree with the frozen
+    producer manifest before imports and verifies its full verdict lifetime.
+    The interpreter remains the selected checkout's own.
     """
-    command = reader_command(str(_upstream().gnn_checkout_python(checkout)))
-    print(f"[gnn] $ {_display(command)}", flush=True)
     with tempfile.TemporaryDirectory(prefix="gnn-reader-") as name:
         extract = Path(name)
         archive = subprocess.run(
@@ -297,8 +287,9 @@ def run_reader(checkout: Path, commit: str) -> int:
                 stream.extractall(extract, filter="data")
             else:  # pragma: no cover - the documented gate runs a modern interpreter
                 stream.extractall(extract)
-        env = {**os.environ, "PYTHONPATH": str(extract / "src")}
-        return subprocess.run(command, cwd=PROJECT_ROOT, env=env, check=False).returncode
+        command = reader_command(str(_upstream().gnn_checkout_python(checkout)), extract)
+        print(f"[gnn] $ {_display(command)}", flush=True)
+        return subprocess.run(command, cwd=PROJECT_ROOT, env=os.environ.copy(), check=False).returncode
 
 
 def run_commands(label: str, commands: list[list[str]], env: dict[str, str] | None = None) -> int:
@@ -349,7 +340,7 @@ def _display(command: list[str]) -> str:
 def arm_table() -> list[str]:
     """One documentation row per arm, listing the argv it runs."""
     gnn_steps = [
-        _display(reader_command("python")),
+        _display(reader_command("python", "<pinned-source>")),
         *(_display(cmd) for cmd in gnn_commands()),
     ]
     rows = [
