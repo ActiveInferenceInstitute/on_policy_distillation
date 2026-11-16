@@ -293,3 +293,32 @@ def test_actual_nonpassing_rerun_cannot_leave_prior_success_current(
     successful, issues = load_receipts(root)
     assert successful == {} and issues
     assert counterexample_payload(root)["observed_count"] == 0
+
+
+@pytest.mark.artifact_slow
+@pytest.mark.timeout(600)
+def test_strict_integration_audit_rejects_removed_current_observation(
+    recorded_root: Path, tmp_path: Path,
+) -> None:
+    from gate_support import ensure_gate_artifacts
+    from gates.output_checks import validate_outputs_selected_strict
+    from orchestration.artifact_pipeline import hydrate_manuscript_fixed_point
+    from roadmap_tracks.integration_audit import validate_integration_audit_artifacts
+
+    root = tmp_path / "source"
+    shutil.copytree(recorded_root, root)
+    ensure_gate_artifacts(root, include_manuscript=True)
+    observation_issue = "adversarial_audit.json requires successful current per-case observations"
+    assert counterexample_payload(root)["observed_count"] == len(CASES)
+    assert observation_issue not in validate_integration_audit_artifacts(root)
+    assert validate_integration_audit_artifacts(root, require_release_evidence=False) == []
+
+    (root / RECEIPT_DIRECTORY / f"{CASES[0].id}.json").unlink()
+    hydrate_manuscript_fixed_point(root, require_analysis_outputs=False)
+
+    assert counterexample_payload(root)["observed_count"] == len(CASES) - 1
+    assert observation_issue in validate_integration_audit_artifacts(root)
+    assert validate_integration_audit_artifacts(root, require_release_evidence=False) == []
+    key = "integration_audit_track_schemas"
+    assert validate_outputs_selected_strict(root, {key}) == {key: False}
+    assert validate_outputs_selected_strict(root, {key}, require_observations=False) == {key: True}

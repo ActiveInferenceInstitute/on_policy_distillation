@@ -182,6 +182,12 @@ The complete structural validator still checks source, schemas, and live
 contents; only the release-evidence requirement is deferred. The default
 `validate_manuscript` path remains strict.
 
+The integration-audit validator propagates its strict release-evidence setting
+to current adversarial observations. A previously green saved validation report
+cannot replace a missing or stale per-case receipt. Explicit structural mode
+may accept the authenticated unobserved state, but default selected integration
+checks reject it independently of other release checks.
+
 The hydration CLI adopts the full-chain runner's validated inherited artifact
 lease before entering the fixed-point producer; it does not contend with its
 own parent or release the parent's custody. Standalone hydration acquires the

@@ -281,7 +281,9 @@ def validate_integration_audit_artifacts(
     if scope != live_scope or live_scope["all_current_claims_toy"] is not True:
         issues.append("scope_boundary_audit.json records empirical scope leakage or stale clause evidence")
     adversarial = _load_json(root / "output" / "reports" / "adversarial_audit.json")
-    issues.extend(validate_observation_payload(root, adversarial, adversarial=True, require_observations=False))
+    issues.extend(validate_observation_payload(
+        root, adversarial, adversarial=True, require_observations=require_release_evidence,
+    ))
     figure_hash = _load_json(root / "output" / "reports" / "figure_hash_manifest.json")
     figure_hash_derived = _figure_hash_rows_complete(root, figure_hash)
     if (
