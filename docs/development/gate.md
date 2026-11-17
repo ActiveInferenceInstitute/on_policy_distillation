@@ -96,13 +96,12 @@ manifest. A local conformance receipt does not establish hosted delivery.
 
 The workflow acquires both resources into its own ignored workspace output
 directory before any verdict and verifies their exact SHA-256 identities.
-The repository Actions variables `GNN_BOOTSTRAP_URL` and
-`GNN_SOURCE_MANIFEST_URL` must be provisioned by
-the producer/repository owner with approved immutable HTTPS locators. They are
-required public-resource configuration, not ambient local paths or an alternate
-runtime. Unset locators or missing independently published assets remain an
-explicit owner prerequisite; the workflow does not generate replacements or
-turn that absence into a passing status.
+Both HTTPS locators are pinned directly to producer resource-delivery commit
+`66d491f86895443cf588011cc6f40c37b8bae8fd`, under `interop/gnn_bootstrap.py`
+and `interop/v5.1.0-source-manifest.json`. This resource-only commit is not the
+parser pin: the original v5.1.0 parser remains at
+`75c834bd8519dc7b5adc4d24f16bf393cfd1ecdf`. No repository URL variables,
+fallback locators, alternate runtime, or generated replacement manifest are used.
 Job-level paths use the permitted `github.workspace` context; `runner` is not
 available in `jobs.<job_id>.env`. The checkout and both resource paths stay
 bound across all arms.
