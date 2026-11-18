@@ -27,7 +27,7 @@ jobs:
       # Job-level so the conformance tests inside the `full` arm resolve the same
       # pinned checkout the `gnn` arm provisions. An explicit selection turns an
       # unavailable or divergent checkout into a failure instead of a skip.
-      ON_POLICY_DISTILLATION_GNN_ROOT: ${{ runner.temp }}/gnn
+      ON_POLICY_DISTILLATION_GNN_ROOT: ${{ github.workspace }}/output/gnn-pin
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # The typography contract renders the combined .tex and fails closed when
