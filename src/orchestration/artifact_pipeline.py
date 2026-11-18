@@ -172,14 +172,15 @@ def hydrate_manuscript_fixed_point(
             pass_paths.update(write_semantic_gluing_outputs(root, refresh_hydration=False))
             from roadmap_tracks.sheaf_tracks import CANONICAL_ARTIFACTS, _write_json, build_artifact_provenance
 
-            pass_paths["provenance"] = _write_json(
-                root / CANONICAL_ARTIFACTS["provenance"],
-                build_artifact_provenance(root),
-            )
             _, variables_path, resolved_dir = _write_variables(root, require_analysis_outputs=require_analysis_outputs)
             pass_paths["variables"] = variables_path
             pass_paths["resolved_manuscript"] = resolved_dir
             pass_paths["manuscript_staleness"] = write_manuscript_staleness_report(root)
+            # Provenance hashes the hydrated variables and staleness report.
+            pass_paths["provenance"] = _write_json(
+                root / CANONICAL_ARTIFACTS["provenance"],
+                build_artifact_provenance(root),
+            )
             paths.update(pass_paths)
 
             # Structural convergence is not an observation receipt. Required
