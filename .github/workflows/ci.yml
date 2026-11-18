@@ -59,6 +59,8 @@ jobs:
       # conformance + parser tests. A dead pin fails here, before the suite, and
       # a green run is evidence the pin works.
       - run: uv run --extra dev python scripts/gate.py gnn
+      # The artifact chain reads current per-case observations produced by this arm.
+      - run: uv run --extra dev python scripts/gate.py negative-controls
       # The suite is not self-contained: the gate tests and the manuscript
       # checks read the generated artifact tree, so a clean checkout has to
       # build it first. The chain is bounded and convergent and runs

@@ -19,12 +19,13 @@ uv run --extra dev python scripts/gate.py all      # CI sequence (includes the l
 | `full` | Whole-suite coverage gate, unchanged 90% floor. Requires generated artifacts and selects the pinned GNN checkout explicitly. |
 | `docs` | Relative Markdown path checks and documentation-contract tests. |
 | `gnn` | Provision/select the upstream pin, run the shared reader (`gnn.importers`) from that revision, then run the conformance and project-parser tests. |
+| `negative-controls` | Record the registered per-case pytest observation receipts used by release validation. |
 | `chain` | Existing convergent artifact runner, bounded to four convergence passes. |
 | `render` | Existing canonical `scripts/render_pdf.py` command. Requires generated artifacts, `pandoc`, and `xelatex`. |
-| `all` | `lint`, `docs`, `gnn`, `chain`, `full`, sequentially. Rendering remains separate. |
+| `all` | `lint`, `docs`, `gnn`, `negative-controls`, `chain`, `full`, sequentially. Rendering remains separate. |
 
 Run one arm with `uv run --extra dev python scripts/gate.py ARM`. Run `chain`
-before `full` or `render` on a fresh checkout. There is no types arm: the
+after `negative-controls` and before `full` or `render` on a fresh checkout. There is no types arm: the
 repository has no configured static type checker.
 
 Ruff now lives in the project's `dev` extra and `uv.lock`; lint no longer
