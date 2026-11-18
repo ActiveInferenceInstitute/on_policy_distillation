@@ -93,13 +93,13 @@ The provenance claim is intentionally limited: every listed artifact exists, has
 
 <!-- sheaf-track:counterexample -->
 
-The `counterexample` fragment records expected-failure fixtures as first-class evidence. `output/reports/counterexample_matrix.json` lists {{counterexample_count}} negative controls that intentionally mutate ontology mappings, semantic certificates, graph-world trace agreement, typed claim evidence, replay rows, release parity, and provenance hashes.
+The `counterexample` fragment registers {{counterexample_count}} expected-failure cases. The current matrix records {{counterexample_observed_count}} observed cases and {{counterexample_unobserved_count}} unobserved cases. Registration describes a falsification target; only authenticated successful per-case receipts establish observed rejection.
 
-The matrix is not an empirical result. It is a falsifiability ledger: each row names the gate that must fail and the test that proves the failure path remains live.
+The matrix is not an empirical result. Each row binds a mutation, finite fixture and input bytes, actual target validator, and exact parametrized test node. Missing or invalid receipts remain unobserved and cannot satisfy observation release gates.
 
 <!-- sheaf-track:adversarial_audit -->
 
-The `adversarial_audit` fragment makes expected failures part of the sheaf rather than an informal test note. `output/reports/adversarial_audit.json` records {{adversarial_audit_count}} known-bad rows and {{adversarial_known_bad_passed}} known-bad rows passing; publication proceeds only when every row is documented as an expected failure and mapped to a gate.
+The `adversarial_audit` fragment separates registered expectations from observed rejection. It records {{adversarial_audit_count}} cases, {{adversarial_observed_count}} observed cases, and {{adversarial_unobserved_count}} unobserved cases. The all-observed flag is `{{adversarial_audit_all_observed}}`. Zero known-bad passes does not establish rejection when observations are missing; publication requires current successful receipts for every required case.
 
 The audit rows target the same failure modes as the semantic certificate: incomplete sweep cells, unnormalized uncertainty rows, interop field loss, stale certificate state, and empirical-scope leakage. The scope boundary remains toy-only: `{{scope_boundary_status}}`.
 
@@ -113,9 +113,9 @@ The `release_bundle` fragment records whether the canonical deliverables exist b
 
 <!-- sheaf-track:gate_ergonomics -->
 
-The `gate_ergonomics` fragment turns validation commands into evidence rows. `output/data/validation_gate_index.json` records {{validation_gate_index_count}} gate rows, each naming required inputs and the negative-control surface that should fail closed.
+The `gate_ergonomics` fragment indexes validation commands, inputs, and negative-control surfaces. `output/data/validation_gate_index.json` records {{validation_gate_index_count}} gate rows. An index is not execution evidence; observed rejection requires current successful per-case recorder receipts.
 
-**Integration-audit sub-artifacts.** Beyond the named sheaf tracks, `generate_integration_audit.py` emits a set of cross-cutting audit artifacts that are each enforced with a fail-closed negative control, so this section states what every one of them guarantees rather than leaving them as unexplained inventory rows. *Producer completeness* (`output/reports/producer_completeness.json`) requires every registered sheaf-track artifact to name a configured producer script; its `all_complete` flag is re-derived from the rows, so a registered artifact with a missing or unconfigured producer fails even if the stored flag was left true. *Token provenance* (`output/data/manuscript_token_provenance.json`) maps each hydrated double-brace token placeholder back to the artifact and field that produced it; the gate independently re-scans the manuscript and requires the rendered-token set, the provenance-key set, the per-row token set, and the live re-scan to coincide, so a deleted provenance row (a rendered token with no producer) or a phantom row (a provenance key that is never rendered) fails. *Claim-evidence audit* (`output/reports/claim_evidence_audit.json`) re-derives `all_claims_typed` per row, so any manuscript claim lacking a typed evidence binding or track set fails. *Scope-boundary audit* (`output/reports/scope_boundary_audit.json`) keeps every current claim inside the deterministic toy boundary and fails on any empirical or production scope leak. *Cross-track symbol table* (`output/data/cross_track_symbol_table.json`) is the table of shared symbols and the tracks that must agree on each; it backs the gluing certificate, which fails if two tracks bind different values to one symbol. *Evidence crosswalk* (`output/data/sheaf_evidence_crosswalk.json`) ties each typed claim to the evidence artifact and gate that back it; its schema gate fails closed on a malformed or inconsistent crosswalk, and its presence is enforced upstream by the producer-completeness check. *Validation dependency graph* (`output/data/validation_dependency_graph.json`) is the producer-to-artifact-to-consumer edge set that the semantic-gluing figure renders; manuscript validation fails on an unresolved dependency edge. *Reproducibility replay* (`output/data/reproducibility_replay.json`) records the end-to-end validation-spine replay distinct from the per-producer replay matrix, and its schema gate fails closed on a malformed replay record.
+**Integration-audit sub-artifacts.** Beyond the named sheaf tracks, `generate_integration_audit.py` emits cross-cutting audit artifacts with registered negative controls whose observed rejection requires authenticated per-case receipts, so this section states what every one of them guarantees rather than leaving them as unexplained inventory rows. *Producer completeness* (`output/reports/producer_completeness.json`) requires every registered sheaf-track artifact to name a configured producer script; its `all_complete` flag is re-derived from the rows, so a registered artifact with a missing or unconfigured producer fails even if the stored flag was left true. *Token provenance* (`output/data/manuscript_token_provenance.json`) maps each hydrated double-brace token placeholder back to the artifact and field that produced it; the gate independently re-scans the manuscript and requires the rendered-token set, the provenance-key set, the per-row token set, and the live re-scan to coincide, so a deleted provenance row (a rendered token with no producer) or a phantom row (a provenance key that is never rendered) fails. *Claim-evidence audit* (`output/reports/claim_evidence_audit.json`) re-derives `all_claims_typed` per row, so any manuscript claim lacking a typed evidence binding or track set fails. *Scope-boundary audit* (`output/reports/scope_boundary_audit.json`) keeps every current claim inside the deterministic toy boundary and fails on any empirical or production scope leak. *Cross-track symbol table* (`output/data/cross_track_symbol_table.json`) is the table of shared symbols and the tracks that must agree on each; it backs the gluing certificate, which fails if two tracks bind different values to one symbol. *Evidence crosswalk* (`output/data/sheaf_evidence_crosswalk.json`) ties each typed claim to the evidence artifact and gate that back it; its schema gate fails closed on a malformed or inconsistent crosswalk, and its presence is enforced upstream by the producer-completeness check. *Validation dependency graph* (`output/data/validation_dependency_graph.json`) is the producer-to-artifact-to-consumer edge set that the semantic-gluing figure renders; manuscript validation fails on an unresolved dependency edge. *Reproducibility replay* (`output/data/reproducibility_replay.json`) records the end-to-end validation-spine replay distinct from the per-producer replay matrix, and its schema gate fails closed on a malformed replay record.
 
 <!-- sheaf-track:artifact_diffoscope -->
 
@@ -198,7 +198,7 @@ support from the cited literature.
 
 <!-- sheaf-track:manuscript_staleness -->
 
-The `manuscript_staleness` fragment closes the hydration loop. `output/reports/manuscript_staleness_report.json` checks {{manuscript_staleness_row_count}} manuscript token bindings against the current generated variables after resolved markdown is written; the pass flag is `{{manuscript_staleness_all_fresh}}`.
+The `manuscript_staleness` fragment binds every token occurrence by source position, format, and resolved span, and compares complete canonical sections. Repeated tokens are independent. `output/reports/manuscript_staleness_report.json` records {{manuscript_staleness_row_count}} occurrences and freshness `{{manuscript_staleness_all_fresh}}` after genuine hydration/report convergence. An intermediate report is not release acceptance.
 
 `output/reports/manuscript_hardcoded_variable_audit.json` then scans the source fragments for guarded generated values that appear as prose literals instead of double-brace manuscript-variable placeholders. It guards {{hardcoded_variable_guarded_count}} formatted token values and records {{hardcoded_variable_issue_count}} hard-coded-value issues; the pass flag is `{{hardcoded_variables_all_auto_injected}}`.
 
@@ -270,7 +270,7 @@ Section rows versus fragment track columns. **P** = present (bound and file exis
 | Discussion (group) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 |   Limitations and outlook | P | — | P | — | — | — | — | — | — | — | — | — | — | — | — | — | P | — | — | — | — | P | — | — | — | — | — | — | — | P | — | — | P |
 | Appendix (group) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-|   Supplementary material: full coverage and concordance | P | P | P | P | — | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | — | P | — | — | — | — | P | P | — | — | — | — | — |
+|   Supplementary material: full coverage and concordance | P | P | P | P | — | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | — | P | — | — | — | — | P | P | — | P | — | — | — |
 |   Supplementary material: reproducibility methodology | P | P | — | — | P | — | — | P | — | P | P | P | P | P | P | P | P | — | — | — | P | P | — | — | — | — | — | — | — | — | — | — | — |
 |   Supplementary material: validation invariants and statistics | P | — | P | — | — | — | — | — | P | — | — | — | — | — | — | — | — | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P |
 
@@ -299,7 +299,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | Free-energy decomposition | results | 2 | 2 | 0 | `fully_sheafed` |
 | On-policy student rollout (T-maze) | results | 3 | 3 | 0 | `fully_sheafed` |
 | Limitations and outlook | discussion | 6 | 6 | 0 | `fully_sheafed` |
-| Supplementary material: full coverage and concordance | appendix | 22 | 22 | 0 | `fully_sheafed` |
+| Supplementary material: full coverage and concordance | appendix | 23 | 23 | 0 | `fully_sheafed` |
 | Supplementary material: reproducibility methodology | appendix | 14 | 14 | 0 | `fully_sheafed` |
 | Supplementary material: validation invariants and statistics | appendix | 19 | 19 | 0 | `fully_sheafed` |
 
@@ -319,9 +319,9 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `interop` | `markdown` | 2 | 2 | 0 | 6 | `complete` |
 | `provenance` | `markdown` | 2 | 2 | 0 | 12 | `complete` |
 | `replay_matrix` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
-| `counterexample` | `markdown` | 2 | 2 | 0 | 2 | `complete` |
+| `counterexample` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
 | `adversarial_audit` | `markdown` | 2 | 2 | 0 | 11 | `complete` |
-| `evidence_fields` | `markdown` | 2 | 2 | 0 | 2 | `complete` |
+| `evidence_fields` | `markdown` | 2 | 2 | 0 | 3 | `complete` |
 | `release_bundle` | `markdown` | 2 | 2 | 0 | 5 | `complete` |
 | `gate_ergonomics` | `markdown` | 2 | 2 | 0 | 5 | `complete` |
 | `artifact_diffoscope` | `markdown` | 2 | 2 | 0 | 1 | `complete` |
@@ -339,7 +339,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `state_space_catalog` | `markdown` | 2 | 2 | 0 | 2 | `complete` |
 | `causal_ablation` | `markdown` | 2 | 2 | 0 | 2 | `complete` |
 | `gnn` | `markdown` | 3 | 3 | 0 | 5 | `complete` |
-| `ontology` | `ontology_yaml` | 5 | 5 | 0 | 7 | `complete` |
+| `ontology` | `ontology_yaml` | 6 | 6 | 0 | 7 | `complete` |
 | `animation` | `markdown` | 1 | 1 | 0 | 2 | `complete` |
 | `animation_delta` | `markdown` | 1 | 1 | 0 | 1 | `complete` |
 | `release_notes` | `markdown` | 2 | 2 | 0 | 2 | `complete` |
@@ -353,7 +353,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | --- | --- | --- | --- | --- |
 | `registry_loaded` | `sheaf.registry` | `registered_tracks` | `ok` | 33 tracks |
 | `manifest_loaded` | `sheaf.manifest` | `manifest_sections` | `ok` | 17 sections |
-| `coverage_matrix_built` | `sheaf.coverage` | `output/data/sheaf_coverage_matrix.json` | `ok` | 95 present cells |
+| `coverage_matrix_built` | `sheaf.coverage` | `output/data/sheaf_coverage_matrix.json` | `ok` | 96 present cells |
 | `section_status_matrix_built` | `sheaf.status` | `output/data/sheaf_section_status_matrix.json` | `ok` | 561 section-track cells |
 | `layers_renderer_bound` | `sheaf.layers_report` | `manuscript/19_supplement_reproducibility.md` | `ok` | methods sheaf layer tables |
 | `semantic_artifacts_indexed` | `sheaf.semantic` | `output/data/validation_dependency_graph.json` | `ok` | 121 artifact producer rows |
@@ -376,7 +376,7 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | `evidence_field_index` | `output/data/evidence_field_index.json` | `generate_sheaf_tracks.py` | validate_outputs, validate_manuscript |
 | `validation_dependency_graph` | `output/data/validation_dependency_graph.json` | `generate_sheaf_tracks.py` | validate_manuscript, validate_outputs |
 
-**Claim rows:** 145 typed evidence claims.
+**Claim rows:** 146 typed evidence claims.
 
 <!-- sheaf-layers:artifact-producers -->
 ## Artifact producer graph
