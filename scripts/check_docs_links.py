@@ -25,8 +25,8 @@ from urllib.parse import unquote
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-#: Link target prefixes that are generated or tool-owned, never tracked.
-GENERATED_PREFIXES = ("output/", ".venv/", "htmlcov/", "lean/.lake/", "lean/build/")
+#: Link target roots that are generated or tool-owned, never tracked.
+GENERATED_TREES = ("output", ".venv", "htmlcov", "lean/.lake", "lean/build")
 
 #: `[text](target)` and `![alt](target)`, with an optional quoted title.
 INLINE_LINK_RE = re.compile(r"!?\[[^\]]*\]\(\s*(<[^>]*>|[^)\s]+)(?:\s+\"[^\"]*\")?\s*\)")
@@ -97,7 +97,7 @@ def is_checkable(project_root: Path, source: Path, target: str) -> bool:
         relative = (source.parent / path).resolve().relative_to(project_root.resolve())
     except ValueError:
         return True
-    return not relative.as_posix().startswith(GENERATED_PREFIXES)
+    return not any(relative.is_relative_to(tree) for tree in GENERATED_TREES)
 
 
 def broken_links(project_root: Path, files: list[Path]) -> list[str]:
