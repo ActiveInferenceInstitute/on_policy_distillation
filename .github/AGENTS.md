@@ -1,5 +1,7 @@
 # GitHub automation agent guide
 
+See the [automation guide](AUTOMATION.md) for the release gate and dependency updates.
+
 - Check steps in `workflows/ci.yml` invoke arms of `scripts/gate.py`.
   Never restate an arm's argv in the workflow — add or change
   the arm, then point the step at it.
