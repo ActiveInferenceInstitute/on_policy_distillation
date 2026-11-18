@@ -805,6 +805,25 @@ def build_semantic_gluing_certificate(project_root: Path) -> dict[str, Any]:
     }
 
 
+def _write_semantic_certificate(root: Path, path: Path) -> None:
+    payload = _with_proof_obligations(root, build_semantic_gluing_certificate(root))
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _write_attested_semantic_certificate(root: Path, path: Path) -> None:
+    from roadmap_tracks.supplemental import SUPPLEMENTAL_ARTIFACTS, write_release_attestation
+
+    _write_semantic_certificate(root, path)
+    attestation = _load_json(root / SUPPLEMENTAL_ARTIFACTS["release_attestation"])
+    if not _attestation_consistent_and_current(root, attestation):
+        # The certificate may change the semantic row of the saved attestation.
+        # Rebuild both sides so the certificate sees a current attestation and
+        # the attestation binds the final certificate's restrictions.
+        write_release_attestation(root)
+        _write_semantic_certificate(root, path)
+        write_release_attestation(root)
+
+
 def write_semantic_gluing_certificate(
     project_root: Path,
     *,
@@ -820,8 +839,9 @@ def write_semantic_gluing_certificate(
 
         write_sheaf_status_outputs(root)
         write_supplemental_artifacts(root)
-    payload = _with_proof_obligations(root, build_semantic_gluing_certificate(root))
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        _write_attested_semantic_certificate(root, path)
+    else:
+        _write_semantic_certificate(root, path)
     return path
 
 
@@ -866,10 +886,7 @@ def write_semantic_gluing_outputs(project_root: Path, *, refresh_hydration: bool
         json.dumps(build_validation_dependency_graph(root), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    certificate_path.write_text(
-        json.dumps(_with_proof_obligations(root, build_semantic_gluing_certificate(root)), indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    _write_attested_semantic_certificate(root, certificate_path)
     return {
         "certificate": certificate_path,
         "crosswalk": crosswalk_path,

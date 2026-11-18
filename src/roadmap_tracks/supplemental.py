@@ -607,6 +607,12 @@ def build_release_attestation(project_root: Path) -> dict[str, Any]:
     }
 
 
+def write_release_attestation(project_root: Path) -> Path:
+    """Write the release attestation for the current source artifacts."""
+    root = project_root.resolve()
+    return _write_json(root / SUPPLEMENTAL_ARTIFACTS["release_attestation"], build_release_attestation(root))
+
+
 def write_supplemental_artifacts(project_root: Path) -> dict[str, Path]:
     """Write all supplemental canonical sheaf artifacts."""
     root = project_root.resolve()
@@ -623,10 +629,7 @@ def write_supplemental_artifacts(project_root: Path) -> dict[str, Path]:
             root / SUPPLEMENTAL_ARTIFACTS["ablation_sensitivity_report"],
             build_ablation_sensitivity_report(root),
         ),
-        "release_attestation": _write_json(
-            root / SUPPLEMENTAL_ARTIFACTS["release_attestation"],
-            build_release_attestation(root),
-        ),
+        "release_attestation": write_release_attestation(root),
     }
 
 

@@ -147,3 +147,18 @@ def test_oracle_negative_controls_fail_for_the_asserted_reason(tmp_path: Path) -
     tmaze_rows = [row for row in witnesses["rows"] if row["model"].startswith("si_tmaze")]
     assert tmaze_rows and all(row["passed"] is False for row in tmaze_rows)
     assert all(row["counterexamples"] for row in tmaze_rows)  # reason recorded, not incidental
+
+
+def test_semantic_writer_refreshes_attestation_after_certificate_changes(tmp_path: Path) -> None:
+    from manuscript.sheaf.semantic import write_semantic_gluing_outputs
+
+    _companions(tmp_path)
+    _report(tmp_path, failed=[])
+    assert build_release_attestation(tmp_path)["all_attested"] is True
+
+    outputs = write_semantic_gluing_outputs(tmp_path, refresh_hydration=False)
+    certificate = json.loads(outputs["certificate"].read_bytes())
+    attestation = json.loads((tmp_path / "output/reports/release_attestation.json").read_bytes())
+    assert attestation == build_release_attestation(tmp_path)
+    assert certificate["restrictions"]["release_attestation_complete"] is True
+    assert attestation["all_attested"] is False
