@@ -256,11 +256,17 @@ def write_sheaf_track_artifacts(
     return paths
 
 
-def validate_sheaf_track_artifacts(project_root: Path, *, validate_saved_certificate: bool = True) -> list[str]:
+def validate_sheaf_track_artifacts(
+    project_root: Path, *, validate_saved_certificate: bool = True, require_observations: bool = True
+) -> list[str]:
     """Compatibility facade for canonical sheaf-track validation."""
     from .sheaf_track_validation import validate_sheaf_track_artifacts as _validate
 
-    return _validate(project_root, validate_saved_certificate=validate_saved_certificate)
+    return _validate(
+        project_root,
+        validate_saved_certificate=validate_saved_certificate,
+        require_observations=require_observations,
+    )
 
 
 def load_sheaf_track_payloads(project_root: Path) -> dict[str, dict]:
@@ -275,8 +281,14 @@ def validate_sheaf_track_payloads(
     payloads: dict[str, dict],
     *,
     validate_saved_certificate: bool = True,
+    require_observations: bool = True,
 ) -> list[str]:
     """Compatibility facade for validating preloaded canonical sheaf-track payloads."""
     from .sheaf_track_validation import validate_sheaf_track_payloads as _validate
 
-    return _validate(project_root, payloads, validate_saved_certificate=validate_saved_certificate)
+    return _validate(
+        project_root,
+        payloads,
+        validate_saved_certificate=validate_saved_certificate,
+        require_observations=require_observations,
+    )

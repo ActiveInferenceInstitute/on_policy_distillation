@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,80 @@ import yaml
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 ACTIVE_TASK_STATUSES = {"todo", "in_progress", "blocked"}
 VALID_TASK_STATUSES = ACTIVE_TASK_STATUSES | {"done"}
+SUPPLEMENTAL_IDS = {
+    "proof_dependency_graph",
+    "state_transition_table",
+    "ablation_sensitivity_report",
+    "release_attestation",
+}
+
+
+def _active_roadmap_ids(text: str) -> set[str]:
+    """Read current table/checklist status, not historical mentions or headings."""
+    active: set[str] = set()
+    headings: list[tuple[int, str]] = []
+    status_column: int | None = None
+    fence: str | None = None
+    in_comment = False
+    for line in text.splitlines():
+        # Hidden comments and quoted/code examples cannot create active work.
+        if in_comment:
+            if "-->" not in line:
+                continue
+            line = line.split("-->", 1)[1]
+            in_comment = False
+        while "<!--" in line:
+            before, comment = line.split("<!--", 1)
+            if "-->" not in comment:
+                line, in_comment = before, True
+                break
+            line = before + comment.split("-->", 1)[1]
+        stripped = line.strip()
+        if stripped.startswith(("```", "~~~")):
+            marker = stripped[:3]
+            if fence is None:
+                fence = marker
+            elif fence == marker:
+                fence = None
+            continue
+        if fence is not None or stripped.startswith(">"):
+            continue
+        heading = re.match(r"^(#{1,6})\s+(.+?)\s*#*\s*$", stripped)
+        if heading:
+            level, title = len(heading[1]), heading[2].strip().lower()
+            while headings and headings[-1][0] >= level:
+                headings.pop()
+            headings.append((level, title))
+            status_column = None
+            continue
+        historical = any(
+            re.match(r"^(completed|closed|historical|history|archived?|archive)\b", title)
+            for _, title in headings
+        )
+        active_section = any(title in {"active roadmap", "active tasks", "open tasks"} for _, title in headings)
+        if stripped.startswith("|"):
+            cells = [cell.strip().strip("`*").strip() for cell in re.split(r"(?<!\\)\|", stripped.strip("|"))]
+            if cells and cells[0].lower() in {"id", "canonical id"}:
+                labels = [cell.lower() for cell in cells]
+                status_column = labels.index("status") if "status" in labels else None
+                continue
+            if not cells or historical or re.fullmatch(r":?-+:?", cells[0]):
+                continue
+            if status_column is not None:
+                status = cells[status_column].lower().replace(" ", "_") if status_column < len(cells) else ""
+                is_active = status in ACTIVE_TASK_STATUSES | {"active", "open"}
+            else:
+                is_active = active_section
+            if is_active:
+                active.add(cells[0])
+            continue
+        status_column = None
+        checkbox = re.match(r"^[-*+]\s+\[([ xX])\]\s+(.+)$", stripped)
+        if checkbox and checkbox[1] == " " and not historical:
+            identifier = re.match(r"^[`*]*([A-Za-z][A-Za-z0-9_-]*)", checkbox[2])
+            if identifier:
+                active.add(identifier[1])
+    return active
 
 
 def _read_tasks(path: Path) -> dict[str, Any]:
@@ -66,11 +141,13 @@ def audit_roadmap_tasks(*, tasks_path: Path, todo_path: Path) -> list[str]:
         if title_fragment.lower() not in str(task.get("title", "")).lower():
             issues.append(f"{task_id} title does not describe {title_fragment}")
 
+    active_ids = _active_roadmap_ids(todo_text)
     opsd8 = tasks.get("opsd-8") or {}
-    if "AI-TEST-ISOLATION-1" in todo_text:
+    if "AI-TEST-ISOLATION-1" in active_ids:
         if opsd8.get("status") != "in_progress":
             issues.append("AI-TEST-ISOLATION-1 is active in TODO.md but opsd-8 is not in_progress")
-        if int(opsd8.get("progress", 0) or 0) >= 100:
+        progress = opsd8.get("progress")
+        if isinstance(progress, int) and progress >= 100:
             issues.append("AI-TEST-ISOLATION-1 is active in TODO.md but opsd-8 is complete")
         opsd8_notes = str(opsd8.get("notes", ""))
         if "complete_soak: true" not in opsd8_notes:
@@ -78,22 +155,15 @@ def audit_roadmap_tasks(*, tasks_path: Path, todo_path: Path) -> list[str]:
         if "61300" not in opsd8_notes:
             issues.append("opsd-8 notes must preserve the latest reported shuffle-seed evidence")
 
-    if "Live canonical supplemental artifacts" in todo_text:
+    active_supplemental = SUPPLEMENTAL_IDS & active_ids
+    if active_supplemental:
         opsd5 = tasks.get("opsd-5") or {}
         if opsd5.get("status") not in ACTIVE_TASK_STATUSES:
             issues.append("canonical supplemental artifacts are open in TODO.md but opsd-5 is not active")
         opsd5_notes = str(opsd5.get("notes", ""))
-        for artifact_id in (
-            "proof_dependency_graph",
-            "state_transition_table",
-            "ablation_sensitivity_report",
-            "release_attestation",
-        ):
+        for artifact_id in sorted(active_supplemental):
             if artifact_id not in opsd5_notes:
                 issues.append(f"opsd-5 notes omit canonical artifact {artifact_id}")
-
-    if "`_vN`" in todo_text:
-        opsd5_notes = str((tasks.get("opsd-5") or {}).get("notes", ""))
         if "_vN" not in opsd5_notes and "stable" not in opsd5_notes.lower():
             issues.append("opsd-5 notes must preserve the stable-id/no-_vN constraint")
 

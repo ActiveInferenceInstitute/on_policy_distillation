@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 from functools import lru_cache
 from pathlib import Path
 from typing import cast
@@ -18,6 +19,25 @@ from .models import (
     SheafManifest,
     SheafSection,
 )
+
+
+class _UniqueKeyLoader(yaml.SafeLoader):
+    """Reject ambiguous bindings instead of silently retaining the last value."""
+
+    def construct_mapping(self, node: yaml.nodes.MappingNode, deep: bool = False) -> dict:
+        self.flatten_mapping(node)
+        mapping: dict = {}
+        for key_node, value_node in node.value:
+            key = self.construct_object(key_node, deep=deep)
+            if key in mapping:
+                raise yaml.constructor.ConstructorError(
+                    "while constructing a mapping",
+                    node.start_mark,
+                    f"duplicate key {key!r}",
+                    key_node.start_mark,
+                )
+            mapping[key] = self.construct_object(value_node, deep=deep)
+        return mapping
 
 
 def parse_missing(value: str | None, fallback: MissingTrackPolicy) -> MissingTrackPolicy:
@@ -103,7 +123,17 @@ def load_manifest(
 @lru_cache(maxsize=16)
 def _load_manifest_yaml_cached(path: str, mtime_ns: int, size: int) -> dict:
     del mtime_ns, size
-    return yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
+    data = yaml.load(Path(path).read_text(encoding="utf-8"), Loader=_UniqueKeyLoader) or {}
+    if not isinstance(data, dict):
+        raise ValueError(f"manifest must contain a mapping: {path}")
+    return data
+
+
+def load_manifest_data(manifest_path: Path) -> dict:
+    """Return a defensive, duplicate-safe manifest projection for artifact builders."""
+    path = manifest_path.resolve()
+    stat = path.stat()
+    return copy.deepcopy(_load_manifest_yaml_cached(str(path), stat.st_mtime_ns, stat.st_size))
 
 
 def default_manifest_path(project_root: Path) -> Path:

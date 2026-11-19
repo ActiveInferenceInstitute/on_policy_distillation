@@ -8,6 +8,7 @@ from pathlib import Path
 from roadmap_tracks.supplemental import (
     release_attestation_consistent_and_current as _attestation_consistent_and_current,
 )
+from roadmap_tracks.negative_controls import validate_observation_payload
 from typing import Any
 
 from gnn.parser import parse_gnn_file
@@ -18,6 +19,7 @@ from ontology.bindings import (
     SI_EXPECTED_TERMS,
     SI_SYMBOL_MAP,
     load_section_ontology,
+    resolve_model_ontology_path,
     validate_all_gnn_ontology,
 )
 
@@ -42,17 +44,17 @@ def _load_json(path: Path) -> dict[str, Any]:
     return data
 
 
-def _validation_spine_saved_ok(root: Path) -> bool:
+def _validation_spine_saved_ok(root: Path, *, require_observations: bool = True) -> bool:
     provenance = _load_json(root / "output" / "data" / "artifact_provenance.json")
     replay = _load_json(root / "output" / "reports" / "replay_matrix.json")
     counterexample = _load_json(root / "output" / "reports" / "counterexample_matrix.json")
+
     return (
         provenance.get("all_seeded") is True
         and provenance.get("all_config_digests") is True
         and replay.get("all_replay_rows_matched") is True
         and replay.get("all_replayed") is True
-        and counterexample.get("all_expected_failures_documented") is True
-        and counterexample.get("all_expected_failures_observed") is True
+        and not validate_observation_payload(root, counterexample, require_observations=require_observations)
     )
 
 
@@ -282,8 +284,11 @@ def _gnn_symbols(root: Path, rel_path: str) -> dict[str, str]:
     return dict(parse_gnn_file(path).ontology)
 
 
-def _section_ontology_symbols(root: Path, rel_path: str) -> dict[str, str]:
-    symbols = load_section_ontology(root / rel_path)
+def _section_ontology_symbols(root: Path, model_id: str) -> dict[str, str]:
+    path = resolve_model_ontology_path(root, model_id)
+    if not path.is_file():
+        raise ValueError(f"{model_id}: referenced ontology is missing: {path}")
+    symbols = load_section_ontology(path)
     return {str(key): str(value) for key, value in symbols.items()}
 
 
@@ -311,7 +316,7 @@ def _expected_symbol_gaps(
     return gaps
 
 
-def semantic_gluing_issues(project_root: Path) -> list[str]:
+def semantic_gluing_issues(project_root: Path, *, require_observations: bool = True) -> list[str]:
     """Return semantic cross-track disagreements not covered by structural laws."""
     root = project_root.resolve()
     issues: list[str] = []
@@ -322,30 +327,19 @@ def semantic_gluing_issues(project_root: Path) -> list[str]:
         issues.append(f"coverage matrix has {missing} missing bound fragment(s)")
 
     issues.extend(validate_all_gnn_ontology(root))
-    issues.extend(
-        _expected_symbol_gaps(
-            label="bernoulli_toy",
-            gnn_symbols=_gnn_symbols(root, "gnn/bernoulli_toy.gnn.md"),
-            section_symbols=_section_ontology_symbols(
-                root,
-                "manuscript/sections/imrad/methods_analytical/ontology.yaml",
-            ),
-            symbol_map=BERNOULLI_SYMBOL_MAP,
-            expected_terms=BERNOULLI_EXPECTED_TERMS,
-        )
-    )
-    issues.extend(
-        _expected_symbol_gaps(
-            label="si_tmaze",
-            gnn_symbols=_gnn_symbols(root, "gnn/si_tmaze.gnn.md"),
-            section_symbols=_section_ontology_symbols(
-                root,
-                "manuscript/sections/imrad/methods_pymdp/ontology.yaml",
-            ),
-            symbol_map=SI_SYMBOL_MAP,
-            expected_terms=SI_EXPECTED_TERMS,
-        )
-    )
+    for model_id, symbol_map, expected_terms in (
+        ("bernoulli_toy", BERNOULLI_SYMBOL_MAP, BERNOULLI_EXPECTED_TERMS),
+        ("si_tmaze", SI_SYMBOL_MAP, SI_EXPECTED_TERMS),
+    ):
+        try:
+            section_symbols = _section_ontology_symbols(root, model_id)
+        except (OSError, ValueError) as exc:
+            issues.append(f"{model_id}: invalid live ontology binding: {exc}")
+            continue
+        issues.extend(_expected_symbol_gaps(
+            label=model_id, gnn_symbols=_gnn_symbols(root, f"gnn/{model_id}.gnn.md"),
+            section_symbols=section_symbols, symbol_map=symbol_map, expected_terms=expected_terms,
+        ))
 
     variables_path = root / "output" / "data" / "manuscript_variables.json"
     if variables_path.is_file():
@@ -416,7 +410,7 @@ def semantic_gluing_issues(project_root: Path) -> list[str]:
 
     issues.extend(validate_configured_artifact_producers(root))
 
-    if not _validation_spine_saved_ok(root):
+    if not _validation_spine_saved_ok(root, require_observations=require_observations):
         issues.append("saved validation-spine artifacts are incomplete")
 
     from roadmap_tracks import (
@@ -449,7 +443,9 @@ def semantic_gluing_issues(project_root: Path) -> list[str]:
         payload = _load_json(path)
         if payload.get(field) is not True:
             issues.append(f"{label} integration check failed: {field}")
-    issues.extend(validate_sheaf_track_artifacts(root, validate_saved_certificate=False))
+    issues.extend(validate_sheaf_track_artifacts(
+        root, validate_saved_certificate=False, require_observations=require_observations
+    ))
 
     return issues
 
@@ -545,6 +541,22 @@ def validate_configured_artifact_producers(
             qualifier = " exists without" if (root / rel).exists() else " lacks"
             issues.append(f"required artifact {rel}{qualifier} configured producer {producer}")
     return issues
+
+
+def validate_canonical_claim_bindings(project_root: Path) -> list[str]:
+    """Require a real typed claim declaration for each canonical artifact."""
+    from roadmap_tracks.sheaf_track_contracts import CANONICAL_ARTIFACTS
+
+    claims = _claim_records(project_root.resolve())
+    return [
+        f"canonical artifact {relative} has no typed claim binding"
+        for relative in CANONICAL_ARTIFACTS.values()
+        if not any(
+            claim.get("path") == relative and claim.get("id") and claim.get("tracks")
+            and isinstance(claim.get("evidence"), dict) and claim["evidence"]
+            for claim in claims
+        )
+    ]
 
 
 def build_semantic_gluing_certificate(project_root: Path) -> dict[str, Any]:
@@ -721,7 +733,7 @@ def build_semantic_gluing_certificate(project_root: Path) -> dict[str, Any]:
             "lean_proved_count": lean["proved_count"],
             "gnn_ontology_ok": not validate_all_gnn_ontology(root),
             "configured_artifact_producers_ok": not dependency_graph["issues"],
-            "validation_spine_ok": _validation_spine_saved_ok(root),
+            "validation_spine_ok": _validation_spine_saved_ok(root, require_observations=False),
             "sensitivity_complete_grid": sensitivity.get("complete_grid") is True,
             "analytical_assumptions_indexed": assumptions.get("all_equations_indexed") is True,
             "analytical_assumption_count": int(assumptions.get("row_count", 0) or 0),
@@ -735,6 +747,11 @@ def build_semantic_gluing_certificate(project_root: Path) -> dict[str, Any]:
             "interop_all_lossless": interop.get("all_lossless") is True,
             "interop_check_count": int(interop.get("check_count", 0) or 0),
             "adversarial_expected_failures_documented": adversarial.get("all_expected_failures_documented") is True,
+            "adversarial_expected_failures_observed": not validate_observation_payload(
+                root, adversarial, adversarial=True
+            ),
+            "adversarial_observed_count": int(adversarial.get("observed_count", 0) or 0),
+            "adversarial_unobserved_count": int(adversarial.get("unobserved_count", 0) or 0),
             "adversarial_known_bad_passed": int(adversarial.get("known_bad_rows_passed", 0) or 0),
             "dependency_edge_types_ok": dependency_graph.get("all_required_edge_types_present") is True,
             "dependency_edge_type_count": len(dependency_graph.get("edge_types") or []),
@@ -788,6 +805,25 @@ def build_semantic_gluing_certificate(project_root: Path) -> dict[str, Any]:
     }
 
 
+def _write_semantic_certificate(root: Path, path: Path) -> None:
+    payload = _with_proof_obligations(root, build_semantic_gluing_certificate(root))
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _write_attested_semantic_certificate(root: Path, path: Path) -> None:
+    from roadmap_tracks.supplemental import SUPPLEMENTAL_ARTIFACTS, write_release_attestation
+
+    _write_semantic_certificate(root, path)
+    attestation = _load_json(root / SUPPLEMENTAL_ARTIFACTS["release_attestation"])
+    if not _attestation_consistent_and_current(root, attestation):
+        # The certificate may change the semantic row of the saved attestation.
+        # Rebuild both sides so the certificate sees a current attestation and
+        # the attestation binds the final certificate's restrictions.
+        write_release_attestation(root)
+        _write_semantic_certificate(root, path)
+        write_release_attestation(root)
+
+
 def write_semantic_gluing_certificate(
     project_root: Path,
     *,
@@ -803,8 +839,9 @@ def write_semantic_gluing_certificate(
 
         write_sheaf_status_outputs(root)
         write_supplemental_artifacts(root)
-    payload = _with_proof_obligations(root, build_semantic_gluing_certificate(root))
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        _write_attested_semantic_certificate(root, path)
+    else:
+        _write_semantic_certificate(root, path)
     return path
 
 
@@ -849,10 +886,7 @@ def write_semantic_gluing_outputs(project_root: Path, *, refresh_hydration: bool
         json.dumps(build_validation_dependency_graph(root), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    certificate_path.write_text(
-        json.dumps(_with_proof_obligations(root, build_semantic_gluing_certificate(root)), indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    _write_attested_semantic_certificate(root, certificate_path)
     return {
         "certificate": certificate_path,
         "crosswalk": crosswalk_path,
@@ -884,23 +918,33 @@ def _stable_certificate_fields(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def validate_semantic_gluing(project_root: Path) -> list[str]:
+def validate_semantic_snapshot(saved: dict[str, Any], live: dict[str, Any]) -> list[str]:
+    """Authenticate stable saved/live semantic fields without asserting greenness."""
+    if _stable_certificate_fields(saved) != _stable_certificate_fields(live):
+        return ["saved sheaf_gluing_certificate.json is stale relative to live semantic fields"]
+    return []
+
+
+def validate_semantic_gluing(project_root: Path, *, require_observations: bool = True) -> list[str]:
     """Validate the live semantic certificate and its generated artifact."""
     root = project_root.resolve()
     path = root / "output" / "data" / "sheaf_gluing_certificate.json"
     if not path.is_file():
-        return semantic_gluing_issues(root) + ["missing output/data/sheaf_gluing_certificate.json"]
+        return semantic_gluing_issues(root, require_observations=require_observations) + [
+            "missing output/data/sheaf_gluing_certificate.json"
+        ]
     saved = _load_json(path)
     saved_issues: list[str] = []
     if saved.get("schema") != SEMANTIC_SCHEMA:
         saved_issues.append(f"saved sheaf_gluing_certificate.json schema is not {SEMANTIC_SCHEMA}")
-    if saved.get("ok") is not True:
+    if require_observations and saved.get("ok") is not True:
         saved_issues.append("saved sheaf_gluing_certificate.json is not ok")
     if saved.get("restrictions", {}).get("coverage_missing") != 0:
         saved_issues.append("saved sheaf_gluing_certificate.json records missing coverage")
-    issues = semantic_gluing_issues(root)
+    issues = semantic_gluing_issues(root, require_observations=require_observations)
     issues.extend(saved_issues)
     live = build_semantic_gluing_certificate(root)
-    if _stable_certificate_fields(saved) != _stable_certificate_fields(live):
-        issues.append("saved sheaf_gluing_certificate.json is stale relative to live semantic fields")
+    if not require_observations and saved.get("ok") is not live.get("ok"):
+        issues.append("saved sheaf_gluing_certificate.json greenness disagrees with live evidence")
+    issues.extend(validate_semantic_snapshot(saved, live))
     return issues

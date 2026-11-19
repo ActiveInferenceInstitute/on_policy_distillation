@@ -147,21 +147,20 @@ def build_stale_artifact_report(project_root: Path) -> dict[str, Any]:
 def build_cross_track_symbol_table(project_root: Path) -> dict[str, Any]:
     root = project_root.resolve()
     from gnn.parser import parse_gnn_file
-    from ontology.bindings import load_section_ontology
+    from ontology.bindings import load_section_ontology, resolve_model_ontology_path
 
     rows = []
     domain_rows: list[dict[str, Any]] = []
-    section_ontology_paths = {
-        "bernoulli_toy": root / "manuscript" / "sections" / "imrad" / "methods_analytical" / "ontology.yaml",
-        "si_tmaze": root / "manuscript" / "sections" / "imrad" / "methods_pymdp" / "ontology.yaml",
-        "graph_world": root / "manuscript" / "sections" / "imrad" / "results_invariants" / "ontology.yaml",
-    }
     for path in sorted((root / "gnn").glob("*.gnn.md")):
         model_id = path.stem.replace(".gnn", "")
         model = parse_gnn_file(path)
-        section_ontology = (
-            load_section_ontology(section_ontology_paths[model_id]) if model_id in section_ontology_paths else {}
-        )
+        binding_issue = ""
+        try:
+            section_path = resolve_model_ontology_path(root, model_id)
+        except (ValueError, OSError, yaml.YAMLError) as exc:
+            section_path = None
+            binding_issue = str(exc)
+        section_ontology = load_section_ontology(section_path) if section_path is not None else {}
         for variable, var in sorted(model.variables.items()):
             gnn_term = model.ontology.get(variable)
             section_term = section_ontology.get(variable)
@@ -176,6 +175,8 @@ def build_cross_track_symbol_table(project_root: Path) -> dict[str, Any]:
                     "dtype": var.dtype,
                     "gnn_term": gnn_term,
                     "section_ontology_term": section_term,
+                    "section_ontology_path": section_path.relative_to(root).as_posix() if section_path else "",
+                    "section_ontology_issue": binding_issue,
                     "json_field": variable,
                     "lean_namespace": "OnPolicyDistillation",
                     "domains": ["gnn_variable", "ontology_term", "json_field"],
@@ -200,7 +201,11 @@ def build_cross_track_symbol_table(project_root: Path) -> dict[str, Any]:
                     {
                         "domain": "ontology_term",
                         "symbol": symbol_id,
-                        "source": section_ontology_paths.get(model_id, path).relative_to(root).as_posix(),
+                        "source": (
+                            section_path.relative_to(root).as_posix()
+                            if section_path is not None
+                            else "manuscript/sheaf/manifest.yaml"
+                        ),
                         "consumer": section_term or "",
                         "consistent": term_consistent,
                     },
@@ -455,74 +460,90 @@ def _expected_token_value(token: str, spec: str | None, variables: dict[str, Any
 
 
 def build_manuscript_staleness_report(project_root: Path) -> dict[str, Any]:
-    """Compare hydrated manuscript tokens against the current generated variables."""
+    """Compare every token occurrence with its canonical hydrated position."""
     root = project_root.resolve()
-    from manuscript.hydrate import EXCLUDED_DOC_FILENAMES
+    from manuscript.hydrate import EXCLUDED_DOC_FILENAMES, format_variables, substitute_snake_case_tokens
     from manuscript.variables import generate_variables
 
+    sources = [
+        (path, path.read_text(encoding="utf-8"))
+        for path in sorted((root / "manuscript").glob("*.md"))
+        if path.name not in EXCLUDED_DOC_FILENAMES
+    ]
+    occurrences = [(path, text, list(TOKEN_MATCH_RE.finditer(text))) for path, text in sources]
+    row_count = sum(len(matches) for _path, _text, matches in occurrences)
     variables = generate_variables(root, require_analysis_outputs=False)
+    variables["manuscript_staleness_row_count"] = row_count
+    # WHY: the freshness token describes the previous report until rehydration.
+    # Comparing it with that real value lets an honestly red bootstrap converge;
+    # forcing "true" here creates a false -> false self-reference deadlock.
+    formatted = format_variables(variables)
     rows: list[dict[str, Any]] = []
-    output_dir = root / "output" / "manuscript"
-    for path in sorted((root / "manuscript").glob("*.md")):
-        if path.name in EXCLUDED_DOC_FILENAMES:
-            continue
-        resolved_path = output_dir / path.name
-        try:
-            source_text = path.read_text(encoding="utf-8")
-        except FileNotFoundError:
+    sections: list[dict[str, Any]] = []
+    for path, source_text, matches in occurrences:
+        resolved_path = root / "output" / "manuscript" / path.name
+        exists = resolved_path.is_file()
+        resolved_bytes = resolved_path.read_bytes() if exists else b""
+        resolved_text = resolved_bytes.decode("utf-8")
+        section = path.relative_to(root).as_posix()
+        resolved_rel = resolved_path.relative_to(root).as_posix()
+        chunks: list[str] = []
+        cursor = 0
+        resolved_offset = 0
+        for occurrence, match in enumerate(matches, start=1):
+            literal = source_text[cursor : match.start()]
+            chunks.append(literal)
+            resolved_offset += len(literal)
+            expected, unresolved = substitute_snake_case_tokens(match.group(0), formatted)
+            resolved_end = resolved_offset + len(expected)
+            actual = resolved_text[resolved_offset:resolved_end]
             rows.append(
                 {
-                    "section": path.relative_to(root).as_posix(),
-                    "token": "<missing_source>",
-                    "expected": "source file exists",
-                    "resolved_path": resolved_path.relative_to(root).as_posix(),
-                    "fresh": False,
-                }
-            )
-            continue
-        resolved_text = resolved_path.read_text(encoding="utf-8") if resolved_path.is_file() else ""
-        seen: set[tuple[str, str | None]] = set()
-        for match in TOKEN_MATCH_RE.finditer(source_text):
-            token = match.group(1)
-            spec = match.group(2)
-            key = (token, spec)
-            if key in seen:
-                continue
-            seen.add(key)
-            expected = _expected_token_value(token, spec, variables)
-            if token == "manuscript_staleness_all_fresh":
-                expected = "true"
-            unresolved = match.group(0) in resolved_text
-            fresh = resolved_path.is_file() and not unresolved and expected in resolved_text
-            rows.append(
-                {
-                    "section": path.relative_to(root).as_posix(),
-                    "token": token,
+                    "section": section,
+                    "token": match.group(1),
+                    "format_spec": match.group(2),
+                    "occurrence": occurrence,
+                    "occurrence_id": f"{section}:{match.start()}",
+                    "source_start": match.start(),
+                    "source_end": match.end(),
+                    "source_line": source_text.count("\n", 0, match.start()) + 1,
+                    "source_column": match.start() - source_text.rfind("\n", 0, match.start()),
                     "expected": expected,
-                    "resolved_path": resolved_path.relative_to(root).as_posix(),
-                    "fresh": fresh,
+                    "actual": actual,
+                    "mapped": not unresolved,
+                    "resolved_path": resolved_rel,
+                    "resolved_start": resolved_offset,
+                    "resolved_end": resolved_end,
+                    "fresh": exists and not unresolved and actual == expected,
                 }
             )
-    for row in rows:
-        if row["token"] == "manuscript_staleness_row_count":
-            row["expected"] = str(len(rows))
-            resolved_path = root / str(row["resolved_path"])
-            resolved_text = resolved_path.read_text(encoding="utf-8") if resolved_path.is_file() else ""
-            row["fresh"] = resolved_path.is_file() and row["expected"] in resolved_text
-    rows = sorted(
-        rows,
-        key=lambda row: (
-            str(row.get("section") or ""),
-            str(row.get("token") or ""),
-            str(row.get("resolved_path") or ""),
-            str(row.get("expected") or ""),
-        ),
-    )
+            chunks.append(expected)
+            resolved_offset = resolved_end
+            cursor = match.end()
+        chunks.append(source_text[cursor:])
+        canonical_text = "".join(chunks)
+        sections.append(
+            {
+                "section": section,
+                "resolved_path": resolved_rel,
+                "token_occurrence_count": len(matches),
+                "source_sha256": _sha256(path),
+                "expected_sha256": hashlib.sha256(canonical_text.encode("utf-8")).hexdigest(),
+                "resolved_sha256": hashlib.sha256(resolved_bytes).hexdigest() if exists else "",
+                "canonical_hydration_matches": exists and resolved_text == canonical_text,
+            }
+        )
     return {
         "schema": "template_active_inference.manuscript_staleness_report.v1",
         "rows": rows,
-        "row_count": len(rows),
-        "all_fresh": bool(rows) and all(row["fresh"] for row in rows),
+        "row_count": row_count,
+        "sections": sections,
+        "section_count": len(sections),
+        "all_fresh": (
+            bool(rows)
+            and all(row["fresh"] for row in rows)
+            and all(section["canonical_hydration_matches"] for section in sections)
+        ),
     }
 
 

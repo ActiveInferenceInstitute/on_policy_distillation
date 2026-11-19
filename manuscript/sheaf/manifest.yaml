@@ -203,6 +203,7 @@ sections:
     benchmark: manuscript/sections/imrad/appendix_full_sheaf/benchmark.md
     state_space_catalog: manuscript/sections/imrad/appendix_full_sheaf/state_space_catalog.md
     causal_ablation: manuscript/sections/imrad/appendix_full_sheaf/causal_ablation.md
+    ontology: manuscript/sections/imrad/appendix_full_sheaf/ontology.yaml
     visualization: manuscript/sections/imrad/appendix_full_sheaf/visualization.md
 - id: methods_sheaf
   order: 16
@@ -266,7 +267,6 @@ sections:
     theorem_traceability: manuscript/sections/imrad/appendix_full_sheaf/theorem_traceability.md
     proof_extraction: manuscript/sections/imrad/appendix_full_sheaf/proof_extraction.md
     gnn: manuscript/sections/imrad/appendix_full_sheaf/gnn.md
-    ontology: manuscript/sections/imrad/appendix_full_sheaf/ontology.yaml
     animation: manuscript/sections/imrad/appendix_full_sheaf/animation.md
     animation_delta: manuscript/sections/imrad/appendix_full_sheaf/animation_delta.md
     manuscript_staleness: manuscript/sections/imrad/appendix_full_sheaf/manuscript_staleness.md

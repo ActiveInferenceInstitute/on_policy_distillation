@@ -108,7 +108,7 @@ def test_canonical_sheaf_artifacts_are_present_and_valid(project_root: Path) -> 
     assert _relative_posix(paths["release_attestation"], project_root) == "output/reports/release_attestation.json"
     assert _relative_posix(paths["section_status"], project_root) == "output/data/sheaf_section_status_matrix.json"
     assert _relative_posix(paths["render_log"], project_root) == "output/reports/sheaf_render_log.json"
-    assert validate_sheaf_track_artifacts(project_root) == []
+    assert validate_sheaf_track_artifacts(project_root, require_observations=False) == []
 
     semantic = _load(project_root / "output" / "data" / "sheaf_gluing_certificate.json")
     evidence = _load(project_root / "output" / "data" / "evidence_field_index.json")
@@ -129,7 +129,16 @@ def test_canonical_sheaf_artifacts_are_present_and_valid(project_root: Path) -> 
     section_status = _load(project_root / "output" / "data" / "sheaf_section_status_matrix.json")
     render_log = _load(project_root / "output" / "reports" / "sheaf_render_log.json")
 
-    assert semantic["ok"] is True
+    from manuscript.sheaf.semantic import validate_semantic_gluing
+    from roadmap_tracks.negative_controls import counterexample_payload
+    from roadmap_tracks.supplemental import build_release_attestation
+
+    controls = counterexample_payload(project_root)
+    assert validate_semantic_gluing(project_root, require_observations=False) == []
+    if controls["observed_count"] == 0:
+        assert semantic["ok"] is False
+        assert any("requires successful current per-case observations" in issue
+                   for issue in validate_sheaf_track_artifacts(project_root))
     assert semantic["restrictions"]["no_versioned_live_tracks"] is True
     assert evidence["all_fields_mapped"] is True
     assert release["all_required_sources_present"] is True
@@ -144,7 +153,9 @@ def test_canonical_sheaf_artifacts_are_present_and_valid(project_root: Path) -> 
     assert catalog["all_finite"] is True
     assert ablation["complete_grid"] is True
     assert license_audit["all_license_safe"] is True
-    assert release_notes["all_notes_source_backed"] is True
+    assert release_notes["all_notes_source_backed"] is all(
+        row["source"] and row["passed"] for row in release_notes["rows"]
+    )
     assert scholarship["all_sources_connected"] is True
     assert proof_dependency["all_theorems_have_dependencies"] is True
     assert proof_dependency["all_edge_keys_unique"] is True
@@ -164,9 +175,10 @@ def test_canonical_sheaf_artifacts_are_present_and_valid(project_root: Path) -> 
     assert ablation_sensitivity["all_ablation_rows_joined"] is True
     assert ablation_sensitivity["source_row_count_agreement"] is True
     assert ablation_sensitivity["row_count"] == ablation_sensitivity["ablation_source_row_count"]
-    assert release_attestation["all_attested"] is True
+    assert release_attestation == build_release_attestation(project_root)
     assert release_attestation["attested_source_count"] == release_attestation["row_count"]
-    assert release_attestation["attested_validation_check_count"] > 0
+    validation_row = next(row for row in release_attestation["rows"] if row["id"] == "validation_report")
+    assert release_attestation["attested_validation_check_count"] == len(validation_row["attested_validation_check_ids"])
     assert section_status["all_bound_fragments_present"] is True
     assert section_status["all_sections_have_status"] is True
     assert section_status["cell_count"] == section_status["section_count"] * section_status["track_count"]
@@ -177,12 +189,14 @@ def test_canonical_sheaf_artifacts_are_present_and_valid(project_root: Path) -> 
 def test_canonical_sheaf_negative_controls(project_root: Path) -> None:
     from roadmap_tracks import load_sheaf_track_payloads, validate_sheaf_track_payloads
 
+    ensure_gate_artifacts(project_root)
     baseline = load_sheaf_track_payloads(project_root)
+    assert validate_sheaf_track_payloads(project_root, baseline, require_observations=False) == []
 
     def _issues_after(key: str, mutate) -> list[str]:
         payloads = deepcopy(baseline)
         mutate(payloads[key])
-        return validate_sheaf_track_payloads(project_root, payloads)
+        return validate_sheaf_track_payloads(project_root, payloads, require_observations=False)
 
     def _assert_issue(key: str, mutate, needle: str) -> None:
         assert any(needle in issue for issue in _issues_after(key, mutate))
@@ -211,7 +225,7 @@ def test_canonical_sheaf_negative_controls(project_root: Path) -> None:
         data["rows"][0]["fixture_replay_status"] = "passed"
         data["all_expected_failures_observed"] = False
 
-    _assert_issue("counterexample", _break_counterexample, "fixtures passing")
+    _assert_issue("counterexample", _break_counterexample, "inconsistent with the registered cases")
 
     def _break_model(data: dict) -> None:
         data["rows"][0]["counterexamples"] = ["finite miss"]
@@ -231,7 +245,7 @@ def test_canonical_sheaf_negative_controls(project_root: Path) -> None:
         data["rows"][0]["known_bad_passed"] = True
         data["known_bad_rows_passed"] = 1
 
-    _assert_issue("adversarial_audit", _break_adversarial, "known-bad rows passing")
+    _assert_issue("adversarial_audit", _break_adversarial, "inconsistent with the registered cases")
 
     def _break_dependency(data: dict) -> None:
         data["edge_types"] = ["producer_to_track"]
@@ -317,10 +331,10 @@ def test_canonical_sheaf_negative_controls(project_root: Path) -> None:
     _assert_issue("artifact_license", _break_license, "unsafe artifacts")
 
     def _break_release_notes(data: dict) -> None:
-        data["rows"][0]["passed"] = False
-        data["all_notes_source_backed"] = False
+        assert data["all_notes_source_backed"] is False
+        data["all_notes_source_backed"] = True
 
-    _assert_issue("release_notes", _break_release_notes, "unsupported notes")
+    assert _issues_after("release_notes", _break_release_notes)
 
     def _break_proof_dependency(data: dict) -> None:
         data["rows"][0]["linked"] = False
@@ -471,3 +485,239 @@ def test_canonical_track_contract_negative_controls(project_root: Path) -> None:
     finally:
         for path, text in originals.items():
             path.write_text(text, encoding="utf-8")
+
+
+def test_canonical_sensitivity_rejects_incomplete_warm_inputs(tmp_path: Path) -> None:
+    from roadmap_tracks.sheaf_tracks import build_sensitivity_sweep
+    from roadmap_tracks.toy_sweep import build_sensitivity_sweep as build_authoritative
+
+    authoritative = build_authoritative(tmp_path)
+    path = tmp_path / "output/data/sensitivity_sweep.json"
+    path.parent.mkdir(parents=True)
+    path.write_text(json.dumps(authoritative), encoding="utf-8")
+    canonical = build_sensitivity_sweep(tmp_path)
+    expected = {
+        (row["lambda"], row["horizon"], row["seed"], row["topology"]): row for row in authoritative["rows"]
+    }
+    assert set(canonical["grid"]["topologies"]) == set(authoritative["grid"]["topologies"])
+    assert len(canonical["grid"]["topologies"]) == 4
+    for row in canonical["rows"]:
+        source = expected[(row["lambda"], row["horizon"], row["seed"], row["topology"])]
+        assert all(row[field] == source[field] for field in ("mi", "goal_reached", "belief_entropy_terminal"))
+    for mutation in ("missing_topology", "missing_cell", "missing_value", "empty"):
+        changed = deepcopy(authoritative)
+        if mutation == "missing_topology":
+            topology = changed["grid"]["topologies"][-1]
+            changed["rows"] = [row for row in changed["rows"] if row["topology"] != topology]
+        elif mutation == "missing_cell":
+            changed["rows"].pop()
+        elif mutation == "missing_value":
+            del changed["rows"][0]["mi"]
+        else:
+            changed = {}
+        path.write_text(json.dumps(changed), encoding="utf-8")
+        with pytest.raises(ValueError, match="sensitivity source"):
+            build_sensitivity_sweep(tmp_path)
+
+
+@pytest.mark.parametrize("key", [
+    "proof_dependency_graph", "state_transition_table", "ablation_sensitivity_report", "release_attestation",
+])
+def test_supplemental_consumers_share_source_authentication(
+    tmp_path: Path, key: str,
+) -> None:
+    from gates.output_checks import validate_outputs_selected_strict
+    from roadmap_tracks import load_sheaf_track_payloads, validate_sheaf_track_payloads
+    from roadmap_tracks.supplemental import SUPPLEMENTAL_ARTIFACTS, validate_supplemental_payloads
+    from test_supplemental_source_binding import supplemental_root
+
+    root = supplemental_root.__wrapped__(tmp_path)
+    payloads = {name: _load(root / relative) for name, relative in SUPPLEMENTAL_ARTIFACTS.items()}
+    check = f"{key}_schema"
+    assert validate_supplemental_payloads(root, payloads)[key] == []
+    assert validate_outputs_selected_strict(root, {check}, payloads=payloads) == {check: True}
+    changed = deepcopy(payloads)
+    if key == "proof_dependency_graph":
+        kind = changed[key]["required_edge_types"][0]
+        changed[key]["edges"] = [edge for edge in changed[key]["edges"] if edge["kind"] != kind]
+        changed[key]["required_edge_types"].remove(kind)
+    elif key == "state_transition_table":
+        model = changed[key]["required_models"][0]
+        changed[key]["rows"] = [row for row in changed[key]["rows"] if row["model"] != model]
+        changed[key]["required_models"].remove(model)
+        changed[key]["covered_models"].remove(model)
+    elif key == "ablation_sensitivity_report":
+        changed[key]["rows"][0]["source_join_key"] = "unrelated::42"
+    else:
+        row = next(row for row in changed[key]["rows"] if row["id"] == "validation_report")
+        row["attested_validation_check_ids"][0] = "outputs.forged_same_count"
+    direct = validate_supplemental_payloads(root, changed)[key]
+    assert direct
+    assert validate_outputs_selected_strict(root, {check}, payloads=changed) == {check: False}
+    all_payloads = load_sheaf_track_payloads(root)
+    all_payloads.update(changed)
+    issues = validate_sheaf_track_payloads(root, all_payloads, validate_saved_certificate=False,
+                                         require_observations=False)
+    filename = Path(SUPPLEMENTAL_ARTIFACTS[key]).name
+    assert [issue for issue in issues if filename in issue] == direct
+    (root / SUPPLEMENTAL_ARTIFACTS[key]).write_text(json.dumps(changed[key]), encoding="utf-8")
+    assert validate_supplemental_payloads(root)[key] == direct
+    assert validate_outputs_selected_strict(root, {check}) == {check: False}
+
+
+@pytest.mark.artifact_slow
+def test_bootstrap_readiness_accepts_only_authentic_unobserved_state(project_root: Path, tmp_path: Path) -> None:
+    import shutil
+    from gate_support import _gate_artifacts_ready
+    from gates.output_checks import validate_outputs
+    from ontology.bindings import resolve_model_ontology_path
+    from orchestration.artifact_pipeline import hydrate_manuscript_fixed_point
+    from roadmap_tracks.negative_controls import counterexample_payload
+    from roadmap_tracks.integration_audit import validate_integration_audit_artifacts
+    from test_negative_control_receipts import _copy_authored
+
+    ensure_gate_artifacts(project_root)
+    root = _copy_authored(project_root, tmp_path / "source")
+    shutil.copytree(project_root / "output", root / "output",
+                    ignore=shutil.ignore_patterns("negative_control_receipts", ".artifact.lock"))
+    hydrate_manuscript_fixed_point(root, require_analysis_outputs=False)
+    assert counterexample_payload(root)["observed_count"] == 0
+    assert _gate_artifacts_ready(root, include_manuscript=True) is True
+    strict = validate_outputs(root, only={"counterexample_matrix_schema", "adversarial_audit_schema"})
+    assert strict == {"counterexample_matrix_schema": False, "adversarial_audit_schema": False}
+    assert validate_integration_audit_artifacts(root, require_release_evidence=False) == []
+    assert validate_integration_audit_artifacts(root)
+    from gates.output_checks import validate_outputs_selected_strict
+
+    integration_key = "integration_audit_track_schemas"
+    assert validate_outputs_selected_strict(root, {integration_key}, require_observations=False) == {integration_key: True}
+    assert validate_outputs_selected_strict(root, {integration_key}) == {integration_key: False}
+
+    promotion_key = "track_improvement_scope_schema"
+    assert validate_outputs_selected_strict(root, {promotion_key}, require_observations=False) == {promotion_key: True}
+    assert validate_outputs_selected_strict(root, {promotion_key}) == {promotion_key: False}
+    promotion_path = root / "output/data/track_improvement_scope.json"
+    promotion_bytes = promotion_path.read_bytes()
+    promotion = json.loads(promotion_bytes)
+    row = next(row for row in promotion["promotion_matrix"] if row["negative_control_observed"] is False)
+    row["negative_control_observed"] = True
+    promotion_path.write_text(json.dumps(promotion), encoding="utf-8")
+    try:
+        assert validate_outputs_selected_strict(root, {promotion_key}, require_observations=False) == {promotion_key: False}
+    finally:
+        promotion_path.write_bytes(promotion_bytes)
+    audit_path = root / "output/reports/adversarial_audit.json"
+    audit_bytes = audit_path.read_bytes()
+    altered = json.loads(audit_bytes)
+    assert altered["all_expected_failures_documented"] is True and altered["observed_count"] == 0
+    altered["rows"][0]["known_bad_passed"] = True
+    audit_path.write_text(json.dumps(altered), encoding="utf-8")
+    try:
+        assert any("adversarial_audit.json is inconsistent" in issue
+                   for issue in validate_integration_audit_artifacts(root, require_release_evidence=False))
+    finally:
+        audit_path.write_bytes(audit_bytes)
+    abstract = root / "manuscript/00_abstract.md"
+    abstract_bytes = abstract.read_bytes()
+    abstract.write_text("This finite toy is illustrative; we measured production LLMs.\n", encoding="utf-8")
+    try:
+        assert any("scope_boundary_audit.json" in issue
+                   for issue in validate_integration_audit_artifacts(root, require_release_evidence=False))
+    finally:
+        abstract.write_bytes(abstract_bytes)
+    ontology = resolve_model_ontology_path(root, "si_tmaze")
+    ontology.write_text(ontology.read_text().replace("q_pi: PolicyPosterior", "q_pi: HiddenState"), encoding="utf-8")
+    assert _gate_artifacts_ready(root, include_manuscript=True) is False
+
+
+def _finite_comparison_input(root: Path, project_root: Path) -> dict:
+    """A genuine finite posterior input, independent of canonical run defaults."""
+    import math
+    import shutil
+    from dataclasses import replace
+    from simulation.pymdp_config import apply_pymdp_overrides, config_hash, config_snapshot, load_pymdp_config
+
+    shutil.copy2(project_root / "pymdp.yaml", root / "pymdp.yaml")
+    base = apply_pymdp_overrides(load_pymdp_config(root), horizon=2, steps=1, seed=91)
+    seeds = (7, 11)
+    planners = ("sophisticated_inference", "vanilla")
+    runs = []
+    for seed in seeds:
+        for planner in planners:
+            configured = apply_pymdp_overrides(base, seed=seed)
+            log_path = Path(base.logging.path).parent / f"pymdp_compare_{planner}_2_{seed}.jsonl"
+            configured = replace(configured, logging=replace(configured.logging, path=str(log_path)))
+            values = [0.75, 0.25]
+            steps = [{
+                "step": step, "posterior_available": True, "posterior_source": planner,
+                "q_pi": values, "q_pi_sum": sum(values), "q_pi_normalized": abs(sum(values) - 1.0) <= 1e-9,
+                "q_pi_entropy": -sum(value * math.log(value) for value in values),
+                "action_probabilities": {"0": values[0], "1": values[1]}, "fallback_reason": None,
+            } for step in range(base.timesteps + 1)]
+            runs.append({
+                "planner": planner, "seed": seed, "role": "validation_comparison",
+                "config": config_snapshot(configured), "config_hash": config_hash(configured),
+                "horizon": base.planning_horizon, "steps": base.timesteps,
+                "policy_len": (base.agent.si_policy_len if planner == "sophisticated_inference"
+                               else base.agent.vanilla_policy_len),
+                "goal_reached": [0, 1][-1] == 1,
+                "policy_posterior_steps": steps,
+                "policy_posterior_all_normalized": all(step["q_pi_normalized"] for step in steps),
+            })
+    return {
+        "schema": "template_active_inference.si_policy_comparison.v2",
+        "scope": "comparison_only", "canonical_planner": "sophisticated_inference",
+        "config": config_snapshot(base), "config_hash": config_hash(base), "runs": runs,
+        "summary": {
+            "run_count": len(runs), "planners": sorted(planners), "seeds": list(seeds), "horizons": [2],
+            "expected_run_count": len(seeds) * len(planners), "complete_grid": True,
+            "vanilla_role": "comparison_only", "all_efe_rows_explained": True,
+            "all_available_posteriors_normalized": all(run["policy_posterior_all_normalized"] for run in runs),
+        },
+    }
+
+
+@pytest.mark.parametrize("mutation", ["missing_run", "missing_grid_row", "run_hash", "run_config", "grid_hash", "source_hash"])
+def test_selected_policy_gates_bind_effective_input_not_root_defaults(
+    project_root: Path, tmp_path: Path, mutation: str,
+) -> None:
+    from gates.output_checks import validate_outputs_selected_strict
+    from simulation.si_artifacts import write_policy_posterior_grid
+
+    comparison = _finite_comparison_input(tmp_path, project_root)
+    comparison_path = tmp_path / "output/data/si_policy_comparison.json"
+    comparison_path.parent.mkdir(parents=True)
+    comparison_path.write_text(json.dumps(comparison), encoding="utf-8")
+    grid_path = write_policy_posterior_grid(tmp_path, comparison=comparison)
+    keys = {"si_policy_comparison_schema", "pymdp_policy_posterior_grid_schema"}
+    assert validate_outputs_selected_strict(tmp_path, keys) == {key: True for key in keys}
+    if mutation in {"missing_run", "run_hash", "run_config"}:
+        changed = deepcopy(comparison)
+        if mutation == "missing_run":
+            changed["runs"].pop()
+        elif mutation == "run_hash":
+            changed["runs"][0]["config_hash"] = "0" * 16
+        else:
+            import hashlib
+
+            run = changed["runs"][0]
+            run["config"]["environment"]["cue_validity"] = 0.625
+            run["config_hash"] = hashlib.sha256(
+                json.dumps(run["config"], sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()[:16]
+        comparison_path.write_text(json.dumps(changed), encoding="utf-8")
+        checks = validate_outputs_selected_strict(tmp_path, keys)
+        assert checks == {key: False for key in keys}
+    else:
+        grid = _load(grid_path)
+        if mutation == "missing_grid_row":
+            grid["rows"].pop()
+            grid["row_count"] = len(grid["rows"])
+        elif mutation == "grid_hash":
+            grid["config_hash"] = "0" * 16
+        else:
+            grid["source_payload_sha256"] = "0" * 64
+        grid_path.write_text(json.dumps(grid), encoding="utf-8")
+        assert validate_outputs_selected_strict(tmp_path, keys) == {
+            "si_policy_comparison_schema": True, "pymdp_policy_posterior_grid_schema": False,
+        }

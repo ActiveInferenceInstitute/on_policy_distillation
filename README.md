@@ -58,10 +58,11 @@ uv run --extra dev python scripts/gate.py          # fast arm (default): no slow
 uv run --extra dev python scripts/gate.py lint     # ruff + byte-compile of src, scripts, tests
 uv run --extra dev python scripts/gate.py docs     # relative links + documentation contracts
 uv run --extra dev python scripts/gate.py gnn      # pinned GNN conformance
+uv run --extra dev python scripts/gate.py negative-controls # record per-case observations
 uv run --extra dev python scripts/gate.py chain    # regenerate + validate the artifact tree
 uv run --extra dev python scripts/gate.py full     # release coverage gate (after the chain)
 uv run --extra dev python scripts/gate.py render   # canonical PDF (after the chain)
-uv run --extra dev python scripts/gate.py all      # the CI sequence: lint, docs, gnn, chain, full
+uv run --extra dev python scripts/gate.py all      # the CI sequence: lint, docs, gnn, negative-controls, chain, full
 ```
 
 `fast` is the tight daily edit loop: it skips `artifact_slow` (full artifact

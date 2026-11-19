@@ -15,11 +15,12 @@ Arms
 ``gnn``     upstream conformance: provision/select the checkout pinned by
             `gnn/upstream.json`, run the estate reader (`gnn.importers`) from
             that revision, then run the conformance and parser tests.
+``negative-controls``  record current per-case pytest observations.
 ``chain``   the convergent artifact chain (`scripts/run_full_chain.py`), which a
             clean checkout must run before `full` and `render`.
 ``render``  the canonical manuscript PDF (`scripts/render_pdf.py`); needs the
             `chain` arm's artifacts, pandoc, and xelatex.
-``all``     the CI sequence: lint, docs, gnn, chain, full.
+``all``     the CI sequence: lint, docs, gnn, negative-controls, chain, full.
 
 There is no `types` arm: the project configures no static type checker.
 
@@ -60,9 +61,9 @@ GNN_PYTHON = "3.12"
 
 #: Arms the CI sequence runs, in order. `render` stays a separate arm: CI does
 #: not build the PDF, and neither does `all`.
-CI_ARM_ORDER = ("lint", "docs", "gnn", "chain", "full")
+CI_ARM_ORDER = ("lint", "docs", "gnn", "negative-controls", "chain", "full")
 #: Every selectable arm name.
-ARM_NAMES = ("lint", "fast", "full", "docs", "gnn", "chain", "render", "all")
+ARM_NAMES = ("lint", "fast", "full", "docs", "gnn", "negative-controls", "chain", "render", "all")
 
 
 def _python() -> str:
@@ -104,6 +105,11 @@ def docs_commands() -> list[list[str]]:
         [_python(), str(PROJECT_ROOT / "scripts" / "check_docs_links.py")],
         [_python(), "-m", "pytest", "tests/test_documentation_contracts.py", "-q", "--no-cov"],
     ]
+
+
+def negative_control_commands() -> list[list[str]]:
+    """Record current observations before the release artifact chain reads them."""
+    return [[_python(), str(PROJECT_ROOT / "scripts" / "record_negative_controls.py")]]
 
 
 def chain_commands() -> list[list[str]]:
@@ -253,33 +259,23 @@ def _report_pin(pin: dict[str, str], checkout: Path) -> None:
             handle.write(f"gnn-version={version}\n")
 
 
-def reader_command(interpreter: str) -> list[str]:
-    """The estate's shared importer reader, run against this checkout."""
+def reader_command(interpreter: str, source: Path | str) -> list[str]:
+    """Run the producer's reader inside full pinned-source admission."""
     return [
-        interpreter,
-        "-m",
-        "gnn.importers",
-        "check",
-        "--repo",
-        ".",
-        "--require-pointer",
-        "--workflow",
-        CONFORMANCE_WORKFLOW,
-        "--job",
-        CONFORMANCE_JOB,
+        interpreter, "-I", "-B", str(PROJECT_ROOT / "scripts/qualified_gnn.py"),
+        "check", "--repo", str(PROJECT_ROOT), "--source", str(source),
+        "--workflow", CONFORMANCE_WORKFLOW, "--job", CONFORMANCE_JOB,
     ]
 
 
 def run_reader(checkout: Path, commit: str) -> int:
     """Run `gnn.importers` from the pinned revision, in the pinned environment.
 
-    The reader and the parser it validates must both be the pinned release's
-    bytes, so `src/gnn` is extracted from `commit` the way the conformance tests
-    extract the parser, and only that tree is placed on `PYTHONPATH`. The
-    interpreter is the checkout's own, so no live working tree is on the path.
+    The reader and parser use complete `src/gnn` extracted from `commit` as in
+    the conformance tests. The isolated worker admits that tree with the frozen
+    producer manifest before imports and verifies its full verdict lifetime.
+    The interpreter remains the selected checkout's own.
     """
-    command = reader_command(str(_upstream().gnn_checkout_python(checkout)))
-    print(f"[gnn] $ {_display(command)}", flush=True)
     with tempfile.TemporaryDirectory(prefix="gnn-reader-") as name:
         extract = Path(name)
         archive = subprocess.run(
@@ -297,8 +293,9 @@ def run_reader(checkout: Path, commit: str) -> int:
                 stream.extractall(extract, filter="data")
             else:  # pragma: no cover - the documented gate runs a modern interpreter
                 stream.extractall(extract)
-        env = {**os.environ, "PYTHONPATH": str(extract / "src")}
-        return subprocess.run(command, cwd=PROJECT_ROOT, env=env, check=False).returncode
+        command = reader_command(str(_upstream().gnn_checkout_python(checkout)), extract)
+        print(f"[gnn] $ {_display(command)}", flush=True)
+        return subprocess.run(command, cwd=PROJECT_ROOT, env=os.environ.copy(), check=False).returncode
 
 
 def run_commands(label: str, commands: list[list[str]], env: dict[str, str] | None = None) -> int:
@@ -332,6 +329,7 @@ def run_arm(arm: str) -> int:
         "lint": lint_commands,
         "fast": fast_commands,
         "docs": docs_commands,
+        "negative-controls": negative_control_commands,
         "chain": chain_commands,
         "render": render_commands,
     }[arm]()
@@ -349,7 +347,7 @@ def _display(command: list[str]) -> str:
 def arm_table() -> list[str]:
     """One documentation row per arm, listing the argv it runs."""
     gnn_steps = [
-        _display(reader_command("python")),
+        _display(reader_command("python", "<pinned-source>")),
         *(_display(cmd) for cmd in gnn_commands()),
     ]
     rows = [
@@ -358,6 +356,7 @@ def arm_table() -> list[str]:
         "full   " + " | ".join(_display(cmd) for cmd in full_commands()),
         "docs   " + " | ".join(_display(cmd) for cmd in docs_commands()),
         "gnn    provision the pin in gnn/upstream.json, then " + " | ".join(gnn_steps),
+        "negative-controls " + " | ".join(_display(cmd) for cmd in negative_control_commands()),
         "chain  " + " | ".join(_display(cmd) for cmd in chain_commands()),
         "render " + " | ".join(_display(cmd) for cmd in render_commands()),
         "all    " + ", ".join(CI_ARM_ORDER),
@@ -372,7 +371,7 @@ def main(argv: list[str] | None = None) -> int:
         nargs="?",
         default="fast",
         choices=ARM_NAMES,
-        help="lint | fast | full | docs | gnn | chain | render | all (default: fast)",
+        help="lint | fast | full | docs | gnn | negative-controls | chain | render | all (default: fast)",
     )
     parser.add_argument("--list", action="store_true", help="print each arm and the argv it runs")
     args = parser.parse_args(argv)

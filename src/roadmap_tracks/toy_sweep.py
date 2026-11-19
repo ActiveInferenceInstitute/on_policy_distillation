@@ -271,11 +271,10 @@ def build_analytical_assumption_index(project_root: Path) -> dict[str, Any]:
 
 def build_sensitivity_sweep(project_root: Path) -> dict[str, Any]:
     """Build the sensitivity_sweep.v1 payload: the full lambda x horizon x seed x topology grid with closed-form MI per cell."""
-    _ = project_root
     lambdas = [0.0, 1.0, 2.0]
     horizons = [2, 3]
     seeds = [0, 1]
-    topologies = ["linear4", "branch4"]
+    topologies = [row["topology"] for row in build_graph_world_topology_sweep(project_root)["rows"]]
     rows: list[dict[str, Any]] = []
     for lam, horizon, seed, topology in product(lambdas, horizons, seeds, topologies):
         rows.append(

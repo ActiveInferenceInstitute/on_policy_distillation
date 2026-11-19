@@ -19,12 +19,13 @@ uv run --extra dev python scripts/gate.py all      # CI sequence (includes the l
 | `full` | Whole-suite coverage gate, unchanged 90% floor. Requires generated artifacts and selects the pinned GNN checkout explicitly. |
 | `docs` | Relative Markdown path checks and documentation-contract tests. |
 | `gnn` | Provision/select the upstream pin, run the shared reader (`gnn.importers`) from that revision, then run the conformance and project-parser tests. |
+| `negative-controls` | Record the registered per-case pytest observation receipts used by release validation. |
 | `chain` | Existing convergent artifact runner, bounded to four convergence passes. |
 | `render` | Existing canonical `scripts/render_pdf.py` command. Requires generated artifacts, `pandoc`, and `xelatex`. |
-| `all` | `lint`, `docs`, `gnn`, `chain`, `full`, sequentially. Rendering remains separate. |
+| `all` | `lint`, `docs`, `gnn`, `negative-controls`, `chain`, `full`, sequentially. Rendering remains separate. |
 
 Run one arm with `uv run --extra dev python scripts/gate.py ARM`. Run `chain`
-before `full` or `render` on a fresh checkout. There is no types arm: the
+after `negative-controls` and before `full` or `render` on a fresh checkout. There is no types arm: the
 repository has no configured static type checker.
 
 Ruff now lives in the project's `dev` extra and `uv.lock`; lint no longer
@@ -76,12 +77,35 @@ python -m gnn.importers check --repo . --require-pointer \
     --workflow .github/workflows/ci.yml --job release-gate
 ```
 
-The arm extracts `src/gnn` from the pinned commit with `git archive`, puts only
-that tree on `PYTHONPATH`, and executes the command with the selected
-checkout's own interpreter — the same pinned bytes and interpreter the
-conformance tests use. The pin's raw revision, repository and tag are read
-literally once before provisioning, because no pinned interpreter exists yet;
-everything the contract makes a finding is the reader's output.
+The arm extracts complete `src/gnn` from the pinned commit with `git archive`
+and executes `scripts/qualified_gnn.py` with the selected checkout's own
+interpreter in isolated, bytecode-disabled mode. That thin boundary calls the
+independently reviewed producer bootstrap's real reader and parser source
+admission, not a second pin reader. The original three-spec digest comparison
+and doubled-space ontology mutant remain unchanged in scope.
+
+`GNN_BOOTSTRAP` and `GNN_SOURCE_MANIFEST` must name independently frozen producer
+resources. Their source-owned SHA-256 identities are respectively
+`f638d4c01fe7de31e43d793e59bf382d0c3d1a82f365c59238334a2b40adfb37`
+and `43b33c0b2b40386afa3f306fec4cc13bc1fd7c3b570fbf11d5008bad5c8e6b51`.
+The complete v5.1.0 manifest covers 1232 files. The producer verifies source
+before imports, module ownership, and unchanged bytes at the verdict boundary.
+Missing or changed resources fail closed; no installed-runtime fallback or
+source-derived manifest is accepted. Hosted delivery requires these exact
+independently published producer resources, not a mutable checkout-generated
+manifest. A local conformance receipt does not establish hosted delivery.
+
+The workflow acquires both resources into its own ignored workspace output
+directory before any verdict and verifies their exact SHA-256 identities.
+Both HTTPS locators are pinned directly to producer resource-delivery commit
+`66d491f86895443cf588011cc6f40c37b8bae8fd`, under `interop/gnn_bootstrap.py`
+and `interop/v5.1.0-source-manifest.json`. This resource-only commit is not the
+parser pin: the original v5.1.0 parser remains at
+`75c834bd8519dc7b5adc4d24f16bf393cfd1ecdf`. No repository URL variables,
+fallback locators, alternate runtime, or generated replacement manifest are used.
+Job-level paths use the permitted `github.workspace` context; `runner` is not
+available in `jobs.<job_id>.env`. The checkout and both resource paths stay
+bound across all arms.
 
 Removed in the same change: `load_upstream_pin`, `UpstreamPin`,
 `UpstreamPinError` (renamed `UpstreamConformanceError`, which now only reports

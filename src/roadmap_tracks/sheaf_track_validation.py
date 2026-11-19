@@ -7,6 +7,7 @@ from pathlib import Path
 import roadmap_tracks.sheaf_tracks as _tracks
 from .formal_interop import proof_inventory_mismatch
 from .supplemental import validate_supplemental_artifacts
+from .negative_controls import OBSERVATION_RESTRICTIONS, validate_observation_payload
 
 
 def _all_rows(payload: dict, field: str) -> bool:
@@ -19,7 +20,7 @@ def _all_rows_absent(payload: dict, field: str) -> bool:
     return bool(rows) and all(not row.get(field) for row in rows)
 
 
-def _semantic_obligation_issues(root: Path, semantic: dict) -> list[str]:
+def _semantic_obligation_issues(root: Path, semantic: dict, *, require_observations: bool) -> list[str]:
     from manuscript.sheaf.semantic import _proof_obligations
 
     classes = semantic.get("restriction_classes") or {}
@@ -35,7 +36,7 @@ def _semantic_obligation_issues(root: Path, semantic: dict) -> list[str]:
         key for key, value in (semantic.get("restrictions") or {}).items() if isinstance(value, bool)
     }
     obligation_restrictions = {str(row.get("semantic_restriction")) for row in rows}
-    if obligation_restrictions != boolean_restrictions:
+    if obligation_restrictions != boolean_restrictions or len(rows) != len(boolean_restrictions):
         issues.append("sheaf_gluing_certificate.json proof obligations do not cover every boolean restriction")
     expected_classes, expected_rows = _proof_obligations(root, semantic.get("restrictions") or {})
     expected_by_restriction = {str(row.get("semantic_restriction")): row for row in expected_rows}
@@ -51,13 +52,18 @@ def _semantic_obligation_issues(root: Path, semantic: dict) -> list[str]:
                 break
     for class_id, class_row in classes.items():
         class_rows = [row for row in rows if row.get("class") == class_id]
-        if not class_rows or class_row.get("obligation_count") != len(class_rows) or class_row.get("all_passed") is not True:
+        applicable = [row for row in class_rows if require_observations
+                      or row.get("semantic_restriction") not in OBSERVATION_RESTRICTIONS]
+        if (not class_rows or class_row.get("obligation_count") != len(class_rows)
+                or class_row.get("all_passed") is not all(row.get("passed") is True for row in class_rows)
+                or any(row.get("passed") is not True for row in applicable)):
             issues.append(f"sheaf_gluing_certificate.json class {class_id} has incomplete proof obligations")
             break
     for row in rows:
         artifacts = row.get("source_artifacts") or []
         if (
-            row.get("passed") is not True
+            (row.get("passed") is not True and
+             (require_observations or row.get("semantic_restriction") not in OBSERVATION_RESTRICTIONS))
             or row.get("class") not in required_classes
             or not row.get("gate")
             or not row.get("negative_control")
@@ -67,8 +73,9 @@ def _semantic_obligation_issues(root: Path, semantic: dict) -> list[str]:
         ):
             issues.append("sheaf_gluing_certificate.json has an invalid proof-obligation row")
             break
-    if semantic.get("all_proof_obligations_passed") is not True:
-        issues.append("sheaf_gluing_certificate.json proof obligations did not all pass")
+    all_passed = bool(rows) and all(row.get("passed") is True for row in rows)
+    if semantic.get("all_proof_obligations_passed") is not all_passed or (require_observations and not all_passed):
+        issues.append("sheaf_gluing_certificate.json proof obligations did not all pass consistently")
     return issues
 
 
@@ -96,6 +103,7 @@ def validate_sheaf_track_payloads(
     payloads: dict[str, dict],
     *,
     validate_saved_certificate: bool = True,
+    require_observations: bool = True,
 ) -> list[str]:
     """Validate already-loaded canonical sheaf-track payloads.
 
@@ -106,15 +114,19 @@ def validate_sheaf_track_payloads(
         project_root,
         payloads=payloads,
         validate_saved_certificate=validate_saved_certificate,
+        require_observations=require_observations,
     )
 
 
-def validate_sheaf_track_artifacts(project_root: Path, *, validate_saved_certificate: bool = True) -> list[str]:
+def validate_sheaf_track_artifacts(
+    project_root: Path, *, validate_saved_certificate: bool = True, require_observations: bool = True
+) -> list[str]:
     """Validate canonical sheaf-track artifacts and their semantic certificate."""
     return _validate_sheaf_track_artifacts(
         project_root,
         payloads=None,
         validate_saved_certificate=validate_saved_certificate,
+        require_observations=require_observations,
     )
 
 
@@ -123,6 +135,7 @@ def _validate_sheaf_track_artifacts(
     *,
     payloads: dict[str, dict] | None,
     validate_saved_certificate: bool,
+    require_observations: bool,
 ) -> list[str]:
     root = project_root.resolve()
     issues: list[str] = []
@@ -188,16 +201,7 @@ def _validate_sheaf_track_artifacts(
         issues.append("uncertainty_summary.json has invalid bins or unnormalized rows")
 
     counter = _payload(root, payloads, "counterexample")
-    if counter.get("schema") != "template_active_inference.counterexample_matrix.v1":
-        issues.append("counterexample_matrix.json schema mismatch")
-    counter_observed = bool(counter.get("rows")) and all(
-        row.get("fixture_replay_status") == "expected_failure_observed" for row in counter.get("rows") or []
-    )
-    if (
-        counter.get("all_expected_failures_observed") is not True
-        or counter.get("all_expected_failures_observed") != counter_observed
-    ):
-        issues.append("counterexample_matrix.json has expected-failure fixtures passing")
+    issues.extend(validate_observation_payload(root, counter, require_observations=require_observations))
 
     model = _payload(root, payloads, "model_checking")
     if model.get("schema") != "template_active_inference.model_checking_witnesses.v1":
@@ -228,20 +232,9 @@ def _validate_sheaf_track_artifacts(
         issues.append("interop_roundtrip_report.json is not lossless")
 
     adversarial = _payload(root, payloads, "adversarial_audit")
-    if adversarial.get("schema") != "template_active_inference.adversarial_audit.v1":
-        issues.append("adversarial_audit.json schema mismatch")
-    adversarial_observed = bool(adversarial.get("rows")) and all(
-        row.get("expected_failure") and row.get("observed") == "expected_failure"
-        for row in adversarial.get("rows") or []
-    )
-    known_bad_passed = sum(1 for row in adversarial.get("rows") or [] if row.get("known_bad_passed"))
-    if (
-        adversarial.get("all_expected_failures_observed") is not True
-        or adversarial.get("all_expected_failures_observed") != adversarial_observed
-        or adversarial.get("known_bad_rows_passed") != known_bad_passed
-        or known_bad_passed != 0
-    ):
-        issues.append("adversarial_audit.json has known-bad rows passing")
+    issues.extend(validate_observation_payload(
+        root, adversarial, adversarial=True, require_observations=require_observations
+    ))
 
     dependency = _payload(root, payloads, "dependency")
     if dependency.get("schema") != _tracks.DEPENDENCY_SCHEMA:
@@ -306,6 +299,10 @@ def _validate_sheaf_track_artifacts(
     )
     if scope.get("all_live_tracks_valid") is not True or scope.get("all_live_tracks_valid") != live_tracks_ok:
         issues.append("track_improvement_scope.json has incomplete live-track promotion rows")
+    from .sheaf_tracks_reports import track_improvement_scope_consistent
+
+    if not track_improvement_scope_consistent(root, scope):
+        issues.append("track_improvement_scope.json promotion rows disagree with current definitions or receipts")
 
     blocked = _payload(root, payloads, "blocked_scope_manifest")
     if blocked.get("schema") != "template_active_inference.blocked_scope_manifest.v1":
@@ -425,11 +422,15 @@ def _validate_sheaf_track_artifacts(
     release_notes = _payload(root, payloads, "release_notes")
     if release_notes.get("schema") != "template_active_inference.release_notes_evidence.v1":
         issues.append("release_notes_evidence.json schema mismatch")
+    from .integration_audit_artifacts import build_release_notes_evidence
+
+    if release_notes != build_release_notes_evidence(root):
+        issues.append("release_notes_evidence.json has unsupported notes relative to current sources")
     notes_backed = bool(release_notes.get("rows")) and all(
         row.get("source") and row.get("passed") for row in release_notes.get("rows") or []
     )
     if (
-        release_notes.get("all_notes_source_backed") is not True
+        (require_observations and release_notes.get("all_notes_source_backed") is not True)
         or release_notes.get("all_notes_source_backed") != notes_backed
     ):
         issues.append("release_notes_evidence.json has unsupported notes")
@@ -459,185 +460,19 @@ def _validate_sheaf_track_artifacts(
     if int(scholarship.get("method_role_count", 0) or 0) < 6:
         issues.append("scholarship_source_matrix.json has too few method roles")
 
-    proof_dependency = _payload(root, payloads, "proof_dependency_graph")
-    proof_dependency_rows = proof_dependency.get("rows") or []
-    proof_dependency_edges = proof_dependency.get("edges") or []
-    proof_dependency_rows_ok = bool(proof_dependency_rows) and all(row.get("linked") for row in proof_dependency_rows)
-    proof_dependency_edges_ok = bool(proof_dependency_edges) and all(
-        edge.get("source") and edge.get("target") and edge.get("kind") for edge in proof_dependency_edges
-    )
-    proof_edge_keys = [str(edge.get("edge_key") or "") for edge in proof_dependency_edges]
-    proof_edges_unique = bool(proof_edge_keys) and all(proof_edge_keys) and len(proof_edge_keys) == len(set(proof_edge_keys))
-    proof_edge_types = {str(edge.get("kind") or "") for edge in proof_dependency_edges}
-    proof_required_edge_types = set(proof_dependency.get("required_edge_types") or [])
-    proof_required_types_present = bool(proof_dependency_edges) and proof_required_edge_types.issubset(proof_edge_types)
-    theorem_ids = {str(row.get("theorem") or "") for row in proof_dependency_rows}
-    known_targets = {
-        str(row.get("source") or "")
-        for row in proof_dependency_rows
-        if row.get("source")
-    } | {
-        f"lean_tactic:{row.get('leading_tactic')}"
-        for row in proof_dependency_rows
-        if row.get("leading_tactic")
-    }
-    for row in proof_dependency_rows:
-        known_targets.update(str(symbol) for symbol in row.get("statement_symbols") or [] if symbol)
-        known_targets.update(str(witness) for witness in row.get("model_witnesses") or [] if witness)
-    orphan_edge_targets = sorted(
-        {
-            str(edge.get("edge_key") or "")
-            for edge in proof_dependency_edges
-            if edge.get("source") not in theorem_ids or edge.get("target") not in known_targets
-        }
-    )
-    if proof_dependency.get("schema") != "template_active_inference.proof_dependency_graph.v1":
-        issues.append("proof_dependency_graph.json schema mismatch")
-    if (
-        proof_dependency.get("all_theorems_have_dependencies") is not True
-        or proof_dependency.get("all_theorems_have_dependencies") != proof_dependency_rows_ok
-    ):
-        issues.append("proof_dependency_graph.json has unlinked theorem dependencies")
-    if (
-        proof_dependency.get("all_edges_resolved") is not True
-        or proof_dependency.get("all_edges_resolved") != proof_dependency_edges_ok
-    ):
-        issues.append("proof_dependency_graph.json has unresolved edges")
-    if (
-        proof_dependency.get("all_edge_keys_unique") is not True
-        or proof_dependency.get("all_edge_keys_unique") != proof_edges_unique
-        or proof_dependency.get("duplicate_edge_keys")
-    ):
-        issues.append("proof_dependency_graph.json has duplicate dependency edges")
-    if (
-        proof_dependency.get("all_required_edge_types_present") is not True
-        or proof_dependency.get("all_required_edge_types_present") != proof_required_types_present
-    ):
-        issues.append("proof_dependency_graph.json lacks required theorem edge types")
-    if (
-        proof_dependency.get("all_edge_targets_resolved") is not True
-        or proof_dependency.get("all_edge_targets_resolved") != (not orphan_edge_targets)
-        or proof_dependency.get("orphan_edge_targets")
-    ):
-        issues.append("proof_dependency_graph.json has orphan theorem dependency targets")
-
-    transition_table = _payload(root, payloads, "state_transition_table")
-    transition_rows = transition_table.get("rows") or []
-    transitions_deterministic = bool(transition_rows) and all(
-        row.get("deterministic") and row.get("next_state") for row in transition_rows
-    )
-    transitions_covered = set(transition_table.get("required_models") or []).issubset(
-        set(transition_table.get("covered_models") or [])
-    )
-    reachable_state_keys = {
-        str(row.get("state_key") or "")
-        for row in transition_rows
-        if row.get("reachable") and row.get("state_key")
-    } | {
-        str(row.get("next_state_key") or "")
-        for row in transition_rows
-        if row.get("reachable") and row.get("next_state_key")
-    }
-    outgoing_state_keys = {str(row.get("state_key") or "") for row in transition_rows if row.get("state_key")}
-    missing_outgoing_state_keys = sorted(reachable_state_keys - outgoing_state_keys)
-    models_with_rows = {str(row.get("model") or "") for row in transition_rows if row.get("model")}
-    terminal_models = {str(row.get("model") or "") for row in transition_rows if row.get("terminal_self_transition")}
-    missing_terminal_models = sorted(models_with_rows - terminal_models)
-    if transition_table.get("schema") != "template_active_inference.state_transition_table.v1":
-        issues.append("state_transition_table.json schema mismatch")
-    transition_keys = [str(row.get("transition_key") or "") for row in transition_rows]
-    transitions_unique = bool(transition_keys) and all(transition_keys) and len(transition_keys) == len(set(transition_keys))
-    if (
-        transition_table.get("all_transitions_deterministic") is not True
-        or transition_table.get("all_transitions_deterministic") != transitions_deterministic
-    ):
-        issues.append("state_transition_table.json has nondeterministic or incomplete transitions")
-    if (
-        transition_table.get("all_transition_keys_unique") is not True
-        or transition_table.get("all_transition_keys_unique") != transitions_unique
-        or transition_table.get("duplicate_transition_keys")
-    ):
-        issues.append("state_transition_table.json has duplicate transition keys")
-    if (
-        transition_table.get("all_reachable_states_covered") is not True
-        or transition_table.get("all_reachable_states_covered") != transitions_covered
-    ):
-        issues.append("state_transition_table.json omits a reachable finite model")
-    if (
-        transition_table.get("all_reachable_states_have_outgoing") is not True
-        or transition_table.get("all_reachable_states_have_outgoing") != (
-            bool(reachable_state_keys) and not missing_outgoing_state_keys
-        )
-        or transition_table.get("missing_outgoing_state_keys")
-    ):
-        issues.append("state_transition_table.json omits outgoing transitions for a reachable toy state")
-    if (
-        transition_table.get("all_terminal_states_have_self_transition") is not True
-        or transition_table.get("all_terminal_states_have_self_transition") != (
-            bool(models_with_rows) and not missing_terminal_models
-        )
-        or transition_table.get("models_without_terminal_self_transition")
-    ):
-        issues.append("state_transition_table.json omits terminal self-transition coverage")
-
-    ablation_sensitivity = _payload(root, payloads, "ablation_sensitivity_report")
-    ablation_sensitivity_rows = ablation_sensitivity.get("rows") or []
-    ablation_sensitivity_backed = bool(ablation_sensitivity_rows) and all(
-        row.get("source_backed") for row in ablation_sensitivity_rows
-    )
-    ablation_joined = bool(ablation_sensitivity_rows) and all(
-        row.get("source_join_key")
-        and row.get("source_backed")
-        and int(row.get("sensitivity_row_count", 0) or 0) > 0
-        and int(row.get("uncertainty_row_count", 0) or 0) > 0
-        for row in ablation_sensitivity_rows
-    )
-    ablation_row_count_agreement = ablation_sensitivity.get("row_count") == ablation_sensitivity.get(
-        "ablation_source_row_count"
-    )
-    if ablation_sensitivity.get("schema") != "template_active_inference.ablation_sensitivity_report.v1":
-        issues.append("ablation_sensitivity_report.json schema mismatch")
-    if (
-        ablation_sensitivity.get("all_effects_source_backed") is not True
-        or ablation_sensitivity.get("all_effects_source_backed") != ablation_sensitivity_backed
-    ):
-        issues.append("ablation_sensitivity_report.json has unsupported ablation effects")
-    if (
-        ablation_sensitivity.get("all_ablation_rows_joined") is not True
-        or ablation_sensitivity.get("all_ablation_rows_joined") != ablation_joined
-        or ablation_sensitivity.get("source_row_count_agreement") is not True
-        or not ablation_row_count_agreement
-    ):
-        issues.append("ablation_sensitivity_report.json has stale source joins or row counts")
-
-    release_attestation = _payload(root, payloads, "release_attestation")
-    release_attestation_rows = release_attestation.get("rows") or []
-    # Strict re-derivation: deferred evidence is not attested evidence.
-    release_attested = bool(release_attestation_rows) and all(
-        row.get("passed") for row in release_attestation_rows
-    )
-    if release_attestation.get("schema") != "template_active_inference.release_attestation.v1":
-        issues.append("release_attestation.json schema mismatch")
-    # Consistency check only: the flag must agree with its rows. Whether the
-    # attestation is GREEN is enforced by validate_outputs (with hash currency);
-    # mid-convergence an honestly-false flag is the expected state, not a lie.
-    if release_attestation.get("all_attested") != release_attested:
-        issues.append("release_attestation.json claims a failed gate passed")
-    if release_attestation.get("attested_source_count") != len(release_attestation_rows):
-        issues.append("release_attestation.json attested source count is stale")
-    validation_row = next((row for row in release_attestation_rows if row.get("id") == "validation_report"), {})
-    validation_check_ids = validation_row.get("attested_validation_check_ids") or []
-    if validation_row and release_attestation.get("attested_validation_check_count") != len(validation_check_ids):
-        issues.append("release_attestation.json validation check count is stale")
+    # Exactly one source-authenticated implementation serves disk and overrides.
+    issues.extend(validate_supplemental_artifacts(root, payloads))
 
     if payloads is None:
         from .scholarship import validate_scholarship_source_matrix
 
         issues.extend(validate_scholarship_source_matrix(root))
-        issues.extend(validate_supplemental_artifacts(root))
 
-    restrictions = _tracks._canonical_restrictions(root)
-    false_restrictions = sorted(key for key, ok in restrictions.items() if not ok)
+    restrictions = _tracks._canonical_restrictions(root, payloads=payloads)
+    false_restrictions = sorted(
+        key for key, ok in restrictions.items()
+        if not ok and (require_observations or key not in OBSERVATION_RESTRICTIONS)
+    )
     if false_restrictions:
         issues.append(f"canonical semantic restrictions failed: {', '.join(false_restrictions)}")
 
@@ -645,14 +480,14 @@ def _validate_sheaf_track_artifacts(
         semantic = _payload(root, payloads, "semantic")
         if semantic.get("schema") != _tracks.SEMANTIC_SCHEMA:
             issues.append("sheaf_gluing_certificate.json schema mismatch")
-        if semantic.get("ok") is not True:
+        if require_observations and semantic.get("ok") is not True:
             issues.append("sheaf_gluing_certificate.json is not ok")
         saved_restrictions = semantic.get("restrictions") or {}
         for key, expected in restrictions.items():
             if saved_restrictions.get(key) != expected:
                 issues.append("sheaf_gluing_certificate.json is stale relative to canonical restrictions")
                 break
-        issues.extend(_semantic_obligation_issues(root, semantic))
+        issues.extend(_semantic_obligation_issues(root, semantic, require_observations=require_observations))
 
     if "empirical_adapter" in registry:
         issues.append("empirical_adapter blocked track was promoted live")

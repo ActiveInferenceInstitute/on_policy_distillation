@@ -19,29 +19,41 @@ def test_provenance_token_regex_matches_renderer_scientific_notation() -> None:
         _expected_token_value,
     )
 
-    text = "a {{alpha:.1e}} b {{beta:.3f}} c {{gamma:.2g}} d {{delta}}"
+    text = "a {{alpha:.1e}} b {{beta:.3f}} c {{gamma:.2g}} d {{delta}} e {{epsilon:+.2e}}"
     rendered = {m.group(1) for m in RENDER_RE.finditer(text)}
     scanned = set(TOKEN_RE.findall(text))
     matched = {token for token, _spec in TOKEN_MATCH_RE.findall(text)}
-    assert rendered == {"alpha", "beta", "gamma", "delta"}
+    assert rendered == {"alpha", "beta", "gamma", "delta", "epsilon"}
     assert scanned == rendered, "provenance scanner must enumerate every rendered token"
     assert matched == rendered
     # expected value renders identically to the live renderer across format specs
     assert _expected_token_value("alpha", ":.1e", {"alpha": 4.44e-16}) == "4.4e-16"
     assert _expected_token_value("beta", ":.3f", {"beta": 0.0}) == "0.000"
+    assert _expected_token_value("epsilon", ":+.2e", {"epsilon": -4.44e-16}) == "-4.44e-16"
 
 
 def test_generate_variables_includes_structural_counts() -> None:
+    import yaml
+
+    from manuscript.sheaf import build_coverage_matrix, load_manifest, load_track_registry
+
     root = Path(__file__).resolve().parents[1]
     vars_ = generate_variables(root, require_analysis_outputs=False)
-    assert vars_["pipeline_track_count"] == 30
-    assert vars_["sheaf_track_count"] == 33
-    assert vars_["appendix_sheaf_track_count"] == 22
-    assert vars_["appendix_sheaf_track_count"] < vars_["sheaf_track_count"]
-    assert vars_["imrad_manifest_rows"] == 17
-    assert vars_["composed_section_count"] == 12
-    assert vars_["imrad_group_count"] == 5
-    assert vars_["coverage_bound"] >= vars_["coverage_present"]
+    manifest = load_manifest(root / "manuscript" / "sheaf" / "manifest.yaml", project_root=root)
+    registry = load_track_registry(root / manifest.registry_path)
+    appendix = next(section for section in manifest.sections if section.id == "appendix_full_sheaf")
+    pipeline = yaml.safe_load((root / "tracks.yaml").read_text(encoding="utf-8"))
+    matrix = build_coverage_matrix(registry, manifest, root)
+    assert vars_["pipeline_track_count"] == sum(track.get("required", True) for track in pipeline["tracks"])
+    assert vars_["sheaf_track_count"] == len(registry.tracks)
+    assert vars_["appendix_sheaf_track_count"] == len(appendix.tracks)
+    assert vars_["imrad_manifest_rows"] == len(manifest.sections)
+    assert vars_["composed_section_count"] == sum(section.should_compose() for section in manifest.sections)
+    assert vars_["imrad_group_count"] == sum(section.kind == "group" for section in manifest.sections)
+    assert vars_["coverage_bound"] == sum(cell.bound for section in matrix.sections for cell in section.cells)
+    assert vars_["coverage_present"] == sum(
+        cell.status == "present" for section in matrix.sections for cell in section.cells
+    )
 
 
 def test_format_variables_adds_entropy_formatted() -> None:
@@ -122,7 +134,7 @@ def test_write_resolved_manuscript_removes_tokens(tmp_path: Path) -> None:
     out_dir = write_resolved_manuscript(tmp_path, variables)
     resolved = (out_dir / "00_abstract.md").read_text(encoding="utf-8")
     assert _TOKEN_RE.search(resolved) is None
-    assert "Tracks: 30" in resolved
+    assert f"Tracks: {variables['pipeline_track_count']}" in resolved
 
 
 def test_manuscript_no_longer_describes_state_inference_as_default(project_root: Path) -> None:

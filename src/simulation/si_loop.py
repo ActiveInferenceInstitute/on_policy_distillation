@@ -10,6 +10,7 @@ from typing import Any, Literal
 
 import numpy as np
 
+from orchestration.artifact_lock import artifact_lease
 from simulation.logging_utils import RunLogger
 from simulation.numerics import STEP_POSTERIOR_ATOL
 from simulation.pymdp_config import (
@@ -76,17 +77,24 @@ def _prob_entropy(values: np.ndarray) -> float:
     return float(-np.sum(nz * np.log(nz)))
 
 
-def _sequence_from_rollout(array: Any) -> list[int]:
-    arr = np.asarray(array)
-    return [int(value) for value in arr[0, :, 0].tolist()]
+def _action_vectors_from_rollout(array: Any) -> list[list[int]]:
+    """Extract control-factor IDs without applying observation decoding."""
+    return np.asarray(array, dtype=np.int64)[0].tolist()
 
 
-def _observations_by_modality(info: dict[str, Any]) -> dict[str, list[int]]:
-    observations = info["observation"]
+def _observation_sequence_from_rollout(array: Any, *, categorical_obs: bool) -> list[int]:
+    """Decode the first batch's IDs or categorical vectors, retaining time order."""
+    values = np.asarray(array)
+    if categorical_obs:
+        values = np.argmax(values, axis=-1)
+    # TMaze retains a singleton observation-time axis; compact traces omit it.
+    return [int(value) for value in values[0].reshape(-1)]
+
+
+def _observations_by_modality(info: dict[str, Any], *, categorical_obs: bool) -> dict[str, list[int]]:
     return {
-        "location": _sequence_from_rollout(observations[0]),
-        "outcome": _sequence_from_rollout(observations[1]),
-        "cue": _sequence_from_rollout(observations[2]),
+        modality: _observation_sequence_from_rollout(observation, categorical_obs=categorical_obs)
+        for modality, observation in zip(("location", "outcome", "cue"), info["observation"], strict=True)
     }
 
 
@@ -229,10 +237,10 @@ def _run_pymdp_rollout(
     if runtime_output:
         runtime_diagnostics["rollout_output_excerpt"] = runtime_output.splitlines()[:8]
 
-    actions = _sequence_from_rollout(info["action"])
+    action_vectors = _action_vectors_from_rollout(info["action"])
+    actions = [vector[0] for vector in action_vectors]
     action_names = [ACTION_LABELS.get(action, f"action_{action}") for action in actions]
-    action_vectors = np.asarray(info["action"], dtype=np.int64)[0].tolist()
-    observations_by_modality = _observations_by_modality(info)
+    observations_by_modality = _observations_by_modality(info, categorical_obs=config.environment.categorical_obs)
     observation_names = _named_observations(observations_by_modality)
     q_pi_by_step, q_pi_entropy_by_step = _q_pi_rows(info)
     action_probabilities = _first_action_probabilities(agent, info)
@@ -322,10 +330,12 @@ def run_si_tmaze(
     logger: RunLogger | None = None,
 ) -> SIRunResult:
     """Run the canonical full-TMaze sophisticated-inference profile."""
-    cfg = config or load_pymdp_config(project_root)
-    if steps is not None:
-        cfg = apply_pymdp_overrides(cfg, steps=steps)
-    return _run_pymdp_rollout(project_root, config=cfg, planner="sophisticated_inference", logger=logger)
+    root = project_root.resolve()
+    with artifact_lease(root):
+        cfg = config or load_pymdp_config(root)
+        if steps is not None:
+            cfg = apply_pymdp_overrides(cfg, steps=steps)
+        return _run_pymdp_rollout(root, config=cfg, planner="sophisticated_inference", logger=logger)
 
 
 def run_validation_comparison_tmaze(
@@ -336,4 +346,6 @@ def run_validation_comparison_tmaze(
     logger: RunLogger | None = None,
 ) -> SIRunResult:
     """Run SI or vanilla pymdp planning for comparison artifacts only."""
-    return _run_pymdp_rollout(project_root, config=config, planner=planner, logger=logger)
+    root = project_root.resolve()
+    with artifact_lease(root):
+        return _run_pymdp_rollout(root, config=config, planner=planner, logger=logger)

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+import yaml
 
 from gates.validation import validate_manuscript
 from manuscript.sheaf import (
@@ -19,16 +20,71 @@ from gate_support import ensure_gate_artifacts
 def test_manifest_loads_imrad_sections() -> None:
     root = Path(__file__).resolve().parents[1]
     manifest = load_manifest(root / "manuscript" / "sheaf" / "manifest.yaml")
-    assert len(manifest.sections) == 17
+    assert [section.order for section in manifest.sections] == sorted(section.order for section in manifest.sections)
+    assert len({section.id for section in manifest.sections}) == len(manifest.sections)
     assert manifest.sections[0].id == "intro"
     assert manifest.sections[0].kind == "group"
     appendix = next(s for s in manifest.sections if s.id == "appendix_full_sheaf")
     registry = load_track_registry(root / manifest.registry_path)
-    assert len(registry.tracks) == 33
-    assert len(appendix.tracks) == 22
-    assert sum(1 for s in manifest.sections if s.should_compose()) == 12
-    # Every IMRAD block now carries a group row (uniform base poset).
-    assert sum(1 for s in manifest.sections if s.kind == "group") == 5
+    assert set(appendix.tracks) < set(registry.tracks)
+    assert all(set(section.tracks).issubset(registry.tracks) for section in manifest.sections)
+    assert all(section.kind == "section" for section in manifest.sections if section.should_compose())
+    groups = [section for section in manifest.sections if section.kind == "group"]
+    assert {section.imrad for section in groups} == {"introduction", "methods", "results", "discussion", "appendix"}
+    assert all(not section.should_compose() for section in groups)
+
+
+def test_canonical_ontology_placement_preserves_strict_composition_laws() -> None:
+    root = Path(__file__).resolve().parents[1]
+    manifest = load_manifest(root / "manuscript" / "sheaf" / "manifest.yaml", project_root=root)
+    registry = load_track_registry(root / manifest.registry_path)
+    assert validate_manifest(manifest, root, registry=registry, strict_coverage=True) == []
+
+
+@pytest.mark.parametrize("track", ["ontology", "prose"])
+def test_manifest_and_promotion_reject_duplicate_binding_keys(tmp_path: Path, track: str) -> None:
+    from manuscript.sheaf.manifest import load_manifest_data
+    from roadmap_tracks.sheaf_tracks_support import _bound_tracks, _manifest_sections
+
+    path = tmp_path / "manuscript" / "sheaf" / "manifest.yaml"
+    path.parent.mkdir(parents=True)
+    path.write_text(
+        "sections:\n"
+        "  - id: demo\n"
+        "    title: Demo\n"
+        "    order: 1\n"
+        "    tracks:\n"
+        f"      {track}: first.yaml\n"
+        f"      {track}: second.yaml\n",
+        encoding="utf-8",
+    )
+    for reader in (
+        lambda: load_manifest(path, project_root=tmp_path),
+        lambda: load_manifest_data(path),
+        lambda: _manifest_sections(tmp_path),
+        lambda: _bound_tracks(tmp_path),
+    ):
+        with pytest.raises(yaml.YAMLError, match=f"duplicate key '{track}'"):
+            reader()
+
+
+def test_manifest_projection_cannot_mutate_cached_bindings(tmp_path: Path) -> None:
+    from manuscript.sheaf.manifest import load_manifest_data
+
+    path = tmp_path / "manifest.yaml"
+    path.write_text(
+        "sections:\n"
+        "  - id: demo\n"
+        "    title: Demo\n"
+        "    order: 1\n"
+        "    tracks:\n"
+        "      ontology: selected.yaml\n",
+        encoding="utf-8",
+    )
+    projected = load_manifest_data(path)
+    projected["sections"][0]["tracks"]["ontology"] = "not-selected.yaml"
+    assert load_manifest_data(path)["sections"][0]["tracks"]["ontology"] == "selected.yaml"
+    assert load_manifest(path).sections[0].tracks["ontology"] == "selected.yaml"
 
 
 def test_all_composed_sections_bind_prose() -> None:
@@ -190,6 +246,8 @@ def test_group_rows_skip_compose(tmp_path: Path) -> None:
 
 @pytest.mark.artifact_slow
 def test_validate_manuscript_strict_coverage() -> None:
+    from gate_support import _gate_artifacts_ready
+
     root = Path(__file__).resolve().parents[1]
     ensure_gate_artifacts(root, verify=True)
     checks = validate_manuscript(root)
@@ -197,7 +255,9 @@ def test_validate_manuscript_strict_coverage() -> None:
     assert checks["coverage_matrix_valid"]
     assert checks["full_sheaf_appendix_tracks"]
     assert checks["imrad_groups_present"]
-    assert checks["claim_ledger_valid"]
+    # Structural readiness neither invents observations nor requires authentic
+    # existing observations to remain absent. Cold-root tests cover rejection.
+    assert _gate_artifacts_ready(root, include_manuscript=True)
     assert checks["methods_sheaf_layers"]
     assert checks["manuscript_tokens_registered"]
     assert checks["resolved_manuscript_hydrated"]

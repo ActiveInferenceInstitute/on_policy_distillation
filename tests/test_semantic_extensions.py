@@ -3,43 +3,133 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 import pytest
+import yaml
 from PIL import Image, ImageChops, ImageSequence
 
 
-@pytest.mark.artifact_slow
-@pytest.mark.mutates_artifacts
-def test_validate_all_gnn_ontology_covers_si_tmaze(project_root: Path) -> None:
+def _ontology_project(tmp_path: Path) -> Path:
+    from manuscript.sheaf.manifest import load_manifest
+
+    source = Path(__file__).resolve().parents[1]
+    manifest_rel = Path("manuscript/sheaf/manifest.yaml")
+    (tmp_path / manifest_rel).parent.mkdir(parents=True)
+    shutil.copyfile(source / manifest_rel, tmp_path / manifest_rel)
+    (tmp_path / "gnn").mkdir()
+    for path in (source / "gnn").glob("*.gnn.md"):
+        shutil.copyfile(path, tmp_path / "gnn" / path.name)
+    manifest = load_manifest(tmp_path / manifest_rel, project_root=tmp_path)
+    for section in manifest.sections:
+        binding = section.tracks.get("ontology")
+        if binding:
+            destination = tmp_path / binding
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source / binding, destination)
+    return tmp_path
+
+
+def test_validate_all_gnn_ontology_covers_si_tmaze(tmp_path: Path) -> None:
     from ontology.bindings import validate_all_gnn_ontology
 
-    assert validate_all_gnn_ontology(project_root) == []
-
-    gnn_path = project_root / "gnn" / "si_tmaze.gnn.md"
+    root = _ontology_project(tmp_path)
+    assert validate_all_gnn_ontology(root) == []
+    gnn_path = root / "gnn" / "si_tmaze.gnn.md"
     original = gnn_path.read_text(encoding="utf-8")
-    try:
-        gnn_path.write_text(original.replace("q_pi=PolicyPosterior", "q_pi=HiddenState"), encoding="utf-8")
-        gaps = validate_all_gnn_ontology(project_root)
-        assert any("si_tmaze" in gap and "PolicyPosterior" in gap for gap in gaps)
-    finally:
-        gnn_path.write_text(original, encoding="utf-8")
+    gnn_path.write_text(original.replace("q_pi=PolicyPosterior", "q_pi=HiddenState"), encoding="utf-8")
+    gaps = validate_all_gnn_ontology(root)
+    assert any("si_tmaze" in gap and "PolicyPosterior" in gap for gap in gaps)
 
 
-@pytest.mark.artifact_slow
-@pytest.mark.mutates_artifacts
-def test_validate_all_gnn_ontology_rejects_extra_section_alias(project_root: Path) -> None:
+def test_validate_all_gnn_ontology_rejects_extra_section_alias(tmp_path: Path) -> None:
+    from ontology.bindings import resolve_model_ontology_path, validate_all_gnn_ontology
+
+    root = _ontology_project(tmp_path)
+    ontology_path = resolve_model_ontology_path(root, "si_tmaze")
+    ontology_path.write_text(ontology_path.read_text(encoding="utf-8") + "\nalien_alias: HiddenState\n", encoding="utf-8")
+    gaps = validate_all_gnn_ontology(root)
+    assert any("alien_alias" in gap for gap in gaps)
+
+
+@pytest.mark.parametrize("model_id", ["bernoulli_toy", "si_tmaze", "graph_world"])
+def test_model_ontology_resolver_follows_relocated_binding_and_detects_term_drift(
+    tmp_path: Path, model_id: str
+) -> None:
+    from manuscript.sheaf.manifest import load_manifest_data
+    from ontology.bindings import load_section_ontology, resolve_model_ontology_path, validate_all_gnn_ontology
+    from roadmap_tracks.integration_audit import build_cross_track_symbol_table
+
+    root = _ontology_project(tmp_path)
+    assert validate_all_gnn_ontology(root) == []
+    original_path = resolve_model_ontology_path(root, model_id)
+    original_text = original_path.read_text(encoding="utf-8")
+    relocated = root / "bindings" / f"{model_id}.yaml"
+    relocated.parent.mkdir()
+    relocated.write_text(original_text, encoding="utf-8")
+    manifest_path = root / "manuscript" / "sheaf" / "manifest.yaml"
+    manifest = load_manifest_data(manifest_path)
+    section = next(
+        section
+        for section in manifest["sections"]
+        if section.get("tracks", {}).get("ontology") == original_path.relative_to(root).as_posix()
+    )
+    section["tracks"]["ontology"] = relocated.relative_to(root).as_posix()
+    manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
+    assert resolve_model_ontology_path(root, model_id) == relocated
+    assert validate_all_gnn_ontology(root) == []
+
+    terms = load_section_ontology(relocated)
+    variable = next(iter(terms))
+    terms[variable] = "UnmappedTerm"
+    relocated.write_text(yaml.safe_dump(terms, sort_keys=False), encoding="utf-8")
+    assert original_path.read_text(encoding="utf-8") == original_text
+    assert any(model_id in gap and variable in gap for gap in validate_all_gnn_ontology(root))
+    table = build_cross_track_symbol_table(root)
+    row = next(row for row in table["rows"] if row["model"] == model_id and row["symbol"] == variable)
+    assert row["section_ontology_path"] == relocated.relative_to(root).as_posix()
+    assert row["term_consistent"] is False
+    assert table["all_consistent"] is False
+
+
+def test_graph_world_binding_cannot_be_replaced_by_generic_appendix_ontology(tmp_path: Path) -> None:
+    from manuscript.sheaf.manifest import load_manifest_data
     from ontology.bindings import validate_all_gnn_ontology
 
-    ontology_path = project_root / "manuscript" / "sections" / "imrad" / "methods_pymdp" / "ontology.yaml"
-    original = ontology_path.read_text(encoding="utf-8")
-    try:
-        ontology_path.write_text(original + "\nalien_alias: HiddenState\n", encoding="utf-8")
-        gaps = validate_all_gnn_ontology(project_root)
-    finally:
-        ontology_path.write_text(original, encoding="utf-8")
+    root = _ontology_project(tmp_path)
+    manifest_path = root / "manuscript" / "sheaf" / "manifest.yaml"
+    manifest = load_manifest_data(manifest_path)
+    generic = next(section for section in manifest["sections"] if section["id"] == "appendix_full_sheaf")
+    graph = next(section for section in manifest["sections"] if section["id"] == "results_invariants")
+    graph["tracks"]["ontology"] = generic["tracks"]["ontology"]
+    manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
+    assert any("graph_world" in gap and "section ontology" in gap for gap in validate_all_gnn_ontology(root))
 
-    assert any("alien_alias" in gap for gap in gaps)
+
+@pytest.mark.parametrize("mutation", ["missing", "ambiguous", "not_composed", "not_rendered"])
+def test_model_ontology_resolver_rejects_noncanonical_binding(tmp_path: Path, mutation: str) -> None:
+    import copy
+
+    from manuscript.sheaf.manifest import load_manifest_data
+    from ontology.bindings import resolve_model_ontology_path, validate_all_gnn_ontology
+
+    root = _ontology_project(tmp_path)
+    manifest_path = root / "manuscript" / "sheaf" / "manifest.yaml"
+    manifest = load_manifest_data(manifest_path)
+    graph = next(section for section in manifest["sections"] if section["id"] == "results_invariants")
+    if mutation == "missing":
+        del graph["tracks"]["ontology"]
+    elif mutation == "ambiguous":
+        manifest["sections"].append(copy.deepcopy(graph))
+    elif mutation == "not_composed":
+        graph["compose"] = False
+    else:
+        graph["track_order"] = ["prose"]
+    manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
+    with pytest.raises(ValueError, match="graph_world"):
+        resolve_model_ontology_path(root, "graph_world")
+    assert any("cannot resolve canonical ontology binding" in gap for gap in validate_all_gnn_ontology(root))
 
 
 @pytest.mark.requires_pymdp

@@ -8,10 +8,10 @@ by running the **real upstream parser**
 comparing normalized digests. Any divergence fails.
 
 The upstream parser runs under the GNN checkout's own interpreter, with the
-pinned commit's ``src/gnn`` extracted from Git onto ``PYTHONPATH`` — so the
-bytes exercised are the pinned release's bytes, not the live working tree's
-(the checkout may legitimately carry in-progress edits). The checkout is treated
-as read-only: this test only runs ``git archive`` / ``git cat-file``.
+pinned commit's complete ``src/gnn`` extracted from Git and admitted by the
+independently frozen producer bootstrap/manifest before imports. The isolated
+worker rechecks the full source and loaded modules at the verdict boundary.
+The checkout remains read-only: only ``git archive`` / ``git cat-file`` run.
 
 When the checkout or its ``.venv`` is unavailable the test skips with an
 explicit reason; setting ``ON_POLICY_DISTILLATION_GNN_ROOT`` selects a checkout
@@ -39,7 +39,6 @@ import pytest
 
 from gnn.parser import parse_gnn_file
 from gnn.upstream import (
-    DIGEST_DRIVER_SOURCE,
     ENV_UPSTREAM_ROOT,
     PARSER_RELATIVE_PATH,
     UpstreamConformanceError,
@@ -133,16 +132,13 @@ def upstream_run(tmp_path_factory: pytest.TempPathFactory) -> UpstreamRun:
     )
 
     spec_paths = [str(path.resolve()) for path in SHIPPED_SPECS] + [str(mutant)]
-    env = {**os.environ, "PYTHONPATH": str(extract_dir / "src")}
+    env = os.environ.copy()
     parser_module, parser_class = pin["parser_module"], pin["parser_class"]
     command = [
-        str(gnn_checkout_python(root)),
-        "-c",
-        DIGEST_DRIVER_SOURCE,
-        "--module",
-        parser_module,
-        "--class-name",
-        parser_class,
+        str(gnn_checkout_python(root)), "-I", "-B",
+        str(PROJECT_ROOT / "scripts/qualified_gnn.py"), "digest",
+        "--repo", str(PROJECT_ROOT), "--source", str(extract_dir),
+        "--module", parser_module, "--class-name", parser_class,
     ]
     for spec in spec_paths:
         command += ["--spec", spec]
@@ -184,6 +180,10 @@ def test_upstream_parser_ran_from_the_pinned_commit(upstream_run: UpstreamRun) -
     parser_file = Path(parser_info["file"]).resolve()
     assert parser_file.is_relative_to(upstream_run.extract_dir.resolve())
     assert parser_info["gnn_version"] == upstream_run.pin["version"]
+    qualification = upstream_run.payload["source_qualification"]
+    assert qualification["ok"] is qualification["imports_verified"] is True
+    assert qualification["manifest_sha256"] == "43b33c0b2b40386afa3f306fec4cc13bc1fd7c3b570fbf11d5008bad5c8e6b51"
+    assert qualification["file_count"] == 1232
 
 
 def test_upstream_parser_accepts_every_shipped_spec(upstream_run: UpstreamRun) -> None:
@@ -324,3 +324,21 @@ def test_normalize_upstream_digest_maps_enums_and_sequences() -> None:
     assert digest["variables"] == {"a": {"dims": [2, 1], "dtype": "int"}}
     assert digest["connections"] == [["a", "b", "directed", ""]]
     assert digest["ontology"] == {"a": "Term"}
+
+
+@pytest.mark.parametrize("resource", ["GNN_BOOTSTRAP", "GNN_SOURCE_MANIFEST"])
+def test_source_admission_rejects_changed_producer_resource(
+    upstream_run: UpstreamRun, tmp_path: Path, resource: str,
+) -> None:
+    original = Path(os.environ[resource])
+    changed = tmp_path / original.name
+    changed.write_bytes(original.read_bytes() + b"\n")
+    environment = {**os.environ, resource: str(changed)}
+    command = [
+        str(gnn_checkout_python(upstream_run.root)), "-I", "-B",
+        str(PROJECT_ROOT / "scripts/qualified_gnn.py"), "check",
+        "--repo", str(PROJECT_ROOT), "--source", str(upstream_run.extract_dir),
+    ]
+    result = subprocess.run(command, env=environment, capture_output=True, text=True, check=False)
+    assert result.returncode != 0
+    assert f"{resource}: resource-hash-mismatch" in result.stderr

@@ -5,10 +5,22 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from gates.validation import validate_manuscript
+
+
+_NONFINITE_NUMERICAL_VALUES = [
+    pytest.param(float("nan"), id="native-nan"),
+    pytest.param(float("inf"), id="native-positive-infinity"),
+    pytest.param(float("-inf"), id="native-negative-infinity"),
+    pytest.param("NaN", id="string-nan"),
+    pytest.param("Infinity", id="string-positive-infinity"),
+    pytest.param("-Infinity", id="string-negative-infinity"),
+    pytest.param("1e309", id="string-overflow"),
+]
 
 
 @pytest.mark.artifact_slow
@@ -294,6 +306,310 @@ def test_typed_claim_evidence_reports_structured_failures(tmp_path: Path) -> Non
     assert any("missing path" in issue for issue in issues)
     assert any("cannot load evidence" in issue for issue in issues)
     assert any("tracks must not be empty" in issue for issue in issues)
+
+
+def _assert_typed_evidence_admission(
+    root: Path,
+    document: dict[str, Any],
+    evidence: dict[str, Any],
+    expected: bool,
+    *,
+    suffix: str,
+    other_document: dict[str, Any] | None = None,
+) -> None:
+    """Read real structured artifacts and dispatch a standalone typed claim."""
+    import yaml
+
+    from gates.claim_ledger import typed_claim_evidence_issues, validate_typed_claim_evidence
+
+    root.mkdir(parents=True, exist_ok=True)
+    serialize = json.dumps if suffix == ".json" else yaml.safe_dump
+    artifact = root / f"evidence{suffix}"
+    artifact.write_text(serialize(document), encoding="utf-8")
+    if other_document is not None:
+        (root / f"reference{suffix}").write_text(serialize(other_document), encoding="utf-8")
+    ledger = root / "data" / "claim_ledger.yaml"
+    ledger.parent.mkdir()
+    ledger.write_text(
+        yaml.safe_dump(
+            {
+                "claims": [
+                    {
+                        "id": "finite_evidence",
+                        "path": artifact.name,
+                        "tracks": ["simulation"],
+                        "evidence": evidence,
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    expected_issues = [] if expected else [f"finite_evidence: evidence predicate failed for {artifact.name}"]
+    assert typed_claim_evidence_issues(root) == expected_issues
+    assert validate_typed_claim_evidence(root) is expected
+
+
+@pytest.mark.parametrize("suffix", [".json", ".yaml"])
+@pytest.mark.parametrize("numeric_strings", [False, True], ids=["numbers", "numeric-strings"])
+@pytest.mark.parametrize(
+    ("operation", "value", "expected"),
+    [
+        pytest.param("min", 0.75, False, id="min-below"),
+        pytest.param("min", 1.0, True, id="min-at"),
+        pytest.param("min", 1.25, True, id="min-above"),
+        pytest.param("max", 0.75, True, id="max-below"),
+        pytest.param("max", 1.0, True, id="max-at"),
+        pytest.param("max", 1.25, False, id="max-above"),
+        pytest.param("leq_field", 0.75, True, id="reference-below"),
+        pytest.param("leq_field", 1.0, True, id="reference-at"),
+        pytest.param("leq_field", 1.25, False, id="reference-above"),
+        pytest.param("zero", -0.25, False, id="zero-below"),
+        pytest.param("zero", 0.0, True, id="zero-at"),
+        pytest.param("zero", 0.25, False, id="zero-above"),
+        pytest.param("positive", -0.25, False, id="positive-below"),
+        pytest.param("positive", 0.0, False, id="positive-at"),
+        pytest.param("positive", 0.25, True, id="positive-above"),
+    ],
+)
+def test_typed_claim_evidence_finite_admission_boundaries(
+    tmp_path: Path, suffix: str, numeric_strings: bool, operation: str, value: float, expected: bool
+) -> None:
+    bound = "1.0" if numeric_strings else 1.0
+    evidence: dict[str, Any] = {"field": "value"}
+    if operation in {"min", "max"}:
+        evidence[operation] = bound
+    elif operation == "leq_field":
+        evidence[operation] = "bound"
+    else:
+        evidence["predicate"] = operation
+    _assert_typed_evidence_admission(
+        tmp_path,
+        {"value": str(value) if numeric_strings else value, "bound": bound},
+        evidence,
+        expected,
+        suffix=suffix,
+    )
+
+
+@pytest.mark.parametrize("suffix", [".json", ".yaml"])
+@pytest.mark.parametrize("operation", ["equals", "approx", "equals_difference", "leq_field"])
+@pytest.mark.parametrize("tolerance", [0.125, "0.125"], ids=["number", "numeric-string"])
+@pytest.mark.parametrize(
+    ("offset", "expected"), [(0.0625, True), (0.125, True), (0.25, False)], ids=["below", "at", "above"]
+)
+def test_typed_claim_evidence_finite_admission_tolerances(
+    tmp_path: Path, suffix: str, operation: str, tolerance: float | str, offset: float, expected: bool
+) -> None:
+    operand: Any = ["a", "b"] if operation == "equals_difference" else "bound" if operation == "leq_field" else 1.0
+    _assert_typed_evidence_admission(
+        tmp_path,
+        {"value": 1.0 + offset, "bound": 1.0, "a": 2.0, "b": 1.0},
+        {"field": "value", operation: operand, "tolerance": tolerance},
+        expected,
+        suffix=suffix,
+    )
+
+
+@pytest.mark.parametrize("suffix", [".json", ".yaml"])
+@pytest.mark.parametrize("operation", ["equals_difference", "leq_field"])
+@pytest.mark.parametrize("tolerance", [None, 0.0, "0.0"], ids=["omitted", "zero", "string-zero"])
+@pytest.mark.parametrize(
+    ("value", "expected"), [(0.5e-9, True), (1e-9, True), (2e-9, False)], ids=["below", "at", "above"]
+)
+def test_typed_claim_evidence_finite_admission_default_tolerance(
+    tmp_path: Path, suffix: str, operation: str, tolerance: float | str | None, value: float, expected: bool
+) -> None:
+    evidence: dict[str, Any] = {
+        "field": "value",
+        operation: ["a", "b"] if operation == "equals_difference" else "bound",
+    }
+    if tolerance is not None:
+        evidence["tolerance"] = tolerance
+    _assert_typed_evidence_admission(
+        tmp_path, {"value": value, "a": 1.0, "b": 1.0, "bound": 0.0}, evidence, expected, suffix=suffix
+    )
+
+
+@pytest.mark.parametrize("suffix", [".json", ".yaml"])
+@pytest.mark.parametrize("operation", ["len_equals", "len_min"])
+@pytest.mark.parametrize("bound", [2, "2"], ids=["number", "numeric-string"])
+@pytest.mark.parametrize("length", [1, 2, 3], ids=["below", "at", "above"])
+def test_typed_claim_evidence_finite_admission_lengths(
+    tmp_path: Path, suffix: str, operation: str, bound: int | str, length: int
+) -> None:
+    expected = length == 2 if operation == "len_equals" else length >= 2
+    _assert_typed_evidence_admission(
+        tmp_path, {"value": [True] * length}, {"field": "value", operation: bound}, expected, suffix=suffix
+    )
+
+
+@pytest.mark.parametrize("suffix", [".json", ".yaml"])
+@pytest.mark.parametrize("nonfinite", _NONFINITE_NUMERICAL_VALUES)
+@pytest.mark.parametrize(
+    "evidence",
+    [
+        pytest.param({"min": 0.0}, id="min"),
+        pytest.param({"max": 2.0}, id="max"),
+        pytest.param({"approx": 1.0}, id="approx"),
+        pytest.param({"leq_field": "bound"}, id="referenced-bound"),
+        pytest.param({"equals_difference": ["a", "b"]}, id="difference"),
+        pytest.param({"predicate": "zero"}, id="zero"),
+        pytest.param({"predicate": "positive"}, id="positive"),
+    ],
+)
+def test_typed_claim_evidence_finite_admission_rejects_values(
+    tmp_path: Path, suffix: str, nonfinite: float | str, evidence: dict[str, Any]
+) -> None:
+    _assert_typed_evidence_admission(
+        tmp_path,
+        {"value": nonfinite, "bound": 1.0, "a": 2.0, "b": 1.0},
+        {"field": "value", **evidence},
+        False,
+        suffix=suffix,
+    )
+
+
+@pytest.mark.parametrize("suffix", [".json", ".yaml"])
+@pytest.mark.parametrize("nonfinite", _NONFINITE_NUMERICAL_VALUES)
+@pytest.mark.parametrize("parameter", ["min", "max", "approx", "tolerance", "len_equals", "len_min"])
+def test_typed_claim_evidence_finite_admission_rejects_parameters(
+    tmp_path: Path, suffix: str, nonfinite: float | str, parameter: str
+) -> None:
+    evidence: dict[str, Any] = {"field": "value", parameter: nonfinite}
+    if parameter == "tolerance":
+        evidence["equals"] = 1.0
+    value: Any = [True] if parameter.startswith("len_") else 1.0
+    _assert_typed_evidence_admission(tmp_path, {"value": value}, evidence, False, suffix=suffix)
+
+
+@pytest.mark.parametrize("suffix", [".json", ".yaml"])
+@pytest.mark.parametrize("nonfinite", _NONFINITE_NUMERICAL_VALUES)
+@pytest.mark.parametrize("field", ["a", "b", "bound"])
+def test_typed_claim_evidence_finite_admission_rejects_referenced_operands(
+    tmp_path: Path, suffix: str, nonfinite: float | str, field: str
+) -> None:
+    document = {"value": 1.0, "a": 2.0, "b": 1.0, "bound": 1.0}
+    document[field] = nonfinite
+    evidence = {"leq_field": "bound"} if field == "bound" else {"equals_difference": ["a", "b"]}
+    _assert_typed_evidence_admission(
+        tmp_path, document, {"field": "value", **evidence}, False, suffix=suffix
+    )
+
+
+@pytest.mark.parametrize("suffix", [".json", ".yaml"])
+@pytest.mark.parametrize("nonfinite", _NONFINITE_NUMERICAL_VALUES[:3])
+@pytest.mark.parametrize("shape", ["scalar", "list", "mapping"])
+def test_typed_claim_evidence_finite_admission_rejects_cross_artifact_values(
+    tmp_path: Path, suffix: str, nonfinite: float, shape: str
+) -> None:
+    value: Any = nonfinite if shape == "scalar" else [True, nonfinite] if shape == "list" else {"score": nonfinite}
+    _assert_typed_evidence_admission(
+        tmp_path,
+        {"value": value},
+        {"field": "value", "matches_artifact_field": {"path": f"reference{suffix}", "field": "value"}},
+        False,
+        suffix=suffix,
+        other_document={"value": value},
+    )
+
+
+@pytest.mark.parametrize("suffix", [".json", ".yaml"])
+@pytest.mark.parametrize("nonfinite", _NONFINITE_NUMERICAL_VALUES[:3])
+@pytest.mark.parametrize("role", ["value", "expected", "reference"])
+def test_typed_claim_evidence_finite_admission_rejects_boolean_coercion(
+    tmp_path: Path, suffix: str, nonfinite: float, role: str
+) -> None:
+    evidence: dict[str, Any] = {"field": "value", "equals": nonfinite if role == "expected" else True}
+    if role == "reference":
+        evidence["matches_artifact_field"] = {"path": f"reference{suffix}", "field": "value"}
+    _assert_typed_evidence_admission(
+        tmp_path,
+        {"value": nonfinite if role == "value" else True},
+        evidence,
+        False,
+        suffix=suffix,
+        other_document={"value": nonfinite} if role == "reference" else None,
+    )
+
+
+@pytest.mark.parametrize("suffix", [".json", ".yaml"])
+@pytest.mark.parametrize("nonfinite", _NONFINITE_NUMERICAL_VALUES)
+@pytest.mark.parametrize("quantifier", ["all", "any"])
+@pytest.mark.parametrize("empty", [False, True], ids=["populated", "empty"])
+def test_typed_claim_evidence_finite_admission_rejects_nested_parameters(
+    tmp_path: Path, suffix: str, nonfinite: float | str, quantifier: str, empty: bool
+) -> None:
+    _assert_typed_evidence_admission(
+        tmp_path,
+        {"rows": [] if empty else [{"score": 1.0}]},
+        {"field": "rows", quantifier: {"field": "score", "min": nonfinite}},
+        False,
+        suffix=suffix,
+    )
+
+
+@pytest.mark.parametrize("nonfinite", _NONFINITE_NUMERICAL_VALUES)
+@pytest.mark.parametrize("nested", [False, True], ids=["direct-any", "nested-any"])
+@pytest.mark.parametrize(
+    ("field", "evidence"),
+    [
+        pytest.param("score", {"min": 0.0}, id="minimum"),
+        pytest.param("score", {"approx": 1.0}, id="approximation"),
+        pytest.param("score", {"predicate": "positive"}, id="positive"),
+        pytest.param("bound", {"leq_field": "bound"}, id="bound"),
+        pytest.param("a", {"equals_difference": ["a", "b"]}, id="minuend"),
+        pytest.param("b", {"equals_difference": ["a", "b"]}, id="subtrahend"),
+    ],
+)
+def test_typed_claim_evidence_finite_admission_rejects_hidden_any_operands(
+    tmp_path: Path, nonfinite: float | str, nested: bool, field: str, evidence: dict[str, Any]
+) -> None:
+    finite = {"score": 1.0, "a": 2.0, "b": 1.0, "bound": 1.0}
+    nonfinite_row = {**finite, field: nonfinite}
+    document: dict[str, Any] = {"rows": [finite, nonfinite_row]}
+    spec: dict[str, Any] = {"field": "rows", "any": {"field": "score", **evidence}}
+    if nested:
+        document = {"groups": [{"rows": [finite]}, document]}
+        spec = {"field": "groups", "any": spec}
+    _assert_typed_evidence_admission(tmp_path, document, spec, False, suffix=".json")
+
+
+@pytest.mark.parametrize("suffix", [".json", ".yaml"])
+@pytest.mark.parametrize(
+    ("value", "evidence"),
+    [
+        pytest.param("ordinary text", {"equals": "ordinary text"}, id="text-equality"),
+        pytest.param("ordinary text", {"approx": "ordinary text"}, id="existing-text-approximation"),
+        pytest.param("NaN", {"equals": "NaN"}, id="text-nan"),
+        pytest.param("Infinity", {"contains": "fin"}, id="text-infinity"),
+        pytest.param("Infinity", {"predicate": "truthy"}, id="text-truthiness"),
+        pytest.param(["NaN", "Infinity"], {"set_equals": ["Infinity", "NaN"]}, id="text-set"),
+        pytest.param(True, {"equals": True}, id="true"),
+        pytest.param(False, {"equals": False}, id="false"),
+        pytest.param(True, {"equals": 1}, id="existing-boolean-numeric-equality"),
+        pytest.param([True, True], {"predicate": "all_true"}, id="boolean-list"),
+        pytest.param({"a": True, "b": True}, {"predicate": "all_true"}, id="boolean-mapping"),
+        pytest.param(False, {"predicate": "zero"}, id="existing-boolean-zero"),
+        pytest.param(True, {"predicate": "positive"}, id="existing-boolean-positive"),
+        pytest.param("1.0", {"approx": "1.0"}, id="existing-numeric-string-equality"),
+    ],
+)
+def test_typed_claim_evidence_finite_admission_preserves_text_and_booleans(
+    tmp_path: Path, suffix: str, value: Any, evidence: dict[str, Any]
+) -> None:
+    _assert_typed_evidence_admission(
+        tmp_path,
+        {"value": value},
+        {
+            "field": "value",
+            **evidence,
+            "matches_artifact_field": {"path": f"reference{suffix}", "field": "value"},
+        },
+        True,
+        suffix=suffix,
+        other_document={"value": value},
+    )
 
 
 def test_rederivation_evidence_forms_bite(tmp_path: Path) -> None:

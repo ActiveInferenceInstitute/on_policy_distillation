@@ -154,6 +154,16 @@ claims:
   evidence:
     field: all_expected_failures_documented
     equals: true
+- id: counterexample_observations_current
+  statement: Release acceptance requires successful current per-case observations for every registered mutation.
+  path: output/reports/counterexample_matrix.json
+  section: methods_sheaf
+  tracks:
+  - counterexample
+  - evidence_fields
+  evidence:
+    field: all_expected_failures_observed
+    equals: true
 - id: sheaf_coverage_heatmap
   statement: B/W/G coverage heatmap PNG is generated for the first manuscript page.
   path: output/figures/sheaf_coverage_heatmap.png
@@ -812,8 +822,8 @@ claims:
     field: all_normalized
     equals: true
 - id: counterexample_expected_failures
-  statement: Canonical counterexample matrix covers every canonical promoted track
-    with observed expected failures.
+  statement: Canonical counterexample registry documents mutations for every canonical
+    promoted track; current successful observations are a separate release requirement.
   path: output/reports/counterexample_matrix.json
   section: methods_sheaf
   tracks:
@@ -865,18 +875,18 @@ claims:
     field: all_lossless
     equals: true
 - id: adversarial_audit_known_bad_blocked
-  statement: Canonical adversarial audit documents known-bad rows and records zero
-    known-bad rows passing.
+  statement: Current successful per-case receipts show rejection of every registered
+    known-bad mutation by its actual target gate.
   path: output/reports/adversarial_audit.json
   section: methods_sheaf
   tracks:
   - adversarial_audit
   evidence:
-    field: known_bad_rows_passed
-    equals: 0
+    field: all_expected_failures_observed
+    equals: true
 - id: track_improvement_scope_complete
-  statement: Track improvement scope records complete promotion proof rows and future
-    improvement rows for canonical tracks.
+  statement: Release promotion requires current observed negative-control receipts for
+    every canonical track.
   path: output/data/track_improvement_scope.json
   section: methods_sheaf
   tracks:
@@ -884,7 +894,7 @@ claims:
   - sheaf
   - provenance
   evidence:
-    field: all_live_tracks_valid
+    field: all_required_controls_observed
     equals: true
 - id: empirical_adapter_blocked
   statement: Empirical adapter remains blocked and absent from the live sheaf registry.

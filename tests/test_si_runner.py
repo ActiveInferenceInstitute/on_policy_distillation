@@ -39,7 +39,7 @@ def test_si_tmaze_rollout(project_root, tmp_path) -> None:
     cfg = apply_pymdp_overrides(load_pymdp_config(project_root), seed=123)
     logger = RunLogger(tmp_path / "log.jsonl")
     logger.fresh()
-    result = run_si_tmaze(project_root, config=cfg, logger=logger)
+    result = run_si_tmaze(tmp_path, config=cfg, logger=logger)
     assert result.profile == "full_tmaze_sophisticated_inference"
     assert result.planner == "sophisticated_inference"
     assert result.steps == cfg.timesteps
@@ -72,10 +72,10 @@ def test_si_tmaze_rollout(project_root, tmp_path) -> None:
 def test_write_si_artifacts_schema(project_root, tmp_path) -> None:
     if not pymdp_available():
         pytest.skip("pymdp not installed")
-    cfg = load_pymdp_config(project_root)
+    cfg = apply_pymdp_overrides(load_pymdp_config(project_root), steps=2)
     logger = RunLogger(tmp_path / "log.jsonl", enabled=False)
-    result = run_si_tmaze(project_root, config=cfg, steps=2, logger=logger)
-    paths = write_si_artifacts(project_root, result, config=cfg)
+    result = run_si_tmaze(tmp_path, config=cfg, logger=logger)
+    paths = write_si_artifacts(tmp_path, result, config=cfg)
     summary = json.loads(paths["summary"].read_text(encoding="utf-8"))
     trace = json.loads(paths["trace"].read_text(encoding="utf-8"))
     matrices = json.loads(paths["model_matrices"].read_text(encoding="utf-8"))
@@ -87,6 +87,10 @@ def test_write_si_artifacts_schema(project_root, tmp_path) -> None:
     assert summary["tree_available"] is True
     assert summary["expected_known_warnings"]["tree_max_nodes"] >= 1
     assert len(trace["steps"]) == len(summary["actions"])
+    entropies = [step["belief_entropy"] for step in trace["steps"] if step["belief_entropy"] is not None]
+    assert summary["belief_entropy_start"] == entropies[0]
+    assert summary["belief_entropy_end"] == entropies[-1]
+    assert summary["config"]["timesteps"] == summary["steps"] == 2
     assert trace["steps"][0]["action_probabilities"]["move_to_cue"] == max(
         trace["steps"][0]["action_probabilities"].values()
     )
@@ -122,8 +126,8 @@ def test_simulate_cli_help(project_root) -> None:
 @pytest.mark.render_slow
 @pytest.mark.artifact_slow
 @pytest.mark.mutates_artifacts
-def test_run_and_persist(project_root) -> None:
+def test_run_and_persist(project_root, tmp_path) -> None:
     if not pymdp_available():
         pytest.skip("pymdp not installed")
-    payload = run_and_persist(project_root)
+    payload = run_and_persist(tmp_path, config=load_pymdp_config(project_root))
     assert payload["paths"]["summary"].exists()

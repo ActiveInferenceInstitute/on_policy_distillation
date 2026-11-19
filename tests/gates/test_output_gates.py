@@ -609,31 +609,32 @@ def test_figure_hash_manifest_deferred_bookends_absent_ok_and_present_tamper_fai
         build_figure_hash_manifest,
     )
 
-    for rel in _PUBLISH_DEFERRED_IMAGE_PATHS:
-        (project_root / rel).unlink(missing_ok=True)
-
+    ensure_gate_artifacts_for(project_root, "output/reports/figure_hash_manifest.json")
+    bookends = {
+        rel: (project_root / rel).read_bytes() if (project_root / rel).is_file() else None
+        for rel in _PUBLISH_DEFERRED_IMAGE_PATHS
+    }
     path = project_root / "output" / "reports" / "figure_hash_manifest.json"
-    if not path.is_file():
-        pytest.skip("figure_hash_manifest.json not generated yet")
     backup = tmp_path / "figure_hash_manifest.json.bak"
     backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
-
-    # Positive: the freshly-built manifest marks absent bookends deferred and the
-    # saved aggregate matches the row-level re-derivation (deferred rows exempt).
-    fresh = build_figure_hash_manifest(project_root)
-    assert fresh["all_hashes_present"] is True
-    deferred_rows = [r for r in fresh["rows"] if r.get("deferred")]
-    assert {r["path"] for r in deferred_rows} == set(_PUBLISH_DEFERRED_IMAGE_PATHS)
-    assert all(not r["exists"] for r in deferred_rows)
-
-    from gates.aggregate_rederivation import rederive_aggregate
-    from gates.aggregate_rederivation import ARTIFACT_AGGREGATE_RULES
-
-    spec = ARTIFACT_AGGREGATE_RULES["output/reports/figure_hash_manifest.json"][0][1]
-    assert rederive_aggregate(fresh, spec) is True
-
     try:
-        # Negative: tampering a NON-deferred registry row must still fail closed.
+        for rel in bookends:
+            (project_root / rel).unlink(missing_ok=True)
+
+        # Absent-only deferral does not waive any ordinary image requirement.
+        fresh = build_figure_hash_manifest(project_root)
+        assert fresh["all_hashes_present"] is True
+        deferred_rows = [r for r in fresh["rows"] if r.get("deferred")]
+        assert {r["path"] for r in deferred_rows} == set(_PUBLISH_DEFERRED_IMAGE_PATHS)
+        assert all(not r["exists"] for r in deferred_rows)
+
+        from gates.aggregate_rederivation import rederive_aggregate
+        from gates.aggregate_rederivation import ARTIFACT_AGGREGATE_RULES
+
+        spec = ARTIFACT_AGGREGATE_RULES["output/reports/figure_hash_manifest.json"][0][1]
+        assert rederive_aggregate(fresh, spec, project_root=project_root) is True
+
+        # An ordinary registry row cannot borrow a bookend's exemption.
         payload = json.loads(backup.read_text(encoding="utf-8"))
         nondeferred = next(row for row in payload["rows"] if not row.get("deferred"))
         nondeferred["sha256"] = ""
@@ -644,6 +645,12 @@ def test_figure_hash_manifest_deferred_bookends_absent_ok_and_present_tamper_fai
         assert checks["figure_hash_manifest_schema"] is False
     finally:
         path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
+        for rel, original in bookends.items():
+            target = project_root / rel
+            if original is None:
+                target.unlink(missing_ok=True)
+            else:
+                target.write_bytes(original)
 
 
 @pytest.mark.timeout(300)

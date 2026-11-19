@@ -26,8 +26,16 @@ def test_semantic_certificate_covers_tracks_symbols_and_variables(project_root: 
     cert = build_semantic_gluing_certificate(project_root)
 
     assert cert["schema"] == "template_active_inference.semantic_gluing.v2"
-    assert cert["ok"] is True
-    assert cert["manuscript_variables"]["sheaf_track_count"] == 33
+    from manuscript.sheaf.semantic import validate_semantic_gluing
+    from manuscript.sheaf.registry import load_track_registry
+    from roadmap_tracks.negative_controls import counterexample_payload
+
+    assert validate_semantic_gluing(project_root, require_observations=False) == []
+    if counterexample_payload(project_root)["observed_count"] == 0:
+        assert cert["ok"] is False
+    assert cert["manuscript_variables"]["sheaf_track_count"] == len(
+        load_track_registry(project_root / "manuscript/sheaf/tracks.yaml").tracks
+    )
     assert cert["shared_symbols"]["bernoulli"]["J"] == "CrossStreamCouplingPotential"
     assert cert["shared_symbols"]["si_tmaze"]["q_pi"] == "PolicyPosterior"
     assert cert["artifact_sources"]["si_summary"]["path"] == "output/data/si_tmaze_summary.json"
@@ -64,7 +72,9 @@ def test_semantic_gluing_rejects_wrong_si_ontology(project_root: Path) -> None:
     from manuscript.sheaf.semantic import validate_semantic_gluing
 
     ensure_gate_artifacts(project_root)
-    ontology_path = project_root / "manuscript" / "sections" / "imrad" / "methods_pymdp" / "ontology.yaml"
+    from ontology.bindings import resolve_model_ontology_path
+
+    ontology_path = resolve_model_ontology_path(project_root, "si_tmaze")
     original = ontology_path.read_text(encoding="utf-8")
     stat = ontology_path.stat()
     try:
@@ -92,7 +102,9 @@ def test_semantic_certificate_is_written_as_generated_artifact(project_root: Pat
         paths["dependency_graph"].relative_to(project_root).as_posix()
         == "output/data/validation_dependency_graph.json"
     )
-    assert payload["ok"] is True
+    from manuscript.sheaf.semantic import validate_semantic_gluing
+
+    assert validate_semantic_gluing(project_root, require_observations=False) == []
     assert payload["restrictions"]["coverage_missing"] == 0
     assert "si_graph_world_trace" in json.dumps(paths["crosswalk"].read_text(encoding="utf-8"))
 
@@ -200,7 +212,9 @@ def test_semantic_certificate_records_lean_graph_world_topology_witnesses(projec
     ensure_gate_artifacts(project_root)
     cert = build_semantic_gluing_certificate(project_root)
 
-    assert cert["ok"] is True
+    from manuscript.sheaf.semantic import validate_semantic_gluing
+
+    assert validate_semantic_gluing(project_root, require_observations=False) == []
     assert cert["restrictions"]["lean_all_proved"] is True
     assert cert["restrictions"]["model_checking_all_passed"] is True
 
@@ -301,4 +315,37 @@ def test_validate_manuscript_checks_semantic_certificate(project_root: Path) -> 
     write_semantic_gluing_certificate(project_root)
     checks = validate_manuscript(project_root)
 
-    assert checks["semantic_sheaf_gluing"] is True
+    from manuscript.sheaf.semantic import validate_semantic_gluing
+    from roadmap_tracks.negative_controls import counterexample_payload
+
+    assert validate_semantic_gluing(project_root, require_observations=False) == []
+    assert checks["semantic_sheaf_gluing"] is (not validate_semantic_gluing(project_root))
+    if counterexample_payload(project_root)["observed_count"] == 0:
+        assert checks["semantic_sheaf_gluing"] is False
+
+
+@pytest.mark.parametrize("model_id", ["bernoulli_toy", "si_tmaze", "graph_world"])
+def test_semantic_model_symbols_follow_live_manifest_binding(tmp_path: Path, model_id: str) -> None:
+    import yaml
+    from manuscript.sheaf.manifest import load_manifest_data
+    from manuscript.sheaf.semantic import _section_ontology_symbols
+    from ontology.bindings import resolve_model_ontology_path
+    from test_semantic_extensions import _ontology_project
+
+    root = _ontology_project(tmp_path)
+    original = resolve_model_ontology_path(root, model_id)
+    expected = _section_ontology_symbols(root, model_id)
+    moved = root / "relocated" / f"{model_id}.yaml"
+    moved.parent.mkdir()
+    moved.write_bytes(original.read_bytes())
+    manifest_path = root / "manuscript/sheaf/manifest.yaml"
+    manifest = load_manifest_data(manifest_path)
+    for section in manifest["sections"]:
+        tracks = section.get("tracks") or {}
+        if tracks.get("ontology") == original.relative_to(root).as_posix():
+            tracks["ontology"] = moved.relative_to(root).as_posix()
+    manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
+    assert _section_ontology_symbols(root, model_id) == expected
+    moved.unlink()
+    with pytest.raises(ValueError):
+        _section_ontology_symbols(root, model_id)

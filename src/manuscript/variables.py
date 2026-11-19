@@ -158,14 +158,16 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
     graph_topology_traces = _load_json(root / "output" / "data" / "si_graph_world_topology_traces.json")
     provenance_data = _load_json(root / "output" / "data" / "artifact_provenance.json")
     replay_data = _load_json(root / "output" / "reports" / "reproducibility_replay.json")
-    counterexample_data = _load_json(root / "output" / "reports" / "counterexample_matrix.json")
+    from roadmap_tracks.negative_controls import adversarial_payload, counterexample_payload
+
+    counterexample_data = counterexample_payload(root)
     sensitivity_data = _load_json(root / "output" / "data" / "sensitivity_sweep.json")
     uncertainty_data = _load_json(root / "output" / "data" / "uncertainty_summary.json")
     benchmark_data = _load_json(root / "output" / "data" / "toy_benchmark_matrix.json")
     model_checking_data = _load_json(root / "output" / "reports" / "model_checking_witnesses.json")
     lean_graph_data = _load_json(root / "output" / "reports" / "lean_graph_world_inventory.json")
     interop_data = _load_json(root / "output" / "data" / "interop_roundtrip_report.json")
-    adversarial_data = _load_json(root / "output" / "reports" / "adversarial_audit.json")
+    adversarial_data = adversarial_payload(counterexample_data)
     semantic_data = _load_json(root / "output" / "data" / "sheaf_gluing_certificate.json")
     dependency_data = _load_json(root / "output" / "data" / "validation_dependency_graph.json")
     stale_data = _load_json(root / "output" / "reports" / "stale_artifact_report.json")
@@ -379,6 +381,8 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
         "counterexample_all_known_bad_fail": int(
             bool(counterexample_data.get("all_expected_failures_observed", False))
         ),
+        "counterexample_observed_count": counterexample_data["observed_count"],
+        "counterexample_unobserved_count": counterexample_data["unobserved_count"],
         "sensitivity_cell_count": sensitivity_data.get("row_count", 0),
         "sensitivity_complete_grid": bool(sensitivity_data.get("complete_grid", False)),
         "analytical_assumption_count": assumption_data.get("row_count", 0),
@@ -399,6 +403,9 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
         "adversarial_audit_count": adversarial_data.get("audit_count", 0),
         "adversarial_audit_all_documented": bool(adversarial_data.get("all_expected_failures_documented", False)),
         "adversarial_known_bad_passed": adversarial_data.get("known_bad_rows_passed", 0),
+        "adversarial_audit_all_observed": adversarial_data["all_expected_failures_observed"],
+        "adversarial_observed_count": adversarial_data["observed_count"],
+        "adversarial_unobserved_count": adversarial_data["unobserved_count"],
         "animation_delta_count": animation_delta_data.get("delta_count", 0),
         "animation_deltas_all_nonzero": bool(animation_delta_data.get("all_nonzero", False)),
         "semantic_restriction_count": len(semantic_data.get("restrictions") or {}),

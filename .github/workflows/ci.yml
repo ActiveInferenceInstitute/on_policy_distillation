@@ -27,7 +27,9 @@ jobs:
       # Job-level so the conformance tests inside the `full` arm resolve the same
       # pinned checkout the `gnn` arm provisions. An explicit selection turns an
       # unavailable or divergent checkout into a failure instead of a skip.
-      ON_POLICY_DISTILLATION_GNN_ROOT: ${{ runner.temp }}/gnn
+      ON_POLICY_DISTILLATION_GNN_ROOT: ${{ github.workspace }}/output/gnn-pin
+      GNN_BOOTSTRAP: ${{ github.workspace }}/output/gnn-custody/gnn_bootstrap.py
+      GNN_SOURCE_MANIFEST: ${{ github.workspace }}/output/gnn-custody/v5.1.0-source-manifest.json
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # The typography contract renders the combined .tex and fails closed when
@@ -40,6 +42,13 @@ jobs:
       # One environment for every arm. `--locked` already refuses an out-of-date
       # uv.lock, so no separate `uv lock --check` step is needed.
       - run: uv sync --locked --extra dev
+      - name: Acquire independently frozen GNN producer resources
+        run: |
+          mkdir -p "$(dirname "$GNN_BOOTSTRAP")"
+          curl --fail --location --proto '=https' --proto-redir '=https' --max-time 60 --max-filesize 1048576 --output "$GNN_BOOTSTRAP" 'https://raw.githubusercontent.com/ActiveInferenceInstitute/Generalized_Notation_Notation/66d491f86895443cf588011cc6f40c37b8bae8fd/interop/gnn_bootstrap.py'
+          curl --fail --location --proto '=https' --proto-redir '=https' --max-time 60 --max-filesize 1048576 --output "$GNN_SOURCE_MANIFEST" 'https://raw.githubusercontent.com/ActiveInferenceInstitute/Generalized_Notation_Notation/66d491f86895443cf588011cc6f40c37b8bae8fd/interop/v5.1.0-source-manifest.json'
+          printf '%s  %s\n' 'f638d4c01fe7de31e43d793e59bf382d0c3d1a82f365c59238334a2b40adfb37' "$GNN_BOOTSTRAP" | sha256sum --check --strict
+          printf '%s  %s\n' '43b33c0b2b40386afa3f306fec4cc13bc1fd7c3b570fbf11d5008bad5c8e6b51' "$GNN_SOURCE_MANIFEST" | sha256sum --check --strict
       # Static checks: ruff plus a byte-compile of src, scripts, and tests.
       - run: uv run --extra dev python scripts/gate.py lint
       # Relative-link check over tracked Markdown plus the doc-contract tests.
@@ -50,6 +59,8 @@ jobs:
       # conformance + parser tests. A dead pin fails here, before the suite, and
       # a green run is evidence the pin works.
       - run: uv run --extra dev python scripts/gate.py gnn
+      # The artifact chain reads current per-case observations produced by this arm.
+      - run: uv run --extra dev python scripts/gate.py negative-controls
       # The suite is not self-contained: the gate tests and the manuscript
       # checks read the generated artifact tree, so a clean checkout has to
       # build it first. The chain is bounded and convergent and runs

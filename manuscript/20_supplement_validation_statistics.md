@@ -41,10 +41,11 @@ The appendix `manuscript_staleness` row points to
 {{manuscript_staleness_row_count}} token bindings after hydration, including late
 audit variables, and the pass flag is `{{manuscript_staleness_all_fresh}}`.
 
-This is the rendered-output side of the sheaf contract. Source fragments may
-contain hydration placeholders, but the public manuscript must not; the staleness report
-compares each token's generated value against the resolved markdown so stale
-counts are caught after composition, not only during source-file linting.
+The staleness report authenticates each occurrence's source identity, format,
+and resolved span, plus complete canonical section content, including
+token-free sections. Saved green flags do not substitute for current hydration
+equality. Repeated occurrences and self-referential count/freshness tokens are
+checked independently after genuine convergence.
 
 <!-- sheaf-track:visualization -->
 
@@ -112,12 +113,13 @@ GNN declarations: `gnn/bernoulli_toy.gnn.md` and `gnn/si_tmaze.gnn.md` [@gnn2023
 
 ### Ontology bindings
 
-- `belief_entropy` → **BeliefEntropy**
-- `expected_free_energy` → **ExpectedFreeEnergy**
-- `location` → **HiddenState**
-- `observation` → **ObservationLikelihood**
-- `policy` → **PolicyPosterior**
-- `sheaf_track` → **SheafFragment**
+- `action` → **GraphWorldAction**
+- `edge` → **GraphWorldTopology**
+- `goal` → **GraphWorldGoal**
+- `goal_reached` → **GraphWorldReachability**
+- `graph_policy` → **GraphWorldPolicy**
+- `node` → **GraphWorldState**
+- `trace_step` → **GraphWorldTrace**
 
 
 <!-- sheaf-track:animation -->

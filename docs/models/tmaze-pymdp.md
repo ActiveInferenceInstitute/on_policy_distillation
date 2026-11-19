@@ -26,13 +26,19 @@ marginal first-action probabilities, selected action names, modality-specific
 observations, and the SI tree metadata — the on-policy trajectory the student
 writes and is then scored against.
 
-Policy selection is in
-[`si_policy.py`](../../src/simulation/si_policy.py)
-(`select_policy_action`): it calls `agent.infer_policies(qs)` to get the policy
-posterior `q_π` and negative expected free energy, samples an action, and records
-the selected policy index and EFE. If pymdp's policy inference is unavailable it
-falls back to a transparent expected-utility scorer with an explicit
-`fallback_reason` — the fallback is never silent.
+The canonical SI rollout uses the real rollout path and
+`_build_si_policy_search`; a fallback helper is not substituted for SI.
+The standalone [`si_policy.py`](../../src/simulation/si_policy.py) helper is a
+separate API, and vanilla planning is a comparison condition.
+
+Observations are integer category identifiers, not one-hot arrays or incidental
+floating-point indices. Outcome category 1 is reward and category 2 punishment;
+cue information is recorded before the action it informs. Original software
+qualification used `inferactively-pymdp==1.0.4` and retains its full
+categorical-SI producer failure. Main adopted 1.0.5 in #25, but that pin update
+is not acceptance of the categorical-SI repair. Unreleased sibling repairs
+cannot supply released-producer evidence, and no scientific policy is changed
+by the local adapter fixes.
 
 ## Planner configuration
 
@@ -55,8 +61,12 @@ The manuscript reads SI search horizon `{{si_tmaze_planning_horizon}}`, rollout
 length `{{si_tmaze_steps}}`, agent `policy_len = {{si_tmaze_policy_len}}`, cue
 validity `{{si_tmaze_cue_validity}}`, and reward condition
 `{{si_tmaze_reward_condition}}` — all from the config snapshot, never hard-coded.
-`config_hash` (the first 16 hex of a SHA-256 over the sorted config snapshot)
-stamps every artifact so runs are traceable to their exact configuration.
+`config_hash` is the first 16 hexadecimal digits of SHA-256 over compact,
+sorted JSON of the effective configuration. Effective CLI inputs flow into
+both canonical and comparison production. Base and per-run seeded snapshots,
+hashes, and log paths remain distinct: canonical `--seed` does not replace
+the configured comparison seed list. Grid provenance binds the exact saved
+comparison consumed; missing comparison evidence is not silently regenerated.
 
 ## The cue as a privileged-information channel
 
@@ -84,8 +94,8 @@ channel first.
 | `data/si_tmaze_trace.json` | Per-step `q_π`, first-action marginals, modality observations, belief entropy, SI tree metadata. |
 | `data/si_tmaze_model_matrices.json` | Labeled `A/B/C/D` factor shapes, dependencies, normalization checks, preferences. |
 | `reports/si_tmaze_run_report.json` | Config hash, seed, horizon, log record count, goal flag. |
-| `data/si_policy_comparison.json` | SI alongside a **comparison-only** vanilla planner. |
-| `data/pymdp_policy_posterior_grid.json` | Step-level policy-posterior normalization evidence. |
+| `data/si_policy_comparison.json` | SI and comparison-only vanilla runs with effective base/per-run configuration and seed provenance. |
+| `data/pymdp_policy_posterior_grid.json` | Step-level posterior evidence bound to the exact consumed saved comparison and its configuration. |
 | `logs/pymdp_runs.jsonl` | Per-step JSONL run log. |
 
 The vanilla planner is recorded only as `vanilla_role: comparison_only` and

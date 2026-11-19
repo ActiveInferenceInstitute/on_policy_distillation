@@ -84,21 +84,21 @@ The appendix provenance fragment points to `output/data/artifact_provenance.json
 
 <!-- sheaf-track:counterexample -->
 
-The appendix counterexample fragment points to
-`output/reports/counterexample_matrix.json`, the expected-failure matrix that
-keeps promoted validation gates falsifiable. It currently records
-{{counterexample_count}} known-bad fixtures, and the hydrated pass flag is
-`{{counterexample_all_known_bad_fail}}`, meaning those fixtures are expected to
-fail rather than sneak through a positive-control gate.
+The registry contains {{counterexample_count}} falsification cases. Current
+receipts establish {{counterexample_observed_count}} observations;
+{{counterexample_unobserved_count}} cases remain unobserved. The
+all-observed-rejections flag is `{{counterexample_all_known_bad_fail}}`;
+documentary expectations alone cannot make it true.
 
-This row is the negative-control ledger for the sheaf. Each counterexample names
-a promoted track, target validation gate, mutation, and observed expected-failure
-status. A new live track without a counterexample row is therefore visibly
-incomplete in the track-improvement scope.
+Each registered counterexample binds its track, actual target, mutation,
+fixture, input bytes, and parametrized test node. Observation additionally
+requires a current authenticated receipt proving baseline acceptance,
+target-specific rejection, and successful test completion. Registration
+completeness and release observation acceptance are separate predicates.
 
 <!-- sheaf-track:adversarial_audit -->
 
-`sheaf-track:adversarial_audit` binds `output/reports/adversarial_audit.json`, `output/reports/scope_boundary_audit.json`, and claim-audit outputs. The appendix claim is exactly {{adversarial_audit_count}} expected-failure rows with documented status `{{adversarial_audit_all_documented}}` and known-bad-passing count {{adversarial_known_bad_passed}}.
+`sheaf-track:adversarial_audit` binds the adversarial, scope-boundary, and claim-audit outputs. The registry contains {{adversarial_audit_count}} cases with documented status `{{adversarial_audit_all_documented}}`. Current observations cover {{adversarial_observed_count}} cases; {{adversarial_unobserved_count}} remain unobserved. Required observation acceptance is `{{adversarial_audit_all_observed}}`, independently of the known-bad-passing count {{adversarial_known_bad_passed}}.
 
 <!-- sheaf-track:evidence_fields -->
 
@@ -218,3 +218,15 @@ effects to the sensitivity and uncertainty artifacts. The report contributes
 {{ablation_sensitivity_row_count}} source-backed rows, with source-backed status
 `{{ablation_sensitivity_source_backed}}`, so the appendix heatmap is a rendered
 view of validated JSON rather than a decorative restatement.
+
+<!-- sheaf-track:ontology -->
+
+### Ontology bindings
+
+- `belief_entropy` → **BeliefEntropy**
+- `expected_free_energy` → **ExpectedFreeEnergy**
+- `location` → **HiddenState**
+- `observation` → **ObservationLikelihood**
+- `policy` → **PolicyPosterior**
+- `sheaf_track` → **SheafFragment**
+

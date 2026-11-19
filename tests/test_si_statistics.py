@@ -47,6 +47,38 @@ def test_summarize_si_trace_from_fixture() -> None:
     assert stats["policy_entropy_drop_after_cue"] == pytest.approx(0.7)
 
 
+@pytest.mark.parametrize("cue_id", [1, 2], ids=["cue_left", "cue_right"])
+@pytest.mark.parametrize(
+    ("outcomes", "expected_reward_step"),
+    [([0, 0, 2], None), ([0, 0, 2, 1], 3)],
+    ids=["punishment_only", "punishment_then_reward"],
+)
+def test_reward_timing_ignores_punishment(cue_id: int, outcomes: list[int], expected_reward_step: int | None) -> None:
+    summary = {
+        "observations_by_modality": {
+            "cue": [0, cue_id] + [0] * (len(outcomes) - 2),
+            "outcome": outcomes,
+        }
+    }
+
+    stats = summarize_si_trace({"steps": []}, summary)
+
+    assert stats["cue_observed_step"] == 1
+    assert stats["reward_observed_step"] == expected_reward_step
+    assert stats["cue_before_reward"] is (expected_reward_step is not None)
+
+
+@pytest.mark.parametrize("cue_id", [1, 2], ids=["cue_left", "cue_right"])
+def test_reward_before_cue_is_not_cue_before_reward(cue_id: int) -> None:
+    summary = {"observations_by_modality": {"cue": [0, 0, cue_id], "outcome": [0, 1, 0]}}
+
+    stats = summarize_si_trace({"steps": []}, summary)
+
+    assert stats["cue_observed_step"] == 2
+    assert stats["reward_observed_step"] == 1
+    assert stats["cue_before_reward"] is False
+
+
 def test_summarize_sweep(tmp_path: Path) -> None:
     csv_path = tmp_path / "parameter_sweep.csv"
     csv_path.write_text(

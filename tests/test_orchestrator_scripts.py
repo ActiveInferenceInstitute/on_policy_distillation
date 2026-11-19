@@ -12,17 +12,23 @@ from pathlib import Path
 
 import yaml
 
+from orchestration.artifact_lock import artifact_lease
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
-def _run(script: str, *args: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [sys.executable, str(PROJECT_ROOT / "scripts" / script), *args],
-        cwd=PROJECT_ROOT,
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
+def _run(script: str, *args: str, timeout: int = 120) -> subprocess.CompletedProcess[str]:
+    with artifact_lease(PROJECT_ROOT) as lease:
+        handoff = lease.handoff()
+        return subprocess.run(
+            [sys.executable, str(PROJECT_ROOT / "scripts" / script), *args],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            env=handoff.env,
+            pass_fds=handoff.pass_fds,
+        )
 
 
 def test_run_full_chain_help_exits_zero() -> None:
@@ -136,13 +142,7 @@ def test_run_full_chain_convergence_loop_actually_executes() -> None:
     report["all_passed"] = False
     report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
-    proc = subprocess.run(
-        [sys.executable, str(PROJECT_ROOT / "scripts" / "run_full_chain.py"), "--tail-only", "--max-passes", "3"],
-        cwd=PROJECT_ROOT,
-        capture_output=True,
-        text=True,
-        timeout=1700,
-    )
+    proc = _run("run_full_chain.py", "--tail-only", "--max-passes", "3", timeout=1700)
     assert proc.returncode == 0, proc.stdout[-2000:]
     assert "convergence pass 1" in proc.stdout, proc.stdout[-1500:]  # the loop body ran
     # Final state must be green and hash-current again.

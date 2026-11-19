@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 import pytest
@@ -124,8 +125,8 @@ def test_promoted_roadmap_artifacts_are_present_and_valid(project_root: Path) ->
     assert proof["extra_extracted_theorems"] == []
     toy_issues = validate_toy_sweep_artifacts(project_root)
     formal_issues = validate_formal_interop_artifacts(project_root)
-    integration_issues = validate_integration_audit_artifacts(project_root)
-    sheaf_issues = validate_sheaf_track_artifacts(project_root)
+    integration_issues = validate_integration_audit_artifacts(project_root, require_release_evidence=False)
+    sheaf_issues = validate_sheaf_track_artifacts(project_root, require_observations=False)
     fixed_point_stale = bool(integration_issues or sheaf_issues) and all(
         _stale_fixed_point_issue(issue) for issue in [*integration_issues, *sheaf_issues]
     )
@@ -133,8 +134,8 @@ def test_promoted_roadmap_artifacts_are_present_and_valid(project_root: Path) ->
         ensure_gate_artifacts(project_root, verify=True)
         toy_issues = validate_toy_sweep_artifacts(project_root)
         formal_issues = validate_formal_interop_artifacts(project_root)
-        integration_issues = validate_integration_audit_artifacts(project_root)
-        sheaf_issues = validate_sheaf_track_artifacts(project_root)
+        integration_issues = validate_integration_audit_artifacts(project_root, require_release_evidence=False)
+        sheaf_issues = validate_sheaf_track_artifacts(project_root, require_observations=False)
     assert toy_issues == []
     assert formal_issues == []
     assert integration_issues == []
@@ -507,13 +508,9 @@ def test_integration_audit_negative_controls(project_root: Path) -> None:
 @pytest.mark.mutates_artifacts
 def test_cross_track_symbol_table_binds_type_shape_and_section_ontology(project_root: Path) -> None:
     from roadmap_tracks.integration_audit import build_cross_track_symbol_table
+    from ontology.bindings import resolve_model_ontology_path
 
-    required_sources = (
-        project_root / "gnn" / "si_tmaze.gnn.md",
-        project_root / "manuscript" / "sections" / "imrad" / "methods_pymdp" / "ontology.yaml",
-    )
-    if not all(path.is_file() for path in required_sources):
-        ensure_gate_artifacts(project_root)
+    ensure_gate_artifacts(project_root, verify=True)
     table = build_cross_track_symbol_table(project_root)
     pi_row = next(row for row in table["rows"] if row["model"] == "si_tmaze" and row["symbol"] == "q_pi")
     assert table["all_consistent"] is True
@@ -522,7 +519,7 @@ def test_cross_track_symbol_table_binds_type_shape_and_section_ontology(project_
     assert pi_row["gnn_term"] == "PolicyPosterior"
     assert pi_row["section_ontology_term"] == "PolicyPosterior"
 
-    ontology_path = project_root / "manuscript" / "sections" / "imrad" / "methods_pymdp" / "ontology.yaml"
+    ontology_path = resolve_model_ontology_path(project_root, "si_tmaze")
     original = ontology_path.read_text(encoding="utf-8")
     try:
         ontology_path.write_text(original.replace("q_pi: PolicyPosterior", "q_pi: HiddenState"), encoding="utf-8")
@@ -532,6 +529,22 @@ def test_cross_track_symbol_table_binds_type_shape_and_section_ontology(project_
         assert drifted_pi["term_consistent"] is False
     finally:
         ontology_path.write_text(original, encoding="utf-8")
+
+
+def test_promotion_projection_preserves_canonical_model_and_generic_bindings(tmp_path: Path) -> None:
+    from ontology.bindings import resolve_model_ontology_path
+    from roadmap_tracks.sheaf_tracks_support import _bound_tracks, _manifest_sections
+
+    source = Path(__file__).resolve().parents[1]
+    manifest_rel = Path("manuscript/sheaf/manifest.yaml")
+    (tmp_path / manifest_rel).parent.mkdir(parents=True)
+    shutil.copyfile(source / manifest_rel, tmp_path / manifest_rel)
+    sections = {section["id"]: section for section in _manifest_sections(tmp_path)}
+    graph_binding = sections["results_invariants"]["tracks"]["ontology"]
+    generic_binding = sections["appendix_full_sheaf"]["tracks"]["ontology"]
+    assert graph_binding != generic_binding
+    assert resolve_model_ontology_path(tmp_path, "graph_world") == tmp_path / graph_binding
+    assert {"results_invariants", "appendix_full_sheaf"}.issubset(_bound_tracks(tmp_path)["ontology"])
 
 
 def test_promoted_scripts_are_configured_between_validation_spine_and_hydration(project_root: Path) -> None:

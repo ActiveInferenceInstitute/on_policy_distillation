@@ -41,6 +41,7 @@ __all__ = [
     "sdpg_demo",
     "write_json",
     "write_all",
+    "write_complete",
     "write_markdown_tables",
     "write_statistics_artifact",
 ]
@@ -72,9 +73,13 @@ def _dir(root: Path) -> Path:
 
 
 def write_json(root: Path, name: str, payload: dict[str, Any]) -> Path:
-    path = _dir(root) / name
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return path
+    from orchestration.artifact_lock import artifact_lease
+
+    root = root.resolve()
+    with artifact_lease(root):
+        path = _dir(root) / name
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        return path
 
 
 def divergence_demo() -> dict[str, Any]:
@@ -189,50 +194,108 @@ def write_statistics_artifact(
 
 def write_markdown_tables(root: Path) -> dict[str, Path]:
     """Write the correspondence and taxonomy markdown tables."""
-    directory = _dir(root)
-    paths: dict[str, Path] = {}
-    for name, text in (
-        ("correspondence_table.md", mapping.markdown_table()),
-        ("taxonomy_table.md", taxonomy.markdown_table()),
-        ("benchmark_table.md", empirical.markdown_table()),
-    ):
-        path = directory / name
-        path.write_text(text, encoding="utf-8")
-        paths[name] = path
-    return paths
+    from orchestration.artifact_lock import artifact_lease
+
+    root = root.resolve()
+    with artifact_lease(root):
+        directory = _dir(root)
+        paths: dict[str, Path] = {}
+        for name, text in (
+            ("correspondence_table.md", mapping.markdown_table()),
+            ("taxonomy_table.md", taxonomy.markdown_table()),
+            ("benchmark_table.md", empirical.markdown_table()),
+        ):
+            path = directory / name
+            path.write_text(text, encoding="utf-8")
+            paths[name] = path
+        return paths
 
 
 def write_all(root: Path) -> dict[str, Path]:
     """Emit every deterministic first-principles artifact; return name->path."""
-    paths: dict[str, Path] = {
-        "correspondence_map.json": write_json(root, "correspondence_map.json", mapping.build_payload()),
-        "opd_taxonomy.json": write_json(root, "opd_taxonomy.json", taxonomy.build_payload()),
-        "divergence_demo.json": write_json(root, "divergence_demo.json", divergence_demo()),
-        "reward_tilting_demo.json": write_json(root, "reward_tilting_demo.json", reward_tilting_demo()),
-        "exposure_bias_demo.json": write_json(root, "exposure_bias_demo.json", exposure_bias_demo()),
-        "sdpg_demo.json": write_json(root, "sdpg_demo.json", sdpg_demo()),
-        "gkd_demo.json": write_json(root, "gkd_demo.json", gkd.build_payload()),
-        "variational_em_demo.json": write_json(root, "variational_em_demo.json", variational_em.build_payload()),
-        "diversity_demo.json": write_json(root, "diversity_demo.json", diversity.build_payload()),
-        "adaptive_demo.json": write_json(root, "adaptive_demo.json", adaptive.build_payload()),
-        "energy_demo.json": write_json(root, "energy_demo.json", energy.build_payload()),
-        "active_selection_demo.json": write_json(
-            root, "active_selection_demo.json", active_selection.build_payload()
-        ),
-        "active_selection_general_demo.json": write_json(
-            root, "active_selection_general_demo.json", active_selection_general.build_payload()
-        ),
-        "sequential_selection_demo.json": write_json(
-            root, "sequential_selection_demo.json", sequential_selection.build_payload()
-        ),
-        "empirical_benchmark.json": write_json(root, "empirical_benchmark.json", empirical.build_payload()),
-        "parallel_demo.json": write_json(root, "parallel_demo.json", parallel.build_payload()),
-        "sequential_shift.json": write_json(root, "sequential_shift.json", sequential_shift.build_payload()),
-        "sequential_shift_sensitivity.json": write_json(
-            root,
-            "sequential_shift_sensitivity.json",
-            sequential_shift.build_sensitivity_payload(),
-        ),
-    }
-    paths.update(write_markdown_tables(root))
-    return paths
+    from orchestration.artifact_lock import artifact_lease
+
+    root = root.resolve()
+    with artifact_lease(root):
+        paths: dict[str, Path] = {
+            "correspondence_map.json": write_json(root, "correspondence_map.json", mapping.build_payload()),
+            "opd_taxonomy.json": write_json(root, "opd_taxonomy.json", taxonomy.build_payload()),
+            "divergence_demo.json": write_json(root, "divergence_demo.json", divergence_demo()),
+            "reward_tilting_demo.json": write_json(root, "reward_tilting_demo.json", reward_tilting_demo()),
+            "exposure_bias_demo.json": write_json(root, "exposure_bias_demo.json", exposure_bias_demo()),
+            "sdpg_demo.json": write_json(root, "sdpg_demo.json", sdpg_demo()),
+            "gkd_demo.json": write_json(root, "gkd_demo.json", gkd.build_payload()),
+            "variational_em_demo.json": write_json(root, "variational_em_demo.json", variational_em.build_payload()),
+            "diversity_demo.json": write_json(root, "diversity_demo.json", diversity.build_payload()),
+            "adaptive_demo.json": write_json(root, "adaptive_demo.json", adaptive.build_payload()),
+            "energy_demo.json": write_json(root, "energy_demo.json", energy.build_payload()),
+            "active_selection_demo.json": write_json(
+                root, "active_selection_demo.json", active_selection.build_payload()
+            ),
+            "active_selection_general_demo.json": write_json(
+                root, "active_selection_general_demo.json", active_selection_general.build_payload()
+            ),
+            "sequential_selection_demo.json": write_json(
+                root, "sequential_selection_demo.json", sequential_selection.build_payload()
+            ),
+            "empirical_benchmark.json": write_json(root, "empirical_benchmark.json", empirical.build_payload()),
+            "parallel_demo.json": write_json(root, "parallel_demo.json", parallel.build_payload()),
+            "sequential_shift.json": write_json(root, "sequential_shift.json", sequential_shift.build_payload()),
+            "sequential_shift_sensitivity.json": write_json(
+                root,
+                "sequential_shift_sensitivity.json",
+                sequential_shift.build_sensitivity_payload(),
+            ),
+        }
+        paths.update(write_markdown_tables(root))
+        return paths
+
+
+def write_complete(root: Path, *, classroom: bool = True) -> dict[str, Path]:
+    """Emit the complete first-principles surface from current upstream inputs.
+
+    SI trace/summary and the analytical observable sweep must already exist.
+    ``write_all`` remains the smaller deterministic-only producer. Disabling
+    classroom production explicitly invalidates its three derived artifacts;
+    stale measured results must not masquerade as outputs of this invocation.
+    """
+    from orchestration.artifact_lock import artifact_lease
+
+    from . import precision_ledger, si_bridge
+
+    root = root.resolve()
+    with artifact_lease(root):
+        if not classroom:
+            for name in ("classroom.json", "statistics_demo.json", "privilege_sweep.json"):
+                root.joinpath(*ARTIFACT_DIR, name).unlink(missing_ok=True)
+
+        paths = write_all(root)
+        paths["si_bridge_demo.json"] = write_json(root, "si_bridge_demo.json", si_bridge.build_payload(root))
+        if classroom:
+            from .classroom import ClassroomConfig, run_classroom, write_classroom_artifact
+            from .privilege import PrivilegeSweepConfig, build_payload
+
+            result = run_classroom(root, ClassroomConfig())
+            paths["classroom.json"] = write_classroom_artifact(root, result)
+            paths["statistics_demo.json"] = write_statistics_artifact(
+                root,
+                teacher_entropy=result.teacher_belief_entropies,
+                student_entropy=result.student_belief_entropies,
+            )
+            paths["privilege_sweep.json"] = write_json(
+                root,
+                "privilege_sweep.json",
+                build_payload(
+                    root,
+                    PrivilegeSweepConfig(
+                        teacher_cue_validities=(0.5, 0.6, 0.7, 0.8, 0.9, 0.98),
+                        student_cue_validity=0.5,
+                        steps=3,
+                        seed=0,
+                    ),
+                ),
+            )
+        paths["precision_ledger_demo.json"] = write_json(
+            root, "precision_ledger_demo.json", precision_ledger.build_payload(root)
+        )
+        return paths

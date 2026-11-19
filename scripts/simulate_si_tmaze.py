@@ -4,14 +4,16 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
+from orchestration.artifact_lock import ARTIFACT_LEASE_ENV, ArtifactLeaseError, artifact_lease
 from simulation.pymdp_config import apply_pymdp_overrides, load_pymdp_config
-from simulation.si_artifacts import write_policy_comparison, write_policy_posterior_grid
+from simulation.si_artifacts import write_policy_comparison
 from simulation.si_runner import pymdp_available, run_and_persist
 
 
@@ -57,32 +59,38 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    if not pymdp_available():
-        print(
-            "pymdp not installed; simulate_si_tmaze.py requires inferactively-pymdp "
-            "(see pyproject.toml). Install deps with `uv sync` in the project root.",
-            file=sys.stderr,
-        )
-        return 1
+    try:
+        with artifact_lease(PROJECT_ROOT, inherited=os.environ.get(ARTIFACT_LEASE_ENV)):
+            if not pymdp_available():
+                print(
+                    "pymdp not installed; simulate_si_tmaze.py requires inferactively-pymdp "
+                    "(see pyproject.toml). Install deps with `uv sync` in the project root.",
+                    file=sys.stderr,
+                )
+                return 1
 
-    config = load_pymdp_config(PROJECT_ROOT, config_path=args.config)
-    config = apply_pymdp_overrides(
-        config,
-        steps=args.steps,
-        horizon=args.horizon,
-        seed=args.seed,
-        logging_enabled=False if args.log_disabled else None,
-        comparison_enabled=args.comparison,
-    )
-    result = run_and_persist(PROJECT_ROOT, config=config)
-    for name, path in result["paths"].items():
-        print(f"{name}: {path}")
-    if config.validation_comparison.enabled:
-        print(f"policy_comparison: {write_policy_comparison(PROJECT_ROOT)}")
-        print(f"policy_posterior_grid: {write_policy_posterior_grid(PROJECT_ROOT)}")
-    log_path = PROJECT_ROOT / config.logging.path
-    if config.logging.enabled:
-        print(f"log: {log_path}")
+            config = load_pymdp_config(PROJECT_ROOT, config_path=args.config)
+            config = apply_pymdp_overrides(
+                config,
+                steps=args.steps,
+                horizon=args.horizon,
+                seed=args.seed,
+                logging_enabled=False if args.log_disabled else None,
+                comparison_enabled=args.comparison,
+            )
+            result = run_and_persist(PROJECT_ROOT, config=config)
+            for name, path in result["paths"].items():
+                print(f"{name}: {path}")
+            if config.validation_comparison.enabled:
+                comparison_path = write_policy_comparison(PROJECT_ROOT, config=config)
+                print(f"policy_comparison: {comparison_path}")
+                print(f"policy_posterior_grid: {comparison_path.with_name('pymdp_policy_posterior_grid.json')}")
+            log_path = PROJECT_ROOT / config.logging.path
+            if config.logging.enabled:
+                print(f"log: {log_path}")
+    except ArtifactLeaseError as exc:
+        print(f"cannot run SI artifacts without artifact custody: {exc}", file=sys.stderr)
+        return 1
     return 0
 
 
