@@ -53,7 +53,8 @@ def _relative_doc_path(path: Path, project_root: Path) -> str:
 def test_meaningful_project_dirs_have_agents_and_readme(project_root: Path) -> None:
     missing: list[str] = []
     for directory in _repo_doc_contract_dirs(project_root):
-        for filename in sorted(DOC_FILENAMES):
+        filenames = {"AGENTS.md", "AUTOMATION.md"} if directory == project_root / ".github" else DOC_FILENAMES
+        for filename in sorted(filenames):
             doc = directory / filename
             if not doc.is_file():
                 rel_dir = directory.relative_to(project_root)
@@ -61,6 +62,21 @@ def test_meaningful_project_dirs_have_agents_and_readme(project_root: Path) -> N
                 missing.append(f"{prefix}{filename}")
 
     assert not missing, "missing local documentation contracts: " + ", ".join(missing)
+
+
+def test_generated_link_targets_skip_the_root_and_descendants(tmp_path: Path) -> None:
+    from scripts.check_docs_links import broken_links
+
+    source = tmp_path / "docs/reference/links.md"
+    source.parent.mkdir(parents=True)
+    source.write_text(
+        "[Generated directory](../../output/)\n"
+        "[Generated file](../../output/report.json)\n"
+        "[Checked directory](../../output-backup/)\n",
+        encoding="utf-8",
+    )
+
+    assert broken_links(tmp_path, [source]) == ["docs/reference/links.md:3 -> ../../output-backup/"]
 
 
 def test_flat_documentation_index_is_complete(project_root: Path) -> None:
