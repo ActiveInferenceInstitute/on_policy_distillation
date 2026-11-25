@@ -48,6 +48,7 @@ def styled_figure(project_root: Path, figure_id: str) -> Iterator[tuple[FigureSt
     with apply_style(style):
         yield style, out
 
+
 def subset_note(fig, shown: int, total: int, what: str, *, color: str = "#64748b", fontsize: float = 9.0) -> None:
     """Stamp a 'showing N of M' annotation on any figure rendering a filtered view.
 

@@ -143,7 +143,9 @@ def _gate_artifacts_ready(project_root: Path, *, include_manuscript: bool = Fals
         if validate_integration_audit_artifacts(root, require_release_evidence=False):
             return False
         plain_keys = set(_READY_MANUSCRIPT_CHECK_KEYS) - {
-            "claim_ledger_valid", "semantic_sheaf_gluing", "canonical_sheaf_tracks",
+            "claim_ledger_valid",
+            "semantic_sheaf_gluing",
+            "canonical_sheaf_tracks",
             "integration_audit_artifacts",
         }
         plain_keys.update({"coverage_matrix_valid", "claim_bindings_satisfied"})
@@ -163,7 +165,14 @@ def _gate_artifacts_ready(project_root: Path, *, include_manuscript: bool = Fals
         promotion_path = "output/data/track_improvement_scope.json"
         documents = {
             relative: json.loads((root / relative).read_bytes())
-            for relative in (counter_path, adversarial_path, semantic_path, notes_path, attestation_path, promotion_path)
+            for relative in (
+                counter_path,
+                adversarial_path,
+                semantic_path,
+                notes_path,
+                attestation_path,
+                promotion_path,
+            )
         }
         authenticated = {
             (counter_path, "all_expected_failures_observed"): not validate_observation_payload(
@@ -190,8 +199,10 @@ def _gate_artifacts_ready(project_root: Path, *, include_manuscript: bool = Fals
             field = evidence.get("field") if isinstance(evidence, dict) else None
             message = f"{claim.get('id') or '<unknown>'}: evidence predicate failed for {relative}"
             if (
-                isinstance(evidence, dict) and set(evidence) == {"field", "equals"}
-                and isinstance(field, str) and evidence["equals"] is True
+                isinstance(evidence, dict)
+                and set(evidence) == {"field", "equals"}
+                and isinstance(field, str)
+                and evidence["equals"] is True
                 and authenticated.get((relative, field)) is True
                 and documents[relative].get(field) is False
             ):

@@ -48,7 +48,9 @@ def test_validate_all_gnn_ontology_rejects_extra_section_alias(tmp_path: Path) -
 
     root = _ontology_project(tmp_path)
     ontology_path = resolve_model_ontology_path(root, "si_tmaze")
-    ontology_path.write_text(ontology_path.read_text(encoding="utf-8") + "\nalien_alias: HiddenState\n", encoding="utf-8")
+    ontology_path.write_text(
+        ontology_path.read_text(encoding="utf-8") + "\nalien_alias: HiddenState\n", encoding="utf-8"
+    )
     gaps = validate_all_gnn_ontology(root)
     assert any("alien_alias" in gap for gap in gaps)
 

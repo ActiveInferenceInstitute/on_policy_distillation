@@ -54,7 +54,8 @@ def test_only_genuinely_absent_publish_bookends_defer(tmp_path: Path) -> None:
     payload = build_figure_hash_manifest(tmp_path)
     deferred = [row for row in payload["rows"] if row["deferred"]]
     assert {row["path"] for row in deferred} == {
-        "output/figures/transmission_integrity_strip.png", "output/figures/transmission_pairing.png",
+        "output/figures/transmission_integrity_strip.png",
+        "output/figures/transmission_pairing.png",
     }
     assert all(not (tmp_path / row["path"]).exists() for row in deferred)
     assert _figure_hash_rows_complete(tmp_path, payload)
@@ -64,10 +65,18 @@ def test_only_genuinely_absent_publish_bookends_defer(tmp_path: Path) -> None:
     assert rederive_aggregate(payload, spec, project_root=tmp_path)
 
 
-@pytest.mark.parametrize("mutation", [
-    "ordinary_deferred", "present_bookend_deferred", "present_hash", "present_size", "changed_bytes",
-    "absent_forged_hash", "duplicate_row",
-])
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "ordinary_deferred",
+        "present_bookend_deferred",
+        "present_hash",
+        "present_size",
+        "changed_bytes",
+        "absent_forged_hash",
+        "duplicate_row",
+    ],
+)
 def test_forged_deferral_and_stale_present_images_fail(tmp_path: Path, mutation: str) -> None:
     _images(tmp_path)
     bookend = tmp_path / "output/figures/transmission_pairing.png"
@@ -100,19 +109,22 @@ def test_forged_deferral_and_stale_present_images_fail(tmp_path: Path, mutation:
     _assert_gate(tmp_path, False)
 
 
-@pytest.mark.parametrize("text", [
-    "This finite toy is illustrative; we measured production LLMs.",
-    "We did not measure production LLMs; we measured production LLMs.",
-    "We did not measure production LLMs and we measured production LLMs.",
-    "This is not a universal theorem; we establish a general theorem.",
-    "No biological data are used, but we use biological data.",
-    "The finite toy is limited in scope: we validate Qwen results.",
-    "We do not claim OPD = Active Inference, but OPD = Active Inference.",
-    "We measured production LLMs, not finite toy models.",
-    "This is a general theorem, not a finite illustration.",
-    "No Markov blanket is biological and Markov blanket is physical.",
-    "No biological Markov blanket is claimed and a biological boundary is established.",
-])
+@pytest.mark.parametrize(
+    "text",
+    [
+        "This finite toy is illustrative; we measured production LLMs.",
+        "We did not measure production LLMs; we measured production LLMs.",
+        "We did not measure production LLMs and we measured production LLMs.",
+        "This is not a universal theorem; we establish a general theorem.",
+        "No biological data are used, but we use biological data.",
+        "The finite toy is limited in scope: we validate Qwen results.",
+        "We do not claim OPD = Active Inference, but OPD = Active Inference.",
+        "We measured production LLMs, not finite toy models.",
+        "This is a general theorem, not a finite illustration.",
+        "No Markov blanket is biological and Markov blanket is physical.",
+        "No biological Markov blanket is claimed and a biological boundary is established.",
+    ],
+)
 def test_each_affirmative_scope_clause_is_rejected(tmp_path: Path, text: str) -> None:
     manuscript = tmp_path / "manuscript"
     manuscript.mkdir()
@@ -125,13 +137,16 @@ def test_each_affirmative_scope_clause_is_rejected(tmp_path: Path, text: str) ->
     assert report["violations"]
 
 
-@pytest.mark.parametrize("text", [
-    "No universal theorem or general theorem is claimed.",
-    "We did not measure production LLMs and did not validate Qwen results.",
-    "No biological Markov blanket boundary claim is made; no biological data are used.",
-    "We do not claim OPD = Active Inference; this is not a universal theorem.",
-    "Qwen and Thinking Machines are external context, not reproduced results.",
-])
+@pytest.mark.parametrize(
+    "text",
+    [
+        "No universal theorem or general theorem is claimed.",
+        "We did not measure production LLMs and did not validate Qwen results.",
+        "No biological Markov blanket boundary claim is made; no biological data are used.",
+        "We do not claim OPD = Active Inference; this is not a universal theorem.",
+        "Qwen and Thinking Machines are external context, not reproduced results.",
+    ],
+)
 def test_all_negated_guardrails_remain_legitimate(tmp_path: Path, text: str) -> None:
     manuscript = tmp_path / "manuscript"
     manuscript.mkdir()

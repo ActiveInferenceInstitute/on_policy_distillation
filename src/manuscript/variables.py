@@ -214,11 +214,11 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
     energy_data = _load_json(root / "output" / "data" / "firstprinciples" / "energy_demo.json")
     energy_vfe_prior = energy_data.get("vfe_at_prior") or {}
     energy_efe = energy_data.get("efe") or {}
-    active_selection_data = _load_json(
-        root / "output" / "data" / "firstprinciples" / "active_selection_demo.json"
-    )
+    active_selection_data = _load_json(root / "output" / "data" / "firstprinciples" / "active_selection_demo.json")
     active_selection_policies = active_selection_data.get("policies") or []
-    active_general_data = _load_json(root / "output" / "data" / "firstprinciples" / "active_selection_general_demo.json")
+    active_general_data = _load_json(
+        root / "output" / "data" / "firstprinciples" / "active_selection_general_demo.json"
+    )
     sequential_data = _load_json(root / "output" / "data" / "firstprinciples" / "sequential_selection_demo.json")
     sequential_policies = sequential_data.get("policies") or {}
     sequential_horizon = sequential_data.get("horizon_curve") or {}
@@ -245,9 +245,7 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
     exposure_gap = exposure_bias_data.get("gap") or {}
     si_stats = stats_data.get("si_tmaze") or {}
     sweep_stats = stats_data.get("sweep") or {}
-    if require_analysis_outputs and not (
-        "max_residual" in sweep_stats and "rmse_mi" in sweep_stats
-    ):
+    if require_analysis_outputs and not ("max_residual" in sweep_stats and "rmse_mi" in sweep_stats):
         # Fail closed: defaulting these to 0.0 would hydrate the *strongest
         # possible* agreement claim ("residual 0") exactly when the statistics
         # artifact is missing or corrupt.
@@ -600,20 +598,14 @@ def generate_variables(project_root: Path, *, require_analysis_outputs: bool = T
         "sequential_gap_closed": float(sequential_shift_data.get("gap_closed", 0.0)),
         "sequential_shift_ok": bool(sequential_shift_data.get("ok", False)),
         "sequential_sensitivity_row_count": int(sequential_sensitivity_data.get("row_count", 0) or 0),
-        "sequential_sensitivity_baseline_loss": float(
-            sequential_sensitivity_data.get("baseline_test_loss", 0.0)
-        ),
+        "sequential_sensitivity_baseline_loss": float(sequential_sensitivity_data.get("baseline_test_loss", 0.0)),
         "sequential_sensitivity_final_loss": float(sequential_sensitivity_data.get("final_test_loss", 0.0)),
         "sequential_sensitivity_test_loss_reduction": float(
             sequential_sensitivity_data.get("test_loss_reduction", 0.0)
         ),
-        "sequential_sensitivity_baseline_shift": float(
-            sequential_sensitivity_data.get("baseline_shift_mass", 0.0)
-        ),
+        "sequential_sensitivity_baseline_shift": float(sequential_sensitivity_data.get("baseline_shift_mass", 0.0)),
         "sequential_sensitivity_final_shift": float(sequential_sensitivity_data.get("final_shift_mass", 0.0)),
-        "sequential_sensitivity_shift_reduction": float(
-            sequential_sensitivity_data.get("shift_mass_reduction", 0.0)
-        ),
+        "sequential_sensitivity_shift_reduction": float(sequential_sensitivity_data.get("shift_mass_reduction", 0.0)),
         "sequential_sensitivity_ok": bool(sequential_sensitivity_data.get("ok", False)),
         "proof_dependency_edge_count": proof_dependency_data.get("edge_count", 0),
         "proof_dependency_all_resolved": bool(proof_dependency_data.get("all_edges_resolved", False)),

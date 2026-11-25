@@ -65,7 +65,9 @@ def test_write_sheaf_track_artifacts_writes_each_generated_path_once(monkeypatch
     monkeypatch.setattr(
         scholarship,
         "write_scholarship_source_matrix",
-        lambda root: fake_write_json(root / "output" / "data" / "scholarship_source_matrix.json", {"schema": "scholarship"}),
+        lambda root: fake_write_json(
+            root / "output" / "data" / "scholarship_source_matrix.json", {"schema": "scholarship"}
+        ),
     )
     monkeypatch.setattr(
         supplemental,
@@ -134,6 +136,7 @@ def test_write_semantic_gluing_outputs_emits_one_status_supplement_and_certifica
         lambda root: calls.update(["certificate"]) or {"schema": "certificate"},
     )
     monkeypatch.setattr(semantic, "_with_proof_obligations", lambda root, data: data)
+    monkeypatch.setattr(semantic, "_attestation_consistent_and_current", lambda root, attestation: True)
 
     paths = semantic.write_semantic_gluing_outputs(tmp_path, refresh_hydration=True)
 

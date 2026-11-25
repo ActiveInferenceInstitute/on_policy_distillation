@@ -306,9 +306,7 @@ def write_policy_comparison(
                     f"pymdp_compare_{planner}_{seeded.planning_horizon}_{seed}.jsonl"
                 )
                 cfg = replace(seeded, logging=replace(seeded.logging, path=str(log_path)))
-                logger = RunLogger.from_project_root(
-                    root, relative_path=cfg.logging.path, enabled=cfg.logging.enabled
-                )
+                logger = RunLogger.from_project_root(root, relative_path=cfg.logging.path, enabled=cfg.logging.enabled)
                 logger.fresh()
                 result = run_validation_comparison_tmaze(root, config=cfg, planner=planner, logger=logger)
                 diagnostics.append(result.runtime_diagnostics)

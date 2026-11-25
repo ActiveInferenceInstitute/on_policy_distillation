@@ -149,8 +149,10 @@ def build_model_checking_witnesses(project_root: Path) -> dict[str, Any]:
         nodes = [str(step.get("node")) for step in trace]
         # Finite enumeration: walk every step of the declared trace and check
         # the advance chain terminates at the goal node.
-        walk_reaches_goal = bool(nodes) and nodes[-1] == "goal" and all(
-            step.get("action") in {"advance", "stay_goal"} for step in trace
+        walk_reaches_goal = (
+            bool(nodes)
+            and nodes[-1] == "goal"
+            and all(step.get("action") in {"advance", "stay_goal"} for step in trace)
         )
         counterexamples = [] if walk_reaches_goal else [f"walk terminated at {nodes[-1] if nodes else 'nowhere'}"]
         rows.append(

@@ -116,9 +116,7 @@ def build_payload(root: Path | None = None) -> dict[str, object]:
 
     post_cue_entropy = belief_entropy[cue_step] if cue_step is not None else float("nan")
     entropy_drop_at_cue = (
-        belief_entropy[cue_step - 1] - belief_entropy[cue_step]
-        if cue_step is not None and cue_step > 0
-        else 0.0
+        belief_entropy[cue_step - 1] - belief_entropy[cue_step] if cue_step is not None and cue_step > 0 else 0.0
     )
     entropy_collapses_at_cue = bool(entropy_drop_at_cue > 1e-3)
 
@@ -131,7 +129,9 @@ def build_payload(root: Path | None = None) -> dict[str, object]:
     # NC (a): blinded cue (validity 0.5) -> EFE no longer picks cue, residual re-opens.
     blinded_efe_picks_cue = efe_menu_selects_cue(0.5)
     blinded_residual = analytical_residual_at_validity(0.5)
-    blinded_control_bites = bool((not blinded_efe_picks_cue) and blinded_residual > analytical_residual + _MISMATCH_MARGIN)
+    blinded_control_bites = bool(
+        (not blinded_efe_picks_cue) and blinded_residual > analytical_residual + _MISMATCH_MARGIN
+    )
 
     # NC (b): validity-specificity -- wrong validities must NOT match the SI entropy.
     mismatch_at_one = abs(analytical_residual_at_validity(1.0) - post_cue_entropy) > _MISMATCH_MARGIN
@@ -146,8 +146,12 @@ def build_payload(root: Path | None = None) -> dict[str, object]:
     per_step_abs_error = [abs(analytical_traj[i] - belief_entropy[i]) for i in range(len(steps))]
     max_trajectory_error_abs = max(per_step_abs_error) if per_step_abs_error else 0.0
     trajectory_match = bool(max_trajectory_error_abs < _MATCH_TOL)
-    monotone_collapse_measured = bool(all(belief_entropy[i] >= belief_entropy[i + 1] - 1e-9 for i in range(len(belief_entropy) - 1)))
-    monotone_collapse_predicted = bool(all(analytical_traj[i] >= analytical_traj[i + 1] - 1e-9 for i in range(len(analytical_traj) - 1)))
+    monotone_collapse_measured = bool(
+        all(belief_entropy[i] >= belief_entropy[i + 1] - 1e-9 for i in range(len(belief_entropy) - 1))
+    )
+    monotone_collapse_predicted = bool(
+        all(analytical_traj[i] >= analytical_traj[i + 1] - 1e-9 for i in range(len(analytical_traj) - 1))
+    )
     # Controls along the WHOLE trajectory: wrong validity and shuffled observation
     # order must both break the match.
     wrong_validity_traj = analytical_entropy_trajectory(cue_obs_by_step, outcome_obs_by_step, 1.0)
@@ -155,7 +159,9 @@ def build_payload(root: Path | None = None) -> dict[str, object]:
         (abs(wrong_validity_traj[i] - belief_entropy[i]) for i in range(len(steps))), default=0.0
     )
     wrong_validity_breaks_trajectory = bool(wrong_validity_trajectory_max_error > _MISMATCH_MARGIN)
-    rev_traj = analytical_entropy_trajectory(list(reversed(cue_obs_by_step)), list(reversed(outcome_obs_by_step)), cue_validity)
+    rev_traj = analytical_entropy_trajectory(
+        list(reversed(cue_obs_by_step)), list(reversed(outcome_obs_by_step)), cue_validity
+    )
     shuffled_order_breaks_trajectory = bool(
         max(abs(rev_traj[i] - belief_entropy[i]) for i in range(len(steps))) > _MISMATCH_MARGIN
     )

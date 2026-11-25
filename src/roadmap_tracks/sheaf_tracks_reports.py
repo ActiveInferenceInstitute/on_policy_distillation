@@ -297,9 +297,9 @@ def build_track_improvement_scope(project_root: Path) -> dict[str, Any]:
             "has_validation_gate": bool(gates.get(artifact)) or True,
             "has_negative_control": bool(negative_by_track.get(track_id)) or track_id not in CANONICAL_TRACKS,
             "negative_control_observed": observed_by_track.get(track_id) if track_id in CANONICAL_TRACKS else None,
-            "negative_control_status": (
-                "observed" if observed_by_track.get(track_id) else "documented_unobserved"
-            ) if track_id in CANONICAL_TRACKS else "outside_registered_receipt_scope",
+            "negative_control_status": ("observed" if observed_by_track.get(track_id) else "documented_unobserved")
+            if track_id in CANONICAL_TRACKS
+            else "outside_registered_receipt_scope",
             "versioned_track_id": VERSIONED_TRACK_RE.search(track_id) is not None,
         }
         row["promotion_complete"] = not row["versioned_track_id"] and all(
@@ -436,7 +436,9 @@ def build_validation_dependency_graph(project_root: Path) -> dict[str, Any]:
         edges.append({"source": row["id"], "target": "expected_failure", "kind": "fixture_to_expected_failure"})
         edges.append({"source": row["id"], "target": row["test"], "kind": "case_to_test_node"})
         if row["receipt"] is not None:
-            edges.append({"source": row["id"], "target": row["receipt_sha256"], "kind": "fixture_to_observed_rejection"})
+            edges.append(
+                {"source": row["id"], "target": row["receipt_sha256"], "kind": "fixture_to_observed_rejection"}
+            )
     for row in build_model_checking_witnesses(root).get("rows") or []:
         edges.append({"source": str(row.get("model")), "target": str(row.get("id")), "kind": "model_to_witness"})
     for row in build_interop_roundtrip_report(root).get("rows") or []:
@@ -487,8 +489,11 @@ def build_validation_dependency_graph(project_root: Path) -> dict[str, Any]:
 def _canonical_restrictions(root: Path, *, payloads: dict[str, dict] | None = None) -> dict[str, bool]:
     registry = _registry_tracks(root)
     bound = _bound_tracks(root)
+
     def _read(key: str) -> dict:
-        return payloads[key] if payloads is not None and key in payloads else _load_json(root / CANONICAL_ARTIFACTS[key])
+        return (
+            payloads[key] if payloads is not None and key in payloads else _load_json(root / CANONICAL_ARTIFACTS[key])
+        )
 
     provenance = _read("provenance")
     replay = _read("replay_matrix")
@@ -518,6 +523,7 @@ def _canonical_restrictions(root: Path, *, payloads: dict[str, dict] | None = No
 
     supplemental = validate_supplemental_payloads(root, payloads)
     from manuscript.sheaf.semantic import validate_canonical_claim_bindings
+
     return {
         "no_versioned_live_tracks": not any(VERSIONED_TRACK_RE.search(track_id) for track_id in registry),
         "all_canonical_tracks_registered": set(CANONICAL_TRACKS).issubset(registry),
@@ -531,7 +537,9 @@ def _canonical_restrictions(root: Path, *, payloads: dict[str, dict] | None = No
         and sensitivity.get("all_finite_bounds_ok") is True,
         "uncertainty_normalized": uncertainty.get("all_normalized") is True
         and uncertainty.get("all_bins_valid") is True,
-        "counterexample_receipts_consistent": not validate_observation_payload(root, counter, require_observations=False),
+        "counterexample_receipts_consistent": not validate_observation_payload(
+            root, counter, require_observations=False
+        ),
         "counterexamples_fail_as_expected": not validate_observation_payload(root, counter),
         "model_checking_exhaustive": model.get("all_exhaustive") is True and model.get("all_passed") is True,
         "interop_lossless": interop.get("all_lossless") is True and interop.get("all_shape_diffs_empty") is True,

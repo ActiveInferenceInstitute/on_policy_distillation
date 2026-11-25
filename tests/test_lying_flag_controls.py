@@ -44,18 +44,14 @@ def _sheaf_issues(project_root: Path, mutate) -> list[str]:
     ensure_gate_artifacts(root, verify=True)
     payloads = load_sheaf_track_payloads(root)
     mutate(payloads)
-    return validate_sheaf_track_payloads(
-        root, payloads, validate_saved_certificate=False
-    )
+    return validate_sheaf_track_payloads(root, payloads, validate_saved_certificate=False)
 
 
 # --- Flag 1: si_invariants.json :: all_pass --------------------------------
 
 
 def test_flag1_si_invariants_all_pass_honest_passes(project_root: Path) -> None:
-    payload = json.loads(
-        (project_root / "output" / "reports" / "si_invariants.json").read_text(encoding="utf-8")
-    )
+    payload = json.loads((project_root / "output" / "reports" / "si_invariants.json").read_text(encoding="utf-8"))
     assert _si_invariants_all_pass_ok(payload) is True
 
 
@@ -198,9 +194,7 @@ def test_flag8_producers_represented_lying_flag_dies(project_root: Path) -> None
         p["replay_matrix"]["all_configured_producers_represented"] = True  # the lie
 
     issues = _sheaf_issues(project_root, mutate)
-    assert any(
-        "replay_matrix.json does not represent every configured producer" in i for i in issues
-    )
+    assert any("replay_matrix.json does not represent every configured producer" in i for i in issues)
 
 
 # --- Flag 9: track_improvement_scope.json :: all_live_tracks_valid ----------
@@ -212,9 +206,7 @@ def test_flag9_live_tracks_valid_lying_flag_dies(project_root: Path) -> None:
         p["track_improvement_scope"]["all_live_tracks_valid"] = True  # the lie
 
     issues = _sheaf_issues(project_root, mutate)
-    assert any(
-        "track_improvement_scope.json has incomplete live-track promotion rows" in i for i in issues
-    )
+    assert any("track_improvement_scope.json has incomplete live-track promotion rows" in i for i in issues)
 
 
 # --- Advisor hardening: empty / missing rows must NOT vacuously pass ----------

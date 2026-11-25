@@ -475,18 +475,14 @@ def validate_reproducibility_replay(project_root: Path, *, rebuild: bool = False
     return issues
 
 
-def validate_counterexample_matrix(
-    project_root: Path, *, require_observations: bool = True
-) -> list[str]:
+def validate_counterexample_matrix(project_root: Path, *, require_observations: bool = True) -> list[str]:
     from roadmap_tracks.negative_controls import validate_observation_payload
 
     root = project_root.resolve()
     path = root / "output" / "reports" / "counterexample_matrix.json"
     if not path.is_file():
         return ["missing output/reports/counterexample_matrix.json"]
-    return validate_observation_payload(
-        root, _load_json(path), require_observations=require_observations
-    )
+    return validate_observation_payload(root, _load_json(path), require_observations=require_observations)
 
 
 def validate_validation_spine(project_root: Path) -> list[str]:

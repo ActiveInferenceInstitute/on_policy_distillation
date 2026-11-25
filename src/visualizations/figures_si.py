@@ -35,7 +35,7 @@ def _tmaze_action_vocabulary(root: Path, data: dict[str, Any]) -> tuple[dict[int
     matrices_path = root / "output" / "data" / "si_tmaze_model_matrices.json"
     if matrices_path.is_file():
         matrices = json.loads(matrices_path.read_text(encoding="utf-8"))
-        action_labels = ((matrices.get("labels") or {}).get("actions") or {})
+        action_labels = (matrices.get("labels") or {}).get("actions") or {}
         for idx_text, name in sorted(action_labels.items(), key=lambda item: int(item[0])):
             index_to_name.setdefault(int(idx_text), str(name))
     action_probabilities = data.get("action_probabilities") or []
@@ -80,7 +80,13 @@ def figure_si_belief_entropy_curve(project_root: Path) -> Path:
         ax.set_ylabel("Belief entropy (nats)")
         ax.set_title("Cue observation reduces rollout uncertainty")
         style_grid(ax, style)
-        fig.text(0.01, 0.01, "Source: output/data/si_tmaze_trace.json", fontsize=style.font_size("source"), color=style.color("muted"))
+        fig.text(
+            0.01,
+            0.01,
+            "Source: output/data/si_tmaze_trace.json",
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
+        )
         save_styled_figure(fig, out, style)
     return out
 
@@ -152,7 +158,13 @@ def figure_si_obs_action_trace(project_root: Path) -> Path:
                 color=style.color("primary"),
             )
         _style_discrete_y(act_ax, style)
-        fig.text(0.01, 0.01, "Source: output/data/si_tmaze_summary.json", fontsize=style.font_size("source"), color=style.color("muted"))
+        fig.text(
+            0.01,
+            0.01,
+            "Source: output/data/si_tmaze_summary.json",
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
+        )
         save_styled_figure(fig, out, style)
     return out
 
@@ -211,12 +223,16 @@ def figure_si_tmaze_actions(project_root: Path) -> Path:
         prob_ax.set_ylim(-0.02, 1.02)
         prob_ax.set_xlabel("Timestep")
         prob_ax.set_ylabel("Marginal first-action probability")
-        prob_ax.set_title(
-            f"Policy posterior: cue action is selected first (horizon={planning_horizon})"
-        )
+        prob_ax.set_title(f"Policy posterior: cue action is selected first (horizon={planning_horizon})")
         style_grid(prob_ax, style)
         prob_ax.legend(frameon=True, ncol=2, fontsize=style.font_size("legend"))
-        fig.text(0.01, 0.01, "Source: output/data/si_tmaze_summary.json", fontsize=style.font_size("source"), color=style.color("muted"))
+        fig.text(
+            0.01,
+            0.01,
+            "Source: output/data/si_tmaze_summary.json",
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
+        )
         save_styled_figure(fig, out, style)
     return out
 
@@ -253,8 +269,12 @@ def figure_si_tmaze_model_matrices(project_root: Path) -> Path:
             shape_ax.add_patch(box)
             shape_ax.text(0.08, y, name, fontsize=style.font_size("small"), weight="bold", color=color, va="center")
             shape_ax.text(0.22, y, label, fontsize=style.font_size("dense"), va="center", color=style.color("primary"))
-            shape_ax.text(0.58, y, f"shape {shape}", fontsize=style.font_size("dense"), va="center", color=style.color("muted"))
-            shape_ax.text(0.78, y, f"deps {deps}", fontsize=style.font_size("dense"), va="center", color=style.color("muted"))
+            shape_ax.text(
+                0.58, y, f"shape {shape}", fontsize=style.font_size("dense"), va="center", color=style.color("muted")
+            )
+            shape_ax.text(
+                0.78, y, f"deps {deps}", fontsize=style.font_size("dense"), va="center", color=style.color("muted")
+            )
             y -= 0.158
         env = data.get("environment") or {}
         shape_ax.text(

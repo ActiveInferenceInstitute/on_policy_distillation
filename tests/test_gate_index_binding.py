@@ -12,7 +12,11 @@ from __future__ import annotations
 from pathlib import Path
 
 from gates.output_checks import _gate_index_binding
-from roadmap_tracks.integration_audit_builders import GATE_INDEX_ROWS, _rows_fully_specified, build_validation_gate_index
+from roadmap_tracks.integration_audit_builders import (
+    GATE_INDEX_ROWS,
+    _rows_fully_specified,
+    build_validation_gate_index,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 

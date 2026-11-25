@@ -27,7 +27,7 @@ def test_quantitative_match_to_si_post_cue_entropy(project_root: Path) -> None:
 
 def test_match_is_validity_specific_and_blinded_control_bites(project_root: Path) -> None:
     p = si_bridge.build_payload(project_root)
-    assert p["match_is_validity_specific"] is True   # wrong validities do NOT match
+    assert p["match_is_validity_specific"] is True  # wrong validities do NOT match
     assert p["blinded_control_bites"] is True
 
 
@@ -49,8 +49,8 @@ def test_per_step_trajectory_matches_pymdp(project_root: Path) -> None:
 
 def test_trajectory_controls_bite(project_root: Path) -> None:
     p = si_bridge.build_payload(project_root)
-    assert p["wrong_validity_breaks_trajectory"] is True   # wrong cue validity
-    assert p["shuffled_order_breaks_trajectory"] is True    # reversed observation order
+    assert p["wrong_validity_breaks_trajectory"] is True  # wrong cue validity
+    assert p["shuffled_order_breaks_trajectory"] is True  # reversed observation order
 
 
 def test_trajectory_rederived_from_obs_not_stored_vector(project_root: Path) -> None:

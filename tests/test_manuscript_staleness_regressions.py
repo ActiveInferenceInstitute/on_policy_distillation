@@ -120,7 +120,9 @@ def test_missing_hydrated_file_and_unmapped_occurrence_fail_closed(tmp_path: Pat
     assert unmapped["all_fresh"] is False
 
 
-@pytest.mark.parametrize("mutation", ["drop_repeat", "duplicate_identity", "format_spec", "source_offset", "section_hash", "row_count"])
+@pytest.mark.parametrize(
+    "mutation", ["drop_repeat", "duplicate_identity", "format_spec", "source_offset", "section_hash", "row_count"]
+)
 def test_saved_occurrence_identity_and_content_are_rederived(tmp_path: Path, mutation: str) -> None:
     root = _project(tmp_path, "Left {{pipeline_track_count}}; right {{pipeline_track_count}}.\n")
     assert _hydrate(root)["all_fresh"] is True

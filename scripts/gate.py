@@ -206,9 +206,7 @@ def _read_bootstrap_pin() -> dict[str, str]:
         raise SystemExit(f"gnn arm: cannot read {PIN_PATH.relative_to(PROJECT_ROOT)}: {exc}") from exc
     if not isinstance(data, dict):
         raise SystemExit(f"gnn arm: {PIN_PATH.name} must be a JSON object")
-    missing = [
-        key for key in ("commit", "repository") if not isinstance(data.get(key), str) or not data[key]
-    ]
+    missing = [key for key in ("commit", "repository") if not isinstance(data.get(key), str) or not data[key]]
     if missing:
         raise SystemExit(f"gnn arm: {PIN_PATH.name} records no {missing}")
     tag = data.get("tag")
@@ -262,9 +260,19 @@ def _report_pin(pin: dict[str, str], checkout: Path) -> None:
 def reader_command(interpreter: str, source: Path | str) -> list[str]:
     """Run the producer's reader inside full pinned-source admission."""
     return [
-        interpreter, "-I", "-B", str(PROJECT_ROOT / "scripts/qualified_gnn.py"),
-        "check", "--repo", str(PROJECT_ROOT), "--source", str(source),
-        "--workflow", CONFORMANCE_WORKFLOW, "--job", CONFORMANCE_JOB,
+        interpreter,
+        "-I",
+        "-B",
+        str(PROJECT_ROOT / "scripts/qualified_gnn.py"),
+        "check",
+        "--repo",
+        str(PROJECT_ROOT),
+        "--source",
+        str(source),
+        "--workflow",
+        CONFORMANCE_WORKFLOW,
+        "--job",
+        CONFORMANCE_JOB,
     ]
 
 
@@ -338,9 +346,7 @@ def run_arm(arm: str) -> int:
 
 def _display(command: list[str]) -> str:
     """A command as a reader would type it: `python`, project-relative paths."""
-    parts = [
-        "python" if part == _python() or part.endswith("/.venv/bin/python") else part for part in command
-    ]
+    parts = ["python" if part == _python() or part.endswith("/.venv/bin/python") else part for part in command]
     return " ".join(part.removeprefix(str(PROJECT_ROOT) + os.sep) for part in parts)
 
 

@@ -116,7 +116,10 @@ def main(argv: list[str] | None = None) -> int:
         if args.dry_run:
             for step in plan:
                 print(step)
-            print(f"# then converge (tail + {VALIDATE}) up to {args.max_passes} passes" + (" + render" if args.render else ""))
+            print(
+                f"# then converge (tail + {VALIDATE}) up to {args.max_passes} passes"
+                + (" + render" if args.render else "")
+            )
             return 0
 
         for script in CONVERGENCE_TAIL if args.tail_only else full:

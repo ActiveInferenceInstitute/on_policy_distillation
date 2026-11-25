@@ -19,7 +19,9 @@ def _decorator_name(node: ast.AST) -> str:
 
 def _module_marks_artifact_slow(tree: ast.Module) -> bool:
     for node in tree.body:
-        if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == "pytestmark" for target in node.targets):
+        if isinstance(node, ast.Assign) and any(
+            isinstance(target, ast.Name) and target.id == "pytestmark" for target in node.targets
+        ):
             value = node.value
             if _decorator_name(value).endswith("pytest.mark.artifact_slow"):
                 return True

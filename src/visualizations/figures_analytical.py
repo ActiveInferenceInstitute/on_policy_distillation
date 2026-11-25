@@ -97,7 +97,9 @@ def figure_energy_decomposition(project_root: Path) -> Path:
         vfe_ax.set_ylabel("nats")
         vfe_ax.set_title("VFE at prior: complexity is zero", fontsize=style.font_size("small"))
         for i, v in enumerate(vfe_values):
-            vfe_ax.text(i, v, f"{v:.3f}", ha="center", va="bottom" if v >= 0 else "top", fontsize=style.font_size("annotation"))
+            vfe_ax.text(
+                i, v, f"{v:.3f}", ha="center", va="bottom" if v >= 0 else "top", fontsize=style.font_size("annotation")
+            )
         vfe_ax.annotate(
             "q = prior, so\ncomplexity = 0",
             xy=(0, complexity),
@@ -131,7 +133,9 @@ def figure_energy_decomposition(project_root: Path) -> Path:
         efe_ax.set_ylabel("nats")
         efe_ax.set_title("EFE sign convention: G = risk + ambiguity - value", fontsize=style.font_size("small"))
         for i, v in enumerate(efe_values):
-            efe_ax.text(i, v, f"{v:.3f}", ha="center", va="bottom" if v >= 0 else "top", fontsize=style.font_size("annotation"))
+            efe_ax.text(
+                i, v, f"{v:.3f}", ha="center", va="bottom" if v >= 0 else "top", fontsize=style.font_size("annotation")
+            )
         efe_ax.text(
             0.98,
             0.30,

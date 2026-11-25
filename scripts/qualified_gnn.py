@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Admit the original pinned source before its real importer/parser operations."""
+
 from __future__ import annotations
 
 import argparse
@@ -55,10 +56,16 @@ def main(argv: list[str] | None = None) -> int:
     sys.path.insert(0, str(source / "src"))
     if args.action == "check":
         result = bootstrap.check_importer(
-            args.repo, expected_commit=PINNED_COMMIT, expected_tag="v5.1.0",
-            require_pointer=True, pointer_workflow=args.workflow, pointer_job=args.job,
-            source_manifest=manifest, source_manifest_sha256=SOURCE_MANIFEST_SHA256,
-            package_root=source / "src/gnn", origin_mode="source",
+            args.repo,
+            expected_commit=PINNED_COMMIT,
+            expected_tag="v5.1.0",
+            require_pointer=True,
+            pointer_workflow=args.workflow,
+            pointer_job=args.job,
+            source_manifest=manifest,
+            source_manifest_sha256=SOURCE_MANIFEST_SHA256,
+            package_root=source / "src/gnn",
+            origin_mode="source",
         )
         status = 0 if result["ok"] and result["qualified"] else 1
     else:
@@ -66,9 +73,10 @@ def main(argv: list[str] | None = None) -> int:
             parser.error("digest requires --module, --class-name and --spec")
         tree = ast.parse((PROJECT_ROOT / "src/gnn/upstream.py").read_bytes())
         assignment = next(
-            node for node in tree.body if isinstance(node, ast.Assign)
-            and any(isinstance(target, ast.Name) and target.id == "DIGEST_DRIVER_SOURCE"
-                    for target in node.targets)
+            node
+            for node in tree.body
+            if isinstance(node, ast.Assign)
+            and any(isinstance(target, ast.Name) and target.id == "DIGEST_DRIVER_SOURCE" for target in node.targets)
         )
         driver = ast.literal_eval(assignment.value)
         namespace = {"__name__": "_opd_authored_digest_driver"}
@@ -77,8 +85,11 @@ def main(argv: list[str] | None = None) -> int:
             arguments.extend(("--spec", spec))
         capture = io.StringIO()
         with bootstrap.qualified_source(
-            pin, manifest=manifest, manifest_sha256=SOURCE_MANIFEST_SHA256,
-            package_root=source / "src/gnn", origin_mode="source",
+            pin,
+            manifest=manifest,
+            manifest_sha256=SOURCE_MANIFEST_SHA256,
+            package_root=source / "src/gnn",
+            origin_mode="source",
         ) as qualification:
             exec(compile(driver, "<authored-gnn-digest>", "exec", dont_inherit=True), namespace)
             with contextlib.redirect_stdout(capture):

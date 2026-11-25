@@ -85,8 +85,7 @@ def test_roadmap_task_audit_rejects_progress_status_drift(project_root: Path, tm
         "## Completed / Closed (historical)\n- [x] `AI-TEST-ISOLATION-1` completed.\n",
         "## History\n### Active roadmap\n| ID | Work |\n| --- | --- |\n"
         "| `AI-TEST-ISOLATION-1` | Old in-progress record |\n",
-        "## Active roadmap\n| ID | Status |\n| --- | --- |\n"
-        "| `AI-TEST-ISOLATION-1` | done |\n",
+        "## Active roadmap\n| ID | Status |\n| --- | --- |\n| `AI-TEST-ISOLATION-1` | done |\n",
         "## Notes\nAI-TEST-ISOLATION-1 was completed; the old Live canonical supplemental artifacts "
         "heading and `_vN` discussion are historical.\n",
         "> ## Active roadmap\n> - [ ] `AI-TEST-ISOLATION-1`\n",
@@ -97,7 +96,9 @@ def test_roadmap_task_audit_rejects_progress_status_drift(project_root: Path, tm
     ],
 )
 def test_historical_closed_and_inventory_mentions_do_not_reopen_tasks(
-    project_root: Path, tmp_path: Path, todo: str,
+    project_root: Path,
+    tmp_path: Path,
+    todo: str,
 ) -> None:
     audit = _load_audit_module(project_root)
     tasks_path, todo_path, tasks = _write_inputs(project_root, tmp_path)
@@ -113,15 +114,15 @@ def test_historical_closed_and_inventory_mentions_do_not_reopen_tasks(
 @pytest.mark.parametrize(
     "todo",
     [
-        "## Active roadmap\n| ID | Work |\n| --- | --- |\n"
-        "| `AI-TEST-ISOLATION-1` | Complete the idle-host soak |\n",
+        "## Active roadmap\n| ID | Work |\n| --- | --- |\n| `AI-TEST-ISOLATION-1` | Complete the idle-host soak |\n",
         "## Remaining work\n- [ ] **AI-TEST-ISOLATION-1**: complete the soak.\n",
-        "## Current records\n| ID | Status |\n| --- | --- |\n"
-        "| `AI-TEST-ISOLATION-1` | in_progress |\n",
+        "## Current records\n| ID | Status |\n| --- | --- |\n| `AI-TEST-ISOLATION-1` | in_progress |\n",
     ],
 )
 def test_explicit_open_soak_cannot_be_marked_complete(
-    project_root: Path, tmp_path: Path, todo: str,
+    project_root: Path,
+    tmp_path: Path,
+    todo: str,
 ) -> None:
     audit = _load_audit_module(project_root)
     tasks_path, todo_path, tasks = _write_inputs(project_root, tmp_path)
@@ -136,7 +137,9 @@ def test_explicit_open_soak_cannot_be_marked_complete(
 
 @pytest.mark.parametrize("notes", ["complete_soak: true", "Preserve seed 61300 failures."])
 def test_open_soak_retains_closure_and_seed_evidence(
-    project_root: Path, tmp_path: Path, notes: str,
+    project_root: Path,
+    tmp_path: Path,
+    notes: str,
 ) -> None:
     audit = _load_audit_module(project_root)
     tasks_path, todo_path, tasks = _write_inputs(project_root, tmp_path)
@@ -164,7 +167,8 @@ def test_active_soak_malformed_progress_is_a_diagnostic(project_root: Path, tmp_
 
 
 def test_only_explicit_open_supplemental_rows_require_task_bindings(
-    project_root: Path, tmp_path: Path,
+    project_root: Path,
+    tmp_path: Path,
 ) -> None:
     audit = _load_audit_module(project_root)
     tasks_path, todo_path, tasks = _write_inputs(project_root, tmp_path)
@@ -188,7 +192,9 @@ def test_only_explicit_open_supplemental_rows_require_task_bindings(
 
 @pytest.mark.parametrize("notes", ["stable canonical IDs", "ablation_sensitivity_report"])
 def test_open_supplemental_checkbox_requires_its_source_id_and_stability(
-    project_root: Path, tmp_path: Path, notes: str,
+    project_root: Path,
+    tmp_path: Path,
+    notes: str,
 ) -> None:
     audit = _load_audit_module(project_root)
     tasks_path, todo_path, tasks = _write_inputs(project_root, tmp_path)

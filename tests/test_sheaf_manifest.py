@@ -73,12 +73,7 @@ def test_manifest_projection_cannot_mutate_cached_bindings(tmp_path: Path) -> No
 
     path = tmp_path / "manifest.yaml"
     path.write_text(
-        "sections:\n"
-        "  - id: demo\n"
-        "    title: Demo\n"
-        "    order: 1\n"
-        "    tracks:\n"
-        "      ontology: selected.yaml\n",
+        "sections:\n  - id: demo\n    title: Demo\n    order: 1\n    tracks:\n      ontology: selected.yaml\n",
         encoding="utf-8",
     )
     projected = load_manifest_data(path)
@@ -91,9 +86,7 @@ def test_all_composed_sections_bind_prose() -> None:
     root = Path(__file__).resolve().parents[1]
     manifest = load_manifest(root / "manuscript" / "sheaf" / "manifest.yaml")
     missing = [
-        section.id
-        for section in manifest.sections
-        if section.should_compose() and "prose" not in section.tracks
+        section.id for section in manifest.sections if section.should_compose() and "prose" not in section.tracks
     ]
     assert missing == []
 

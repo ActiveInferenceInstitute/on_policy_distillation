@@ -18,7 +18,7 @@ def test_all_results_precise_and_controlled(project_root: Path) -> None:
         assert r["residual"] < r["tolerance"]  # each within its TIER tolerance
         assert r["within_tol"] is True
     for r in p["control_rows"]:
-        assert r["margin"] > r["min_margin"]   # each control bites by a MEASURED margin
+        assert r["margin"] > r["min_margin"]  # each control bites by a MEASURED margin
         assert r["bites"] is True
 
 
@@ -56,7 +56,12 @@ def test_cross_read_catches_lying_residual_and_margin(project_root: Path) -> Non
     assert pl.validate_against_sources(project_root, p) == []
     bad_res = copy.deepcopy(p)
     bad_res["precision_rows"][1]["residual"] = 9.9  # source says ~0
-    assert any("residual" in i and "does not match source" in i for i in pl.validate_against_sources(project_root, bad_res))
+    assert any(
+        "residual" in i and "does not match source" in i for i in pl.validate_against_sources(project_root, bad_res)
+    )
     bad_ctrl = copy.deepcopy(p)
     bad_ctrl["control_rows"][0]["margin"] = 42.0  # source says ~0.693
-    assert any("control margin" in i and "does not match source" in i for i in pl.validate_against_sources(project_root, bad_ctrl))
+    assert any(
+        "control margin" in i and "does not match source" in i
+        for i in pl.validate_against_sources(project_root, bad_ctrl)
+    )

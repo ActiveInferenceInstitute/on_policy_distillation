@@ -96,8 +96,18 @@ def test_cli_effective_config_and_comparison_seeds(cli_root: Path, log_disabled:
         comparison_enabled=True,
     )
     argv = [
-        sys.executable, "-B", "scripts/simulate_si_tmaze.py",
-        "--config", str(custom), "--steps", "2", "--horizon", "2", "--seed", "19", "--comparison",
+        sys.executable,
+        "-B",
+        "scripts/simulate_si_tmaze.py",
+        "--config",
+        str(custom),
+        "--steps",
+        "2",
+        "--horizon",
+        "2",
+        "--seed",
+        "19",
+        "--comparison",
     ]
     if log_disabled:
         argv.append("--log-disabled")
@@ -168,7 +178,9 @@ def test_cli_effective_config_and_comparison_seeds(cli_root: Path, log_disabled:
             assert records[0]["seed"] == 7
             assert records[0]["config_hash"] == run["config_hash"]
             logged_steps = [record for record in records if record["event"] == "si_tmaze_step"]
-            assert [record["q_pi"] for record in logged_steps] == [step["q_pi"] for step in run["policy_posterior_steps"]]
+            assert [record["q_pi"] for record in logged_steps] == [
+                step["q_pi"] for step in run["policy_posterior_steps"]
+            ]
     canonical_log = cli_root / expected.logging.path
     assert canonical_log.is_file() is (not log_disabled)
     if log_disabled:

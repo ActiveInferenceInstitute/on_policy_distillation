@@ -66,10 +66,7 @@ def test_appendix_supplements_bind_all_registry_tracks() -> None:
     registry = load_track_registry(root / "manuscript" / "sheaf" / "tracks.yaml")
     appendix_ids = {"appendix_full_sheaf", "methods_sheaf", "results_invariants"}
     appendix_tracks = {
-        track_id
-        for section in manifest.sections
-        if section.id in appendix_ids
-        for track_id in section.tracks
+        track_id for section in manifest.sections if section.id in appendix_ids for track_id in section.tracks
     }
     full = next(s for s in manifest.sections if s.id == "appendix_full_sheaf")
     reproducibility = next(s for s in manifest.sections if s.id == "methods_sheaf")

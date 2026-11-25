@@ -54,11 +54,11 @@ CUE_STEP_COST = 1.0
 HORIZON_CUE_STEP_COST = 1.3
 _HORIZONS: tuple[int, ...] = (1, 2, 3, 4, 5, 6)
 _FLAT2 = np.array([0.5, 0.5], dtype=np.float64)
-_RESOLVE = np.array([[1.0, 0.0], [0.0, 1.0]], dtype=np.float64)      # cue resolves r
+_RESOLVE = np.array([[1.0, 0.0], [0.0, 1.0]], dtype=np.float64)  # cue resolves r
 _UNINFORMATIVE = np.array([[0.5, 0.5], [0.5, 0.5]], dtype=np.float64)  # commit / blind cue: no info on r
 _ARM_LIKELIHOOD = np.array([[0.95, 0.05], [0.05, 0.95]], dtype=np.float64)  # step-2 reward/punish
-_ARM_PREF = np.array([0.95, 0.05], dtype=np.float64)                # prefer reward
-_RESOLVED_BELIEF = np.array([1.0, 0.0], dtype=np.float64)           # after a valid cue
+_ARM_PREF = np.array([0.95, 0.05], dtype=np.float64)  # prefer reward
+_RESOLVED_BELIEF = np.array([1.0, 0.0], dtype=np.float64)  # after a valid cue
 # Expected reward derived from the arm likelihood (not hardcoded): a resolved
 # belief picks the correct arm (reward prob = diagonal), chance averages the row.
 _REWARD_PROB_CORRECT = float(_ARM_LIKELIHOOD[0, 0])
@@ -186,7 +186,9 @@ def build_payload() -> dict[str, object]:
     sequential_prefers_cue = bool(cue["policy_efe"] < commit["policy_efe"])
     horizon_matters = bool(myopic_prefers_commit and sequential_prefers_cue)
 
-    cue_first_lowest_policy_efe = bool(cue["policy_efe"] < commit["policy_efe"] and cue["policy_efe"] < blind_cue["policy_efe"])
+    cue_first_lowest_policy_efe = bool(
+        cue["policy_efe"] < commit["policy_efe"] and cue["policy_efe"] < blind_cue["policy_efe"]
+    )
     cue_first_highest_expected_reward = bool(cue["expected_reward"] > commit["expected_reward"])
     blind_cue_collapses_advantage = bool(blind_cue["policy_efe"] >= commit["policy_efe"] - 1e-9)
 
@@ -270,8 +272,12 @@ def validate_payload(payload: dict[str, object]) -> list[str]:
             stored_rows = hz["rows"]
             recomputed = build_horizon_curve(cost=cost, horizons=tuple(int(h) for h in hz["horizons"]))
             for key in (
-                "cost_in_derived_window", "myopic_prefers_commit_h1", "cue_wins_for_all_horizon_ge_2",
-                "gap_strictly_increasing", "gap_increments_constant", "blind_collapses_all_horizons",
+                "cost_in_derived_window",
+                "myopic_prefers_commit_h1",
+                "cue_wins_for_all_horizon_ge_2",
+                "gap_strictly_increasing",
+                "gap_increments_constant",
+                "blind_collapses_all_horizons",
             ):
                 if bool(hz.get(key)) != bool(recomputed[key]):
                     issues.append(f"horizon flag {key} disagrees with re-derived")

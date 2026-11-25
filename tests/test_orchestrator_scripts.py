@@ -75,9 +75,7 @@ def test_run_tests_chunked_help_and_chunking() -> None:
     finally:
         sys.path.pop(0)
     flat = [f for chunk in chunks for f in chunk]
-    expected = sorted(
-        str(p.relative_to(PROJECT_ROOT)) for p in (PROJECT_ROOT / "tests").glob("test_*.py")
-    )
+    expected = sorted(str(p.relative_to(PROJECT_ROOT)) for p in (PROJECT_ROOT / "tests").glob("test_*.py"))
     assert [f for f in flat if f != "tests/gates"] == expected
     assert all(len(chunk) <= 6 for chunk in chunks)
 

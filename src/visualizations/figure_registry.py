@@ -216,10 +216,7 @@ def build_figure_registry_payload(project_root: Path) -> dict[str, dict[str, obj
             "alt": spec.alt,
             "caption": spec.caption,
             "width": spec.width,
-            "claims": [
-                claim.as_payload()
-                for claim in spec.claims
-            ],
+            "claims": [claim.as_payload() for claim in spec.claims],
             "generated_by": f"visualizations.figures::{figure_id}",
         }
     return payload

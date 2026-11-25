@@ -93,7 +93,12 @@ def test_token_provenance_production_gate_fails_on_phantom_provenance_key(tmp_pa
     # match flag lying True.
     phantom = "zzz_phantom_token_never_rendered"
     payload["tokens"].append(
-        {"section": "manuscript/fake.md", "token": phantom, "source": "output/data/manuscript_variables.json", "mapped": True}
+        {
+            "section": "manuscript/fake.md",
+            "token": phantom,
+            "source": "output/data/manuscript_variables.json",
+            "mapped": True,
+        }
     )
     payload["provenance_keys"] = sorted(set(payload["provenance_keys"]) | {phantom})
     payload["rendered_tokens_match_provenance_keys"] = True
@@ -249,9 +254,7 @@ def test_dependency_graph_builder_emits_field_level_jsonpath_edges(project_root:
     payload = build_validation_dependency_graph(project_root)
     assert payload["all_required_edge_types_present"] is True
     assert set(payload["field_level_edge_kinds"]) == {"artifact_to_field", "field_to_claim", "field_to_section"}
-    observed = sum(
-        1 for edge in payload["edges"] if edge.get("kind") in set(payload["field_level_edge_kinds"])
-    )
+    observed = sum(1 for edge in payload["edges"] if edge.get("kind") in set(payload["field_level_edge_kinds"]))
     assert payload["field_level_edge_count"] == observed > 0
     field_edges = [e for e in payload["edges"] if e.get("kind") == "artifact_to_field"]
     assert field_edges and all(e["jsonpath"].startswith("$.") for e in field_edges)

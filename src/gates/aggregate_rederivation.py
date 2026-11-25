@@ -92,7 +92,9 @@ def _eval_spec(spec: Spec, row: dict[str, Any]) -> bool:
         # three flag fields present, else the re-derivation fails closed.
         if not all(field in row for field in ("has_forbidden_wording", "is_negated", "allowed")):
             return row.get(spec[1]) is False
-        expected = (not bool(row.get("has_forbidden_wording"))) or row.get("is_negated") is True or row.get("allowed") is True
+        expected = (
+            (not bool(row.get("has_forbidden_wording"))) or row.get("is_negated") is True or row.get("allowed") is True
+        )
         return row.get(spec[1]) is expected
     raise ValueError(f"unknown predicate spec kind: {kind!r}")
 
@@ -171,9 +173,7 @@ ARTIFACT_AGGREGATE_RULES: dict[str, tuple[tuple[str, Spec], ...]] = {
     "output/data/si_graph_world_topology_sweep.json": (
         ("all_summary_trace_agree", ("true", "summary_trace_agreement")),
     ),
-    "output/data/si_graph_world_topology_traces.json": (
-        ("all_trace_summary_agree", ("true", "trace_summary_agree")),
-    ),
+    "output/data/si_graph_world_topology_traces.json": (("all_trace_summary_agree", ("true", "trace_summary_agree")),),
     "output/data/state_space_catalog.json": (
         ("all_finite", ("true", "finite")),
         # writer semantics (toy_sweep.py): state_count > 0 and policy_count >= 1;
@@ -231,17 +231,13 @@ ARTIFACT_AGGREGATE_RULES: dict[str, tuple[tuple[str, Spec], ...]] = {
         ),
         ("all_expected_failures_observed", ("observations_current", "counterexample")),
     ),
-    "output/reports/figure_hash_manifest.json": (
-        ("all_hashes_present", ("figure_hash_current",)),
-    ),
+    "output/reports/figure_hash_manifest.json": (("all_hashes_present", ("figure_hash_current",)),),
     "output/reports/gnn_lint_report.json": (
         ("all_variables_mapped_once", ("true", "ok")),
         ("all_round_trip_ok", ("true", "round_trip_ok")),
     ),
     "output/reports/graph_world_invariants.json": (("all_passed", ("true", "passed")),),
-    "output/reports/lean_graph_world_inventory.json": (
-        ("all_policy_witnesses_present", ("true", "present")),
-    ),
+    "output/reports/lean_graph_world_inventory.json": (("all_policy_witnesses_present", ("true", "present")),),
     "output/reports/lean_theorem_inventory.json": (("all_proved", ("equals", "status", "proved")),),
     "output/reports/manuscript_hardcoded_variable_audit.json": (
         ("all_values_auto_injected", ("true", "auto_injected")),
@@ -267,9 +263,7 @@ ARTIFACT_AGGREGATE_RULES: dict[str, tuple[tuple[str, Spec], ...]] = {
 }
 
 
-def rederive_aggregate(
-    payload: dict[str, Any], spec: Spec, *, project_root: Path | None = None
-) -> bool:
+def rederive_aggregate(payload: dict[str, Any], spec: Spec, *, project_root: Path | None = None) -> bool:
     """Re-derive row and source-bound aggregates; vacuous truth is False."""
     rows = payload.get("rows")
     if not isinstance(rows, list) or not rows:
@@ -281,16 +275,18 @@ def rederive_aggregate(
         return (
             all(row.get("fresh") is True for row in rows)
             and isinstance(sections, list)
-            and all(isinstance(section, dict) and section.get("canonical_hydration_matches") is True
-                    for section in sections)
+            and all(
+                isinstance(section, dict) and section.get("canonical_hydration_matches") is True for section in sections
+            )
         )
     if spec[0] == "figure_hash_current":
         if project_root is None:
             return False
         from roadmap_tracks.integration_audit_artifacts import figure_hash_row_current
 
-        return (not payload.get("unexpected_image_paths")
-                and all(figure_hash_row_current(project_root, row) for row in rows))
+        return not payload.get("unexpected_image_paths") and all(
+            figure_hash_row_current(project_root, row) for row in rows
+        )
     if spec[0] == "observations_current":
         if project_root is None:
             return False
@@ -353,7 +349,8 @@ def aggregate_rederivation_rows(project_root: Path) -> list[dict[str, Any]]:
             }
             if not consistent:
                 row["reason"] = (
-                    "stored flag disagrees with row-level re-derivation" if authenticated
+                    "stored flag disagrees with row-level re-derivation"
+                    if authenticated
                     else "saved rows disagree with authoritative current sources"
                 )
             out.append(row)

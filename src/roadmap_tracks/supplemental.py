@@ -66,10 +66,7 @@ def _validation_failures_within_fixed_point(validation: dict[str, Any]) -> bool:
     if not _validation_report_valid(validation):
         return False
     failed = {
-        key
-        for section in ("outputs", "manuscript")
-        for key, passed in validation[section].items()
-        if passed is False
+        key for section in ("outputs", "manuscript") for key, passed in validation[section].items() if passed is False
     }
     return failed <= VALIDATION_FIXED_POINT_CHECKS
 
@@ -247,14 +244,8 @@ def build_proof_dependency_graph(project_root: Path) -> dict[str, Any]:
         edge_key_counts[str(edge["edge_key"])] += 1
     duplicate_edge_keys = sorted(key for key, count in edge_key_counts.items() if count > 1)
     theorem_ids = {str(row.get("theorem") or "") for row in rows}
-    known_targets = {
-        str(row.get("source") or "")
-        for row in rows
-        if row.get("source")
-    } | {
-        f"lean_tactic:{row.get('leading_tactic')}"
-        for row in rows
-        if row.get("leading_tactic")
+    known_targets = {str(row.get("source") or "") for row in rows if row.get("source")} | {
+        f"lean_tactic:{row.get('leading_tactic')}" for row in rows if row.get("leading_tactic")
     }
     for row in rows:
         known_targets.update(str(symbol) for symbol in row.get("statement_symbols") or [] if symbol)
@@ -390,14 +381,8 @@ def build_state_transition_table(project_root: Path) -> dict[str, Any]:
         if str(row.get("model") or "").startswith(("graph_world_", "si_tmaze"))
     }
     reachable_state_keys = {
-        str(row.get("state_key") or "")
-        for row in rows
-        if row.get("reachable") and row.get("state_key")
-    } | {
-        str(row.get("next_state_key") or "")
-        for row in rows
-        if row.get("reachable") and row.get("next_state_key")
-    }
+        str(row.get("state_key") or "") for row in rows if row.get("reachable") and row.get("state_key")
+    } | {str(row.get("next_state_key") or "") for row in rows if row.get("reachable") and row.get("next_state_key")}
     outgoing_state_keys = {str(row.get("state_key") or "") for row in rows if row.get("state_key")}
     missing_outgoing_state_keys = sorted(reachable_state_keys - outgoing_state_keys)
     terminal_models = {str(row.get("model") or "") for row in rows if row.get("terminal_self_transition")}
@@ -546,18 +531,13 @@ def build_release_attestation(project_root: Path) -> dict[str, Any]:
             # EXCEPT the attestation check itself (which cannot be green until
             # this row is rebuilt) and the directly dependent fixed-point
             # checks that become green only after the tail is rebuilt.
-            "passed": (
-                not validation_deferred
-                and _validation_failures_within_fixed_point(validation)
-            ),
+            "passed": (not validation_deferred and _validation_failures_within_fixed_point(validation)),
             "deferred_until_validation": validation_deferred,
             "validation_all_passed": validation.get("all_passed") is True,
             "validation_failed_checks": list(validation.get("failed_checks") or []),
             "validation_check_count": len(validation_check_ids),
             "attested_validation_check_ids": validation_check_ids,
-            "report_sha256": (
-                hashlib.sha256(validation_bytes).hexdigest() if validation_bytes is not None else ""
-            ),
+            "report_sha256": (hashlib.sha256(validation_bytes).hexdigest() if validation_bytes is not None else ""),
         },
         {
             "id": "release_bundle",
@@ -638,7 +618,8 @@ def _metadata_issues(payload: dict[str, Any], expected: dict[str, Any], filename
     if payload.get("schema") != expected["schema"]:
         issues.append(f"{filename} schema mismatch")
     stale = [
-        key for key, value in expected.items()
+        key
+        for key, value in expected.items()
         if key not in {"schema", "rows", "edges"} and not _same_value(payload.get(key), value)
     ]
     if stale:
@@ -656,9 +637,7 @@ def _validate_proof_dependency_graph(root: Path, proof: dict[str, Any]) -> list[
     rows = _rows(proof)
     edges = _rows(proof, "edges")
     logical_edges = [tuple(str(edge.get(field) or "") for field in ("source", "target", "kind")) for edge in edges]
-    required_edges = {
-        tuple(str(edge[field]) for field in ("source", "target", "kind")) for edge in expected["edges"]
-    }
+    required_edges = {tuple(str(edge[field]) for field in ("source", "target", "kind")) for edge in expected["edges"]}
     edge_keys = [str(edge.get("edge_key") or "") for edge in edges]
     if (
         not rows
@@ -714,14 +693,17 @@ def _validate_state_transition_table(root: Path, transitions: dict[str, Any]) ->
     if not _same_rows(_rows(saved_catalog), _rows(declared_catalog)):
         issues.append(f"{filename} source catalog omits or changes required finite models")
     required_models = {
-        row["model"] for row in declared_catalog["rows"]
-        if row["model"].startswith(("graph_world_", "si_tmaze"))
+        row["model"] for row in declared_catalog["rows"] if row["model"].startswith(("graph_world_", "si_tmaze"))
     }
     rows = _rows(transitions)
     models = {str(row.get("model") or "") for row in rows}
     logical_keys = [_transition_key(row) for row in rows]
     saved_keys = [str(row.get("transition_key") or "") for row in rows]
-    if not rows or not _same_rows(rows, expected["rows"]) or transitions.get("all_transitions_deterministic") is not True:
+    if (
+        not rows
+        or not _same_rows(rows, expected["rows"])
+        or transitions.get("all_transitions_deterministic") is not True
+    ):
         issues.append(f"{filename} has nondeterministic or incomplete transitions")
     if (
         not rows
@@ -753,18 +735,16 @@ def _validate_state_transition_table(root: Path, transitions: dict[str, Any]) ->
         or transitions.get("missing_outgoing_state_keys") != []
     ):
         issues.append(f"{filename} omits outgoing transitions for a reachable toy state")
-    required_terminal_keys = {
-        _transition_key(row) for row in expected["rows"] if row["state"] == row["next_state"]
-    }
+    required_terminal_keys = {_transition_key(row) for row in expected["rows"] if row["state"] == row["next_state"]}
     terminal_keys = {
-        _transition_key(row) for row in rows
-        if row.get("state") and row.get("state") == row.get("next_state")
+        _transition_key(row) for row in rows if row.get("state") and row.get("state") == row.get("next_state")
     }
     if (
         not required_terminal_keys
         or not required_terminal_keys.issubset(terminal_keys)
         or any(
-            row.get("terminal_self_transition") is not bool(row.get("state") and row.get("state") == row.get("next_state"))
+            row.get("terminal_self_transition")
+            is not bool(row.get("state") and row.get("state") == row.get("next_state"))
             for row in rows
         )
         or transitions.get("all_terminal_states_have_self_transition") is not True
@@ -820,9 +800,8 @@ def _validate_release_attestation(root: Path, attestation: dict[str, Any]) -> li
         or any(row.get("passed") is not expected_by_id.get(row.get("id"), {}).get("passed") for row in rows)
     ):
         issues.append(f"{filename} claims a failed gate passed")
-    if (
-        not _same_value(attestation.get("attested_source_count"), len(expected["rows"]))
-        or not _same_value(attestation.get("row_count"), len(expected["rows"]))
+    if not _same_value(attestation.get("attested_source_count"), len(expected["rows"])) or not _same_value(
+        attestation.get("row_count"), len(expected["rows"])
     ):
         issues.append(f"{filename} attested source count is stale")
     validation_row = next((row for row in rows if row.get("id") == "validation_report"), {})
@@ -872,16 +851,15 @@ def validate_supplemental_payloads(
     root = project_root.resolve()
     return {
         key: _validate_supplemental_payload(
-            root, key,
+            root,
+            key,
             payloads[key] if payloads is not None and key in payloads else _load_json(root / relative_path),
         )
         for key, relative_path in SUPPLEMENTAL_ARTIFACTS.items()
     }
 
 
-def validate_supplemental_artifacts(
-    project_root: Path, payloads: dict[str, dict[str, Any]] | None = None
-) -> list[str]:
+def validate_supplemental_artifacts(project_root: Path, payloads: dict[str, dict[str, Any]] | None = None) -> list[str]:
     """Validate disk artifacts or in-memory overrides through the same contract."""
     return [issue for issues in validate_supplemental_payloads(project_root, payloads).values() for issue in issues]
 

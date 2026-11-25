@@ -216,7 +216,10 @@ def _assert_comparison_grid(config: PymdpConfig, comparison: dict[str, Any], gri
         assert len(projected) == len(run["policy_posterior_steps"]) == 3
         for step, row in zip(run["policy_posterior_steps"], projected, strict=True):
             assert (row["seed"], row["horizon"], row["steps"], row["config_hash"]) == (
-                run["seed"], run["horizon"], run["steps"], run["config_hash"]
+                run["seed"],
+                run["horizon"],
+                run["steps"],
+                run["config_hash"],
             )
             for key in ("step", "q_pi", "q_pi_entropy", "action_probabilities", "posterior_source", "fallback_reason"):
                 assert row[key] == step[key]

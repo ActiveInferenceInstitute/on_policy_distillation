@@ -108,11 +108,7 @@ def validate_manuscript_staleness_report(
 ) -> list[str]:
     """Validate saved occurrence identities, content, and summaries against live hydration."""
     root = project_root.resolve()
-    saved = (
-        _load_json(root / "output" / "reports" / "manuscript_staleness_report.json")
-        if payload is None
-        else payload
-    )
+    saved = _load_json(root / "output" / "reports" / "manuscript_staleness_report.json") if payload is None else payload
     live = build_manuscript_staleness_report(root)
     issues: list[str] = []
     if saved.get("schema") != "template_active_inference.manuscript_staleness_report.v1":
@@ -199,9 +195,7 @@ def write_integration_audit_artifacts(project_root: Path) -> dict[str, Path]:
     return paths
 
 
-def validate_integration_audit_artifacts(
-    project_root: Path, *, require_release_evidence: bool = True
-) -> list[str]:
+def validate_integration_audit_artifacts(project_root: Path, *, require_release_evidence: bool = True) -> list[str]:
     root = project_root.resolve()
     issues: list[str] = []
     producer = _load_json(root / "output" / "reports" / "producer_completeness.json")
@@ -281,9 +275,14 @@ def validate_integration_audit_artifacts(
     if scope != live_scope or live_scope["all_current_claims_toy"] is not True:
         issues.append("scope_boundary_audit.json records empirical scope leakage or stale clause evidence")
     adversarial = _load_json(root / "output" / "reports" / "adversarial_audit.json")
-    issues.extend(validate_observation_payload(
-        root, adversarial, adversarial=True, require_observations=require_release_evidence,
-    ))
+    issues.extend(
+        validate_observation_payload(
+            root,
+            adversarial,
+            adversarial=True,
+            require_observations=require_release_evidence,
+        )
+    )
     figure_hash = _load_json(root / "output" / "reports" / "figure_hash_manifest.json")
     figure_hash_derived = _figure_hash_rows_complete(root, figure_hash)
     if (
@@ -336,10 +335,9 @@ def validate_integration_audit_artifacts(
         issues.append("release_notes_evidence.json schema mismatch")
     notes_rows = release_notes.get("rows") or []
     notes_backed = bool(notes_rows) and all(row.get("source") and row.get("passed") for row in notes_rows)
-    if (
-        (require_release_evidence and release_notes.get("all_notes_source_backed") is not True)
-        or release_notes.get("all_notes_source_backed") != notes_backed
-    ):
+    if (require_release_evidence and release_notes.get("all_notes_source_backed") is not True) or release_notes.get(
+        "all_notes_source_backed"
+    ) != notes_backed:
         issues.append("release_notes_evidence.json has unsupported notes")
     if release_notes != build_release_notes_evidence(root):
         issues.append("release_notes_evidence.json is stale relative to its source artifacts")

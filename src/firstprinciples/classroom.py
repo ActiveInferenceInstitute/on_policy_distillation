@@ -152,12 +152,7 @@ def _normalised(values: Any, *, atol: float = 1e-6) -> bool:
         arr = np.asarray(values, dtype=np.float64).reshape(-1)
     except (TypeError, ValueError):
         return False
-    return bool(
-        arr.size
-        and np.all(np.isfinite(arr))
-        and np.all(arr >= 0.0)
-        and abs(float(arr.sum()) - 1.0) <= atol
-    )
+    return bool(arr.size and np.all(np.isfinite(arr)) and np.all(arr >= 0.0) and abs(float(arr.sum()) - 1.0) <= atol)
 
 
 def _per_step_rows_valid(rows: Any) -> bool:
@@ -248,9 +243,8 @@ def validate_classroom_payload(payload: dict[str, Any], *, require_ok: bool = Tr
             return False
         if abs(float(payload.get(mean_key, -1.0)) - float(np.mean(values))) > 1e-9:
             return False
-    if (
-        not payload.get("teacher_config_hash")
-        or payload.get("teacher_config_hash") == payload.get("student_config_hash")
+    if not payload.get("teacher_config_hash") or payload.get("teacher_config_hash") == payload.get(
+        "student_config_hash"
     ):
         return False
     runtime = payload.get("runtime") or {}

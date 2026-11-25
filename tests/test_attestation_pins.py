@@ -50,15 +50,23 @@ def _report(tmp_path: Path, failed: list[str]) -> bytes:
 
 
 def _companions(root: Path) -> None:
-    _write(root / "output/reports/release_bundle_manifest.json", {
-        "all_required_sources_present": True, "all_copied_outputs_match_or_deferred": True,
-        "bundle_hash": hashlib.sha256(b"finite attestation companion fixture").hexdigest(),
-    })
+    _write(
+        root / "output/reports/release_bundle_manifest.json",
+        {
+            "all_required_sources_present": True,
+            "all_copied_outputs_match_or_deferred": True,
+            "bundle_hash": hashlib.sha256(b"finite attestation companion fixture").hexdigest(),
+        },
+    )
     _write(root / "output/reports/artifact_license_audit.json", {"all_license_safe": True})
     _write(root / "output/reports/blocked_scope_manifest.json", {"all_blocked": True})
-    _write(root / "output/data/sheaf_gluing_certificate.json", {
-        "ok": True, "restrictions": {"finite_fixture_scope": True},
-    })
+    _write(
+        root / "output/data/sheaf_gluing_certificate.json",
+        {
+            "ok": True,
+            "restrictions": {"finite_fixture_scope": True},
+        },
+    )
 
 
 def test_consistent_but_red_attestation_passes_inner_accepts_outer_rejects(tmp_path: Path) -> None:
@@ -69,7 +77,11 @@ def test_consistent_but_red_attestation_passes_inner_accepts_outer_rejects(tmp_p
     _report(tmp_path, failed=["si_summary_schema"])
     consistent_red = build_release_attestation(tmp_path)
     assert {row["id"] for row in consistent_red["rows"]} == {
-        "validation_report", "release_bundle", "artifact_license", "blocked_scope", "semantic_certificate",
+        "validation_report",
+        "release_bundle",
+        "artifact_license",
+        "blocked_scope",
+        "semantic_certificate",
     }
 
     # Inner validator: honestly-red is NOT a lie — no issue.

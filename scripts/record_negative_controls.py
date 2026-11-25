@@ -19,7 +19,8 @@ def main() -> int:
     parser.add_argument("--case", action="append", choices=[case.id for case in CASES], dest="cases")
     args = parser.parse_args()
     paths = record_negative_controls(
-        ROOT, case_ids=tuple(args.cases) if args.cases is not None else None,
+        ROOT,
+        case_ids=tuple(args.cases) if args.cases is not None else None,
         inherited=os.environ.get(ARTIFACT_LEASE_ENV),
     )
     for path in paths.values():

@@ -43,9 +43,7 @@ def _entropy_threshold(students: ArrayF) -> float:
     return float(np.median(ents))
 
 
-def token_directions(
-    teachers: ArrayF, students: ArrayF, *, threshold: float | None = None
-) -> TokenDirections:
+def token_directions(teachers: ArrayF, students: ArrayF, *, threshold: float | None = None) -> TokenDirections:
     """Per-token adaptive KL: reverse where student is confident, forward where uncertain.
 
     ``teachers``/``students`` are (tokens x vocab) row-stochastic batches. A token

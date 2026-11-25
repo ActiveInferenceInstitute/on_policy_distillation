@@ -59,12 +59,22 @@ def figure_distillation_divergence_geometry(project_root: Path) -> Path:
         values = [value for _name, value in measures]
         colors = [style.color("accent"), style.color("secondary"), "#7c3aed", "#b45309", style.color("fail")]
         bars = div_ax.bar(np.arange(len(values)), values, color=colors, alpha=0.88)
-        div_ax.set_xticks(np.arange(len(values)), [name.replace(" ", "\n").replace("-", "-\n") for name in names], fontsize=style.font_size("dense"))
+        div_ax.set_xticks(
+            np.arange(len(values)),
+            [name.replace(" ", "\n").replace("-", "-\n") for name in names],
+            fontsize=style.font_size("dense"),
+        )
         div_ax.set_ylabel("Divergence (nats)")
         div_ax.set_title("Objective changes penalty", fontsize=style.font_size("subtitle"))
         style_grid(div_ax, style)
         for bar, value in zip(bars, values, strict=True):
-            div_ax.text(bar.get_x() + bar.get_width() / 2, value + 0.006, f"{value:.3f}", ha="center", fontsize=style.font_size("annotation"))
+            div_ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                value + 0.006,
+                f"{value:.3f}",
+                ha="center",
+                fontsize=style.font_size("annotation"),
+            )
         entropy_names = [name for name, _value in entropy_rows]
         entropy_values = [value for _name, value in entropy_rows]
         entropy_colors = [style.color("secondary"), style.color("accent")]
@@ -127,19 +137,25 @@ def figure_active_selection_landscape(project_root: Path) -> Path:
 
     out = figure_output_path(root, "active_selection_landscape")
     with apply_style(style):
-        fig, (sweep_ax, bar_ax) = plt.subplots(
-            1, 2, figsize=(14.0, 5.3), gridspec_kw={"width_ratios": [1.0, 1.15]}
+        fig, (sweep_ax, bar_ax) = plt.subplots(1, 2, figsize=(14.0, 5.3), gridspec_kw={"width_ratios": [1.0, 1.15]})
+        sweep_ax.plot(
+            validities,
+            epistemic_sweep,
+            marker="o",
+            color=style.color("accent"),
+            label="epistemic value I(o;r)",
         )
         sweep_ax.plot(
-            validities, epistemic_sweep, marker="o",
-            color=style.color("accent"), label="epistemic value I(o;r)",
-        )
-        sweep_ax.plot(
-            validities, residual_sweep, marker="s",
-            color=style.color("secondary"), label="residual gap E_o[H(r|o)]",
+            validities,
+            residual_sweep,
+            marker="s",
+            color=style.color("secondary"),
+            label="residual gap E_o[H(r|o)]",
         )
         sweep_ax.axhline(
-            prior_entropy, ls="--", color=style.color("reference"),
+            prior_entropy,
+            ls="--",
+            color=style.color("reference"),
             label=f"prior entropy H(r)={prior_entropy:.3f}",
         )
         sweep_ax.set_xlabel("Cue validity")
@@ -150,8 +166,10 @@ def figure_active_selection_landscape(project_root: Path) -> Path:
         sweep_ax.legend(frameon=True, fontsize=style.font_size("legend"), loc="center left")
         sweep_ax.annotate(
             "epistemic + residual = H(r)",
-            xy=(0.62, 0.5), xycoords="axes fraction",
-            fontsize=style.font_size("annotation"), color=style.color("primary"),
+            xy=(0.62, 0.5),
+            xycoords="axes fraction",
+            fontsize=style.font_size("annotation"),
+            color=style.color("primary"),
         )
 
         x = np.arange(len(names))
@@ -169,9 +187,11 @@ def figure_active_selection_landscape(project_root: Path) -> Path:
 
         fig.tight_layout(rect=(0.0, 0.03, 1.0, 1.0))
         fig.text(
-            0.01, 0.01,
+            0.01,
+            0.01,
             "Source: output/data/firstprinciples/active_selection_demo.json; finite flat-prior toy, exact.",
-            fontsize=style.font_size("source"), color=style.color("muted"),
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
         )
         save_styled_figure(fig, out, style)
     return out
@@ -188,7 +208,9 @@ def figure_precision_ledger(project_root: Path) -> Path:
     """
     root = project_root.resolve()
     style = load_figure_style(root)
-    data = json.loads((root / "output" / "data" / "firstprinciples" / "precision_ledger_demo.json").read_text(encoding="utf-8"))
+    data = json.loads(
+        (root / "output" / "data" / "firstprinciples" / "precision_ledger_demo.json").read_text(encoding="utf-8")
+    )
     rows = list(data["precision_rows"])
     controls = list(data["control_rows"])
     tier_tol = {int(k): float(v) for k, v in data["tier_tolerances"].items()}
@@ -209,8 +231,14 @@ def figure_precision_ledger(project_root: Path) -> Path:
         for yi, xi, ti, raw in zip(y, resid, tiers, [float(r["residual"]) for r in rows], strict=True):
             ax.hlines(yi, _floor, xi, color=tier_color.get(ti, style.color("muted")), lw=1.4, alpha=0.7)
             ax.plot(xi, yi, "o", color=tier_color.get(ti, style.color("muted")), markersize=8)
-            ax.text(xi * 1.6, yi, "exact" if raw <= 0.0 else f"{raw:.1e}",
-                    va="center", fontsize=style.font_size("annotation"), color=style.color("primary"))
+            ax.text(
+                xi * 1.6,
+                yi,
+                "exact" if raw <= 0.0 else f"{raw:.1e}",
+                va="center",
+                fontsize=style.font_size("annotation"),
+                color=style.color("primary"),
+            )
         ax.axvline(tol, ls="--", color=style.color("fail"), lw=1.2, label=f"tolerance {tol:.0e}")
         ax.set_xscale("log")
         ax.set_xlim(_floor / 3, tol * 30)
@@ -232,9 +260,13 @@ def figure_precision_ledger(project_root: Path) -> Path:
         ]
         ax.legend(handles=handles, frameon=True, fontsize=style.font_size("legend"), loc="lower right")
         fig.tight_layout(rect=(0.0, 0.03, 1.0, 1.0))
-        fig.text(0.01, 0.005,
-                 "Source: output/data/firstprinciples/precision_ledger_demo.json; synthesis over the result set.",
-                 fontsize=style.font_size("source"), color=style.color("muted"))
+        fig.text(
+            0.01,
+            0.005,
+            "Source: output/data/firstprinciples/precision_ledger_demo.json; synthesis over the result set.",
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
+        )
         save_styled_figure(fig, out, style)
     return out
 
@@ -248,7 +280,9 @@ def figure_si_belief_entropy_trajectory(project_root: Path) -> Path:
     """
     root = project_root.resolve()
     style = load_figure_style(root)
-    data = json.loads((root / "output" / "data" / "firstprinciples" / "si_bridge_demo.json").read_text(encoding="utf-8"))
+    data = json.loads(
+        (root / "output" / "data" / "firstprinciples" / "si_bridge_demo.json").read_text(encoding="utf-8")
+    )
     analytical = [float(x) for x in data["analytical_entropy_by_step"]]
     pymdp = [float(x) for x in data["belief_entropy_by_step"]]
     max_err = float(data["max_trajectory_error_abs"])
@@ -257,10 +291,24 @@ def figure_si_belief_entropy_trajectory(project_root: Path) -> Path:
     out = figure_output_path(root, "si_belief_entropy_trajectory")
     with apply_style(style):
         fig, ax = plt.subplots(1, 1, figsize=(8.4, 5.3))
-        ax.plot(steps, analytical, color=style.color("secondary"), marker="o", markersize=4,
-                label="analytical running-Bayesian H(r)")
-        ax.scatter(steps, pymdp, s=90, zorder=5, facecolor="none",
-                   edgecolor=style.color("accent"), linewidths=1.8, label="pymdp SI belief entropy")
+        ax.plot(
+            steps,
+            analytical,
+            color=style.color("secondary"),
+            marker="o",
+            markersize=4,
+            label="analytical running-Bayesian H(r)",
+        )
+        ax.scatter(
+            steps,
+            pymdp,
+            s=90,
+            zorder=5,
+            facecolor="none",
+            edgecolor=style.color("accent"),
+            linewidths=1.8,
+            label="pymdp SI belief entropy",
+        )
         ax.set_xlabel("Rollout step")
         ax.set_ylabel("Belief entropy (nats)")
         ax.set_title("Closed-form prediction matches the SI agent at every step")
@@ -269,13 +317,19 @@ def figure_si_belief_entropy_trajectory(project_root: Path) -> Path:
         ax.legend(frameon=True, fontsize=style.font_size("legend"), loc="upper right")
         ax.annotate(
             f"max trajectory error: {max_err:.1e} nats",
-            xy=(0.04, 0.06), xycoords="axes fraction",
-            fontsize=style.font_size("annotation"), color=style.color("primary"),
+            xy=(0.04, 0.06),
+            xycoords="axes fraction",
+            fontsize=style.font_size("annotation"),
+            color=style.color("primary"),
         )
         fig.tight_layout(rect=(0.0, 0.03, 1.0, 1.0))
-        fig.text(0.01, 0.01,
-                 "Source: output/data/firstprinciples/si_bridge_demo.json; finite toy, observable bridge.",
-                 fontsize=style.font_size("source"), color=style.color("muted"))
+        fig.text(
+            0.01,
+            0.01,
+            "Source: output/data/firstprinciples/si_bridge_demo.json; finite toy, observable bridge.",
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
+        )
         save_styled_figure(fig, out, style)
     return out
 
@@ -293,7 +347,9 @@ def figure_si_bridge_match(project_root: Path) -> Path:
 
     root = project_root.resolve()
     style = load_figure_style(root)
-    data = json.loads((root / "output" / "data" / "firstprinciples" / "si_bridge_demo.json").read_text(encoding="utf-8"))
+    data = json.loads(
+        (root / "output" / "data" / "firstprinciples" / "si_bridge_demo.json").read_text(encoding="utf-8")
+    )
     env_validity = float(data["cue_validity"])
     pymdp_entropy = float(data["post_cue_belief_entropy"])
     match_abs = float(data["residual_entropy_match_abs"])
@@ -304,11 +360,16 @@ def figure_si_bridge_match(project_root: Path) -> Path:
     out = figure_output_path(root, "si_bridge_match")
     with apply_style(style):
         fig, ax = plt.subplots(1, 1, figsize=(8.4, 5.3))
-        ax.plot(grid, residual_curve, color=style.color("secondary"),
-                label="analytical residual $E_o[H(r\\mid o)]$")
-        ax.scatter([env_validity], [pymdp_entropy], s=120, zorder=5,
-                   color=style.color("accent"), edgecolor="white",
-                   label="pymdp SI post-cue belief entropy")
+        ax.plot(grid, residual_curve, color=style.color("secondary"), label="analytical residual $E_o[H(r\\mid o)]$")
+        ax.scatter(
+            [env_validity],
+            [pymdp_entropy],
+            s=120,
+            zorder=5,
+            color=style.color("accent"),
+            edgecolor="white",
+            label="pymdp SI post-cue belief entropy",
+        )
         ax.axvline(env_validity, ls=":", color=style.color("muted"), lw=1.0)
         ax.set_xlabel("Cue validity")
         ax.set_ylabel("Nats")
@@ -317,14 +378,21 @@ def figure_si_bridge_match(project_root: Path) -> Path:
         ax.legend(frameon=True, fontsize=style.font_size("legend"), loc="upper right")
         ax.annotate(
             f"match at validity {env_validity:.2f}: |Δ| = {match_abs:.1e} nats",
-            xy=(env_validity, pymdp_entropy), xytext=(0.30, 0.30), textcoords="axes fraction",
-            fontsize=style.font_size("annotation"), color=style.color("primary"),
+            xy=(env_validity, pymdp_entropy),
+            xytext=(0.30, 0.30),
+            textcoords="axes fraction",
+            fontsize=style.font_size("annotation"),
+            color=style.color("primary"),
             arrowprops=dict(arrowstyle="->", color=style.color("muted")),
         )
         fig.tight_layout(rect=(0.0, 0.03, 1.0, 1.0))
-        fig.text(0.01, 0.01,
-                 "Source: output/data/firstprinciples/{si_bridge_demo,active_selection_demo}.json; finite toy, observable bridge.",
-                 fontsize=style.font_size("source"), color=style.color("muted"))
+        fig.text(
+            0.01,
+            0.01,
+            "Source: output/data/firstprinciples/{si_bridge_demo,active_selection_demo}.json; finite toy, observable bridge.",
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
+        )
         save_styled_figure(fig, out, style)
     return out
 
@@ -789,7 +857,13 @@ def figure_parallel_convergence(project_root: Path) -> Path:
 
         idx = np.arange(len(teacher))
         width = 0.38
-        bar_ax.bar(idx - width / 2, teacher, width, label="active inference: posterior $p(s\\mid o)$", color=style.color("secondary"))
+        bar_ax.bar(
+            idx - width / 2,
+            teacher,
+            width,
+            label="active inference: posterior $p(s\\mid o)$",
+            color=style.color("secondary"),
+        )
         bar_ax.bar(idx + width / 2, student, width, label="ML: distilled student $\\pi_S$", color=style.color("accent"))
         bar_ax.set_xticks(list(idx))
         bar_ax.set_xticklabels([f"state {i}" for i in idx])
@@ -818,7 +892,13 @@ def figure_parallel_convergence(project_root: Path) -> Path:
             "Two frameworks, one posterior: ML distillation reaches the active-inference posterior",
             fontsize=style.font_size("title"),
         )
-        fig.text(0.01, 0.01, "Source: output/data/firstprinciples/parallel_demo.json", fontsize=style.font_size("source"), color=style.color("muted"))
+        fig.text(
+            0.01,
+            0.01,
+            "Source: output/data/firstprinciples/parallel_demo.json",
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
+        )
         save_styled_figure(fig, out, style)
     return out
 
@@ -827,7 +907,9 @@ def figure_diversity_tradeoff(project_root: Path) -> Path:
     """Pass@1 (greedy, temperature-invariant) vs Pass@k (collapses under sharpening)."""
     root = project_root.resolve()
     style = load_figure_style(root)
-    data = json.loads((root / "output" / "data" / "firstprinciples" / "diversity_demo.json").read_text(encoding="utf-8"))
+    data = json.loads(
+        (root / "output" / "data" / "firstprinciples" / "diversity_demo.json").read_text(encoding="utf-8")
+    )
     temps = [float(t) for t in data.get("temperatures") or []]
     pass_k = [float(v) for v in data.get("pass_at_k") or []]
     greedy = float(data.get("greedy_pass_at_1", 0.0))
@@ -836,7 +918,13 @@ def figure_diversity_tradeoff(project_root: Path) -> Path:
     with apply_style(style):
         fig, ax = plt.subplots(figsize=(9.8, 5.0))
         ax.plot(temps, pass_k, marker="o", linewidth=2.4, color=style.color("accent"), label=f"sampling Pass@{k}")
-        ax.axhline(greedy, color=style.color("secondary"), linewidth=2.0, linestyle="--", label="greedy Pass@1 (temperature-invariant)")
+        ax.axhline(
+            greedy,
+            color=style.color("secondary"),
+            linewidth=2.0,
+            linestyle="--",
+            label="greedy Pass@1 (temperature-invariant)",
+        )
         ax.set_xscale("log")
         ax.xaxis.set_major_locator(FixedLocator(temps))
         ax.xaxis.set_minor_locator(FixedLocator([]))
@@ -867,7 +955,13 @@ def figure_diversity_tradeoff(project_root: Path) -> Path:
         ax.set_title(f"Sharpening costs Pass@{k} coverage; greedy Pass@1 is temperature-invariant")
         ax.legend(frameon=True, fontsize=style.font_size("legend"), loc="best")
         style_grid(ax, style)
-        fig.text(0.01, 0.01, "Source: output/data/firstprinciples/diversity_demo.json", fontsize=style.font_size("source"), color=style.color("muted"))
+        fig.text(
+            0.01,
+            0.01,
+            "Source: output/data/firstprinciples/diversity_demo.json",
+            fontsize=style.font_size("source"),
+            color=style.color("muted"),
+        )
         save_styled_figure(fig, out, style)
     return out
 

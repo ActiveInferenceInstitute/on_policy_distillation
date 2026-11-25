@@ -102,7 +102,9 @@ def figure_tmaze_schematic(project_root: Path) -> Path:
     matrices = json.loads(matrices_path.read_text(encoding="utf-8")) if matrices_path.is_file() else {}
     matrix_summary = ""
     if matrices.get("A_shapes") and matrices.get("B_shapes"):
-        matrix_summary = f"A factors={len(matrices['A_shapes'])}; B factors={len(matrices['B_shapes'])}; C/D priors audited"
+        matrix_summary = (
+            f"A factors={len(matrices['A_shapes'])}; B factors={len(matrices['B_shapes'])}; C/D priors audited"
+        )
     with styled_figure(root, "tmaze_schematic") as (style, out):
         fig, ax = plt.subplots(figsize=(10.2, 6.4))
         ax.set_xlim(-2.15, 2.15)
@@ -160,7 +162,9 @@ def figure_tmaze_schematic(project_root: Path) -> Path:
             (-1.92, -1.18, matrix_summary),
         ):
             if label:
-                ax.text(x, y, label, ha="left", va="center", fontsize=style.font_size("dense"), color=style.color("primary"))
+                ax.text(
+                    x, y, label, ha="left", va="center", fontsize=style.font_size("dense"), color=style.color("primary")
+                )
         ax.text(
             1.92,
             -1.98,
@@ -297,8 +301,18 @@ def figure_multi_track_architecture(project_root: Path) -> Path:
                 facecolor="#f8fafc",
             )
             ax.add_patch(patch)
-            text = "\n".join(textwrap.fill(line, width=max(18, int(width * 13)), break_long_words=False) for line in lines)
-            ax.text(x + 0.12, y + height - 0.22, text, ha="left", va="top", fontsize=style.font_size("dense"), color=style.color("primary"))
+            text = "\n".join(
+                textwrap.fill(line, width=max(18, int(width * 13)), break_long_words=False) for line in lines
+            )
+            ax.text(
+                x + 0.12,
+                y + height - 0.22,
+                text,
+                ha="left",
+                va="top",
+                fontsize=style.font_size("dense"),
+                color=style.color("primary"),
+            )
 
         row_y = [5.25, 3.62, 1.99]
         row_h = 1.14

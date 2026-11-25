@@ -82,9 +82,19 @@ def figure_sheaf_coverage_heatmap(
     from dataclasses import replace as _replace
 
     science_tracks = [
-        "prose", "formalism", "simulation", "pymdp", "interop", "gnn", "ontology",
-        "lean", "model_checking", "theorem_traceability", "proof_extraction",
-        "scholarship", "visualization",
+        "prose",
+        "formalism",
+        "simulation",
+        "pymdp",
+        "interop",
+        "gnn",
+        "ontology",
+        "lean",
+        "model_checking",
+        "theorem_traceability",
+        "proof_extraction",
+        "scholarship",
+        "visualization",
     ]
     keep = [i for i, t in enumerate(payload.track_ids) if t in science_tracks]
     total_tracks = len(payload.track_ids)
@@ -119,6 +129,11 @@ def figure_sheaf_coverage_heatmap(
             show_group_labels=False,
         )
         fig.tight_layout()
-        subset_note(fig, len(payload.track_ids), total_tracks, "registered fragment tracks (science-bearing subset; build-machinery columns in the supplement)")
+        subset_note(
+            fig,
+            len(payload.track_ids),
+            total_tracks,
+            "registered fragment tracks (science-bearing subset; build-machinery columns in the supplement)",
+        )
         save_figure_png(fig, out, dpi=dpi)
     return out

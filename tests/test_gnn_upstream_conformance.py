@@ -135,10 +135,19 @@ def upstream_run(tmp_path_factory: pytest.TempPathFactory) -> UpstreamRun:
     env = os.environ.copy()
     parser_module, parser_class = pin["parser_module"], pin["parser_class"]
     command = [
-        str(gnn_checkout_python(root)), "-I", "-B",
-        str(PROJECT_ROOT / "scripts/qualified_gnn.py"), "digest",
-        "--repo", str(PROJECT_ROOT), "--source", str(extract_dir),
-        "--module", parser_module, "--class-name", parser_class,
+        str(gnn_checkout_python(root)),
+        "-I",
+        "-B",
+        str(PROJECT_ROOT / "scripts/qualified_gnn.py"),
+        "digest",
+        "--repo",
+        str(PROJECT_ROOT),
+        "--source",
+        str(extract_dir),
+        "--module",
+        parser_module,
+        "--class-name",
+        parser_class,
     ]
     for spec in spec_paths:
         command += ["--spec", spec]
@@ -328,16 +337,24 @@ def test_normalize_upstream_digest_maps_enums_and_sequences() -> None:
 
 @pytest.mark.parametrize("resource", ["GNN_BOOTSTRAP", "GNN_SOURCE_MANIFEST"])
 def test_source_admission_rejects_changed_producer_resource(
-    upstream_run: UpstreamRun, tmp_path: Path, resource: str,
+    upstream_run: UpstreamRun,
+    tmp_path: Path,
+    resource: str,
 ) -> None:
     original = Path(os.environ[resource])
     changed = tmp_path / original.name
     changed.write_bytes(original.read_bytes() + b"\n")
     environment = {**os.environ, resource: str(changed)}
     command = [
-        str(gnn_checkout_python(upstream_run.root)), "-I", "-B",
-        str(PROJECT_ROOT / "scripts/qualified_gnn.py"), "check",
-        "--repo", str(PROJECT_ROOT), "--source", str(upstream_run.extract_dir),
+        str(gnn_checkout_python(upstream_run.root)),
+        "-I",
+        "-B",
+        str(PROJECT_ROOT / "scripts/qualified_gnn.py"),
+        "check",
+        "--repo",
+        str(PROJECT_ROOT),
+        "--source",
+        str(upstream_run.extract_dir),
     ]
     result = subprocess.run(command, env=environment, capture_output=True, text=True, check=False)
     assert result.returncode != 0

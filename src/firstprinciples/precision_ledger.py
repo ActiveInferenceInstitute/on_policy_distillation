@@ -43,18 +43,58 @@ _CROSS_READ_TOL = 1e-12
 _PRECISION_SOURCES: tuple[tuple[str, str, str, int], ...] = (
     ("Analytical MI two-route residual", "output/data/analytical_observable_sweep.json", "max_abs_residual", 1),
     ("Active-selection identity", "output/data/firstprinciples/active_selection_demo.json", "max_identity_residual", 1),
-    ("Multi-state identity (n,k in {3,4})", "output/data/firstprinciples/active_selection_general_demo.json", "max_identity_residual", 1),
-    ("Parallel reverse-KL / VFE convergence", "output/data/firstprinciples/parallel_demo.json", "max_abs_difference", 2),
-    ("pymdp bridge (post-cue entropy)", "output/data/firstprinciples/si_bridge_demo.json", "residual_entropy_match_abs", 2),
-    ("pymdp bridge (per-step trajectory)", "output/data/firstprinciples/si_bridge_demo.json", "max_trajectory_error_abs", 2),
+    (
+        "Multi-state identity (n,k in {3,4})",
+        "output/data/firstprinciples/active_selection_general_demo.json",
+        "max_identity_residual",
+        1,
+    ),
+    (
+        "Parallel reverse-KL / VFE convergence",
+        "output/data/firstprinciples/parallel_demo.json",
+        "max_abs_difference",
+        2,
+    ),
+    (
+        "pymdp bridge (post-cue entropy)",
+        "output/data/firstprinciples/si_bridge_demo.json",
+        "residual_entropy_match_abs",
+        2,
+    ),
+    (
+        "pymdp bridge (per-step trajectory)",
+        "output/data/firstprinciples/si_bridge_demo.json",
+        "max_trajectory_error_abs",
+        2,
+    ),
 )
 # (label, source artifact (relative), MARGIN field that must exceed _CONTROL_MIN_MARGIN)
 _CONTROL_SOURCES: tuple[tuple[str, str, str], ...] = (
-    ("Active-selection: blinding reopens the gap", "output/data/firstprinciples/active_selection_demo.json", "blinded_cue_residual_gap"),
-    ("Multi-state: wrong-measure breaks the identity", "output/data/firstprinciples/active_selection_general_demo.json", "wrong_measure_residual_gap"),
-    ("Sequential: blinded cue collapses the advantage", "output/data/firstprinciples/sequential_selection_demo.json", "blind_collapse_margin"),
-    ("Bridge: blinded cue reopens the residual", "output/data/firstprinciples/si_bridge_demo.json", "blinded_efe_residual_margin"),
-    ("Bridge: wrong validity breaks the trajectory", "output/data/firstprinciples/si_bridge_demo.json", "wrong_validity_trajectory_max_error"),
+    (
+        "Active-selection: blinding reopens the gap",
+        "output/data/firstprinciples/active_selection_demo.json",
+        "blinded_cue_residual_gap",
+    ),
+    (
+        "Multi-state: wrong-measure breaks the identity",
+        "output/data/firstprinciples/active_selection_general_demo.json",
+        "wrong_measure_residual_gap",
+    ),
+    (
+        "Sequential: blinded cue collapses the advantage",
+        "output/data/firstprinciples/sequential_selection_demo.json",
+        "blind_collapse_margin",
+    ),
+    (
+        "Bridge: blinded cue reopens the residual",
+        "output/data/firstprinciples/si_bridge_demo.json",
+        "blinded_efe_residual_margin",
+    ),
+    (
+        "Bridge: wrong validity breaks the trajectory",
+        "output/data/firstprinciples/si_bridge_demo.json",
+        "wrong_validity_trajectory_max_error",
+    ),
 )
 
 __all__ = ["build_payload", "validate_payload", "validate_against_sources"]
@@ -74,8 +114,15 @@ def build_payload(root: Path | None = None) -> dict[str, object]:
         residual_values.append(val)
         tol = _TIER_TOL[tier]
         precision_rows.append(
-            {"name": label, "source": rel, "field": field, "tier": tier, "tolerance": tol,
-             "residual": val, "within_tol": bool(math.isfinite(val) and val < tol)}
+            {
+                "name": label,
+                "source": rel,
+                "field": field,
+                "tier": tier,
+                "tolerance": tol,
+                "residual": val,
+                "within_tol": bool(math.isfinite(val) and val < tol),
+            }
         )
     control_rows: list[dict[str, object]] = []
     control_margins: list[float] = []
@@ -83,8 +130,14 @@ def build_payload(root: Path | None = None) -> dict[str, object]:
         margin = float(_read(base, rel).get(field, math.nan))
         control_margins.append(margin)
         control_rows.append(
-            {"name": label, "source": rel, "field": field, "margin": margin, "min_margin": _CONTROL_MIN_MARGIN,
-             "bites": bool(math.isfinite(margin) and margin > _CONTROL_MIN_MARGIN)}
+            {
+                "name": label,
+                "source": rel,
+                "field": field,
+                "margin": margin,
+                "min_margin": _CONTROL_MIN_MARGIN,
+                "bites": bool(math.isfinite(margin) and margin > _CONTROL_MIN_MARGIN),
+            }
         )
 
     max_residual = max(residual_values, default=math.inf)
@@ -119,9 +172,13 @@ def validate_payload(payload: dict[str, object]) -> list[str]:
         return [*issues, "missing precision/control rows"]
     try:
         residuals = [float(r["residual"]) for r in prows]
-        all_precise = all(math.isfinite(float(r["residual"])) and float(r["residual"]) < float(r["tolerance"]) for r in prows)
+        all_precise = all(
+            math.isfinite(float(r["residual"])) and float(r["residual"]) < float(r["tolerance"]) for r in prows
+        )
         margins = [float(r["margin"]) for r in crows]
-        all_controlled = all(math.isfinite(float(r["margin"])) and float(r["margin"]) > float(r["min_margin"]) for r in crows)
+        all_controlled = all(
+            math.isfinite(float(r["margin"])) and float(r["margin"]) > float(r["min_margin"]) for r in crows
+        )
     except (KeyError, TypeError, ValueError) as exc:
         return [*issues, f"malformed ledger rows: {exc}"]
     if bool(payload.get("all_precise")) != all_precise:
