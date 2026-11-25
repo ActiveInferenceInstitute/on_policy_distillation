@@ -1,9 +1,3 @@
-```{=latex}
-\phantomsection
-\addcontentsline{toc}{section}{Appendix}
-\section*{Appendix}
-```
-
 # Supplementary material: reproducibility methodology {#sec:methods_sheaf}
 
 <!-- sheaf-track:prose -->
@@ -492,36 +486,74 @@ Generated status for the current manuscript sheaf, summarized per composable sec
 | Restriction | Value |
 | --- | --- |
 | Coverage missing | `0` |
-| Policy comparison rows | `0` |
-| Policy grid complete | `False` |
-| Policy posterior rows | `0` |
-| Policy posterior normalized | `False` |
+| Policy comparison rows | `2` |
+| Policy grid complete | `True` |
+| Policy posterior rows | `14` |
+| Policy posterior normalized | `True` |
 | Runtime unexpected warnings | `0` |
 | Graph-world trace agrees | `True` |
-| Animation frames | `0` |
+| Animation frames | `4` |
 | Lean all proved | `True` |
 | GNN ontology ok | `True` |
 | Configured producers ok | `True` |
 | Semantic certificate ok | `not evaluated` |
-| Dependency edges ok | `False` |
-| Track scope complete | `False` |
-| Empirical adapter blocked | `False` |
-| Provenance bundles complete | `False` |
-| Replay rows matched | `False` |
-| Sensitivity complete | `False` |
-| Uncertainty normalized | `False` |
-| Evidence fields mapped | `False` |
-| Release bundle sources present | `False` |
-| Theorem traceability linked | `False` |
-| Gate ergonomics indexed | `False` |
-| Interop lossless | `False` |
-| Scope toy-only | `False` |
+| Dependency edges ok | `True` |
+| Track scope complete | `True` |
+| Empirical adapter blocked | `True` |
+| Provenance bundles complete | `True` |
+| Replay rows matched | `True` |
+| Sensitivity complete | `True` |
+| Uncertainty normalized | `True` |
+| Evidence fields mapped | `True` |
+| Release bundle sources present | `True` |
+| Theorem traceability linked | `True` |
+| Gate ergonomics indexed | `True` |
+| Interop lossless | `True` |
+| Scope toy-only | `True` |
 
 <!-- sheaf-layers:track-improvement-scope -->
 ## Track improvement scope
 
 | Track | Status | Current proof | Next artifact | Gate | Negative control |
 | --- | --- | --- | --- | --- | --- |
+| `adversarial_audit` | live | `output/reports/adversarial_audit.json` | `output/reports/adversarial_audit.json` | `validate_outputs, validate_manuscript` | adversarial_known_bad_passes |
+| `animation` | optional | `output/figures/si_belief_trajectory.gif` | `output/figures/si_belief_trajectory.gif` | `validate_outputs` | missing_fragment_coverage |
+| `animation_delta` | live | `output/data/animation_frame_deltas.json` | `output/data/animation_frame_deltas.json` | `validate_outputs, validate_manuscript` | missing_fragment_coverage |
+| `artifact_diffoscope` | live | `output/reports/artifact_diffoscope.json` | `output/reports/artifact_diffoscope.json` | `validate_outputs, validate_manuscript` | artifact_diffoscope_missed_hash_drift |
+| `artifact_license` | live | `output/reports/artifact_license_audit.json` | `output/reports/artifact_license_audit.json` | `validate_outputs, validate_manuscript` | artifact_license_unsafe_artifact |
+| `assumption_index` | live | `output/data/analytical_assumption_index.json` | `output/data/analytical_assumption_index.json` | `validate_outputs, validate_manuscript` | missing_fragment_coverage |
+| `benchmark` | live | `output/data/toy_benchmark_matrix.json` | `output/data/toy_benchmark_matrix.json` | `validate_outputs` | missing_fragment_coverage |
+| `causal_ablation` | live | `output/data/causal_ablation_matrix.json` | `output/data/causal_ablation_matrix.json` | `validate_outputs, validate_manuscript` | causal_ablation_missing_cell |
+| `counterexample` | live | `output/reports/counterexample_matrix.json` | `output/reports/counterexample_matrix.json` | `validate_outputs, validate_manuscript` | known_bad_counterexample_passed |
+| `evidence_fields` | live | `output/data/evidence_field_index.json` | `output/data/evidence_field_index.json` | `validate_outputs, validate_manuscript` | missing_typed_claim |
+| `formalism` | live | `manuscript/sheaf/manifest.yaml` | `manuscript/sheaf/manifest.yaml` | `validate_manuscript` | missing_fragment_coverage |
+| `gate_ergonomics` | live | `output/data/validation_gate_index.json` | `output/data/validation_gate_index.json` | `validate_outputs, validate_manuscript` | gate_ergonomics_unindexed |
+| `gnn` | live | `output/reports/gnn_lint_report.json` | `output/reports/gnn_lint_report.json` | `validate_outputs` | missing_fragment_coverage |
+| `interop` | live | `output/data/interop_roundtrip_report.json` | `output/data/interop_roundtrip_report.json` | `validate_outputs` | interop_shape_loss |
+| `layers` | optional | `output/data/sheaf_coverage_matrix.json` | `output/data/sheaf_coverage_matrix.json` | `validate_outputs, validate_manuscript` | missing_fragment_coverage |
+| `lean` | live | `output/reports/lean_theorem_inventory.json` | `output/reports/lean_theorem_inventory.json` | `validate_outputs` | missing_fragment_coverage |
+| `manuscript_staleness` | live | `output/reports/manuscript_staleness_report.json` | `output/reports/manuscript_staleness_report.json` | `validate_outputs, validate_manuscript` | missing_fragment_coverage |
+| `model_checking` | live | `output/reports/model_checking_witnesses.json` | `output/reports/model_checking_witnesses.json` | `validate_outputs` | missed_model_checking_counterexample |
+| `ontology` | live | `output/data/ontology_profile_matrix.json` | `output/data/ontology_profile_matrix.json` | `validate_outputs` | missing_fragment_coverage |
+| `proof_extraction` | live | `output/data/proof_extraction_index.json` | `output/data/proof_extraction_index.json` | `validate_outputs, validate_manuscript` | proof_extraction_missing_statement |
+| `prose` | live | `manuscript/sheaf/manifest.yaml` | `manuscript/sheaf/manifest.yaml` | `validate_manuscript` | missing_fragment_coverage |
+| `provenance` | live | `output/data/artifact_provenance.json` | `output/data/artifact_provenance.json` | `validate_manuscript, validate_outputs` | missing_sheaf_track_producer |
+| `pymdp` | live | `output/data/si_policy_comparison.json` | `output/data/si_policy_comparison.json` | `validate_outputs` | missing_fragment_coverage |
+| `release_bundle` | live | `output/reports/release_bundle_manifest.json` | `output/reports/release_bundle_manifest.json` | `validate_outputs, validate_manuscript` | release_bundle_parity_failure |
+| `release_notes` | live | `output/reports/release_notes_evidence.json` | `output/reports/release_notes_evidence.json` | `validate_outputs, validate_manuscript` | release_notes_claim_failed_gate_passed |
+| `replay_matrix` | live | `output/reports/replay_matrix.json` | `output/reports/replay_matrix.json` | `validate_outputs, validate_manuscript` | replay_mismatch |
+| `scholarship` | live | `output/data/scholarship_source_matrix.json` | `output/data/scholarship_source_matrix.json` | `validate_outputs, validate_manuscript` | missing_scholarship_source_binding |
+| `sensitivity` | live | `output/data/sensitivity_sweep.json` | `output/data/sensitivity_sweep.json` | `validate_outputs` | missing_sensitivity_cell |
+| `simulation` | live | `output/data/analytical_observable_sweep.json` | `output/data/analytical_observable_sweep.json` | `validate_outputs` | missing_fragment_coverage |
+| `state_space_catalog` | live | `output/data/state_space_catalog.json` | `output/data/state_space_catalog.json` | `validate_outputs, validate_manuscript` | state_space_catalog_missing_finite_space |
+| `theorem_traceability` | live | `output/data/theorem_traceability_matrix.json` | `output/data/theorem_traceability_matrix.json` | `validate_outputs, validate_manuscript` | theorem_traceability_unlinked |
+| `uncertainty` | live | `output/data/uncertainty_summary.json` | `output/data/uncertainty_summary.json` | `validate_outputs` | unnormalized_uncertainty_row |
+| `visualization` | live | `output/data/figure_source_map.json` | `output/data/figure_source_map.json` | `validate_outputs, validate_manuscript` | missing_fragment_coverage |
+| `empirical_adapter` | blocked | `output/reports/blocked_scope_manifest.json` | `output/data/empirical_adapter_manifest.json` | `blocked_scope_manifest.all_blocked` | empirical claim appears without manifest |
+| `private_or_restricted_data` | blocked | `output/reports/blocked_scope_manifest.json` | `output/data/private_data_provenance_manifest.json` | `blocked_scope_manifest.all_blocked` | private data artifact appears without provenance manifest |
+| `network_dependent_research` | blocked | `output/reports/blocked_scope_manifest.json` | `output/data/network_replay_manifest.json` | `blocked_scope_manifest.all_blocked` | network-derived claim appears without replay manifest |
+| `llm_generated_evidence` | blocked | `output/reports/blocked_scope_manifest.json` | `output/data/llm_evidence_audit.json` | `blocked_scope_manifest.all_blocked` | LLM-generated evidence appears as a validation source |
+| `non_toy_model_claims` | blocked | `output/reports/blocked_scope_manifest.json` | `output/data/non_toy_model_scope_manifest.json` | `blocked_scope_manifest.all_blocked` | non-toy result claim appears outside future-only scope |
 
-**Improvement rows:** 0.
+**Improvement rows:** 38.
 
