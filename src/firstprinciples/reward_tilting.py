@@ -82,7 +82,9 @@ def free_energy_against_tilted(policy: ArrayF, reference: ArrayF, reward: ArrayF
     return kl_divergence(pi, target)
 
 
-def verify_optimality(reference: ArrayF, reward: ArrayF, beta: float, *, trials: int = 64, seed: int = 0) -> dict[str, object]:
+def verify_optimality(
+    reference: ArrayF, reward: ArrayF, beta: float, *, trials: int = 64, seed: int = 0
+) -> dict[str, object]:
     """Numerically confirm the reward-tilted target maximises ``J``.
 
     Draws ``trials`` Dirichlet-perturbed policies and checks none beats the

@@ -336,10 +336,15 @@ def semantic_gluing_issues(project_root: Path, *, require_observations: bool = T
         except (OSError, ValueError) as exc:
             issues.append(f"{model_id}: invalid live ontology binding: {exc}")
             continue
-        issues.extend(_expected_symbol_gaps(
-            label=model_id, gnn_symbols=_gnn_symbols(root, f"gnn/{model_id}.gnn.md"),
-            section_symbols=section_symbols, symbol_map=symbol_map, expected_terms=expected_terms,
-        ))
+        issues.extend(
+            _expected_symbol_gaps(
+                label=model_id,
+                gnn_symbols=_gnn_symbols(root, f"gnn/{model_id}.gnn.md"),
+                section_symbols=section_symbols,
+                symbol_map=symbol_map,
+                expected_terms=expected_terms,
+            )
+        )
 
     variables_path = root / "output" / "data" / "manuscript_variables.json"
     if variables_path.is_file():
@@ -443,9 +448,11 @@ def semantic_gluing_issues(project_root: Path, *, require_observations: bool = T
         payload = _load_json(path)
         if payload.get(field) is not True:
             issues.append(f"{label} integration check failed: {field}")
-    issues.extend(validate_sheaf_track_artifacts(
-        root, validate_saved_certificate=False, require_observations=require_observations
-    ))
+    issues.extend(
+        validate_sheaf_track_artifacts(
+            root, validate_saved_certificate=False, require_observations=require_observations
+        )
+    )
 
     return issues
 
@@ -552,8 +559,11 @@ def validate_canonical_claim_bindings(project_root: Path) -> list[str]:
         f"canonical artifact {relative} has no typed claim binding"
         for relative in CANONICAL_ARTIFACTS.values()
         if not any(
-            claim.get("path") == relative and claim.get("id") and claim.get("tracks")
-            and isinstance(claim.get("evidence"), dict) and claim["evidence"]
+            claim.get("path") == relative
+            and claim.get("id")
+            and claim.get("tracks")
+            and isinstance(claim.get("evidence"), dict)
+            and claim["evidence"]
             for claim in claims
         )
     ]

@@ -47,9 +47,7 @@ from . import (
     variational_em,
 )
 
-THESIS = (
-    "A Finite-Model Active-Inference Reading of On-Policy Distillation"
-)
+THESIS = "A Finite-Model Active-Inference Reading of On-Policy Distillation"
 
 __all__ = [
     "THESIS",

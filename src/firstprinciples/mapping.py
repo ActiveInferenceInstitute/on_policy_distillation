@@ -73,8 +73,7 @@ CORRESPONDENCES: tuple[Correspondence, ...] = (
         "Active sampling to minimise F",
         "On-policy student rollouts",
         "the posterior generates its own observations",
-        "Off-policy/passive updating leaves the visited-state mismatch that "
-        "becomes exposure bias.",
+        "Off-policy/passive updating leaves the visited-state mismatch that becomes exposure bias.",
     ),
     Correspondence(
         "Epistemic value (information gain)",
@@ -229,9 +228,7 @@ def markdown_table() -> str:
     """Render the correspondence table as GitHub-flavoured markdown."""
     header = "| Active inference | On-policy distillation | Shared formal object |\n"
     sep = "| --- | --- | --- |\n"
-    rows = "".join(
-        f"| {r.ai_component} | {r.opd_counterpart} | {r.shared_object} |\n" for r in CORRESPONDENCES
-    )
+    rows = "".join(f"| {r.ai_component} | {r.opd_counterpart} | {r.shared_object} |\n" for r in CORRESPONDENCES)
     return header + sep + rows
 
 

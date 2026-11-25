@@ -268,9 +268,7 @@ def policy_posterior(efe_values: list[float], gamma: float) -> list[float]:
     return (weights / total).tolist()
 
 
-def precision_sweep(
-    scores: list[PolicyScore], gammas: tuple[float, ...] = _PRECISION_GAMMAS
-) -> list[dict[str, float]]:
+def precision_sweep(scores: list[PolicyScore], gammas: tuple[float, ...] = _PRECISION_GAMMAS) -> list[dict[str, float]]:
     """Posterior mass on the cue policy across a precision grid (monotone up)."""
     efe = [s.efe for s in scores]
     cue_index = next((i for i, s in enumerate(scores) if s.name == "cue"), 0)
@@ -341,9 +339,7 @@ def build_payload() -> dict[str, object]:
     efe_sorted = sorted(s.efe for s in scores)
     efe_argmin_unique = bool(efe_sorted[1] - efe_sorted[0] > 1e-9)
     q_limit = policy_posterior([s.efe for s in scores], _PRECISION_LIMIT_GAMMA)
-    posterior_uniform_at_zero = bool(
-        prec_sweep[0]["gamma"] == 0.0 and abs(q_cue_seq[0] - 1.0 / n_policies) < 1e-12
-    )
+    posterior_uniform_at_zero = bool(prec_sweep[0]["gamma"] == 0.0 and abs(q_cue_seq[0] - 1.0 / n_policies) < 1e-12)
     posterior_monotone_in_gamma = bool(
         all(q_cue_seq[i] <= q_cue_seq[i + 1] + 1e-12 for i in range(len(q_cue_seq) - 1))
         and q_cue_seq[-1] > q_cue_seq[0] + _GAP_MARGIN

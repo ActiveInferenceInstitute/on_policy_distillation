@@ -141,9 +141,7 @@ def sdpg_demo() -> dict[str, Any]:
     mode_rows = [{"mode": mode, **modes[mode]} for mode in _SDPG_MODES]
     signal_density = sdpg.signal_density(student, teacher)
     all_loss_terms_present = all(all(term in row for term in _SDPG_LOSS_TERMS) for row in mode_rows)
-    all_loss_terms_finite = all(
-        bool(np.isfinite(float(row[term]))) for row in mode_rows for term in _SDPG_LOSS_TERMS
-    )
+    all_loss_terms_finite = all(bool(np.isfinite(float(row[term]))) for row in mode_rows for term in _SDPG_LOSS_TERMS)
     all_self_distillation_kl_positive = all(row["self_distillation_kl"] > 0.0 for row in mode_rows)
     all_reference_kl_positive = all(row["reference_kl"] > 0.0 for row in mode_rows)
     dense_privileged_signal = (

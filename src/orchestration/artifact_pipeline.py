@@ -203,9 +203,7 @@ def hydrate_manuscript_fixed_point(
             previous_signature = signature
             previous_issues = {name: list(issues) for name, issues in remaining_issues.items()}
         else:
-            details = "; ".join(
-                f"{name}: {', '.join(issues)}" for name, issues in remaining_issues.items() if issues
-            )
+            details = "; ".join(f"{name}: {', '.join(issues)}" for name, issues in remaining_issues.items() if issues)
             raise RuntimeError(f"artifact fixed point did not converge after {max_passes} passes: {details}")
         return paths
 

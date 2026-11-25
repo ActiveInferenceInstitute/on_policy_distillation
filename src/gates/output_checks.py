@@ -582,8 +582,10 @@ def _proof_extraction_ok(proof_extraction: dict, lean_theorems: dict) -> bool:
         and int(proof_extraction.get("inventory_theorem_count", -1) or -1)
         == int(lean_theorems.get("theorem_count", -2) or -2)
         and bool(proof_rows)
-        and all(row.get("statement") and row.get("extracted") is True and not row.get("forbidden_tokens")
-                for row in proof_rows)
+        and all(
+            row.get("statement") and row.get("extracted") is True and not row.get("forbidden_tokens")
+            for row in proof_rows
+        )
         and bool(inventory)
         and extracted == inventory
     )
@@ -681,37 +683,59 @@ def _policy_comparison_ok(comparison: dict) -> bool:
             comparison.get("schema") != "template_active_inference.si_policy_comparison.v2"
             or comparison.get("scope") != "comparison_only"
             or comparison.get("canonical_planner") != "sophisticated_inference"
-            or not isinstance(config, dict) or comparison.get("config_hash") != _snapshot_digest(config)
-            or not planners or not seeds or len(planners) != len(set(planners)) or len(seeds) != len(set(seeds))
+            or not isinstance(config, dict)
+            or comparison.get("config_hash") != _snapshot_digest(config)
+            or not planners
+            or not seeds
+            or len(planners) != len(set(planners))
+            or len(seeds) != len(set(seeds))
             or not set(planners) <= {"sophisticated_inference", "vanilla"}
-            or not isinstance(runs, list) or not runs
+            or not isinstance(runs, list)
+            or not runs
             or any(type(seed) is not int for seed in seeds)
         ):
             return False
         cells = [(run["planner"], run["seed"]) for run in runs]
         expected = {(planner, seed) for planner in planners for seed in seeds}
-        if (len(cells) != len(expected) or set(cells) != expected
-                or summary.get("expected_run_count") != len(expected) or summary.get("run_count") != len(runs)
-                or summary.get("complete_grid") is not True or summary.get("vanilla_role") != "comparison_only"
-                or summary.get("horizons") != [config["planning_horizon"]]):
+        if (
+            len(cells) != len(expected)
+            or set(cells) != expected
+            or summary.get("expected_run_count") != len(expected)
+            or summary.get("run_count") != len(runs)
+            or summary.get("complete_grid") is not True
+            or summary.get("vanilla_role") != "comparison_only"
+            or summary.get("horizons") != [config["planning_horizon"]]
+        ):
             return False
         for run in runs:
             effective = run["config"]
-            expected_config = {**config, "random_seed": run["seed"],
-                               "logging": {**config["logging"], "path": str(
-                                   Path(config["logging"]["path"]).parent /
-                                   f"pymdp_compare_{run['planner']}_{config['planning_horizon']}_{run['seed']}.jsonl"
-                               )}}
+            expected_config = {
+                **config,
+                "random_seed": run["seed"],
+                "logging": {
+                    **config["logging"],
+                    "path": str(
+                        Path(config["logging"]["path"]).parent
+                        / f"pymdp_compare_{run['planner']}_{config['planning_horizon']}_{run['seed']}.jsonl"
+                    ),
+                },
+            }
             policy_len = config["agent"][
                 "si_policy_len" if run["planner"] == "sophisticated_inference" else "vanilla_policy_len"
             ]
             steps = run.get("policy_posterior_steps")
-            if (effective != expected_config or run.get("config_hash") != _snapshot_digest(effective)
-                    or run.get("role") != "validation_comparison"
-                    or run.get("horizon") != config["planning_horizon"] or run.get("steps") != config["timesteps"]
-                    or run.get("policy_len") != policy_len or "goal_reached" not in run
-                    or not isinstance(steps, list) or len(steps) != config["timesteps"] + 1
-                    or len({step["step"] for step in steps}) != len(steps)):
+            if (
+                effective != expected_config
+                or run.get("config_hash") != _snapshot_digest(effective)
+                or run.get("role") != "validation_comparison"
+                or run.get("horizon") != config["planning_horizon"]
+                or run.get("steps") != config["timesteps"]
+                or run.get("policy_len") != policy_len
+                or "goal_reached" not in run
+                or not isinstance(steps, list)
+                or len(steps) != config["timesteps"] + 1
+                or len({step["step"] for step in steps}) != len(steps)
+            ):
                 return False
             for step in steps:
                 values = _finite_series(step.get("q_pi"))
@@ -720,9 +744,11 @@ def _policy_comparison_ok(comparison: dict) -> bool:
                         return False
                 elif not step.get("fallback_reason"):
                     return False
-        return (summary.get("all_efe_rows_explained") is True
-                and _si_efe_rows_explained(comparison)
-                and summary.get("all_available_posteriors_normalized") is True)
+        return (
+            summary.get("all_efe_rows_explained") is True
+            and _si_efe_rows_explained(comparison)
+            and summary.get("all_available_posteriors_normalized") is True
+        )
     except (KeyError, TypeError, ValueError, OverflowError):
         return False
 
@@ -737,16 +763,27 @@ def _policy_posterior_grid_ok(root: Path, posterior: dict) -> bool:
             for step in run["policy_posterior_steps"]:
                 values = [float(value) for value in step.get("q_pi", []) or []]
                 total = sum(values) if values else None
-                expected_rows.append({
-                    "run_index": run_index, "step": step.get("step"), "planner": run.get("planner"),
-                    "role": run.get("role"), "horizon": run.get("horizon"), "seed": run.get("seed"),
-                    "steps": run.get("steps"), "policy_len": run.get("policy_len"), "config_hash": run.get("config_hash"),
-                    "posterior_available": step.get("posterior_available") is True,
-                    "posterior_source": step.get("posterior_source"), "q_pi": values, "q_pi_sum": total,
-                    "q_pi_entropy": step.get("q_pi_entropy"), "action_probabilities": step.get("action_probabilities", {}),
-                    "normalized": total is not None and abs(total - 1.0) <= 1e-9,
-                    "fallback_reason": step.get("fallback_reason"),
-                })
+                expected_rows.append(
+                    {
+                        "run_index": run_index,
+                        "step": step.get("step"),
+                        "planner": run.get("planner"),
+                        "role": run.get("role"),
+                        "horizon": run.get("horizon"),
+                        "seed": run.get("seed"),
+                        "steps": run.get("steps"),
+                        "policy_len": run.get("policy_len"),
+                        "config_hash": run.get("config_hash"),
+                        "posterior_available": step.get("posterior_available") is True,
+                        "posterior_source": step.get("posterior_source"),
+                        "q_pi": values,
+                        "q_pi_sum": total,
+                        "q_pi_entropy": step.get("q_pi_entropy"),
+                        "action_probabilities": step.get("action_probabilities", {}),
+                        "normalized": total is not None and abs(total - 1.0) <= 1e-9,
+                        "fallback_reason": step.get("fallback_reason"),
+                    }
+                )
         rows = posterior.get("rows")
         available = [row for row in expected_rows if row["posterior_available"]]
         unavailable = [row for row in expected_rows if not row["posterior_available"]]
@@ -755,19 +792,19 @@ def _policy_posterior_grid_ok(root: Path, posterior: dict) -> bool:
         ).hexdigest()
         return (
             posterior.get("schema") == "template_active_inference.pymdp_policy_posterior_grid.v1"
-            and posterior.get("scope") == "comparison_only" and bool(expected_rows)
+            and posterior.get("scope") == "comparison_only"
+            and bool(expected_rows)
             and posterior.get("config") == comparison["config"]
             and posterior.get("config_hash") == comparison["config_hash"]
             and posterior.get("source_payload_sha256") == digest
-            and rows == expected_rows and posterior.get("row_count") == len(expected_rows)
+            and rows == expected_rows
+            and posterior.get("row_count") == len(expected_rows)
             and posterior.get("available_row_count") == len(available)
-            and posterior.get("all_available_posteriors_normalized") is (
-                bool(available) and all(row["normalized"] for row in available)
-            )
+            and posterior.get("all_available_posteriors_normalized")
+            is (bool(available) and all(row["normalized"] for row in available))
             and posterior.get("all_available_posteriors_normalized") is True
-            and posterior.get("all_unavailable_rows_explained") is all(
-                bool(row["fallback_reason"]) for row in unavailable
-            )
+            and posterior.get("all_unavailable_rows_explained")
+            is all(bool(row["fallback_reason"]) for row in unavailable)
             and posterior.get("all_unavailable_rows_explained") is True
         )
     except (KeyError, TypeError, ValueError, OverflowError):
@@ -778,7 +815,8 @@ def _track_scope_ok(root: Path, payload: dict, *, require_observations: bool) ->
     from roadmap_tracks.sheaf_tracks_reports import track_improvement_scope_consistent
 
     return (
-        track_improvement_scope_consistent(root, payload) and payload.get("all_live_tracks_valid") is True
+        track_improvement_scope_consistent(root, payload)
+        and payload.get("all_live_tracks_valid") is True
         and (not require_observations or payload.get("all_required_controls_observed") is True)
     )
 
@@ -802,25 +840,31 @@ def _canonical_output_ok(
         from roadmap_tracks.negative_controls import validate_observation_payload
 
         return not validate_observation_payload(
-            root, payload, adversarial=artifact == "adversarial_audit",
+            root,
+            payload,
+            adversarial=artifact == "adversarial_audit",
             require_observations=require_observations and not key.endswith("_receipts_consistent"),
         )
-    schema = "template_active_inference." + {
-        "dependency": "validation_dependency_graph",
-        "release_bundle": "release_bundle_manifest",
-        "sensitivity": "sensitivity_sweep",
-        "uncertainty": "uncertainty_summary",
-        "model_checking": "model_checking_witnesses",
-        "interop": "interop_roundtrip_report",
-        "theorem_traceability": "theorem_traceability_matrix",
-        "gate_ergonomics": "validation_gate_index",
-        "scholarship": "scholarship_source_matrix",
-        "state_space_catalog": "state_space_catalog",
-        "causal_ablation": "causal_ablation_matrix",
-        "artifact_license": "artifact_license_audit",
-        "release_notes": "release_notes_evidence",
-        "proof_extraction": "proof_extraction_index",
-    }.get(artifact, artifact) + ".v1"
+    schema = (
+        "template_active_inference."
+        + {
+            "dependency": "validation_dependency_graph",
+            "release_bundle": "release_bundle_manifest",
+            "sensitivity": "sensitivity_sweep",
+            "uncertainty": "uncertainty_summary",
+            "model_checking": "model_checking_witnesses",
+            "interop": "interop_roundtrip_report",
+            "theorem_traceability": "theorem_traceability_matrix",
+            "gate_ergonomics": "validation_gate_index",
+            "scholarship": "scholarship_source_matrix",
+            "state_space_catalog": "state_space_catalog",
+            "causal_ablation": "causal_ablation_matrix",
+            "artifact_license": "artifact_license_audit",
+            "release_notes": "release_notes_evidence",
+            "proof_extraction": "proof_extraction_index",
+        }.get(artifact, artifact)
+        + ".v1"
+    )
     if payload.get("schema") != schema:
         return False
     if artifact == "release_notes" and not require_observations:
@@ -830,8 +874,11 @@ def _canonical_output_ok(
     if artifact == "dependency":
         edges = payload.get("edges") or []
         return (
-            bool(edges) and all(isinstance(edge, dict) and edge.get("source") and edge.get("target")
-                                and edge.get("kind") for edge in edges)
+            bool(edges)
+            and all(
+                isinstance(edge, dict) and edge.get("source") and edge.get("target") and edge.get("kind")
+                for edge in edges
+            )
             and set(REQUIRED_EDGE_TYPES) <= {edge["kind"] for edge in edges}
             and payload.get("all_required_edge_types_present") is True
         )
@@ -843,20 +890,26 @@ def _canonical_output_ok(
             payload.get("all_required_sources_present") is True
             and all(row.get("source_exists") is True or row.get("deferred_until_render") is True for row in rows)
             and payload.get("all_copied_outputs_match_or_deferred") is True
-            and bool(parity) and all(row.get("matches_when_copied") is True for row in parity)
+            and bool(parity)
+            and all(row.get("matches_when_copied") is True for row in parity)
         )
     if artifact == "replay_matrix":
         return (
-            payload.get("all_replay_rows_matched") is True and all(row.get("matched") is True for row in rows)
+            payload.get("all_replay_rows_matched") is True
+            and all(row.get("matched") is True for row in rows)
             and payload.get("all_configured_producers_represented") is True
             and {row.get("producer_script") for row in rows} == set(payload.get("configured_scripts") or [])
         )
     if artifact in {"sensitivity", "causal_ablation"}:
         flag = "all_finite_bounds_ok" if artifact == "sensitivity" else "all_deterministic"
         field = "finite_bound_ok" if artifact == "sensitivity" else "deterministic"
-        return (payload.get("complete_grid") is True and type(payload.get("expected_cells")) is int
-                and payload.get("row_count") == len(rows) == payload["expected_cells"]
-                and payload.get(flag) is True and all(row.get(field) is True for row in rows))
+        return (
+            payload.get("complete_grid") is True
+            and type(payload.get("expected_cells")) is int
+            and payload.get("row_count") == len(rows) == payload["expected_cells"]
+            and payload.get(flag) is True
+            and all(row.get(field) is True for row in rows)
+        )
     if artifact == "uncertainty":
         for row in rows:
             posterior = _finite_series(row.get("distribution", row.get("posterior")))
@@ -866,36 +919,69 @@ def _canonical_output_ok(
                 "distribution_sum" in row and not _close_float(row["distribution_sum"], sum(posterior), atol=1e-9)
             ):
                 return False
-        return (payload.get("all_normalized") is True and payload.get("all_bins_valid") is True
-                and all(row.get("bin") in (payload.get("bins") or {}) for row in rows))
+        return (
+            payload.get("all_normalized") is True
+            and payload.get("all_bins_valid") is True
+            and all(row.get("bin") in (payload.get("bins") or {}) for row in rows)
+        )
     if artifact == "model_checking":
-        return (payload.get("all_passed") is True and payload.get("all_exhaustive") is True
-                and all(row.get("passed") is True and row.get("exhaustive") is True
-                        and not row.get("counterexamples") for row in rows))
+        return (
+            payload.get("all_passed") is True
+            and payload.get("all_exhaustive") is True
+            and all(
+                row.get("passed") is True and row.get("exhaustive") is True and not row.get("counterexamples")
+                for row in rows
+            )
+        )
     if artifact == "interop":
-        return (payload.get("all_lossless") is True and payload.get("all_shape_diffs_empty") is True
-                and all(row.get("lossless") is True and not row.get("shape_diff") for row in rows))
+        return (
+            payload.get("all_lossless") is True
+            and payload.get("all_shape_diffs_empty") is True
+            and all(row.get("lossless") is True and not row.get("shape_diff") for row in rows)
+        )
     if artifact == "gate_ergonomics":
         from roadmap_tracks.integration_audit_builders import _rows_fully_specified
 
-        return (payload.get("all_indexed") is True and payload.get("all_rows_fully_specified") is True
-                and all(row.get("indexed") is True for row in rows) and _rows_fully_specified(rows))
+        return (
+            payload.get("all_indexed") is True
+            and payload.get("all_rows_fully_specified") is True
+            and all(row.get("indexed") is True for row in rows)
+            and _rows_fully_specified(rows)
+        )
     if artifact == "scholarship":
-        fields = ("bib_has_entry", "bib_has_locator", "cited_in_manuscript", "artifact_exists",
-                  "tracks_registered", "sections_bound", "claim_boundary", "connected")
-        return (payload.get("all_sources_connected") is True
-                and payload.get("all_expected_sources_present") is True
-                and all(all(row.get(field) for field in fields) for row in rows))
+        fields = (
+            "bib_has_entry",
+            "bib_has_locator",
+            "cited_in_manuscript",
+            "artifact_exists",
+            "tracks_registered",
+            "sections_bound",
+            "claim_boundary",
+            "connected",
+        )
+        return (
+            payload.get("all_sources_connected") is True
+            and payload.get("all_expected_sources_present") is True
+            and all(all(row.get(field) for field in fields) for row in rows)
+        )
     if artifact == "proof_extraction":
         inventory = (payloads or {}).get("lean_theorems")
         if inventory is None:
             inventory = _read_json(root / "output/reports/lean_theorem_inventory.json")
         return _proof_extraction_ok(payload, inventory)
     if artifact == "state_space_catalog":
-        return (payload.get("all_finite") is True and payload.get("all_counts_positive") is True
-                and all(row.get("finite") is True and type(row.get("state_count")) is int
-                        and row["state_count"] > 0 and type(row.get("policy_count")) is int
-                        and row["policy_count"] >= 1 for row in rows))
+        return (
+            payload.get("all_finite") is True
+            and payload.get("all_counts_positive") is True
+            and all(
+                row.get("finite") is True
+                and type(row.get("state_count")) is int
+                and row["state_count"] > 0
+                and type(row.get("policy_count")) is int
+                and row["policy_count"] >= 1
+                for row in rows
+            )
+        )
     aggregate, field = {
         "theorem_traceability": ("all_theorems_linked", "linked"),
         "artifact_diffoscope": ("all_equal", "equal"),
@@ -912,7 +998,10 @@ def _canonical_output_ok(
 
 
 def validate_output_payloads(
-    project_root: Path, payloads: dict[str, dict] | None = None, *, only: set[str] | None = None,
+    project_root: Path,
+    payloads: dict[str, dict] | None = None,
+    *,
+    only: set[str] | None = None,
     require_observations: bool = True,
 ) -> dict[str, bool]:
     """Validate canonical disk or in-memory payloads through the same selected gates.
@@ -931,13 +1020,15 @@ def validate_output_payloads(
         raise KeyError(f"unsupported canonical output keys: {sorted(unknown)}")
     supplemental = (
         validate_supplemental_payloads(root, payloads)
-        if any(_CANONICAL_OUTPUT_CHECKS[key] in SUPPLEMENTAL_ARTIFACTS for key in selected) else {}
+        if any(_CANONICAL_OUTPUT_CHECKS[key] in SUPPLEMENTAL_ARTIFACTS for key in selected)
+        else {}
     )
     checks = {}
     for key in sorted(selected):
         artifact = _CANONICAL_OUTPUT_CHECKS[key]
         payload = (
-            payloads[artifact] if payloads is not None and artifact in payloads
+            payloads[artifact]
+            if payloads is not None and artifact in payloads
             else _read_json(root / CANONICAL_ARTIFACTS[artifact])
         )
         if artifact in supplemental:
@@ -948,7 +1039,9 @@ def validate_output_payloads(
             checks[key] = False
         else:
             try:
-                checks[key] = _canonical_output_ok(root, key, payload, payloads, require_observations=require_observations)
+                checks[key] = _canonical_output_ok(
+                    root, key, payload, payloads, require_observations=require_observations
+                )
             except (TypeError, ValueError, KeyError, OverflowError):
                 checks[key] = False
     return checks
@@ -972,13 +1065,15 @@ def _validate_outputs_selected(
         )
     if "scope_boundary_audit_schema" in selected:
         scope = (
-            payloads["scope_boundary"] if payloads is not None and "scope_boundary" in payloads
+            payloads["scope_boundary"]
+            if payloads is not None and "scope_boundary" in payloads
             else _read_json(root / "output/reports/scope_boundary_audit.json")
         )
         checks["scope_boundary_audit_schema"] = isinstance(scope, dict) and _scope_boundary_ok(root, scope)
     if "track_improvement_scope_schema" in selected:
         promotion = (
-            payloads["track_improvement_scope"] if payloads is not None and "track_improvement_scope" in payloads
+            payloads["track_improvement_scope"]
+            if payloads is not None and "track_improvement_scope" in payloads
             else _read_json(root / "output/data/track_improvement_scope.json")
         )
         checks["track_improvement_scope_schema"] = isinstance(promotion, dict) and _track_scope_ok(
@@ -995,9 +1090,9 @@ def _validate_outputs_selected(
             checks["si_invariants_all_pass"] = False
         elif si_inv_path.exists():
             payload = _read_json(si_inv_path)
-            checks["si_invariants_all_pass"] = (
-                payload.get("all_pass") is True and payload.get("all_pass") == _si_invariants_all_pass_ok(payload)
-            )
+            checks["si_invariants_all_pass"] = payload.get("all_pass") is True and payload.get(
+                "all_pass"
+            ) == _si_invariants_all_pass_ok(payload)
         else:
             checks["si_invariants_all_pass"] = False
 
@@ -1203,9 +1298,9 @@ def _validate_outputs_full(project_root: Path, *, require_observations: bool = T
         checks["si_invariants_all_pass"] = False
     elif si_inv_path.exists():
         si_inv = json.loads(si_inv_path.read_text(encoding="utf-8"))
-        checks["si_invariants_all_pass"] = (
-            si_inv.get("all_pass") is True and si_inv.get("all_pass") == _si_invariants_all_pass_ok(si_inv)
-        )
+        checks["si_invariants_all_pass"] = si_inv.get("all_pass") is True and si_inv.get(
+            "all_pass"
+        ) == _si_invariants_all_pass_ok(si_inv)
 
     inv_path = root / "output" / "reports" / "invariants.json"
     if inv_path.exists():
@@ -1478,8 +1573,8 @@ def _validate_outputs_full(project_root: Path, *, require_observations: bool = T
     )
     checks["firstprinciples_classroom_schema"] = _firstprinciples_classroom_ok(fp_classroom)
     checks["firstprinciples_sequential_shift_schema"] = _firstprinciples_sequential_shift_ok(fp_sequential_shift)
-    checks["firstprinciples_sequential_shift_sensitivity_schema"] = (
-        _firstprinciples_sequential_shift_sensitivity_ok(fp_sequential_sensitivity)
+    checks["firstprinciples_sequential_shift_sensitivity_schema"] = _firstprinciples_sequential_shift_sensitivity_ok(
+        fp_sequential_sensitivity
     )
     checks["firstprinciples_active_selection_schema"] = _firstprinciples_active_selection_ok(fp_active_selection)
     fp_dir = root / "output" / "data" / "firstprinciples"

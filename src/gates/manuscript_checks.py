@@ -73,9 +73,7 @@ def _bib_keys(root: Path) -> set[str]:
 def _citation_source_paths(root: Path) -> list[Path]:
     section_paths = sorted((root / "manuscript" / "sections").glob("**/*.md"))
     composed_paths = sorted(
-        path
-        for path in (root / "manuscript").glob("*.md")
-        if path.name not in _EXCLUDED_CITATION_FILES
+        path for path in (root / "manuscript").glob("*.md") if path.name not in _EXCLUDED_CITATION_FILES
     )
     return [path for path in section_paths + composed_paths if path.is_file()]
 
@@ -249,7 +247,9 @@ def validate_manuscript(project_root: Path, *, only: set[str] | None = None) -> 
             }
             bound_tracks = {track_id for section in manifest.sections for track_id in section.tracks}
             if _wants("promoted_sheaf_tracks_bound"):
-                checks["promoted_sheaf_tracks_bound"] = promoted_tracks <= set(registry.tracks) and promoted_tracks <= bound_tracks
+                checks["promoted_sheaf_tracks_bound"] = (
+                    promoted_tracks <= set(registry.tracks) and promoted_tracks <= bound_tracks
+                )
             if _wants("blocked_empirical_adapter"):
                 checks["blocked_empirical_adapter"] = (
                     "empirical_adapter" not in set(registry.tracks) and "empirical_adapter" not in bound_tracks

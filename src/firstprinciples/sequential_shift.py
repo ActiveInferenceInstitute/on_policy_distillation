@@ -215,8 +215,12 @@ def build_payload() -> dict[str, Any]:
         "student_policy_after": problem.student_policy_after.tolist(),
         "action_transitions": problem.action_transitions.tolist(),
         "teacher_forced_transition": induced_transition(problem.teacher_policy, problem.action_transitions).tolist(),
-        "student_transition_before": induced_transition(problem.student_policy_before, problem.action_transitions).tolist(),
-        "student_transition_after": induced_transition(problem.student_policy_after, problem.action_transitions).tolist(),
+        "student_transition_before": induced_transition(
+            problem.student_policy_before, problem.action_transitions
+        ).tolist(),
+        "student_transition_after": induced_transition(
+            problem.student_policy_after, problem.action_transitions
+        ).tolist(),
         "train_visitation": train_visitation.tolist(),
         "student_test_visitation_before": test_before.tolist(),
         "student_test_visitation_after": test_after.tolist(),
@@ -410,7 +414,9 @@ def validate_sensitivity_payload(payload: dict[str, Any]) -> list[str]:
             values = np.asarray(row.get(key), dtype=np.float64)
             if not np.all(np.isfinite(values)):
                 issues.append(f"rows[{idx}].{key} must be finite")
-        if not np.isclose(float(row.get("student_induced_test_loss", float("nan"))), float(row.get("test_loss", float("nan")))):
+        if not np.isclose(
+            float(row.get("student_induced_test_loss", float("nan"))), float(row.get("test_loss", float("nan")))
+        ):
             issues.append(f"rows[{idx}].student_induced_test_loss must equal test_loss")
         if row.get("finite") is not True:
             issues.append(f"rows[{idx}].finite must be true")

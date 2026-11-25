@@ -57,9 +57,7 @@ def summarize(data: Sequence[float]) -> Summary:
     )
 
 
-def bootstrap_ci(
-    data: Sequence[float], *, n_boot: int = 2000, alpha: float = 0.05, seed: int = 0
-) -> dict[str, float]:
+def bootstrap_ci(data: Sequence[float], *, n_boot: int = 2000, alpha: float = 0.05, seed: int = 0) -> dict[str, float]:
     """Percentile bootstrap CI for the mean (seeded, deterministic)."""
     arr = _array(data)
     if not 0.0 < alpha < 1.0:
@@ -133,7 +131,7 @@ def paired_sign_test(a: Sequence[float], b: Sequence[float]) -> dict[str, float]
     k = min(pos, neg)
     from math import comb
 
-    tail = sum(comb(n, i) for i in range(0, k + 1)) / (2.0 ** n)
+    tail = sum(comb(n, i) for i in range(0, k + 1)) / (2.0**n)
     p = min(1.0, 2.0 * tail)
     return {"positive": float(pos), "negative": float(neg), "n": float(n), "p_value": float(p)}
 

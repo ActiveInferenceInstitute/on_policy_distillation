@@ -1172,7 +1172,9 @@ def build_visualization_quality_audit(project_root: Path) -> dict[str, Any]:
     palette_contrast_ok = bool(palette_contrast_report) and all(
         row.get("passes_aa") is True for row in palette_contrast_report.values()
     )
-    font_roles_ok = bool(font_role_report) and all(row.get("meets_minimum") is True for row in font_role_report.values())
+    font_roles_ok = bool(font_role_report) and all(
+        row.get("meets_minimum") is True for row in font_role_report.values()
+    )
     source_map = build_figure_source_map(root)
     registry_outputs = {str(row.get("output") or "") for row in source_map.get("rows") or []}
     expected_images = _expected_figure_image_paths(root)
@@ -1504,17 +1506,25 @@ def figure_hash_row_current(project_root: Path, row: dict[str, Any]) -> bool:
     absent = not path.exists() and not path.is_symlink()
     if row.get("deferred") is True:
         return (
-            rel in _PUBLISH_DEFERRED_IMAGE_PATHS and absent
-            and row.get("exists") is False and row.get("fresh") is False
-            and row.get("sha256") == "" and type(row.get("size_bytes")) is int and row["size_bytes"] == 0
+            rel in _PUBLISH_DEFERRED_IMAGE_PATHS
+            and absent
+            and row.get("exists") is False
+            and row.get("fresh") is False
+            and row.get("sha256") == ""
+            and type(row.get("size_bytes")) is int
+            and row["size_bytes"] == 0
         )
     if row.get("deferred") is not False or not path.is_file():
         return False
     digest = row.get("sha256")
     return (
-        row.get("exists") is True and row.get("fresh") is True
-        and isinstance(digest, str) and len(digest) == 64 and digest == _sha256(path)
-        and type(row.get("size_bytes")) is int and row["size_bytes"] == path.stat().st_size
+        row.get("exists") is True
+        and row.get("fresh") is True
+        and isinstance(digest, str)
+        and len(digest) == 64
+        and digest == _sha256(path)
+        and type(row.get("size_bytes")) is int
+        and row["size_bytes"] == path.stat().st_size
     )
 
 
@@ -1593,20 +1603,37 @@ def _scope_forbidden_hits(text: str) -> list[dict[str, Any]]:
                 next_start = next((left for left, _, _ in matches if left > start), len(clause))
                 local = clause[previous_end:end]
                 suffix = clause[end:next_start]
-                postposed_guardrail = bool(re.match(
-                    r"^\s*(?:(?:is|are|was|were)\s+(?:explicitly\s+)?not\b|"
-                    r"(?:results?\s+)?(?:as|are|is)\s+external context\b)", suffix
-                ))
-                independent_predicate = bool(re.search(
-                    r"\b(?:is|are|was|were|has|have|measured?|reproduced?|benchmarked?|validated?|confirmed?)\b",
-                    clause[start:end],
-                ))
-                negated = bool(_SCOPE_NEGATION_RE.search(local)) or postposed_guardrail or (
-                    previous_negated and (start < previous_end or (list_continuation and not independent_predicate))
+                postposed_guardrail = bool(
+                    re.match(
+                        r"^\s*(?:(?:is|are|was|were)\s+(?:explicitly\s+)?not\b|"
+                        r"(?:results?\s+)?(?:as|are|is)\s+external context\b)",
+                        suffix,
+                    )
                 )
-                hits.append({"line": line_no, "rule": rule, "negated": negated,
-                             "clause": clause.strip(), "start": start, "end": end,
-                             "excerpt": clause.strip()[:240]})
+                independent_predicate = bool(
+                    re.search(
+                        r"\b(?:is|are|was|were|has|have|measured?|reproduced?|benchmarked?|validated?|confirmed?)\b",
+                        clause[start:end],
+                    )
+                )
+                negated = (
+                    bool(_SCOPE_NEGATION_RE.search(local))
+                    or postposed_guardrail
+                    or (
+                        previous_negated and (start < previous_end or (list_continuation and not independent_predicate))
+                    )
+                )
+                hits.append(
+                    {
+                        "line": line_no,
+                        "rule": rule,
+                        "negated": negated,
+                        "clause": clause.strip(),
+                        "start": start,
+                        "end": end,
+                        "excerpt": clause.strip()[:240],
+                    }
+                )
                 previous_end = end
                 previous_negated = negated
     return hits

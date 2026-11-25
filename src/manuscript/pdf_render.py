@@ -69,17 +69,14 @@ def build_cover_tex(config: dict, project_root: Path) -> str:
             + "\\vspace{0.6em}\n"
         )
     authors_block = "".join(author_lines)
-    footer = " \\,\\textbullet\\, ".join(
-        part for part in (f"Version {version}" if version else "", date) if part
-    )
+    footer = " \\,\\textbullet\\, ".join(part for part in (f"Version {version}" if version else "", date) if part)
 
     abstract_block = ""
     if front.get("enabled") and abstract_img.is_file():
         abstract_block = (
             "\\vspace{1.0em}\n"
             f"\\includegraphics[width={abstract_width},height={abstract_max_height},keepaspectratio]"
-            f"{{{abstract_img}}}\\par\n"
-            + (f"\\vspace{{0.5em}}{{\\footnotesize {caption}\\par}}\n" if caption else "")
+            f"{{{abstract_img}}}\\par\n" + (f"\\vspace{{0.5em}}{{\\footnotesize {caption}\\par}}\n" if caption else "")
         )
 
     return (
@@ -237,17 +234,25 @@ def render_pdf(project_root: Path) -> int:
     receipt_path = root / "docs" / "reproducibility" / "render-receipt.json"
     versions = {}
     for tool in ("pandoc", "xelatex", *([crossref] if crossref else [])):
-        version = subprocess.run(
-            [tool, "--version"], cwd=root, check=True, capture_output=True, text=True
-        )
+        version = subprocess.run([tool, "--version"], cwd=root, check=True, capture_output=True, text=True)
         versions[Path(tool).name] = version.stdout.strip()
     commit = subprocess.run(
         ["git", "rev-parse", "HEAD"], cwd=root, check=True, capture_output=True, text=True
     ).stdout.strip()
     source_changes = subprocess.run(
-        ["git", "status", "--porcelain", "--untracked-files=no", "--", ".",
-         f":(exclude){receipt_path.relative_to(root).as_posix()}"],
-        cwd=root, check=True, capture_output=True, text=True,
+        [
+            "git",
+            "status",
+            "--porcelain",
+            "--untracked-files=no",
+            "--",
+            ".",
+            f":(exclude){receipt_path.relative_to(root).as_posix()}",
+        ],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
     ).stdout.splitlines()
     with pdf_out.open("rb") as handle:
         digest = hashlib.file_digest(handle, "sha256").hexdigest()

@@ -69,8 +69,7 @@ def _active_roadmap_ids(text: str) -> set[str]:
             status_column = None
             continue
         historical = any(
-            re.match(r"^(completed|closed|historical|history|archived?|archive)\b", title)
-            for _, title in headings
+            re.match(r"^(completed|closed|historical|history|archived?|archive)\b", title) for _, title in headings
         )
         active_section = any(title in {"active roadmap", "active tasks", "open tasks"} for _, title in headings)
         if stripped.startswith("|"):

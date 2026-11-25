@@ -52,18 +52,26 @@ def _semantic_obligation_issues(root: Path, semantic: dict, *, require_observati
                 break
     for class_id, class_row in classes.items():
         class_rows = [row for row in rows if row.get("class") == class_id]
-        applicable = [row for row in class_rows if require_observations
-                      or row.get("semantic_restriction") not in OBSERVATION_RESTRICTIONS]
-        if (not class_rows or class_row.get("obligation_count") != len(class_rows)
-                or class_row.get("all_passed") is not all(row.get("passed") is True for row in class_rows)
-                or any(row.get("passed") is not True for row in applicable)):
+        applicable = [
+            row
+            for row in class_rows
+            if require_observations or row.get("semantic_restriction") not in OBSERVATION_RESTRICTIONS
+        ]
+        if (
+            not class_rows
+            or class_row.get("obligation_count") != len(class_rows)
+            or class_row.get("all_passed") is not all(row.get("passed") is True for row in class_rows)
+            or any(row.get("passed") is not True for row in applicable)
+        ):
             issues.append(f"sheaf_gluing_certificate.json class {class_id} has incomplete proof obligations")
             break
     for row in rows:
         artifacts = row.get("source_artifacts") or []
         if (
-            (row.get("passed") is not True and
-             (require_observations or row.get("semantic_restriction") not in OBSERVATION_RESTRICTIONS))
+            (
+                row.get("passed") is not True
+                and (require_observations or row.get("semantic_restriction") not in OBSERVATION_RESTRICTIONS)
+            )
             or row.get("class") not in required_classes
             or not row.get("gate")
             or not row.get("negative_control")
@@ -83,8 +91,7 @@ def load_sheaf_track_payloads(project_root: Path) -> dict[str, dict]:
     """Load the canonical artifact payload set once for cheap in-memory checks."""
     root = project_root.resolve()
     payloads = {
-        key: _tracks._load_json(root / relative_path)
-        for key, relative_path in _tracks.CANONICAL_ARTIFACTS.items()
+        key: _tracks._load_json(root / relative_path) for key, relative_path in _tracks.CANONICAL_ARTIFACTS.items()
     }
     payloads["lean_theorems"] = _tracks._load_json(root / "output" / "reports" / "lean_theorem_inventory.json")
     return payloads
@@ -232,9 +239,9 @@ def _validate_sheaf_track_artifacts(
         issues.append("interop_roundtrip_report.json is not lossless")
 
     adversarial = _payload(root, payloads, "adversarial_audit")
-    issues.extend(validate_observation_payload(
-        root, adversarial, adversarial=True, require_observations=require_observations
-    ))
+    issues.extend(
+        validate_observation_payload(root, adversarial, adversarial=True, require_observations=require_observations)
+    )
 
     dependency = _payload(root, payloads, "dependency")
     if dependency.get("schema") != _tracks.DEPENDENCY_SCHEMA:
@@ -429,10 +436,9 @@ def _validate_sheaf_track_artifacts(
     notes_backed = bool(release_notes.get("rows")) and all(
         row.get("source") and row.get("passed") for row in release_notes.get("rows") or []
     )
-    if (
-        (require_observations and release_notes.get("all_notes_source_backed") is not True)
-        or release_notes.get("all_notes_source_backed") != notes_backed
-    ):
+    if (require_observations and release_notes.get("all_notes_source_backed") is not True) or release_notes.get(
+        "all_notes_source_backed"
+    ) != notes_backed:
         issues.append("release_notes_evidence.json has unsupported notes")
 
     scholarship = _payload(root, payloads, "scholarship")
@@ -470,7 +476,8 @@ def _validate_sheaf_track_artifacts(
 
     restrictions = _tracks._canonical_restrictions(root, payloads=payloads)
     false_restrictions = sorted(
-        key for key, ok in restrictions.items()
+        key
+        for key, ok in restrictions.items()
         if not ok and (require_observations or key not in OBSERVATION_RESTRICTIONS)
     )
     if false_restrictions:

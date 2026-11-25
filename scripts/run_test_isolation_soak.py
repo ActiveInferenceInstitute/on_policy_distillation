@@ -118,12 +118,7 @@ def build_report(rows: list[dict[str, Any]], *, required_runs: int) -> dict[str,
         }
     )
     failed_tests = _unique_preserve_order(
-        [
-            test
-            for row in rows
-            for test in (row.get("failed_tests", []) or [])
-            if isinstance(test, str) and test
-        ]
+        [test for row in rows for test in (row.get("failed_tests", []) or []) if isinstance(test, str) and test]
     )
     diagnostics_complete = all(
         row.get("diagnostics_complete") is True or (row.get("ok") is True and "diagnostics_complete" not in row)
@@ -242,7 +237,9 @@ def validate_report_payload(report: dict[str, Any], *, require_complete: bool = 
         expected_failed_tests.extend(recomputed["failed_tests"])
 
     if len(expected_seed_sequence) > 1:
-        expected_consecutive = list(range(expected_seed_sequence[0], expected_seed_sequence[0] + len(expected_seed_sequence)))
+        expected_consecutive = list(
+            range(expected_seed_sequence[0], expected_seed_sequence[0] + len(expected_seed_sequence))
+        )
         if expected_seed_sequence != expected_consecutive:
             issues.append("seed_sequence must be consecutive in run order")
     if report.get("seed_sequence") != expected_seed_sequence:
@@ -334,7 +331,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--timeout", type=int, default=900, help="per-test pytest-timeout value")
     parser.add_argument("--failure-tail-lines", type=int, default=120, help="captured tail lines for red runs")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT, help="JSON report path")
-    parser.add_argument("--validate-report", type=Path, help="validate an existing JSON report instead of running tests")
+    parser.add_argument(
+        "--validate-report", type=Path, help="validate an existing JSON report instead of running tests"
+    )
     parser.add_argument("--require-complete", action="store_true", help="fail unless complete_soak is true")
     parser.add_argument(
         "--stop-on-failure",
@@ -344,7 +343,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.validate_report:
-        report_path = args.validate_report if args.validate_report.is_absolute() else PROJECT_ROOT / args.validate_report
+        report_path = (
+            args.validate_report if args.validate_report.is_absolute() else PROJECT_ROOT / args.validate_report
+        )
         report = json.loads(report_path.read_text(encoding="utf-8"))
         issues = validate_report_payload(report, require_complete=args.require_complete)
         if issues:

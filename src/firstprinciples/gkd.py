@@ -86,7 +86,7 @@ def _stationary_visitation(policy_rows: ArrayF, problem: GKDProblem, horizon: in
     states = problem.transition.shape[0]
     # Policy-tilted transition: weight successors by how much probability mass
     # the policy concentrates (sharper policy -> more self-reinforcing walk).
-    concentration = (policy_rows ** 2).sum(axis=1)  # in (1/vocab, 1]
+    concentration = (policy_rows**2).sum(axis=1)  # in (1/vocab, 1]
     tilt = np.eye(states) * concentration[:, None]
     walk = normalize_rows((1.0 - concentration)[:, None] * problem.transition + tilt)
     dist = normalize(problem.start)
@@ -152,15 +152,9 @@ def exposure_bias_gap(problem: GKDProblem, *, horizon: int = 8) -> dict[str, flo
 
 def _canonical_problem() -> GKDProblem:
     # 3 token-states; the student drifts most on state 2 (its own preferred sink).
-    teacher = np.array(
-        [[0.70, 0.20, 0.10], [0.10, 0.80, 0.10], [0.15, 0.15, 0.70]], dtype=np.float64
-    )
-    student = np.array(
-        [[0.60, 0.25, 0.15], [0.20, 0.70, 0.10], [0.45, 0.10, 0.45]], dtype=np.float64
-    )
-    transition = np.array(
-        [[0.20, 0.30, 0.50], [0.25, 0.25, 0.50], [0.20, 0.20, 0.60]], dtype=np.float64
-    )
+    teacher = np.array([[0.70, 0.20, 0.10], [0.10, 0.80, 0.10], [0.15, 0.15, 0.70]], dtype=np.float64)
+    student = np.array([[0.60, 0.25, 0.15], [0.20, 0.70, 0.10], [0.45, 0.10, 0.45]], dtype=np.float64)
+    transition = np.array([[0.20, 0.30, 0.50], [0.25, 0.25, 0.50], [0.20, 0.20, 0.60]], dtype=np.float64)
     start = np.array([1.0, 0.0, 0.0], dtype=np.float64)
     return GKDProblem(teacher=teacher, student=student, transition=transition, start=start)
 
