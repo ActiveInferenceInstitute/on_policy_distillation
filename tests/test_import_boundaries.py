@@ -108,9 +108,7 @@ def test_boundary_packages_do_not_import_contracts_through_each_other() -> None:
     graph = _top_level_import_graph()
     boundary_edges = {
         source: sorted(
-            target
-            for target in targets
-            if source.startswith(BOUNDARY_ROOTS) and target.startswith(BOUNDARY_ROOTS)
+            target for target in targets if source.startswith(BOUNDARY_ROOTS) and target.startswith(BOUNDARY_ROOTS)
         )
         for source, targets in graph.items()
     }

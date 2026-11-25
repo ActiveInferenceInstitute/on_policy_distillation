@@ -142,9 +142,7 @@ def test_live_builder_drift_exercise_fails_parity(tmp_path: Path) -> None:
     # which are render-stage deferred deliverables).
     manifest = build_release_bundle_manifest(project_root)
     required = [
-        row["artifact"]
-        for row in manifest["rows"]
-        if not row["artifact"].startswith(("output/pdf/", "output/web/"))
+        row["artifact"] for row in manifest["rows"] if not row["artifact"].startswith(("output/pdf/", "output/web/"))
     ]
     assert required
     root_out = template_root / "output" / "templates" / project_root.name
@@ -168,9 +166,7 @@ def test_live_builder_drift_exercise_fails_parity(tmp_path: Path) -> None:
     drifted = build_release_bundle_manifest(project_root)
     assert drifted["copied_output_parity"]["all_copied_outputs_match"] is False
     assert drifted["all_copied_outputs_match_or_deferred"] is False
-    drift_row = next(
-        row for row in drifted["copied_output_parity"]["rows"] if row["artifact"] == drift_rel
-    )
+    drift_row = next(row for row in drifted["copied_output_parity"]["rows"] if row["artifact"] == drift_rel)
     assert drift_row["copied_exists"] is True
     assert drift_row["hash_matches"] is False
     assert drift_row["matches_when_copied"] is False

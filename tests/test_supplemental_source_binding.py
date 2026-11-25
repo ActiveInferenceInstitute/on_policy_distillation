@@ -45,13 +45,17 @@ def _validation_report(root: Path, *, failed: tuple[str, ...] = ()) -> None:
     manuscript = {"canonical_sheaf_tracks": True}
     for key in failed:
         (manuscript if key in manuscript else outputs)[key] = False
-    _write(root, "output/reports/validation_report.json", {
-        "schema": "template_active_inference.validation_report.v1",
-        "outputs": outputs,
-        "manuscript": manuscript,
-        "failed_checks": sorted(set(failed)),
-        "all_passed": not failed,
-    })
+    _write(
+        root,
+        "output/reports/validation_report.json",
+        {
+            "schema": "template_active_inference.validation_report.v1",
+            "outputs": outputs,
+            "manuscript": manuscript,
+            "failed_checks": sorted(set(failed)),
+            "all_passed": not failed,
+        },
+    )
 
 
 @pytest.fixture
@@ -69,19 +73,34 @@ def supplemental_root(tmp_path: Path) -> Path:
     _write(tmp_path, "output/data/proof_extraction_index.json", proof)
     finite_cases = [("nextNat_zero", 0 + 1, 1), ("twiceNat_one", 1 + 1, 2)]
     witnesses = [
-        {"id": theorem, "model": "finite_nat", "value": value, "expected": expected,
-         "passed": value == expected, "source": "lean/OnPolicyDistillation/FiniteFixture.lean"}
+        {
+            "id": theorem,
+            "model": "finite_nat",
+            "value": value,
+            "expected": expected,
+            "passed": value == expected,
+            "source": "lean/OnPolicyDistillation/FiniteFixture.lean",
+        }
         for theorem, value, expected in finite_cases
     ]
-    _write(tmp_path, "output/reports/model_checking_witnesses.json", {
-        "rows": witnesses, "all_passed": all(row["passed"] for row in witnesses),
-    })
-    _write(tmp_path, "output/data/theorem_traceability_matrix.json", {
-        "rows": [
-            {"theorem": row["theorem"], "linked": True, "model_witnesses": [case[0] for case in finite_cases]}
-            for row in proof["rows"]
-        ],
-    })
+    _write(
+        tmp_path,
+        "output/reports/model_checking_witnesses.json",
+        {
+            "rows": witnesses,
+            "all_passed": all(row["passed"] for row in witnesses),
+        },
+    )
+    _write(
+        tmp_path,
+        "output/data/theorem_traceability_matrix.json",
+        {
+            "rows": [
+                {"theorem": row["theorem"], "linked": True, "model_witnesses": [case[0] for case in finite_cases]}
+                for row in proof["rows"]
+            ],
+        },
+    )
     _write(tmp_path, "output/data/si_graph_world_topology_traces.json", build_graph_world_topology_traces(tmp_path))
     _write(tmp_path, "output/data/si_graph_world_topology_sweep.json", build_graph_world_topology_sweep(tmp_path))
     _write(tmp_path, "output/data/state_space_catalog.json", build_state_space_catalog(tmp_path))
@@ -93,28 +112,48 @@ def supplemental_root(tmp_path: Path) -> Path:
     ]
     _write(tmp_path, "output/data/sensitivity_sweep.json", {"rows": sensitivity_rows, "row_count": 4})
     ablation_rows = [
-        {"topology": topology, "lambda": lam, "perturbation": "finite_perturbation",
-         "metric": "finite_delta", "effect": effect,
-         "source": "output/data/si_graph_world_topology_sweep.json"}
+        {
+            "topology": topology,
+            "lambda": lam,
+            "perturbation": "finite_perturbation",
+            "metric": "finite_delta",
+            "effect": effect,
+            "source": "output/data/si_graph_world_topology_sweep.json",
+        }
         for topology, lam, effect in (("linear4", 0.0, -0.125), ("branch4", 1.0, 0.25))
     ]
     _write(tmp_path, "output/data/causal_ablation_matrix.json", {"rows": ablation_rows, "row_count": 2})
     uncertainty_rows = [
-        {"step": step, "belief_entropy": entropy, "posterior": posterior,
-         "posterior_sum": sum(posterior), "normalized": True}
+        {
+            "step": step,
+            "belief_entropy": entropy,
+            "posterior": posterior,
+            "posterior_sum": sum(posterior),
+            "normalized": True,
+        }
         for step, entropy, posterior in ((0, 1.0, [0.5, 0.5]), (1, 0.5, [0.75, 0.25]))
     ]
     _write(tmp_path, "output/data/uncertainty_summary.json", {"rows": uncertainty_rows, "row_count": 2})
     _validation_report(tmp_path)
-    _write(tmp_path, "output/reports/release_bundle_manifest.json", {
-        "all_required_sources_present": True, "all_copied_outputs_match_or_deferred": True,
-        "bundle_hash": hashlib.sha256(b"finite fixture bundle").hexdigest(),
-    })
+    _write(
+        tmp_path,
+        "output/reports/release_bundle_manifest.json",
+        {
+            "all_required_sources_present": True,
+            "all_copied_outputs_match_or_deferred": True,
+            "bundle_hash": hashlib.sha256(b"finite fixture bundle").hexdigest(),
+        },
+    )
     _write(tmp_path, "output/reports/artifact_license_audit.json", {"all_license_safe": True})
     _write(tmp_path, "output/reports/blocked_scope_manifest.json", {"all_blocked": True})
-    _write(tmp_path, "output/data/sheaf_gluing_certificate.json", {
-        "ok": True, "restrictions": {"finite_fixture_scope": True, "release_attestation_complete": True},
-    })
+    _write(
+        tmp_path,
+        "output/data/sheaf_gluing_certificate.json",
+        {
+            "ok": True,
+            "restrictions": {"finite_fixture_scope": True, "release_attestation_complete": True},
+        },
+    )
     write_supplemental_artifacts(tmp_path)
     assert validate_supplemental_payloads(tmp_path) == {key: [] for key in SUPPLEMENTAL_ARTIFACTS}
     return tmp_path
@@ -143,15 +182,21 @@ def _assert_rejected(root: Path, key: str, payload: dict, message: str) -> None:
 
 def _refresh_proof(payload: dict) -> None:
     edges = payload["edges"]
-    payload.update({
-        "theorem_count": len(payload["rows"]), "edge_count": len(edges),
-        "edge_types": sorted({row["kind"] for row in edges}),
-        "edge_key_count": len({row["edge_key"] for row in edges}),
-        "duplicate_edge_keys": [], "orphan_edge_targets": [],
-        "all_theorems_have_dependencies": True, "all_edges_resolved": True,
-        "all_edge_keys_unique": True, "all_required_edge_types_present": True,
-        "all_edge_targets_resolved": True,
-    })
+    payload.update(
+        {
+            "theorem_count": len(payload["rows"]),
+            "edge_count": len(edges),
+            "edge_types": sorted({row["kind"] for row in edges}),
+            "edge_key_count": len({row["edge_key"] for row in edges}),
+            "duplicate_edge_keys": [],
+            "orphan_edge_targets": [],
+            "all_theorems_have_dependencies": True,
+            "all_edges_resolved": True,
+            "all_edge_keys_unique": True,
+            "all_required_edge_types_present": True,
+            "all_edge_targets_resolved": True,
+        }
+    )
 
 
 def _refresh_transitions(payload: dict) -> None:
@@ -162,27 +207,41 @@ def _refresh_transitions(payload: dict) -> None:
         row["next_state_key"] = f"{row['model']}::{row['next_state']}"
     models = sorted({row["model"] for row in rows})
     states = {row[field] for row in rows for field in ("state_key", "next_state_key")}
-    payload.update({
-        "row_count": len(rows), "model_count": len(models), "required_models": models,
-        "covered_models": models, "transition_key_count": len({row["transition_key"] for row in rows}),
-        "duplicate_transition_keys": [], "reachable_state_key_count": len(states),
-        "missing_outgoing_state_keys": [],
-        "terminal_self_transition_models": sorted({row["model"] for row in rows if row["terminal_self_transition"]}),
-        "models_without_terminal_self_transition": [], "all_transitions_deterministic": True,
-        "all_transition_keys_unique": True, "all_reachable_states_covered": True,
-        "all_reachable_states_have_outgoing": True, "all_terminal_states_have_self_transition": True,
-    })
+    payload.update(
+        {
+            "row_count": len(rows),
+            "model_count": len(models),
+            "required_models": models,
+            "covered_models": models,
+            "transition_key_count": len({row["transition_key"] for row in rows}),
+            "duplicate_transition_keys": [],
+            "reachable_state_key_count": len(states),
+            "missing_outgoing_state_keys": [],
+            "terminal_self_transition_models": sorted(
+                {row["model"] for row in rows if row["terminal_self_transition"]}
+            ),
+            "models_without_terminal_self_transition": [],
+            "all_transitions_deterministic": True,
+            "all_transition_keys_unique": True,
+            "all_reachable_states_covered": True,
+            "all_reachable_states_have_outgoing": True,
+            "all_terminal_states_have_self_transition": True,
+        }
+    )
 
 
 def _refresh_attestation(payload: dict) -> None:
     rows = payload["rows"]
-    payload.update({
-        "row_count": len(rows), "attested_source_count": len(rows),
-        "attested_source_ids": [row["id"] for row in rows],
-        "attestation_hash": hashlib.sha256(json.dumps(rows, sort_keys=True).encode("utf-8")).hexdigest(),
-        "all_attested": all(row["passed"] for row in rows),
-        "all_attested_or_deferred": all(row["passed"] or row["deferred_until_validation"] for row in rows),
-    })
+    payload.update(
+        {
+            "row_count": len(rows),
+            "attested_source_count": len(rows),
+            "attested_source_ids": [row["id"] for row in rows],
+            "attestation_hash": hashlib.sha256(json.dumps(rows, sort_keys=True).encode("utf-8")).hexdigest(),
+            "all_attested": all(row["passed"] for row in rows),
+            "all_attested_or_deferred": all(row["passed"] or row["deferred_until_validation"] for row in rows),
+        }
+    )
 
 
 def test_disk_and_memory_share_per_artifact_contract(supplemental_root: Path) -> None:
@@ -194,7 +253,9 @@ def test_disk_and_memory_share_per_artifact_contract(supplemental_root: Path) ->
     assert set(validate_supplemental_payloads(root)) == set(SUPPLEMENTAL_ARTIFACTS)
 
 
-@pytest.mark.parametrize("mutation", ["requirements_removed", "duplicate_logical_edge", "unlinked_theorem", "forged_domain"])
+@pytest.mark.parametrize(
+    "mutation", ["requirements_removed", "duplicate_logical_edge", "unlinked_theorem", "forged_domain"]
+)
 def test_proof_graph_uses_source_requirements(supplemental_root: Path, mutation: str) -> None:
     root = supplemental_root
     payload = _payload(root, "proof_dependency_graph")
@@ -297,11 +358,18 @@ def test_transition_sources_cannot_redefine_declared_toys(supplemental_root: Pat
     _assert_rejected(root, "state_transition_table", payload, message)
 
 
-@pytest.mark.parametrize("field,value", [
-    ("source_join_key", "unrelated::42"), ("sensitivity_row_count", 99),
-    ("uncertainty_row_count", 99), ("mean_sensitivity_mi", 0.875), ("effect", 8.0),
-    ("lambda", 2.0), ("topology", "unrelated_topology"),
-])
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("source_join_key", "unrelated::42"),
+        ("sensitivity_row_count", 99),
+        ("uncertainty_row_count", 99),
+        ("mean_sensitivity_mi", 0.875),
+        ("effect", 8.0),
+        ("lambda", 2.0),
+        ("topology", "unrelated_topology"),
+    ],
+)
 def test_ablation_rows_cross_read_actual_joins_and_numerics(supplemental_root: Path, field: str, value: object) -> None:
     root = supplemental_root
     payload = _payload(root, "ablation_sensitivity_report")
@@ -309,11 +377,17 @@ def test_ablation_rows_cross_read_actual_joins_and_numerics(supplemental_root: P
     _assert_rejected(root, "ablation_sensitivity_report", payload, "unsupported ablation effects")
 
 
-@pytest.mark.parametrize("source,mutation", [
-    ("causal_ablation_matrix", "effect"), ("causal_ablation_matrix", "remove_row"),
-    ("sensitivity_sweep", "mi"), ("sensitivity_sweep", "remove_row"),
-    ("uncertainty_summary", "remove_row"), ("uncertainty_summary", "posterior"),
-])
+@pytest.mark.parametrize(
+    "source,mutation",
+    [
+        ("causal_ablation_matrix", "effect"),
+        ("causal_ablation_matrix", "remove_row"),
+        ("sensitivity_sweep", "mi"),
+        ("sensitivity_sweep", "remove_row"),
+        ("uncertainty_summary", "remove_row"),
+        ("uncertainty_summary", "posterior"),
+    ],
+)
 def test_ablation_rejects_stale_source_rows(supplemental_root: Path, source: str, mutation: str) -> None:
     root = supplemental_root
     payload = _payload(root, "ablation_sensitivity_report")
@@ -345,19 +419,28 @@ def test_ablation_source_counters_are_not_authority(supplemental_root: Path) -> 
 
 
 @pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf"), "0.25", True])
-@pytest.mark.parametrize("source,field", [
-    ("causal_ablation_matrix", "effect"), ("sensitivity_sweep", "mi"),
-    ("uncertainty_summary", "belief_entropy"),
-])
+@pytest.mark.parametrize(
+    "source,field",
+    [
+        ("causal_ablation_matrix", "effect"),
+        ("sensitivity_sweep", "mi"),
+        ("uncertainty_summary", "belief_entropy"),
+    ],
+)
 def test_ablation_rejects_nonfinite_or_non_numeric_sources(
-    supplemental_root: Path, source: str, field: str, value: object,
+    supplemental_root: Path,
+    source: str,
+    field: str,
+    value: object,
 ) -> None:
     root = supplemental_root
     path = f"output/data/{source}.json"
     artifact = _load(root, path)
     artifact["rows"][0][field] = value
     _write(root, path, artifact)
-    _assert_rejected(root, "ablation_sensitivity_report", _payload(root, "ablation_sensitivity_report"), "finite numbers")
+    _assert_rejected(
+        root, "ablation_sensitivity_report", _payload(root, "ablation_sensitivity_report"), "finite numbers"
+    )
 
 
 def test_actual_finite_producers_share_topology_lambda_domain(supplemental_root: Path) -> None:
@@ -375,7 +458,10 @@ def test_actual_finite_producers_share_topology_lambda_domain(supplemental_root:
     _write(root, "output/data/causal_ablation_matrix.json", causal)
     payload = build_ablation_sensitivity_report(root)
     assert payload["all_ablation_rows_joined"] is True
-    assert validate_supplemental_payloads(root, {"ablation_sensitivity_report": payload})["ablation_sensitivity_report"] == []
+    assert (
+        validate_supplemental_payloads(root, {"ablation_sensitivity_report": payload})["ablation_sensitivity_report"]
+        == []
+    )
     # Missing canonical support remains red; no aliases or topology narrowing.
     sensitivity["rows"] = [row for row in sensitivity["rows"] if row["topology"] != "loop5"]
     sensitivity["row_count"] = len(sensitivity["rows"])
@@ -398,7 +484,9 @@ def test_release_rejects_same_count_forged_ids_with_current_report_hash(suppleme
     _assert_rejected(root, "release_attestation", payload, "validation check IDs or count")
 
 
-@pytest.mark.parametrize("removed_id", ["validation_report", "release_bundle", "artifact_license", "blocked_scope", "semantic_certificate"])
+@pytest.mark.parametrize(
+    "removed_id", ["validation_report", "release_bundle", "artifact_license", "blocked_scope", "semantic_certificate"]
+)
 def test_release_requires_every_source_row(supplemental_root: Path, removed_id: str) -> None:
     root = supplemental_root
     payload = _payload(root, "release_attestation")
@@ -453,7 +541,9 @@ def test_release_preserves_first_report_deferral_but_not_greenness(supplemental_
 
 @pytest.mark.parametrize("field,value", [("failed_checks", []), ("all_passed", True), ("outputs", {})])
 def test_release_hash_does_not_authenticate_forged_report_summaries(
-    supplemental_root: Path, field: str, value: object,
+    supplemental_root: Path,
+    field: str,
+    value: object,
 ) -> None:
     root = supplemental_root
     _validation_report(root, failed=("finite_fixture_gate",))
@@ -479,10 +569,14 @@ def test_release_carveout_is_fixed_point_only_not_observation(supplemental_root:
     payload = build_release_attestation(root)
     assert payload["rows"][0]["passed"] is True
     assert release_attestation_consistent_and_current(root, payload)
-    _write(root, "output/data/sheaf_gluing_certificate.json", {
-        "ok": True,
-        "restrictions": {"release_attestation_complete": False, "counterexample_failures_observed": False},
-    })
+    _write(
+        root,
+        "output/data/sheaf_gluing_certificate.json",
+        {
+            "ok": True,
+            "restrictions": {"release_attestation_complete": False, "counterexample_failures_observed": False},
+        },
+    )
     payload = build_release_attestation(root)
     semantic = next(row for row in payload["rows"] if row["id"] == "semantic_certificate")
     assert semantic["passed"] is False
@@ -503,19 +597,30 @@ def test_ablation_accepts_existing_policy_uncertainty_shape(supplemental_root: P
     root = supplemental_root
     path = "output/data/uncertainty_summary.json"
     uncertainty = _load(root, path)
-    uncertainty["rows"].append({
-        "id": "policy_0", "source": "output/data/pymdp_policy_posterior_grid.json",
-        "distribution": [0.5, 0.5], "distribution_sum": 1.0,
-        "posterior": [0.5, 0.5], "posterior_sum": 1.0, "entropy": 0.6931471805599453,
-        "bin": "mid_entropy", "normalized": True, "fallback_reason": "",
-        "posterior_concentration": 0.5,
-    })
+    uncertainty["rows"].append(
+        {
+            "id": "policy_0",
+            "source": "output/data/pymdp_policy_posterior_grid.json",
+            "distribution": [0.5, 0.5],
+            "distribution_sum": 1.0,
+            "posterior": [0.5, 0.5],
+            "posterior_sum": 1.0,
+            "entropy": 0.6931471805599453,
+            "bin": "mid_entropy",
+            "normalized": True,
+            "fallback_reason": "",
+            "posterior_concentration": 0.5,
+        }
+    )
     uncertainty["row_count"] = len(uncertainty["rows"])
     _write(root, path, uncertainty)
     payload = build_ablation_sensitivity_report(root)
     assert payload["all_ablation_rows_joined"] is True
     assert all(row["uncertainty_row_count"] == uncertainty["row_count"] for row in payload["rows"])
-    assert validate_supplemental_payloads(root, {"ablation_sensitivity_report": payload})["ablation_sensitivity_report"] == []
+    assert (
+        validate_supplemental_payloads(root, {"ablation_sensitivity_report": payload})["ablation_sensitivity_report"]
+        == []
+    )
 
 
 def test_ablation_rejects_nonfinite_policy_uncertainty(supplemental_root: Path) -> None:
@@ -527,5 +632,8 @@ def test_ablation_rejects_nonfinite_policy_uncertainty(supplemental_root: Path) 
     row["entropy"] = float("nan")
     _write(root, path, uncertainty)
     _assert_rejected(
-        root, "ablation_sensitivity_report", _payload(root, "ablation_sensitivity_report"), "finite numbers",
+        root,
+        "ablation_sensitivity_report",
+        _payload(root, "ablation_sensitivity_report"),
+        "finite numbers",
     )

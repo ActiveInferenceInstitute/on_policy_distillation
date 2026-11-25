@@ -73,7 +73,11 @@ def _target(case: MutationCase, root: Path) -> dict:
 
 @pytest.mark.parametrize("case", CASES, ids=lambda case: case.id)
 def test_registered_negative_control(
-    project_root: Path, tmp_path: Path, request: pytest.FixtureRequest, record_property, case: MutationCase,
+    project_root: Path,
+    tmp_path: Path,
+    request: pytest.FixtureRequest,
+    record_property,
+    case: MutationCase,
 ) -> None:
     """One actual node establishes its own baseline acceptance and target rejection."""
     assert request.node.nodeid == case.nodeid
@@ -98,13 +102,21 @@ def test_registered_negative_control(
         assert actual_input == mutated and actual_input != actual_baseline
         after = _target(case, root)
         assert after["accepted"] is False, (case.id, after)
-    record_property("negative_control_result", {
-        "case_id": case.id, "target_gate": case.target_gate,
-        "fixture": input_binding(actual_baseline), "input": input_binding(actual_input),
-        "baseline_accepted": before["accepted"], "baseline_result": before,
-        "mutation_accepted": after["accepted"], "target_rejected": not after["accepted"],
-        "rejection": after, "assertion_passed": True,
-    })
+    record_property(
+        "negative_control_result",
+        {
+            "case_id": case.id,
+            "target_gate": case.target_gate,
+            "fixture": input_binding(actual_baseline),
+            "input": input_binding(actual_input),
+            "baseline_accepted": before["accepted"],
+            "baseline_result": before,
+            "mutation_accepted": after["accepted"],
+            "target_rejected": not after["accepted"],
+            "rejection": after,
+            "assertion_passed": True,
+        },
+    )
 
 
 def test_missing_receipts_are_documented_not_observed(tmp_path: Path) -> None:
@@ -125,20 +137,33 @@ def test_missing_receipts_are_documented_not_observed(tmp_path: Path) -> None:
     assert validate_observation_payload(tmp_path, counter, require_observations=False) == []
     assert validate_observation_payload(tmp_path, counter)
     assert validate_observation_payload(tmp_path, adversarial, adversarial=True, require_observations=False) == []
-    checks = validate_output_payloads(tmp_path, {"counterexample": counter, "adversarial_audit": adversarial}, only={
-        "counterexample_matrix_schema", "counterexample_receipts_consistent",
-        "adversarial_audit_schema", "adversarial_receipts_consistent",
-    })
-    assert checks == {"counterexample_matrix_schema": False, "counterexample_receipts_consistent": True,
-                      "adversarial_audit_schema": False, "adversarial_receipts_consistent": True}
+    checks = validate_output_payloads(
+        tmp_path,
+        {"counterexample": counter, "adversarial_audit": adversarial},
+        only={
+            "counterexample_matrix_schema",
+            "counterexample_receipts_consistent",
+            "adversarial_audit_schema",
+            "adversarial_receipts_consistent",
+        },
+    )
+    assert checks == {
+        "counterexample_matrix_schema": False,
+        "counterexample_receipts_consistent": True,
+        "adversarial_audit_schema": False,
+        "adversarial_receipts_consistent": True,
+    }
     assert build_counterexample_matrix(tmp_path) == counter
 
 
 def _copy_authored(project_root: Path, destination: Path) -> Path:
     destination.mkdir()
     for name in ("src", "tests", "scripts", "gnn", "lean", "data", "manuscript"):
-        shutil.copytree(project_root / name, destination / name,
-                        ignore=shutil.ignore_patterns("__pycache__", ".lake", ".venv", "*.pyc"))
+        shutil.copytree(
+            project_root / name,
+            destination / name,
+            ignore=shutil.ignore_patterns("__pycache__", ".lake", ".venv", "*.pyc"),
+        )
     for path in project_root.iterdir():
         if path.is_file() and (path.suffix in {".yaml", ".toml", ".lock"} or path.name == "conftest.py"):
             shutil.copy2(path, destination / path.name)
@@ -166,23 +191,43 @@ def test_recorder_certifies_each_actual_parametrized_node(recorded_root: Path) -
     for case, row in zip(CASES, counter["rows"], strict=True):
         receipt = row["receipt"]
         assert receipt["run"]["collected"] == [case.nodeid]
-        assert all(report["nodeid"] == case.nodeid and report["outcome"] == "passed"
-                   for report in receipt["run"]["reports"])
+        assert all(
+            report["nodeid"] == case.nodeid and report["outcome"] == "passed" for report in receipt["run"]["reports"]
+        )
         assert receipt["result"]["baseline_result"] == {"target_gate": case.target_gate, "accepted": True}
         assert receipt["result"]["rejection"] == {"target_gate": case.target_gate, "accepted": False}
 
 
 _RECEIPT_FORGERIES = (
-    "source", "test", "config", "runtime", "fixture", "input", "mutation", "nodeid", "wronggate",
-    "rejection", "assertion", "baseline", "test_result", "failed_process", "failed_session",
-    "failed_phase", "skipped_phase", "missing_phase", "combined_test", "stdout",
+    "source",
+    "test",
+    "config",
+    "runtime",
+    "fixture",
+    "input",
+    "mutation",
+    "nodeid",
+    "wronggate",
+    "rejection",
+    "assertion",
+    "baseline",
+    "test_result",
+    "failed_process",
+    "failed_session",
+    "failed_phase",
+    "skipped_phase",
+    "missing_phase",
+    "combined_test",
+    "stdout",
 )
 
 
 @pytest.mark.artifact_slow
 @pytest.mark.parametrize("forgery", _RECEIPT_FORGERIES)
 def test_forged_or_failed_receipt_never_certifies_a_case(
-    recorded_root: Path, tmp_path: Path, forgery: str,
+    recorded_root: Path,
+    tmp_path: Path,
+    forgery: str,
 ) -> None:
     root = tmp_path / "source"
     shutil.copytree(recorded_root, root)
@@ -228,8 +273,10 @@ def test_forged_or_failed_receipt_never_certifies_a_case(
 
 
 @pytest.mark.artifact_slow
-@pytest.mark.parametrize("relative", ["src/roadmap_tracks/negative_controls.py",
-                                      "tests/test_negative_control_receipts.py", "manuscript/config.yaml"])
+@pytest.mark.parametrize(
+    "relative",
+    ["src/roadmap_tracks/negative_controls.py", "tests/test_negative_control_receipts.py", "manuscript/config.yaml"],
+)
 def test_changed_authored_bytes_require_new_evidence(recorded_root: Path, tmp_path: Path, relative: str) -> None:
     root = tmp_path / "source"
     shutil.copytree(recorded_root, root)
@@ -268,16 +315,22 @@ def test_receipt_domain_is_exact(recorded_root: Path, tmp_path: Path, problem: s
 @pytest.mark.artifact_slow
 @pytest.mark.parametrize("outcome", ["failed", "skipped"])
 def test_actual_nonpassing_rerun_cannot_leave_prior_success_current(
-    project_root: Path, tmp_path: Path, outcome: str,
+    project_root: Path,
+    tmp_path: Path,
+    outcome: str,
 ) -> None:
     root = _copy_authored(project_root, tmp_path / "source")
     test_file = root / "tests/test_negative_control_receipts.py"
-    test_file.write_text(test_file.read_text() + (
-        "\n\n@pytest.fixture(autouse=True)\ndef force_nonpassing_receipt_run():\n"
-        "    outcome = os.environ.get('OPD_RECEIPT_NONPASSING')\n"
-        "    if outcome == 'failed':\n        assert False, 'intentional recorder failure'\n"
-        "    if outcome == 'skipped':\n        pytest.skip('intentional recorder skip')\n"
-    ), encoding="utf-8")
+    test_file.write_text(
+        test_file.read_text()
+        + (
+            "\n\n@pytest.fixture(autouse=True)\ndef force_nonpassing_receipt_run():\n"
+            "    outcome = os.environ.get('OPD_RECEIPT_NONPASSING')\n"
+            "    if outcome == 'failed':\n        assert False, 'intentional recorder failure'\n"
+            "    if outcome == 'skipped':\n        pytest.skip('intentional recorder skip')\n"
+        ),
+        encoding="utf-8",
+    )
     previous = os.environ.pop("OPD_RECEIPT_NONPASSING", None)
     try:
         record_negative_controls(root, case_ids=(CASES[0].id,))
@@ -298,7 +351,8 @@ def test_actual_nonpassing_rerun_cannot_leave_prior_success_current(
 @pytest.mark.artifact_slow
 @pytest.mark.timeout(600)
 def test_strict_integration_audit_rejects_removed_current_observation(
-    recorded_root: Path, tmp_path: Path,
+    recorded_root: Path,
+    tmp_path: Path,
 ) -> None:
     from gate_support import ensure_gate_artifacts
     from gates.output_checks import validate_outputs_selected_strict

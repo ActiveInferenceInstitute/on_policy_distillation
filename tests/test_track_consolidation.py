@@ -137,8 +137,10 @@ def test_canonical_sheaf_artifacts_are_present_and_valid(project_root: Path) -> 
     assert validate_semantic_gluing(project_root, require_observations=False) == []
     if controls["observed_count"] == 0:
         assert semantic["ok"] is False
-        assert any("requires successful current per-case observations" in issue
-                   for issue in validate_sheaf_track_artifacts(project_root))
+        assert any(
+            "requires successful current per-case observations" in issue
+            for issue in validate_sheaf_track_artifacts(project_root)
+        )
     assert semantic["restrictions"]["no_versioned_live_tracks"] is True
     assert evidence["all_fields_mapped"] is True
     assert release["all_required_sources_present"] is True
@@ -178,7 +180,9 @@ def test_canonical_sheaf_artifacts_are_present_and_valid(project_root: Path) -> 
     assert release_attestation == build_release_attestation(project_root)
     assert release_attestation["attested_source_count"] == release_attestation["row_count"]
     validation_row = next(row for row in release_attestation["rows"] if row["id"] == "validation_report")
-    assert release_attestation["attested_validation_check_count"] == len(validation_row["attested_validation_check_ids"])
+    assert release_attestation["attested_validation_check_count"] == len(
+        validation_row["attested_validation_check_ids"]
+    )
     assert section_status["all_bound_fragments_present"] is True
     assert section_status["all_sections_have_status"] is True
     assert section_status["cell_count"] == section_status["section_count"] * section_status["track_count"]
@@ -351,7 +355,9 @@ def test_canonical_sheaf_negative_controls(project_root: Path) -> None:
 
     def _orphan_proof_edge(data: dict) -> None:
         data["edges"][0]["target"] = "missing:model:witness"
-        data["edges"][0]["edge_key"] = f"{data['edges'][0]['source']}::missing:model:witness::{data['edges'][0]['kind']}"
+        data["edges"][0]["edge_key"] = (
+            f"{data['edges'][0]['source']}::missing:model:witness::{data['edges'][0]['kind']}"
+        )
         data["orphan_edge_targets"] = []
         data["all_edge_targets_resolved"] = True
 
@@ -496,9 +502,7 @@ def test_canonical_sensitivity_rejects_incomplete_warm_inputs(tmp_path: Path) ->
     path.parent.mkdir(parents=True)
     path.write_text(json.dumps(authoritative), encoding="utf-8")
     canonical = build_sensitivity_sweep(tmp_path)
-    expected = {
-        (row["lambda"], row["horizon"], row["seed"], row["topology"]): row for row in authoritative["rows"]
-    }
+    expected = {(row["lambda"], row["horizon"], row["seed"], row["topology"]): row for row in authoritative["rows"]}
     assert set(canonical["grid"]["topologies"]) == set(authoritative["grid"]["topologies"])
     assert len(canonical["grid"]["topologies"]) == 4
     for row in canonical["rows"]:
@@ -520,11 +524,18 @@ def test_canonical_sensitivity_rejects_incomplete_warm_inputs(tmp_path: Path) ->
             build_sensitivity_sweep(tmp_path)
 
 
-@pytest.mark.parametrize("key", [
-    "proof_dependency_graph", "state_transition_table", "ablation_sensitivity_report", "release_attestation",
-])
+@pytest.mark.parametrize(
+    "key",
+    [
+        "proof_dependency_graph",
+        "state_transition_table",
+        "ablation_sensitivity_report",
+        "release_attestation",
+    ],
+)
 def test_supplemental_consumers_share_source_authentication(
-    tmp_path: Path, key: str,
+    tmp_path: Path,
+    key: str,
 ) -> None:
     from gates.output_checks import validate_outputs_selected_strict
     from roadmap_tracks import load_sheaf_track_payloads, validate_sheaf_track_payloads
@@ -556,8 +567,9 @@ def test_supplemental_consumers_share_source_authentication(
     assert validate_outputs_selected_strict(root, {check}, payloads=changed) == {check: False}
     all_payloads = load_sheaf_track_payloads(root)
     all_payloads.update(changed)
-    issues = validate_sheaf_track_payloads(root, all_payloads, validate_saved_certificate=False,
-                                         require_observations=False)
+    issues = validate_sheaf_track_payloads(
+        root, all_payloads, validate_saved_certificate=False, require_observations=False
+    )
     filename = Path(SUPPLEMENTAL_ARTIFACTS[key]).name
     assert [issue for issue in issues if filename in issue] == direct
     (root / SUPPLEMENTAL_ARTIFACTS[key]).write_text(json.dumps(changed[key]), encoding="utf-8")
@@ -578,8 +590,11 @@ def test_bootstrap_readiness_accepts_only_authentic_unobserved_state(project_roo
 
     ensure_gate_artifacts(project_root)
     root = _copy_authored(project_root, tmp_path / "source")
-    shutil.copytree(project_root / "output", root / "output",
-                    ignore=shutil.ignore_patterns("negative_control_receipts", ".artifact.lock"))
+    shutil.copytree(
+        project_root / "output",
+        root / "output",
+        ignore=shutil.ignore_patterns("negative_control_receipts", ".artifact.lock"),
+    )
     hydrate_manuscript_fixed_point(root, require_analysis_outputs=False)
     assert counterexample_payload(root)["observed_count"] == 0
     assert _gate_artifacts_ready(root, include_manuscript=True) is True
@@ -590,7 +605,9 @@ def test_bootstrap_readiness_accepts_only_authentic_unobserved_state(project_roo
     from gates.output_checks import validate_outputs_selected_strict
 
     integration_key = "integration_audit_track_schemas"
-    assert validate_outputs_selected_strict(root, {integration_key}, require_observations=False) == {integration_key: True}
+    assert validate_outputs_selected_strict(root, {integration_key}, require_observations=False) == {
+        integration_key: True
+    }
     assert validate_outputs_selected_strict(root, {integration_key}) == {integration_key: False}
 
     promotion_key = "track_improvement_scope_schema"
@@ -603,7 +620,9 @@ def test_bootstrap_readiness_accepts_only_authentic_unobserved_state(project_roo
     row["negative_control_observed"] = True
     promotion_path.write_text(json.dumps(promotion), encoding="utf-8")
     try:
-        assert validate_outputs_selected_strict(root, {promotion_key}, require_observations=False) == {promotion_key: False}
+        assert validate_outputs_selected_strict(root, {promotion_key}, require_observations=False) == {
+            promotion_key: False
+        }
     finally:
         promotion_path.write_bytes(promotion_bytes)
     audit_path = root / "output/reports/adversarial_audit.json"
@@ -613,16 +632,20 @@ def test_bootstrap_readiness_accepts_only_authentic_unobserved_state(project_roo
     altered["rows"][0]["known_bad_passed"] = True
     audit_path.write_text(json.dumps(altered), encoding="utf-8")
     try:
-        assert any("adversarial_audit.json is inconsistent" in issue
-                   for issue in validate_integration_audit_artifacts(root, require_release_evidence=False))
+        assert any(
+            "adversarial_audit.json is inconsistent" in issue
+            for issue in validate_integration_audit_artifacts(root, require_release_evidence=False)
+        )
     finally:
         audit_path.write_bytes(audit_bytes)
     abstract = root / "manuscript/00_abstract.md"
     abstract_bytes = abstract.read_bytes()
     abstract.write_text("This finite toy is illustrative; we measured production LLMs.\n", encoding="utf-8")
     try:
-        assert any("scope_boundary_audit.json" in issue
-                   for issue in validate_integration_audit_artifacts(root, require_release_evidence=False))
+        assert any(
+            "scope_boundary_audit.json" in issue
+            for issue in validate_integration_audit_artifacts(root, require_release_evidence=False)
+        )
     finally:
         abstract.write_bytes(abstract_bytes)
     ontology = resolve_model_ontology_path(root, "si_tmaze")
@@ -648,38 +671,67 @@ def _finite_comparison_input(root: Path, project_root: Path) -> dict:
             log_path = Path(base.logging.path).parent / f"pymdp_compare_{planner}_2_{seed}.jsonl"
             configured = replace(configured, logging=replace(configured.logging, path=str(log_path)))
             values = [0.75, 0.25]
-            steps = [{
-                "step": step, "posterior_available": True, "posterior_source": planner,
-                "q_pi": values, "q_pi_sum": sum(values), "q_pi_normalized": abs(sum(values) - 1.0) <= 1e-9,
-                "q_pi_entropy": -sum(value * math.log(value) for value in values),
-                "action_probabilities": {"0": values[0], "1": values[1]}, "fallback_reason": None,
-            } for step in range(base.timesteps + 1)]
-            runs.append({
-                "planner": planner, "seed": seed, "role": "validation_comparison",
-                "config": config_snapshot(configured), "config_hash": config_hash(configured),
-                "horizon": base.planning_horizon, "steps": base.timesteps,
-                "policy_len": (base.agent.si_policy_len if planner == "sophisticated_inference"
-                               else base.agent.vanilla_policy_len),
-                "goal_reached": [0, 1][-1] == 1,
-                "policy_posterior_steps": steps,
-                "policy_posterior_all_normalized": all(step["q_pi_normalized"] for step in steps),
-            })
+            steps = [
+                {
+                    "step": step,
+                    "posterior_available": True,
+                    "posterior_source": planner,
+                    "q_pi": values,
+                    "q_pi_sum": sum(values),
+                    "q_pi_normalized": abs(sum(values) - 1.0) <= 1e-9,
+                    "q_pi_entropy": -sum(value * math.log(value) for value in values),
+                    "action_probabilities": {"0": values[0], "1": values[1]},
+                    "fallback_reason": None,
+                }
+                for step in range(base.timesteps + 1)
+            ]
+            runs.append(
+                {
+                    "planner": planner,
+                    "seed": seed,
+                    "role": "validation_comparison",
+                    "config": config_snapshot(configured),
+                    "config_hash": config_hash(configured),
+                    "horizon": base.planning_horizon,
+                    "steps": base.timesteps,
+                    "policy_len": (
+                        base.agent.si_policy_len
+                        if planner == "sophisticated_inference"
+                        else base.agent.vanilla_policy_len
+                    ),
+                    "goal_reached": [0, 1][-1] == 1,
+                    "policy_posterior_steps": steps,
+                    "policy_posterior_all_normalized": all(step["q_pi_normalized"] for step in steps),
+                }
+            )
     return {
         "schema": "template_active_inference.si_policy_comparison.v2",
-        "scope": "comparison_only", "canonical_planner": "sophisticated_inference",
-        "config": config_snapshot(base), "config_hash": config_hash(base), "runs": runs,
+        "scope": "comparison_only",
+        "canonical_planner": "sophisticated_inference",
+        "config": config_snapshot(base),
+        "config_hash": config_hash(base),
+        "runs": runs,
         "summary": {
-            "run_count": len(runs), "planners": sorted(planners), "seeds": list(seeds), "horizons": [2],
-            "expected_run_count": len(seeds) * len(planners), "complete_grid": True,
-            "vanilla_role": "comparison_only", "all_efe_rows_explained": True,
+            "run_count": len(runs),
+            "planners": sorted(planners),
+            "seeds": list(seeds),
+            "horizons": [2],
+            "expected_run_count": len(seeds) * len(planners),
+            "complete_grid": True,
+            "vanilla_role": "comparison_only",
+            "all_efe_rows_explained": True,
             "all_available_posteriors_normalized": all(run["policy_posterior_all_normalized"] for run in runs),
         },
     }
 
 
-@pytest.mark.parametrize("mutation", ["missing_run", "missing_grid_row", "run_hash", "run_config", "grid_hash", "source_hash"])
+@pytest.mark.parametrize(
+    "mutation", ["missing_run", "missing_grid_row", "run_hash", "run_config", "grid_hash", "source_hash"]
+)
 def test_selected_policy_gates_bind_effective_input_not_root_defaults(
-    project_root: Path, tmp_path: Path, mutation: str,
+    project_root: Path,
+    tmp_path: Path,
+    mutation: str,
 ) -> None:
     from gates.output_checks import validate_outputs_selected_strict
     from simulation.si_artifacts import write_policy_posterior_grid
@@ -719,5 +771,6 @@ def test_selected_policy_gates_bind_effective_input_not_root_defaults(
             grid["source_payload_sha256"] = "0" * 64
         grid_path.write_text(json.dumps(grid), encoding="utf-8")
         assert validate_outputs_selected_strict(tmp_path, keys) == {
-            "si_policy_comparison_schema": True, "pymdp_policy_posterior_grid_schema": False,
+            "si_policy_comparison_schema": True,
+            "pymdp_policy_posterior_grid_schema": False,
         }

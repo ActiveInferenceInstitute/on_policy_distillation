@@ -646,7 +646,10 @@ def test_scholarship_matrix_has_row_level_negative_control(project_root: Path) -
     assert freshness["source_family"] == "opd_stabilization"
     assert freshness["method_role"] == "freshness_aware_long_horizon_opd"
     assert freshness["source_locator"] == "arXiv:2605.17862v1, Sections 3-4"
-    assert freshness["source_heading"] == "f-OPD: Stabilizing Long-Horizon On-Policy Distillation with Freshness-Aware Control"
+    assert (
+        freshness["source_heading"]
+        == "f-OPD: Stabilizing Long-Horizon On-Policy Distillation with Freshness-Aware Control"
+    )
     assert freshness["doi"] == "10.48550/arXiv.2605.17862"
     assert freshness["url"] == "https://arxiv.org/abs/2605.17862"
     assert freshness["arxiv_id"] == "2605.17862"
@@ -662,15 +665,12 @@ def test_scholarship_matrix_has_row_level_negative_control(project_root: Path) -
     assert pw_opsd["arxiv_id"] == "2605.21606"
 
     missing_new_source = json.loads(json.dumps(data))
-    missing_new_source["rows"] = [
-        row for row in missing_new_source["rows"] if row["citation_key"] != "liu2026pwopsd"
-    ]
+    missing_new_source["rows"] = [row for row in missing_new_source["rows"] if row["citation_key"] != "liu2026pwopsd"]
     missing_new_source["observed_sources"] = sorted(row["citation_key"] for row in missing_new_source["rows"])
     missing_new_source["source_count"] = len(missing_new_source["rows"])
     missing_new_source["all_expected_sources_present"] = True
     assert any(
-        "source set is incomplete" in issue
-        for issue in validate_scholarship_source_matrix_payload(missing_new_source)
+        "source set is incomplete" in issue for issue in validate_scholarship_source_matrix_payload(missing_new_source)
     )
 
     disconnected = json.loads(json.dumps(data))
@@ -678,8 +678,7 @@ def test_scholarship_matrix_has_row_level_negative_control(project_root: Path) -
     disconnected["rows"][0]["connected"] = True
     disconnected["all_sources_connected"] = True
     assert any(
-        "disconnected source rows" in issue
-        for issue in validate_scholarship_source_matrix_payload(disconnected)
+        "disconnected source rows" in issue for issue in validate_scholarship_source_matrix_payload(disconnected)
     )
 
 

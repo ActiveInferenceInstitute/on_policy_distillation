@@ -90,12 +90,7 @@ def test_collect_malformed_token_names_flags_single_brace() -> None:
 def test_collect_malformed_token_names_ignores_latex_fenced_blocks() -> None:
     from manuscript.hydrate import collect_malformed_token_names
 
-    text = (
-        "```{=latex}\n"
-        "\\addcontentsline{toc}{section}{Introduction}\n"
-        "```\n"
-        "Valid {{pipeline_track_count}}.\n"
-    )
+    text = "```{=latex}\n\\addcontentsline{toc}{section}{Introduction}\n```\nValid {{pipeline_track_count}}.\n"
     assert collect_malformed_token_names(text) == []
 
 
@@ -155,6 +150,7 @@ def test_manuscript_no_longer_describes_state_inference_as_default(project_root:
     for phrase in banned:
         assert phrase not in manuscript_text
 
+
 def test_format_variables_preserves_tiny_magnitudes() -> None:
     """Machine-epsilon residuals must not be laundered into a literal "0"."""
     from manuscript.hydrate import format_variables, substitute_snake_case_tokens
@@ -195,13 +191,12 @@ def test_format_variables_adversarial_inputs() -> None:
     assert out["full_precision"] == "0.2468"
 
 
-
 def test_g_format_spec_supported_and_visible() -> None:
     """{{token:.3g}} must hydrate — an unsupported spec previously made the
     token INVISIBLE to both substitution and the fail-closed collector."""
     from manuscript.hydrate import collect_manuscript_tokens, format_variables, substitute_snake_case_tokens
 
-    variables = format_variables({"kl": 6.281983145, "tiny": 0.002.__float__()})
+    variables = format_variables({"kl": 6.281983145, "tiny": (0.002).__float__()})
     text, unresolved = substitute_snake_case_tokens("{{kl:.3g}} and {{tiny:.3g}}", variables)
     assert text == "6.28 and 0.002"
     assert unresolved == []

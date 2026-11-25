@@ -66,8 +66,8 @@ def test_render_pdf_imports_no_infrastructure() -> None:
 def test_cover_image_dimensions_are_config_driven() -> None:
     """The title-page graphical abstract uses config width/max_height, not hard-coded sizing."""
     src = (PROJECT_ROOT / "src" / "manuscript" / "pdf_render.py").read_text(encoding="utf-8")
-    assert "front.get(\"width\")" in src
-    assert "front.get(\"max_height\")" in src
+    assert 'front.get("width")' in src
+    assert 'front.get("max_height")' in src
     assert "width={abstract_width},height={abstract_max_height}" in src
     assert "0.52\\textheight" not in src
     config = yaml.safe_load((PROJECT_ROOT / "manuscript" / "config.yaml").read_text(encoding="utf-8"))
@@ -168,9 +168,19 @@ def test_render_pdf_records_receipt_and_builds_pandoc_command(monkeypatch, tmp_p
     calls: dict[str, object] = {}
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
     subprocess.run(
-        ["git", "-c", "user.name=Receipt Test", "-c", "user.email=receipt@example.invalid",
-         "commit", "--allow-empty", "-qm", "receipt source"],
-        cwd=tmp_path, check=True,
+        [
+            "git",
+            "-c",
+            "user.name=Receipt Test",
+            "-c",
+            "user.email=receipt@example.invalid",
+            "commit",
+            "--allow-empty",
+            "-qm",
+            "receipt source",
+        ],
+        cwd=tmp_path,
+        check=True,
     )
     source_commit = subprocess.run(
         ["git", "rev-parse", "HEAD"], cwd=tmp_path, check=True, capture_output=True, text=True
