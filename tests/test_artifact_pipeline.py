@@ -50,10 +50,7 @@ def test_full_pipeline_produces_current_cold_inputs_and_real_figures_without_rec
     assert statistics["teacher_entropy"] == measured["teacher_belief_entropies"]
     assert statistics["student_entropy"] == measured["student_belief_entropies"]
     assert _load(fp / "privilege_sweep.json")["levels"]
-    figures = [
-        path for key, path in paths.items()
-        if key.startswith("figure:") and path.suffix == ".png"
-    ]
+    figures = [path for key, path in paths.items() if key.startswith("figure:") and path.suffix == ".png"]
     assert figures
     assert all(path.read_bytes().startswith(b"\x89PNG\r\n\x1a\n") for path in figures)
 
@@ -68,20 +65,20 @@ def test_full_pipeline_produces_current_cold_inputs_and_real_figures_without_rec
 
 
 def test_fixed_point_refreshes_real_figure_source_currency(
-    cold_production: tuple[Path, dict[str, Path]], tmp_path: Path,
+    cold_production: tuple[Path, dict[str, Path]],
+    tmp_path: Path,
 ) -> None:
     produced_root, paths = cold_production
     root = tmp_path / "project"
     shutil.copytree(produced_root, root)
     relative_figure = next(
-        path.relative_to(produced_root) for key, path in paths.items()
+        path.relative_to(produced_root)
+        for key, path in paths.items()
         if key.startswith("figure:") and path.suffix == ".png"
     )
     figure = root / relative_figure
     source_map = root / "output" / "data" / "figure_source_map.json"
-    old_row = next(
-        row for row in _load(source_map)["rows"] if row["output"] == relative_figure.as_posix()
-    )
+    old_row = next(row for row in _load(source_map)["rows"] if row["output"] == relative_figure.as_posix())
     with Image.open(figure) as image:
         new_width = image.width + 1
         with image.resize((new_width, image.height)) as resized:
@@ -101,9 +98,7 @@ def test_fixed_point_refreshes_real_figure_source_currency(
             timeout=180,
         )
     assert completed.returncode == 0, completed.stdout + completed.stderr
-    current_row = next(
-        row for row in _load(source_map)["rows"] if row["output"] == relative_figure.as_posix()
-    )
+    current_row = next(row for row in _load(source_map)["rows"] if row["output"] == relative_figure.as_posix())
     assert current_row["image_width_px"] == new_width
 
     assert validate_integration_audit_artifacts(root, require_release_evidence=False) == []
@@ -114,7 +109,8 @@ def test_fixed_point_refreshes_real_figure_source_currency(
 
 
 def test_structural_fixed_point_does_not_exempt_non_observation_failures(
-    cold_production: tuple[Path, dict[str, Path]], tmp_path: Path,
+    cold_production: tuple[Path, dict[str, Path]],
+    tmp_path: Path,
 ) -> None:
     root = tmp_path / "project"
     shutil.copytree(cold_production[0], root)

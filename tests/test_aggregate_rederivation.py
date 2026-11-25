@@ -166,11 +166,7 @@ def test_lying_flag_caught_conditional_posterior_grid(project_root: Path, tmp_pa
 
     _mutate_row_keep_flag(root, rel, mutate)
     rows = aggregate_rederivation_rows(root)
-    lying = [
-        r
-        for r in rows
-        if r["artifact"] == rel and r["aggregate"] == "all_available_posteriors_normalized"
-    ]
+    lying = [r for r in rows if r["artifact"] == rel and r["aggregate"] == "all_available_posteriors_normalized"]
     assert lying and not lying[0]["consistent"]
 
 
@@ -275,7 +271,10 @@ def test_rederivation_logic_single_definition(project_root: Path) -> None:
         if path.name == "aggregate_rederivation.py":
             continue
         text = path.read_text(encoding="utf-8")
-        if "ARTIFACT_AGGREGATE_RULES" in text and "import" not in text.split("ARTIFACT_AGGREGATE_RULES")[0].rsplit("\n", 2)[-1]:
+        if (
+            "ARTIFACT_AGGREGATE_RULES" in text
+            and "import" not in text.split("ARTIFACT_AGGREGATE_RULES")[0].rsplit("\n", 2)[-1]
+        ):
             hits.append(str(path))
         if "def rederive_aggregate" in text or "def _eval_spec" in text:
             hits.append(str(path))
@@ -298,7 +297,9 @@ def test_manuscript_aggregate_authenticates_honest_red_and_rejects_forgery(tmp_p
 
     def save(payload: dict) -> dict:
         path.write_text(json.dumps(payload), encoding="utf-8")
-        return next(row for row in aggregate_rederivation_rows(root) if row["artifact"] == path.relative_to(root).as_posix())
+        return next(
+            row for row in aggregate_rederivation_rows(root) if row["artifact"] == path.relative_to(root).as_posix()
+        )
 
     green = build_manuscript_staleness_report(root)
     assert green["all_fresh"] is True
@@ -343,9 +344,11 @@ def test_unobserved_aggregate_consistency_is_not_release_acceptance(tmp_path: Pa
         path = tmp_path / relative
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(payload), encoding="utf-8")
-    rows = [row for row in aggregate_rederivation_rows(tmp_path)
-            if row["aggregate"] == "all_expected_failures_observed"]
+    rows = [
+        row for row in aggregate_rederivation_rows(tmp_path) if row["aggregate"] == "all_expected_failures_observed"
+    ]
     assert len(rows) == 2 and all(row["consistent"] and row["rederived"] is False for row in rows)
     assert validate_output_payloads(tmp_path, only={"counterexample_matrix_schema", "adversarial_audit_schema"}) == {
-        "counterexample_matrix_schema": False, "adversarial_audit_schema": False,
+        "counterexample_matrix_schema": False,
+        "adversarial_audit_schema": False,
     }

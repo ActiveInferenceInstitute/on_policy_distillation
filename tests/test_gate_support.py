@@ -77,7 +77,9 @@ def test_ensure_gate_artifacts_revalidates_changed_bootstrap_fingerprint(monkeyp
     calls = {"ready": 0}
 
     monkeypatch.setattr(gate_support, "_gate_artifacts_present", lambda project_root: True)
-    monkeypatch.setattr(gate_support, "_gate_artifact_fingerprint", lambda project_root: (("artifact", calls["ready"], 1),))
+    monkeypatch.setattr(
+        gate_support, "_gate_artifact_fingerprint", lambda project_root: (("artifact", calls["ready"], 1),)
+    )
 
     def ready(project_root: Path, *, include_manuscript: bool = False) -> bool:
         calls["ready"] += 1

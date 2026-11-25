@@ -141,7 +141,9 @@ def test_validate_outputs_negative_analytical_invariants_fail(project_root: Path
         path.write_text(backup.read_text(encoding="utf-8"), encoding="utf-8")
 
 
-def test_validate_outputs_simulation_invariants_fails_closed_on_missing_block(project_root: Path, tmp_path: Path) -> None:
+def test_validate_outputs_simulation_invariants_fails_closed_on_missing_block(
+    project_root: Path, tmp_path: Path
+) -> None:
     """The selected path must never vacuously pass simulation invariants.
 
     `validate_outputs(only={"simulation_invariants_all_pass"})` reports True only
@@ -800,9 +802,7 @@ def test_validate_outputs_negative_firstprinciples_benchmark_and_statistics_cont
 
         empirical_path.write_text(empirical_backup.read_text(encoding="utf-8"), encoding="utf-8")
         taxonomy = json.loads(taxonomy_backup.read_text(encoding="utf-8"))
-        taxonomy["methods"] = [
-            row for row in taxonomy["methods"] if row["bibkey"] != "chen2026freshness_opd"
-        ]
+        taxonomy["methods"] = [row for row in taxonomy["methods"] if row["bibkey"] != "chen2026freshness_opd"]
         taxonomy["method_count"] = len(taxonomy["methods"])
         taxonomy["signal_sources"] = [
             source for source in taxonomy["signal_sources"] if source != "freshness_aware_async_buffer"

@@ -304,4 +304,3 @@ def _canonical_artifact_rows(root: Path) -> list[dict[str, Any]]:
             }
         )
     return rows
-

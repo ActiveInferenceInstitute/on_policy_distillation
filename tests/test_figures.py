@@ -235,9 +235,7 @@ def test_figure_source_map_has_registry_parity_and_data_backing(project_root: Pa
     assert "validate_outputs.firstprinciples_sequential_shift_schema" in sequential_row["validation_gates"]
 
     sequential_sensitivity_row = rows_by_id["sequential_shift_sensitivity"]
-    assert sequential_sensitivity_row["sources"] == [
-        "output/data/firstprinciples/sequential_shift_sensitivity.json"
-    ]
+    assert sequential_sensitivity_row["sources"] == ["output/data/firstprinciples/sequential_shift_sensitivity.json"]
     assert {
         "$.rows[*].correction_fraction",
         "$.rows[*].test_loss",
@@ -246,9 +244,10 @@ def test_figure_source_map_has_registry_parity_and_data_backing(project_root: Pa
         "$.monotone_test_loss_decrease",
         "$.monotone_shift_mass_decrease",
     } <= set(sequential_sensitivity_row["source_fields"])
-    assert "validate_outputs.firstprinciples_sequential_shift_sensitivity_schema" in sequential_sensitivity_row[
-        "validation_gates"
-    ]
+    assert (
+        "validate_outputs.firstprinciples_sequential_shift_sensitivity_schema"
+        in sequential_sensitivity_row["validation_gates"]
+    )
 
     cover_row = rows_by_id["graphical_abstract"]
     assert "output/data/manuscript_variables.json" not in cover_row["sources"]
@@ -295,8 +294,7 @@ def test_figure_source_map_has_registry_parity_and_data_backing(project_root: Pa
         "output/data/manuscript_variables.json:$.sheaf_track_count",
     } <= set(situational_row["source_fields"])
     assert (
-        "test_figures.opd_situational_awareness_is_intro_bound_and_source_backed"
-        in situational_row["validation_gates"]
+        "test_figures.opd_situational_awareness_is_intro_bound_and_source_backed" in situational_row["validation_gates"]
     )
 
     quality = build_visualization_quality_audit(project_root)
@@ -355,7 +353,7 @@ def test_figure_ising_mi_curve_dimensions(project_root: Path) -> None:
 
     run_analysis(project_root)
     source = inspect.getsource(figure_ising_mi_curve)
-    assert "label=\"exact recompute\"" not in source
+    assert 'label="exact recompute"' not in source
     assert "ax_main.plot(\n            lambdas,\n            empirical" not in source
     registry = load_figure_registry(project_root)
     figure_text = registry["ising_mi_curve"].alt + "\n" + registry["ising_mi_curve"].caption
@@ -389,9 +387,10 @@ def test_interpretive_figures_expose_formula_signs_and_caveats(project_root: Pat
     assert "not an empirical OPD benchmark" in registry["sequential_shift_recovery"].caption
     assert "sequential_shift_sensitivity.json" in sequential_sensitivity_source
     assert "Correction fraction" in sequential_sensitivity_source
-    assert "deterministic finite correction-dose sensitivity sweep" in registry[
-        "sequential_shift_sensitivity"
-    ].caption.lower()
+    assert (
+        "deterministic finite correction-dose sensitivity sweep"
+        in registry["sequential_shift_sensitivity"].caption.lower()
+    )
     assert "not an empirical OPD benchmark" in registry["sequential_shift_sensitivity"].caption
     assert "source-bound figure 1 mechanism map" in registry["opd_reader_map"].caption.lower()
     assert "validation dependency graph" in registry["opd_reader_map"].caption.lower()
@@ -414,7 +413,7 @@ def test_dense_figures_disclose_readability_compression(project_root: Path) -> N
 
     assert "_taxonomy_label_offset" in taxonomy_source
     assert "arrowprops" in taxonomy_source
-    assert "bbox=dict(boxstyle=\"round,pad=0.14\"" in taxonomy_source
+    assert 'bbox=dict(boxstyle="round,pad=0.14"' in taxonomy_source
     assert "right-side label key" in registry["opd_taxonomy_landscape"].caption
     dx, dy, ha = _taxonomy_label_offset(slot=1, cluster_count=3)
     assert dx < 0
@@ -559,7 +558,9 @@ def test_caption_claim_source_field_resolution(project_root: Path) -> None:
     assert _source_field_resolves("parameter_sweep.csv:closed_form_mi", ["output/data/parameter_sweep.csv"], root)
     assert not _source_field_resolves("parameter_sweep.csv:not_a_column", ["output/data/parameter_sweep.csv"], root)
     assert _source_field_resolves("manuscript/sheaf/tracks.yaml:tracks", ["manuscript/sheaf/tracks.yaml"], root)
-    assert not _source_field_resolves("manuscript/sheaf/tracks.yaml:track_registry", ["manuscript/sheaf/tracks.yaml"], root)
+    assert not _source_field_resolves(
+        "manuscript/sheaf/tracks.yaml:track_registry", ["manuscript/sheaf/tracks.yaml"], root
+    )
     assert not _source_field_resolves("$.totally_made_up", ["output/data/parameter_sweep.csv"], root)
 
     # degenerate selectors bind nothing and must be rejected
@@ -756,14 +757,7 @@ def test_si_tmaze_model_matrices_figure_is_registered_and_nonblank(project_root:
 
 
 def test_appendix_formalism_uses_registry_tokens(project_root: Path) -> None:
-    path = (
-        project_root
-        / "manuscript"
-        / "sections"
-        / "imrad"
-        / "appendix_full_sheaf"
-        / "formalism.md"
-    )
+    path = project_root / "manuscript" / "sections" / "imrad" / "appendix_full_sheaf" / "formalism.md"
     text = path.read_text(encoding="utf-8")
     assert "{{appendix_sheaf_track_count}}" in text
     assert re.search(r"\|\s*\\mathcal\{T\}_\{.*full.*\}\s*\|\s*=\s*9", text) is None

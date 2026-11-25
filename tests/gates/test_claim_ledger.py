@@ -492,9 +492,7 @@ def test_typed_claim_evidence_finite_admission_rejects_referenced_operands(
     document = {"value": 1.0, "a": 2.0, "b": 1.0, "bound": 1.0}
     document[field] = nonfinite
     evidence = {"leq_field": "bound"} if field == "bound" else {"equals_difference": ["a", "b"]}
-    _assert_typed_evidence_admission(
-        tmp_path, document, {"field": "value", **evidence}, False, suffix=suffix
-    )
+    _assert_typed_evidence_admission(tmp_path, document, {"field": "value", **evidence}, False, suffix=suffix)
 
 
 @pytest.mark.parametrize("suffix", [".json", ".yaml"])
@@ -767,8 +765,7 @@ def test_sdpg_claim_evidence_rejects_malformed_artifact(tmp_path: Path) -> None:
     doctored["mode_rows"][0]["reference_kl"] = 0.0
     artifact_path.write_text(json.dumps(doctored), encoding="utf-8")
     assert any(
-        "sdpg_reference_anchor_positive" in issue
-        for issue in typed_claim_evidence_issues(tmp_path, ledger_path=ledger)
+        "sdpg_reference_anchor_positive" in issue for issue in typed_claim_evidence_issues(tmp_path, ledger_path=ledger)
     )
 
 
@@ -913,10 +910,7 @@ def test_validate_claim_ledger_branch_edges(monkeypatch: pytest.MonkeyPatch, tmp
     ledger = tmp_path / "data" / "claim_ledger.yaml"
     ledger.parent.mkdir(parents=True)
     ledger.write_text(
-        "claims:\n"
-        "  - id: missing_artifact\n"
-        "    path: output/data/missing.json\n"
-        "    tracks: [sheaf]\n",
+        "claims:\n  - id: missing_artifact\n    path: output/data/missing.json\n    tracks: [sheaf]\n",
         encoding="utf-8",
     )
     assert claim_ledger.validate_claim_ledger(tmp_path) is False
@@ -926,10 +920,7 @@ def test_validate_claim_ledger_branch_edges(monkeypatch: pytest.MonkeyPatch, tmp
     (manifest_dir / "manifest.yaml").write_text("registry_path: manuscript/sheaf/tracks.yaml\n", encoding="utf-8")
     (manifest_dir / "tracks.yaml").write_text("tracks: []\n", encoding="utf-8")
     ledger.write_text(
-        "claims:\n"
-        "  - id: coverage_no_gray\n"
-        "    path: output/data/present.json\n"
-        "    tracks: [coverage]\n",
+        "claims:\n  - id: coverage_no_gray\n    path: output/data/present.json\n    tracks: [coverage]\n",
         encoding="utf-8",
     )
     monkeypatch.setattr(

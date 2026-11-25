@@ -489,7 +489,9 @@ def build_model_checking_witnesses(project_root: Path) -> dict[str, Any]:
     )
     seen_ids = [str(row.get("id")) for row in rows]
     if len(seen_ids) != len(set(seen_ids)):
-        raise ValueError(f"duplicate model-checking witness ids: {sorted(set(i for i in seen_ids if seen_ids.count(i) > 1))}")
+        raise ValueError(
+            f"duplicate model-checking witness ids: {sorted(set(i for i in seen_ids if seen_ids.count(i) > 1))}"
+        )
     return {
         "schema": "template_active_inference.model_checking_witnesses.v1",
         "schema_version": CANONICAL_SCHEMA,

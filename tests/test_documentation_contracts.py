@@ -23,9 +23,7 @@ IGNORED_DIR_NAMES = {
 
 def _ignored_repo_path(path: Path, project_root: Path) -> bool:
     rel = path.relative_to(project_root)
-    return any(
-        part in IGNORED_DIR_NAMES or part.endswith(".egg-info") for part in rel.parts
-    )
+    return any(part in IGNORED_DIR_NAMES or part.endswith(".egg-info") for part in rel.parts)
 
 
 def _repo_doc_contract_dirs(project_root: Path) -> list[Path]:
@@ -87,8 +85,7 @@ def test_flat_documentation_index_is_complete(project_root: Path) -> None:
     expected = {path.relative_to(docs).as_posix() for path in docs.rglob("*.md")}
     assert len(linked) == len(set(linked)), "duplicate documentation index entries"
     assert set(linked) == expected, (
-        f"documentation index missing {sorted(expected - set(linked))}; "
-        f"unexpected {sorted(set(linked) - expected)}"
+        f"documentation index missing {sorted(expected - set(linked))}; unexpected {sorted(set(linked) - expected)}"
     )
 
 
@@ -143,9 +140,7 @@ def test_rendering_reproducibility_reference_is_signposted(project_root: Path) -
 
 def test_readiness_docs_signpost_canonical_chain_and_soak_validator(project_root: Path) -> None:
     project_readme = (project_root / "README.md").read_text(encoding="utf-8")
-    config_guide = (project_root / "docs" / "reference" / "configuration-and-extension.md").read_text(
-        encoding="utf-8"
-    )
+    config_guide = (project_root / "docs" / "reference" / "configuration-and-extension.md").read_text(encoding="utf-8")
 
     assert "scripts/run_full_chain.py --render" in project_readme
     assert "manuscript/config.yaml" in project_readme
@@ -241,6 +236,4 @@ def test_public_docs_use_working_lifecycle_paths(project_root: Path) -> None:
         for stale in forbidden:
             assert stale not in text, f"{path.relative_to(project_root)} contains stale path {stale}"
 
-    assert "working/active_inference_on_policy_distillation" in (
-        project_root / "README.md"
-    ).read_text(encoding="utf-8")
+    assert "working/active_inference_on_policy_distillation" in (project_root / "README.md").read_text(encoding="utf-8")

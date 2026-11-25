@@ -12,8 +12,15 @@ def stage_source_project(source_root: Path, destination: Path) -> Path:
         source_root,
         destination,
         ignore=shutil.ignore_patterns(
-            ".git", ".venv", "output", "__pycache__", ".pytest_cache",
-            ".mypy_cache", ".ruff_cache", ".coverage*", "htmlcov",
+            ".git",
+            ".venv",
+            "output",
+            "__pycache__",
+            ".pytest_cache",
+            ".mypy_cache",
+            ".ruff_cache",
+            ".coverage*",
+            "htmlcov",
         ),
     )
     return destination

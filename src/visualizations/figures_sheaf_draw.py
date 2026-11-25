@@ -97,9 +97,7 @@ def draw_coverage_heatmap(
     ax.set_xticks(np.arange(len(payload.track_ids)) + 0.5)
     ax.set_xticklabels(payload.track_ids, rotation=45, ha="right", fontsize=label_fontsize)
     ax.set_yticks(np.arange(len(payload.y_labels)) + 0.5)
-    wrapped_y_labels = [
-        "\n".join(textwrap.wrap(label, width=28, break_long_words=False)) for label in payload.y_labels
-    ]
+    wrapped_y_labels = ["\n".join(textwrap.wrap(label, width=28, break_long_words=False)) for label in payload.y_labels]
     ax.set_yticklabels(wrapped_y_labels, fontsize=label_fontsize)
     ax.set_xlabel("Fragment tracks", fontsize=label_fontsize)
     if show_group_labels:

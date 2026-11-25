@@ -23,7 +23,9 @@ def test_model_validation() -> None:
     with pytest.raises(ValueError):
         GenerativeModel(prior=np.array([1.0]), likelihood=np.array([[0.6, 0.4]]), preferences=np.array([0.5]))
     with pytest.raises(ValueError):
-        GenerativeModel(prior=np.array([0.5, 0.5]), likelihood=np.array([[0.7, 0.4], [0.5, 0.5]]), preferences=np.array([0.5, 0.5]))
+        GenerativeModel(
+            prior=np.array([0.5, 0.5]), likelihood=np.array([[0.7, 0.4], [0.5, 0.5]]), preferences=np.array([0.5, 0.5])
+        )
 
 
 def test_vfe_three_decompositions_agree() -> None:

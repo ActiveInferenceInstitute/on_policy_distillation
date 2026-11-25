@@ -172,7 +172,8 @@ def figure_theorem_traceability_graph(project_root: Path) -> Path:
     shown_rows = all_rows
     edges = dependency.get("edges") or []
     edge_count_by_theorem = {
-        row.get("theorem", ""): sum(1 for edge in edges if edge.get("source") == row.get("theorem")) for row in shown_rows
+        row.get("theorem", ""): sum(1 for edge in edges if edge.get("source") == row.get("theorem"))
+        for row in shown_rows
     }
     max_edges = max(edge_count_by_theorem.values(), default=1)
     row_fontsize = style.font_size("dense") if len(shown_rows) <= 12 else style.font_size("source")
@@ -307,14 +308,26 @@ def figure_causal_ablation_heatmap(project_root: Path) -> Path:
         # Anchor the color scale at zero: stretching a narrow effect range over
         # the full colormap exaggerates small differences into maximal contrast.
         image = ax.imshow(matrix, cmap="viridis", aspect="auto", vmin=0.0)
-        ax.set_xticks(range(len(perturbations)), [label.replace("_", "\n") for label in perturbations], fontsize=style.font_size("dense"))
+        ax.set_xticks(
+            range(len(perturbations)),
+            [label.replace("_", "\n") for label in perturbations],
+            fontsize=style.font_size("dense"),
+        )
         ax.set_yticks(range(len(topologies)), topologies, fontsize=style.font_size("dense"))
         ax.set_xlabel("Perturbation")
         ax.set_ylabel("Toy topology")
         ax.set_title("Finite topology stress tests expose sensitive assumptions")
         for i in range(matrix.shape[0]):
             for j in range(matrix.shape[1]):
-                ax.text(j, i, f"{matrix[i, j]:.2f}", ha="center", va="center", color="white", fontsize=style.font_size("dense"))
+                ax.text(
+                    j,
+                    i,
+                    f"{matrix[i, j]:.2f}",
+                    ha="center",
+                    va="center",
+                    color="white",
+                    fontsize=style.font_size("dense"),
+                )
         cbar = fig.colorbar(image, ax=ax, shrink=0.86)
         cbar.set_label("|effect|")
         subset_note(fig, matrix.size, len(rows), "source rows (cells are max-aggregated)")
@@ -413,7 +426,14 @@ def figure_scholarship_source_map(project_root: Path) -> Path:
         family_ax.set_title("Literature families\nwith load-bearing rows", fontsize=style.font_size("small"))
         style_grid(family_ax, style)
         for y, value in zip(y_positions, family_values, strict=True):
-            family_ax.text(value + 0.08, y, str(value), va="center", fontsize=style.font_size("dense"), color=style.color("primary"))
+            family_ax.text(
+                value + 0.08,
+                y,
+                str(value),
+                va="center",
+                fontsize=style.font_size("dense"),
+                color=style.color("primary"),
+            )
 
         masked_counts = np.ma.masked_where(family_bucket_counts == 0, family_bucket_counts)
         cmap = plt.get_cmap("YlGnBu").copy()
@@ -462,7 +482,14 @@ def figure_scholarship_source_map(project_root: Path) -> Path:
         kind_ax.set_title("Primary and contextual\nsource types", fontsize=style.font_size("small"))
         style_grid(kind_ax, style)
         for y, value in zip(kind_positions, kind_values, strict=True):
-            kind_ax.text(value + 0.08, y, str(value), va="center", fontsize=style.font_size("dense"), color=style.color("primary"))
+            kind_ax.text(
+                value + 0.08,
+                y,
+                str(value),
+                va="center",
+                fontsize=style.font_size("dense"),
+                color=style.color("primary"),
+            )
 
         summary = (
             f"{matrix.get('source_count', 0)} sources, "
@@ -470,7 +497,13 @@ def figure_scholarship_source_map(project_root: Path) -> Path:
             f"{matrix.get('method_role_count', 0)} method roles, "
             f"connected={matrix.get('all_sources_connected')}"
         )
-        fig.suptitle("Scholarship source map: print summary of bound citation families", x=0.01, ha="left", fontsize=style.font_size("title"), color=style.color("primary"))
+        fig.suptitle(
+            "Scholarship source map: print summary of bound citation families",
+            x=0.01,
+            ha="left",
+            fontsize=style.font_size("title"),
+            color=style.color("primary"),
+        )
         fig.text(
             0.01,
             0.015,

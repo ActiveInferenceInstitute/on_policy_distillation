@@ -62,29 +62,89 @@ def figure_correspondence_map(project_root: Path) -> Path:
         header_size = style.font_size("subtitle")
         cell_size = max(style.font_size("dense"), 9.5)
         header_y = total_units + 1.4
-        ax.text(0.155, header_y, "Active inference", ha="center", va="center", fontsize=header_size,
-                color=style.color("accent"), fontweight="bold")
-        ax.text(0.50, header_y, "shared formal object", ha="center", va="center", fontsize=header_size,
-                color=style.color("muted"), fontweight="bold")
-        ax.text(0.845, header_y, "On-policy distillation", ha="center", va="center", fontsize=header_size,
-                color=style.color("secondary"), fontweight="bold")
+        ax.text(
+            0.155,
+            header_y,
+            "Active inference",
+            ha="center",
+            va="center",
+            fontsize=header_size,
+            color=style.color("accent"),
+            fontweight="bold",
+        )
+        ax.text(
+            0.50,
+            header_y,
+            "shared formal object",
+            ha="center",
+            va="center",
+            fontsize=header_size,
+            color=style.color("muted"),
+            fontweight="bold",
+        )
+        ax.text(
+            0.845,
+            header_y,
+            "On-policy distillation",
+            ha="center",
+            va="center",
+            fontsize=header_size,
+            color=style.color("secondary"),
+            fontweight="bold",
+        )
         cursor = total_units
         for index, (ai_text, shared_text, opd_text) in enumerate(cells):
             pitch = pitches[index]
             y = cursor - pitch / 2.0
             cursor -= pitch
             if index % 2 == 0:
-                ax.axhspan(y - pitch / 2.0, y + pitch / 2.0, xmin=0.005, xmax=0.995,
-                           color=style.color("muted"), alpha=0.07, lw=0)
-            ax.text(0.155, y, ai_text, ha="center", va="center",
-                    fontsize=cell_size, color=style.color("accent"), linespacing=1.15)
-            ax.text(0.50, y, shared_text, ha="center", va="center",
-                    fontsize=cell_size, color=style.color("primary"), style="italic", linespacing=1.15)
-            ax.text(0.845, y, opd_text, ha="center", va="center",
-                    fontsize=cell_size, color=style.color("secondary"), linespacing=1.15)
+                ax.axhspan(
+                    y - pitch / 2.0,
+                    y + pitch / 2.0,
+                    xmin=0.005,
+                    xmax=0.995,
+                    color=style.color("muted"),
+                    alpha=0.07,
+                    lw=0,
+                )
+            ax.text(
+                0.155,
+                y,
+                ai_text,
+                ha="center",
+                va="center",
+                fontsize=cell_size,
+                color=style.color("accent"),
+                linespacing=1.15,
+            )
+            ax.text(
+                0.50,
+                y,
+                shared_text,
+                ha="center",
+                va="center",
+                fontsize=cell_size,
+                color=style.color("primary"),
+                style="italic",
+                linespacing=1.15,
+            )
+            ax.text(
+                0.845,
+                y,
+                opd_text,
+                ha="center",
+                va="center",
+                fontsize=cell_size,
+                color=style.color("secondary"),
+                linespacing=1.15,
+            )
             for x_left, x_right in ((0.318, 0.352), (0.648, 0.682)):
-                ax.annotate("", xy=(x_right, y), xytext=(x_left, y),
-                            arrowprops={"arrowstyle": "<->", "color": style.color("muted"), "linewidth": 0.9})
+                ax.annotate(
+                    "",
+                    xy=(x_right, y),
+                    xytext=(x_left, y),
+                    arrowprops={"arrowstyle": "<->", "color": style.color("muted"), "linewidth": 0.9},
+                )
         ax.set_title(
             f"Reader dictionary: active inference <-> shared object <-> on-policy distillation ({n} rows)",
             fontsize=style.font_size("title"),
@@ -150,8 +210,15 @@ def figure_policy_posterior_grid(project_root: Path) -> Path:
             )
             for (row_idx, col_idx), value in np.ndenumerate(matrix):
                 if value >= 0.30:
-                    ax.text(col_idx, row_idx, f"{value:.2f}", ha="center", va="center",
-                            fontsize=style.font_size("small"), color="white")
+                    ax.text(
+                        col_idx,
+                        row_idx,
+                        f"{value:.2f}",
+                        ha="center",
+                        va="center",
+                        fontsize=style.font_size("small"),
+                        color="white",
+                    )
         if mappable is not None:
             colorbar = fig.colorbar(mappable, ax=list(axes[: len(planners)]), fraction=0.030, pad=0.030)
             colorbar.set_label("posterior mass", fontsize=style.font_size("source"))

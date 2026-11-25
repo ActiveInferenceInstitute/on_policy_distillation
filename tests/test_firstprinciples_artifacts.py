@@ -130,8 +130,13 @@ def _run_complete_producer(root: Path, entrypoint: str, *, classroom: bool) -> N
         if not classroom:
             argv.append("--no-classroom")
         completed = subprocess.run(
-            argv, cwd=root, env=handoff.env, pass_fds=handoff.pass_fds,
-            capture_output=True, text=True, timeout=600,
+            argv,
+            cwd=root,
+            env=handoff.env,
+            pass_fds=handoff.pass_fds,
+            capture_output=True,
+            text=True,
+            timeout=600,
         )
         assert completed.returncode == 0, completed.stdout + completed.stderr
 
@@ -141,7 +146,9 @@ def _run_complete_producer(root: Path, entrypoint: str, *, classroom: bool) -> N
 @pytest.mark.timeout(900)
 @pytest.mark.parametrize("entrypoint", ["api", "cli"])
 def test_complete_producer_cross_reads_real_inputs_and_clears_disabled_classroom(
-    project_root: Path, tmp_path: Path, entrypoint: str,
+    project_root: Path,
+    tmp_path: Path,
+    entrypoint: str,
 ) -> None:
     from firstprinciples import classroom, precision_ledger, si_bridge
     from visualizations.figures_firstprinciples import (
@@ -177,16 +184,17 @@ def test_complete_producer_cross_reads_real_inputs_and_clears_disabled_classroom
     assert statistics["ok"] is True
     privilege = _load(fp / "privilege_sweep.json")
     matching = next(
-        row for row in privilege["levels"]
-        if row["teacher_cue_validity"] == measured["teacher_cue_validity"]
+        row for row in privilege["levels"] if row["teacher_cue_validity"] == measured["teacher_cue_validity"]
     )
     assert privilege["student_cue_validity"] == measured["student_cue_validity"]
     assert matching["mean_reverse_kl"] == pytest.approx(measured["mean_reverse_kl"])
     assert matching["teacher_belief_entropy"] == pytest.approx(measured["teacher_mean_belief_entropy"])
 
     for render in (
-        figure_si_bridge_match, figure_precision_ledger,
-        figure_classroom_distillation_signal, figure_privilege_dose_response,
+        figure_si_bridge_match,
+        figure_precision_ledger,
+        figure_classroom_distillation_signal,
+        figure_privilege_dose_response,
     ):
         assert render(root).read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
 
@@ -215,7 +223,9 @@ def test_no_classroom_invalidates_stale_outputs_even_when_upstream_is_missing(tm
     ["write_json", "write_all", "write_markdown_tables", "write_statistics_artifact", "write_complete"],
 )
 def test_firstprinciples_producers_refuse_competing_custody(
-    project_root: Path, tmp_path: Path, entrypoint: str,
+    project_root: Path,
+    tmp_path: Path,
+    entrypoint: str,
 ) -> None:
     from orchestration.artifact_lock import ARTIFACT_LEASE_ENV, artifact_lease
 
@@ -244,7 +254,11 @@ raise SystemExit("producer escaped exclusive custody")
         env["PYTHONPATH"] = str(project_root / "src")
         completed = subprocess.run(
             [sys.executable, "-B", "-c", child, str(tmp_path), entrypoint],
-            cwd=tmp_path, env=env, capture_output=True, text=True, timeout=120,
+            cwd=tmp_path,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=120,
         )
         assert completed.returncode == 23, completed.stdout + completed.stderr
         assert not (tmp_path / "output" / "data").exists()

@@ -22,7 +22,7 @@ def test_perfect_channels_close_gap_underresolving_does_not() -> None:
     assert rows["perfect3_k3"]["residual_gap"] < 1e-9
     assert rows["perfect4_k4"]["residual_gap"] < 1e-9
     assert rows["perfect3_k4"]["residual_gap"] < 1e-9  # k>n still resolves
-    assert rows["under4_k3"]["residual_gap"] > 1e-3   # k<n cannot reach zero
+    assert rows["under4_k3"]["residual_gap"] > 1e-3  # k<n cannot reach zero
 
 
 def test_blind_channel_zero_epistemic_and_ranks_last() -> None:

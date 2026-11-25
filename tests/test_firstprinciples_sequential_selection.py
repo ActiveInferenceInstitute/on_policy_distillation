@@ -52,7 +52,7 @@ def test_horizon_gap_scales_linearly_with_remaining_steps() -> None:
 def test_horizon_myopic_commits_but_all_h_ge_2_cue() -> None:
     hz = seq.build_horizon_curve()
     rows = {int(r["horizon"]): r for r in hz["rows"]}
-    assert rows[1]["sequential_prefers_cue"] is False   # myopic commits
+    assert rows[1]["sequential_prefers_cue"] is False  # myopic commits
     assert all(rows[h]["sequential_prefers_cue"] for h in range(2, 7))
     assert 1.0 < hz["break_even_horizon"] < 2.0
 
