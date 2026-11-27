@@ -202,8 +202,8 @@ def test_scope_boundary_wording_mutation_caught(project_root: Path, tmp_path: Pa
 def test_scope_boundary_audit_rejects_overbroad_manuscript_claims(tmp_path: Path) -> None:
     from roadmap_tracks.integration_audit_artifacts import build_scope_boundary_audit
 
-    manuscript = tmp_path / "manuscript"
-    manuscript.mkdir()
+    manuscript = tmp_path / "docs" / "manuscript"
+    manuscript.mkdir(parents=True)
     overclaims = [
         "OPD = Active Inference.",
         "This paper proves a universal theorem about OPD.",
@@ -223,8 +223,8 @@ def test_scope_boundary_audit_rejects_overbroad_manuscript_claims(tmp_path: Path
 def test_scope_boundary_audit_allows_negated_scope_guardrails(tmp_path: Path) -> None:
     from roadmap_tracks.integration_audit_artifacts import build_scope_boundary_audit
 
-    manuscript = tmp_path / "manuscript"
-    manuscript.mkdir()
+    manuscript = tmp_path / "docs" / "manuscript"
+    manuscript.mkdir(parents=True)
     guardrails = [
         "The result is not a universal theorem about OPD.",
         "Qwen and Thinking Machines are external context, not reproduced results.",
@@ -291,7 +291,7 @@ def test_manuscript_aggregate_authenticates_honest_red_and_rejects_forgery(tmp_p
     from test_manuscript_staleness_regressions import _project
 
     root = _project(tmp_path, "Count {{pipeline_track_count}}.\n")
-    (root / "manuscript/01_plain.md").write_text("An authored token-free section.\n", encoding="utf-8")
+    (root / "docs/manuscript/01_plain.md").write_text("An authored token-free section.\n", encoding="utf-8")
     write_resolved_manuscript(root, generate_variables(root, require_analysis_outputs=False))
     path = root / "output/reports/manuscript_staleness_report.json"
     path.parent.mkdir(parents=True)

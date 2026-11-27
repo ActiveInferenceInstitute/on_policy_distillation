@@ -24,8 +24,8 @@ clean-room import with `infrastructure` blocked).
 `output/pdf/on_policy_distillation.pdf` using only this project's code plus
 the external `pandoc` and `xelatex` tools. Typography is read from project-owned sources:
 
-- **Margins** — `manuscript/config.yaml` → `metadata.geometry`.
-- **Dense 9 pt body** — `manuscript/preamble.md` (the `fontsize` package).
+- **Margins** — `docs/manuscript/config.yaml` → `metadata.geometry`.
+- **Dense 9 pt body** — `docs/manuscript/preamble.md` (the `fontsize` package).
 - **Red hyperlinks** — pandoc `colorlinks` variables set by the renderer.
 
 The monorepo pipeline (`scripts/03_render_pdf.py` in the template repo, which *does* use
@@ -40,8 +40,8 @@ binding lives in data, not code:
 
 - **Engine (code)** — `laws.py` (sheaf-axiom oracle), `compose.py`, `coverage.py`,
   `manifest.py`, `registry.py`, `renderers.py`, `models.py`.
-- **Bespoke registry (data)** — `manuscript/sheaf/manifest.yaml` (IMRAD rows → fragments),
-  `manuscript/sheaf/tracks.yaml` (track registry), `figures.yaml`, `pymdp.yaml`.
+- **Bespoke registry (data)** — `docs/manuscript/sheaf/manifest.yaml` (IMRAD rows → fragments),
+  `docs/manuscript/sheaf/tracks.yaml` (track registry), `figures.yaml`, `pymdp.yaml`.
 
 To reuse the engine in another project, copy `src/manuscript/sheaf/` and supply your own
 manifest/registry/figures YAML — the engine reads them; it hard-codes none of this project's

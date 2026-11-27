@@ -15,11 +15,11 @@ resolves paths, and calls these functions (thin-orchestrator pattern).
 
 | Area | Modules | Role |
 | --- | --- | --- |
-| Orchestration | `orchestration/analysis.py`, `orchestration/coverage_pipeline.py` | Analysis entry + sheaf coverage PNG/page (no matplotlib in `manuscript/`) |
+| Orchestration | `orchestration/analysis.py`, `orchestration/coverage_pipeline.py` | Analysis entry + sheaf coverage PNG/page (no matplotlib in `docs/manuscript/`) |
 | Analytical | `analytical/invariants.py` (+ facades at `invariants.py`) | Closed-form invariant checks |
 | First principles | `firstprinciples/` | OPD/Active-Inference correspondence artifacts and classroom evidence |
 | Simulation | `simulation/si_{belief,policy,loop,artifacts}.py`, `si_runner.py` (facade) | pymdp T-maze runner |
-| Sheaf | `manuscript/sheaf/*` | Coverage matrix JSON only in `coverage.py` |
+| Sheaf | `docs/manuscript/sheaf/*` | Coverage matrix JSON only in `coverage.py` |
 | Visualizations | `visualizations/figures_sheaf_{payload,draw}.py`, `figures_sheaf.py` | JSON payload → matplotlib |
 | Validation spine | `validation_spine/artifacts.py` | Provenance, deterministic replay, and counterexample artifacts |
 | Gates | `gates/{output_checks,manuscript_checks,claim_ledger,lean}.py`, `validation.py` (facade) | Output/manuscript validation |

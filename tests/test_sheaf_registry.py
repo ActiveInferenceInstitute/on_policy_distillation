@@ -12,7 +12,7 @@ from manuscript.sheaf import (
 
 def test_registry_defines_track_order() -> None:
     root = Path(__file__).resolve().parents[1]
-    registry = load_track_registry(root / "manuscript" / "sheaf" / "tracks.yaml")
+    registry = load_track_registry(root / "docs" / "manuscript" / "sheaf" / "tracks.yaml")
     assert registry.tracks["prose"].order < registry.tracks["ontology"].order
     assert registry.tracks["animation"].optional is True
     assert registry.tracks["layers"].optional is True
@@ -37,8 +37,8 @@ def test_list_registered_tracks() -> None:
 
 def test_track_order_respects_section_include_exclude() -> None:
     root = Path(__file__).resolve().parents[1]
-    manifest = load_manifest(root / "manuscript" / "sheaf" / "manifest.yaml")
-    registry = load_track_registry(root / "manuscript" / "sheaf" / "tracks.yaml")
+    manifest = load_manifest(root / "docs" / "manuscript" / "sheaf" / "manifest.yaml")
+    registry = load_track_registry(root / "docs" / "manuscript" / "sheaf" / "tracks.yaml")
     section = next(s for s in manifest.sections if s.id == "methods_pymdp")
     ordered = track_order_for_section(section, registry)
     assert ordered.index("prose") < ordered.index("pymdp")
@@ -47,7 +47,7 @@ def test_track_order_respects_section_include_exclude() -> None:
 
 def test_section_custom_track_order() -> None:
     root = Path(__file__).resolve().parents[1]
-    registry = load_track_registry(root / "manuscript" / "sheaf" / "tracks.yaml")
+    registry = load_track_registry(root / "docs" / "manuscript" / "sheaf" / "tracks.yaml")
     section = SheafSection(
         id="demo",
         title="Demo",
@@ -62,8 +62,8 @@ def test_section_custom_track_order() -> None:
 
 def test_appendix_supplements_bind_all_registry_tracks() -> None:
     root = Path(__file__).resolve().parents[1]
-    manifest = load_manifest(root / "manuscript" / "sheaf" / "manifest.yaml")
-    registry = load_track_registry(root / "manuscript" / "sheaf" / "tracks.yaml")
+    manifest = load_manifest(root / "docs" / "manuscript" / "sheaf" / "manifest.yaml")
+    registry = load_track_registry(root / "docs" / "manuscript" / "sheaf" / "tracks.yaml")
     appendix_ids = {"appendix_full_sheaf", "methods_sheaf", "results_invariants"}
     appendix_tracks = {
         track_id
@@ -78,14 +78,14 @@ def test_appendix_supplements_bind_all_registry_tracks() -> None:
     assert "layers" in reproducibility.tracks
     assert "model_checking" in validation.tracks
     assert appendix_tracks == set(registry.tracks)
-    assert full.tracks["ontology"] == "manuscript/sections/imrad/appendix_full_sheaf/ontology.yaml"
-    assert validation.tracks["ontology"] == "manuscript/sections/imrad/results_invariants/ontology.yaml"
+    assert full.tracks["ontology"] == "docs/manuscript/sections/imrad/appendix_full_sheaf/ontology.yaml"
+    assert validation.tracks["ontology"] == "docs/manuscript/sections/imrad/results_invariants/ontology.yaml"
     assert full.tracks["ontology"] != validation.tracks["ontology"]
 
 
 def test_methods_sheaf_binds_layers_tracks() -> None:
     root = Path(__file__).resolve().parents[1]
-    manifest = load_manifest(root / "manuscript" / "sheaf" / "manifest.yaml")
+    manifest = load_manifest(root / "docs" / "manuscript" / "sheaf" / "manifest.yaml")
     section = next(s for s in manifest.sections if s.id == "methods_sheaf")
     assert section.track_order == (
         "prose",
@@ -123,7 +123,7 @@ def test_methods_sheaf_binds_layers_tracks() -> None:
 
 def test_discussion_outlook_binds_simulation_and_ontology() -> None:
     root = Path(__file__).resolve().parents[1]
-    manifest = load_manifest(root / "manuscript" / "sheaf" / "manifest.yaml")
+    manifest = load_manifest(root / "docs" / "manuscript" / "sheaf" / "manifest.yaml")
     section = next(s for s in manifest.sections if s.id == "discussion_outlook")
     assert "simulation" in section.tracks
     assert "ontology" in section.tracks

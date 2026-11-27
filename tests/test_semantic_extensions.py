@@ -15,7 +15,7 @@ def _ontology_project(tmp_path: Path) -> Path:
     from manuscript.sheaf.manifest import load_manifest
 
     source = Path(__file__).resolve().parents[1]
-    manifest_rel = Path("manuscript/sheaf/manifest.yaml")
+    manifest_rel = Path("docs/manuscript/sheaf/manifest.yaml")
     (tmp_path / manifest_rel).parent.mkdir(parents=True)
     shutil.copyfile(source / manifest_rel, tmp_path / manifest_rel)
     (tmp_path / "gnn").mkdir()
@@ -68,7 +68,7 @@ def test_model_ontology_resolver_follows_relocated_binding_and_detects_term_drif
     relocated = root / "bindings" / f"{model_id}.yaml"
     relocated.parent.mkdir()
     relocated.write_text(original_text, encoding="utf-8")
-    manifest_path = root / "manuscript" / "sheaf" / "manifest.yaml"
+    manifest_path = root / "docs" / "manuscript" / "sheaf" / "manifest.yaml"
     manifest = load_manifest_data(manifest_path)
     section = next(
         section
@@ -98,7 +98,7 @@ def test_graph_world_binding_cannot_be_replaced_by_generic_appendix_ontology(tmp
     from ontology.bindings import validate_all_gnn_ontology
 
     root = _ontology_project(tmp_path)
-    manifest_path = root / "manuscript" / "sheaf" / "manifest.yaml"
+    manifest_path = root / "docs" / "manuscript" / "sheaf" / "manifest.yaml"
     manifest = load_manifest_data(manifest_path)
     generic = next(section for section in manifest["sections"] if section["id"] == "appendix_full_sheaf")
     graph = next(section for section in manifest["sections"] if section["id"] == "results_invariants")
@@ -115,7 +115,7 @@ def test_model_ontology_resolver_rejects_noncanonical_binding(tmp_path: Path, mu
     from ontology.bindings import resolve_model_ontology_path, validate_all_gnn_ontology
 
     root = _ontology_project(tmp_path)
-    manifest_path = root / "manuscript" / "sheaf" / "manifest.yaml"
+    manifest_path = root / "docs" / "manuscript" / "sheaf" / "manifest.yaml"
     manifest = load_manifest_data(manifest_path)
     graph = next(section for section in manifest["sections"] if section["id"] == "results_invariants")
     if mutation == "missing":

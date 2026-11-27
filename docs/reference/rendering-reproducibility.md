@@ -7,13 +7,13 @@ claim pass; regenerate the producer that owns the artifact.
 
 ## Authored surfaces
 
-- `manuscript/sections/imrad/**` contains editable section fragments.
-- `manuscript/sheaf/tracks.yaml` declares fragment types, renderers, and order.
-- `manuscript/sheaf/manifest.yaml` binds fragments to IMRAD rows.
+- `docs/manuscript/sections/imrad/**` contains editable section fragments.
+- `docs/manuscript/sheaf/tracks.yaml` declares fragment types, renderers, and order.
+- `docs/manuscript/sheaf/manifest.yaml` binds fragments to IMRAD rows.
 - `tracks.yaml` declares pipeline tracks, gates, and extension artifacts.
 - `figures.yaml` is the source of truth for figure ids, captions, alt text,
   widths, and section bindings.
-- `manuscript/refs/labels.yaml` is intentionally absent; it was a stale second
+- `docs/manuscript/refs/labels.yaml` is intentionally absent; it was a stale second
   figure registry. Figure labels are declared only by `figures.yaml` and
   materialized in `output/figures/figure_registry.json`.
 - `pymdp.yaml`, `domain_profile.yaml`, and `data/claim_ledger.yaml` define
@@ -23,7 +23,7 @@ claim pass; regenerate the producer that owns the artifact.
 
 - `output/data/*.json` and `output/reports/*.json` are produced by project
   scripts and validation-spine modules.
-- `manuscript/0*.md`, except hand-authored front/back matter, are composed from
+- `docs/manuscript/0*.md`, except hand-authored front/back matter, are composed from
   sheaf fragments by `scripts/compose_manuscript.py`.
 - `output/manuscript/*.md` is hydrated from composed manuscript sections plus
   `output/data/manuscript_variables.json`.
@@ -74,7 +74,7 @@ uv run python scripts/render_animation.py
 uv run python scripts/z_generate_manuscript_variables.py
 ```
 
-This mirrors `analysis.scripts` in `manuscript/config.yaml` exactly
+This mirrors `analysis.scripts` in `docs/manuscript/config.yaml` exactly
 (`generate_method_inventory.py` is a docs-maintenance step, not a pipeline
 stage — see "Method inventory" below).
 

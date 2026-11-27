@@ -25,7 +25,7 @@ uv run python scripts/run_full_chain.py --render
 below (`chain`, then `render`) are the same two steps, run separately.
 
 The individual scripts remain available for debugging or narrow development.
-Their order is declared in `manuscript/config.yaml` and should not be
+Their order is declared in `docs/manuscript/config.yaml` and should not be
 hand-reordered:
 
 ```bash
@@ -94,9 +94,9 @@ uv run python scripts/01_run_tests.py --project working/active_inference_on_poli
 
 ## Sheaf composition
 
-Tracks are declared in [`manuscript/sheaf/tracks.yaml`](manuscript/sheaf/tracks.yaml) (order, renderer, optional). Sections bind fragments in [`manuscript/sheaf/manifest.yaml`](manuscript/sheaf/manifest.yaml). The composer merges them into flat `manuscript/0*.md` files for the PDF pipeline.
+Tracks are declared in [`docs/manuscript/sheaf/tracks.yaml`](docs/manuscript/sheaf/tracks.yaml) (order, renderer, optional). Sections bind fragments in [`docs/manuscript/sheaf/manifest.yaml`](docs/manuscript/sheaf/manifest.yaml). The composer merges them into flat `docs/manuscript/0*.md` files for the PDF pipeline.
 
-The first manuscript page ([`manuscript/00_00_sheaf_coverage.md`](manuscript/00_00_sheaf_coverage.md)) shows a **B/W/G heatmap** of section × track coverage (black = present, white = absent, gray = missing binding). Compose writes `output/data/sheaf_coverage_matrix.json` only; `generate_figures.py` renders the heatmap PNG and regenerates the coverage page via `ensure_coverage_artifacts`.
+The first manuscript page ([`docs/manuscript/00_00_sheaf_coverage.md`](docs/manuscript/00_00_sheaf_coverage.md)) shows a **B/W/G heatmap** of section × track coverage (black = present, white = absent, gray = missing binding). Compose writes `output/data/sheaf_coverage_matrix.json` only; `generate_figures.py` renders the heatmap PNG and regenerates the coverage page via `ensure_coverage_artifacts`.
 
 Hydration writes a semantic sheaf certificate at `output/data/sheaf_gluing_certificate.json`.
 It also writes `output/data/sheaf_evidence_crosswalk.json` and
@@ -122,7 +122,7 @@ track-improvement scope, and adversarial/scope audits. Live track IDs are stable
 canonical names; future work improves those tracks rather than adding `_vN`
 siblings.
 
-Section [`18_supplement_full_coverage.md`](manuscript/18_supplement_full_coverage.md) binds the appendix manifest row as a composability proof; live counts are injected through manuscript variables, not hand-authored in this README. Reproducibility methodology is now a standalone supplement at [`19_supplement_reproducibility.md`](manuscript/19_supplement_reproducibility.md), followed by validation statistics at [`20_supplement_validation_statistics.md`](manuscript/20_supplement_validation_statistics.md). Optional `layers` is bound in the reproducibility supplement; `animation` is bound in the validation-statistics supplement row.
+Section [`18_supplement_full_coverage.md`](docs/manuscript/18_supplement_full_coverage.md) binds the appendix manifest row as a composability proof; live counts are injected through manuscript variables, not hand-authored in this README. Reproducibility methodology is now a standalone supplement at [`19_supplement_reproducibility.md`](docs/manuscript/19_supplement_reproducibility.md), followed by validation statistics at [`20_supplement_validation_statistics.md`](docs/manuscript/20_supplement_validation_statistics.md). Optional `layers` is bound in the reproducibility supplement; `animation` is bound in the validation-statistics supplement row.
 
 The reproducible rendering contract is documented in
 [`docs/reference/rendering-reproducibility.md`](docs/reference/rendering-reproducibility.md):
@@ -160,7 +160,7 @@ Related fleet projects: [`policy_entanglement`](https://github.com/ActiveInferen
 
 ## Pipeline tracks
 
-See [`tracks.yaml`](tracks.yaml). **Pipeline:** required tracks are declared there, including the core analytical/pymdp/formal/notation/visual tracks, validation spine, and canonical promoted roadmap tracks. **Sheaf registry:** fragment types live in [`manuscript/sheaf/tracks.yaml`](manuscript/sheaf/tracks.yaml); the appendix binds the manifest-declared proof row (22 of the 33 registered fragment types), `layers` is bound only in the reproducibility supplement, and the Lean/GNN/ontology/model-checking/animation tracks bind in the validation-statistics supplement row. **Deterministic extension artifacts** (thin scripts -> `src/`): `simulate_si_tmaze.py` writes policy comparison, posterior-grid, and runtime-diagnostic artifacts; `simulate_si_graph_world.py` writes graph-world summary/trace artifacts; `render_animation.py` writes a trace-derived multi-frame GIF plus frame-delta manifest; `generate_validation_spine.py`, `generate_toy_sweep_tracks.py`, `generate_formal_interop_tracks.py`, `generate_integration_audit.py`, and `generate_sheaf_tracks.py` write the canonical validation spine, semantic certificate, dependency graph, evidence-field index, release-bundle manifest, theorem traceability matrix, gate index, artifact diffoscope, proof extraction index, state-space catalog, causal-ablation matrix, artifact license audit, release-note evidence, and promoted audit artifacts.
+See [`tracks.yaml`](tracks.yaml). **Pipeline:** required tracks are declared there, including the core analytical/pymdp/formal/notation/visual tracks, validation spine, and canonical promoted roadmap tracks. **Sheaf registry:** fragment types live in [`docs/manuscript/sheaf/tracks.yaml`](docs/manuscript/sheaf/tracks.yaml); the appendix binds the manifest-declared proof row (22 of the 33 registered fragment types), `layers` is bound only in the reproducibility supplement, and the Lean/GNN/ontology/model-checking/animation tracks bind in the validation-statistics supplement row. **Deterministic extension artifacts** (thin scripts -> `src/`): `simulate_si_tmaze.py` writes policy comparison, posterior-grid, and runtime-diagnostic artifacts; `simulate_si_graph_world.py` writes graph-world summary/trace artifacts; `render_animation.py` writes a trace-derived multi-frame GIF plus frame-delta manifest; `generate_validation_spine.py`, `generate_toy_sweep_tracks.py`, `generate_formal_interop_tracks.py`, `generate_integration_audit.py`, and `generate_sheaf_tracks.py` write the canonical validation spine, semantic certificate, dependency graph, evidence-field index, release-bundle manifest, theorem traceability matrix, gate index, artifact diffoscope, proof extraction index, state-space catalog, causal-ablation matrix, artifact license audit, release-note evidence, and promoted audit artifacts.
 
 Non-blocking future work is tracked in [`TODO.md`](TODO.md); current publication claims remain confined to deterministic toy Active Inference artifacts.
 

@@ -11,7 +11,7 @@ import from here.
 - `gnn/` — Generalized Notation Notation (GNN) model parsing, the model object,
   and cross-track concordance checks.
 - `simulation/` — pymdp sophisticated-inference T-maze model, deterministic runner, policy-comparison artifacts, and scoped JAX/pymdp runtime diagnostics.
-- `manuscript/` — sheaf composition and run-derived manuscript variable hydration.
+- `docs/manuscript/` — sheaf composition and run-derived manuscript variable hydration.
 - `validation_spine/` — canonical artifact producers (`CORE_ARTIFACT_PRODUCERS`), replay matrix, provenance, diffoscope, and attestation builders.
 - `artifact_contracts.py` — typed artifact-contract declarations shared by gates and the validation spine.
 - `ontology/` — shared ontology-term bindings used to keep tracks consistent.

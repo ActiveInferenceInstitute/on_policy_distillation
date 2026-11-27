@@ -201,15 +201,15 @@ def build_sheaf_render_log(project_root: Path) -> dict[str, Any]:
     root = project_root.resolve()
     matrix = build_sheaf_section_status_matrix(root)
     producers, _, artifacts_by_gate = _artifact_indexes(root)
-    methods_sheaf_output = "manuscript/19_supplement_reproducibility.md"
+    methods_sheaf_output = "docs/manuscript/19_supplement_reproducibility.md"
     manuscript_outputs = sorted(
-        path.relative_to(root).as_posix() for path in (root / "manuscript").glob("[0-9][0-9]_*.md")
+        path.relative_to(root).as_posix() for path in (root / "docs" / "manuscript").glob("[0-9][0-9]_*.md")
     )
     events = [
         {
             "event_id": "registry_loaded",
             "component": "sheaf.registry",
-            "input": "manuscript/sheaf/tracks.yaml",
+            "input": "docs/manuscript/sheaf/tracks.yaml",
             "output": "registered_tracks",
             "status": "ok" if matrix["track_count"] > 0 else "failed",
             "detail": f"{matrix['track_count']} tracks",
@@ -217,7 +217,7 @@ def build_sheaf_render_log(project_root: Path) -> dict[str, Any]:
         {
             "event_id": "manifest_loaded",
             "component": "sheaf.manifest",
-            "input": "manuscript/sheaf/manifest.yaml",
+            "input": "docs/manuscript/sheaf/manifest.yaml",
             "output": "manifest_sections",
             "status": "ok" if matrix["section_count"] > 0 else "failed",
             "detail": f"{matrix['section_count']} sections",
@@ -266,7 +266,7 @@ def build_sheaf_render_log(project_root: Path) -> dict[str, Any]:
             "event_id": "manuscript_sections_composed",
             "component": "sheaf.compose",
             "input": "manifest fragments",
-            "output": "manuscript/*.md",
+            "output": "docs/manuscript/*.md",
             "status": "ok" if manuscript_outputs else "failed",
             "detail": f"{len(manuscript_outputs)} composed markdown files",
         },

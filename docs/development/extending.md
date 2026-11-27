@@ -48,10 +48,10 @@ uv run --extra dev python -m pytest tests/test_figures.py --no-cov -q
 ## Add a sheaf track / manuscript section
 
 1. Declare the track in
-   [`../../manuscript/sheaf/tracks.yaml`](../../manuscript/sheaf/tracks.yaml)
+   [`../../manuscript/sheaf/tracks.yaml`](../manuscript/sheaf/tracks.yaml)
    (order, renderer — usually `markdown`, label, `optional` flag).
 2. Bind fragments per section in
-   [`../../manuscript/sheaf/manifest.yaml`](../../manuscript/sheaf/manifest.yaml).
+   [`../../manuscript/sheaf/manifest.yaml`](../manuscript/sheaf/manifest.yaml).
 3. Author the fragments; hydrate all numbers via `{{tokens}}`.
 4. If the track has a generated artifact, follow the promotion rule in
    [`../../TODO.md`](../../TODO.md): producer script, deterministic artifact,

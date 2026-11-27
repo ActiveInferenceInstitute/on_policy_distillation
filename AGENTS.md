@@ -8,9 +8,9 @@ Decision memory and verifier hardening follow the template's `docs/rules/memory_
 
 | File | Role |
 | --- | --- |
-| [`manuscript/sheaf/tracks.yaml`](manuscript/sheaf/tracks.yaml) | Fragment registry — order, renderer, optional flag |
-| [`manuscript/sheaf/manifest.yaml`](manuscript/sheaf/manifest.yaml) | IMRAD matrix; row counts come from generated manuscript variables |
-| [`manuscript/sheaf/coverage.yaml`](manuscript/sheaf/coverage.yaml) | Coverage report + heatmap styling |
+| [`docs/manuscript/sheaf/tracks.yaml`](docs/manuscript/sheaf/tracks.yaml) | Fragment registry — order, renderer, optional flag |
+| [`docs/manuscript/sheaf/manifest.yaml`](docs/manuscript/sheaf/manifest.yaml) | IMRAD matrix; row counts come from generated manuscript variables |
+| [`docs/manuscript/sheaf/coverage.yaml`](docs/manuscript/sheaf/coverage.yaml) | Coverage report + heatmap styling |
 | [`figures.yaml`](figures.yaml) | Figure style, alt text, captions, `section_figures` map |
 | [`src/manuscript/sheaf/`](src/manuscript/sheaf/) | Registry, manifest, compose, coverage, report |
 | [`tracks.yaml`](tracks.yaml) | Pipeline gates; required-track count comes from generated manuscript variables |
@@ -24,9 +24,9 @@ uv run python scripts/compose_manuscript.py --section methods_pymdp --tracks pro
 uv run python scripts/z_generate_manuscript_variables.py
 ```
 
-Full compose calls `emit_coverage_artifacts()` → JSON only. `generate_figures.py` calls `ensure_coverage_artifacts()` for heatmap PNG + regenerated [`manuscript/00_00_sheaf_coverage.md`](manuscript/00_00_sheaf_coverage.md). Coverage PNG/page emission is no longer part of `compose_all_sections()` (script is a thin CLI wrapper).
+Full compose calls `emit_coverage_artifacts()` → JSON only. `generate_figures.py` calls `ensure_coverage_artifacts()` for heatmap PNG + regenerated [`docs/manuscript/00_00_sheaf_coverage.md`](docs/manuscript/00_00_sheaf_coverage.md). Coverage PNG/page emission is no longer part of `compose_all_sections()` (script is a thin CLI wrapper).
 
-**Visualization track:** renderer `section_figures` in [`tracks.yaml`](manuscript/sheaf/tracks.yaml); `resolve_track_body()` calls `render_section_figures()` (fragment `.md` files are stubs).
+**Visualization track:** renderer `section_figures` in [`tracks.yaml`](docs/manuscript/sheaf/tracks.yaml); `resolve_track_body()` calls `render_section_figures()` (fragment `.md` files are stubs).
 
 **Generated renderers:** `section_figures` (figures from `figures.yaml`) and `layers_report` (registry + binding matrix tables). Dispatch is centralized in [`renderers.resolve_track_body()`](src/manuscript/sheaf/renderers.py) — no section-specific branches in `compose.py`.
 
@@ -35,7 +35,7 @@ Full compose calls `emit_coverage_artifacts()` → JSON only. `generate_figures.
 | Token | Source |
 | --- | --- |
 | `pipeline_track_count` | `tracks.yaml` required tracks |
-| `sheaf_track_count` | `manuscript/sheaf/tracks.yaml` |
+| `sheaf_track_count` | `docs/manuscript/sheaf/tracks.yaml` |
 | `appendix_sheaf_track_count` | tracks bound in `appendix_full_sheaf` manifest section |
 | `imrad_manifest_rows`, `composed_section_count`, `imrad_group_count` | live manifest |
 | `coverage_present`, `coverage_bound`, `coverage_missing` | coverage matrix at variable generation |
@@ -132,7 +132,7 @@ Non-blocking follow-up scope is tracked in [`TODO.md`](TODO.md); keep current
 publication claims confined to deterministic toy artifacts unless new measured
 outputs are added and validated.
 
-**Methods sheaf layers (main body):** `methods_sheaf` uses explicit `track_order` to place prose/formalism/visualization, provenance, counterexample, adversarial audit, evidence fields, release bundle, gate ergonomics, manuscript staleness, and generated layer tables. Layers overview figure via `visualization` / `section_figures`; tables via optional `layers` track / `layers_report` renderer with HTML markers `sheaf-layers:*`, including the generated track-improvement scope. Front-matter audit page [`manuscript/00_00_sheaf_coverage.md`](manuscript/00_00_sheaf_coverage.md) uses `section_figures.coverage_page` (no duplicate figure number vs appendix coverage figure).
+**Methods sheaf layers (main body):** `methods_sheaf` uses explicit `track_order` to place prose/formalism/visualization, provenance, counterexample, adversarial audit, evidence fields, release bundle, gate ergonomics, manuscript staleness, and generated layer tables. Layers overview figure via `visualization` / `section_figures`; tables via optional `layers` track / `layers_report` renderer with HTML markers `sheaf-layers:*`, including the generated track-improvement scope. Front-matter audit page [`docs/manuscript/00_00_sheaf_coverage.md`](docs/manuscript/00_00_sheaf_coverage.md) uses `section_figures.coverage_page` (no duplicate figure number vs appendix coverage figure).
 
 **Package modules** (`src/manuscript/sheaf/`):
 
@@ -151,7 +151,7 @@ outputs are added and validated.
 
 **Appendix proof:** `appendix_full_sheaf` binds the manifest-declared appendix proof row (`appendix_sheaf_track_count` of the `sheaf_track_count` registry tracks) → `18_supplement_full_coverage.md`; `layers` binds in `methods_sheaf`, and the Lean/GNN/ontology/model-checking/animation tracks bind in `results_invariants`. `methods_sheaf` is now the standalone reproducibility supplement → `19_supplement_reproducibility.md`; `results_invariants` follows it as the validation-statistics supplement → `20_supplement_validation_statistics.md`. Registry size is injected from live counts rather than hand-authored here.
 
-Edit fragments only under [`manuscript/sections/imrad/`](manuscript/sections/imrad/). Manual closing section: [`manuscript/17_conclusion.md`](manuscript/17_conclusion.md) (outside the matrix).
+Edit fragments only under [`docs/manuscript/sections/imrad/`](docs/manuscript/sections/imrad/). Manual closing section: [`docs/manuscript/17_conclusion.md`](docs/manuscript/17_conclusion.md) (outside the matrix).
 
 ## Layout
 

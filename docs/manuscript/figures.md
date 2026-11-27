@@ -7,14 +7,14 @@ from [`../../figures.yaml`](../../figures.yaml) (structure only — it is large)
 the figure-source / hash gates in
 [`../../src/gates/output_checks.py`](../../src/gates/output_checks.py) and
 [`../../src/roadmap_tracks/integration_audit_artifacts.py`](../../src/roadmap_tracks/integration_audit_artifacts.py),
-and the figure tables in [`../../manuscript/SYNTAX.md`](../../manuscript/SYNTAX.md).
+and the figure tables in [`../../manuscript/SYNTAX.md`](SYNTAX.md).
 
 ## Source of truth
 
 [`../../figures.yaml`](../../figures.yaml) is the single source of truth for figure ids,
 captions, alt text, widths, and section bindings (echoed in
 [`../reference/rendering-reproducibility.md`](../reference/rendering-reproducibility.md):
-the stale second registry `manuscript/refs/labels.yaml` is intentionally absent). Its
+the stale second registry `docs/manuscript/refs/labels.yaml` is intentionally absent). Its
 top-level structure is:
 
 - **style block** — `dpi`, `transparent: false`, `font_scale`, `grid`, and a named
@@ -42,7 +42,7 @@ orchestrator: it calls `generate_all_figures(PROJECT_ROOT)` from
 `src/visualizations/figures.py` and prints each output path. Generators are organized by
 module — `figures`, `figures_interpretability`, `figures_diagrams`, `figures_intro`,
 `figures_sheaf`, `figures_validation`, `figures_abstract` — and the id→generator mapping is tabulated in
-[`../../manuscript/SYNTAX.md`](../../manuscript/SYNTAX.md) (e.g.
+[`../../manuscript/SYNTAX.md`](SYNTAX.md) (e.g.
 `figure_ising_mi_curve`, `figures_interpretability.figure_correspondence_map`).
 
 Figures are **deterministic**: no sampling, fixed inputs. Captions say so explicitly
@@ -74,7 +74,7 @@ what this paper actually witnesses, and what it does not claim before the detail
 ## Where figures land
 
 PNGs are written to `output/figures/` (referenced in the section markdown as
-`../output/figures/<filename>.png`). `output/figures/figure_registry.json` materializes
+`../../output/figures/<filename>.png`). `output/figures/figure_registry.json` materializes
 the registry. As with all of `output/`, these are **regeneratable artifacts**, not
 sources of truth — never hand-edit a PNG or its embedded numbers to make a claim pass;
 regenerate the producer.
@@ -187,7 +187,7 @@ captions/alts resolves from a generated artifact.
 ## Registry reference
 
 The full figure id → PNG → generator table lives in
-[`../../manuscript/SYNTAX.md`](../../manuscript/SYNTAX.md) ("Figure label registry"); the
+[`../../manuscript/SYNTAX.md`](SYNTAX.md) ("Figure label registry"); the
 id → section bindings live in `figures.yaml` → `section_figures`. Reference a figure in
 prose as `[@fig:<registry-id>]` (e.g. `[@fig:ising_mi_curve]`), never with a literal
 placeholder.

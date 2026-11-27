@@ -26,7 +26,7 @@ def extract_preamble(preamble_md: Path) -> str:
 
 
 def geometry_string(config_yaml: Path) -> str:
-    """Read page geometry from ``manuscript/config.yaml``; fall back to 0.5 in margins."""
+    """Read page geometry from ``docs/manuscript/config.yaml``; fall back to 0.5 in margins."""
     if not config_yaml.is_file():
         return "margin=0.5in"
     data = yaml.safe_load(config_yaml.read_text(encoding="utf-8")) or {}

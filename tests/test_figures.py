@@ -253,7 +253,7 @@ def test_figure_source_map_has_registry_parity_and_data_backing(project_root: Pa
     cover_row = rows_by_id["graphical_abstract"]
     assert "output/data/manuscript_variables.json" not in cover_row["sources"]
     assert {
-        "manuscript/sheaf/tracks.yaml:tracks",
+        "docs/manuscript/sheaf/tracks.yaml:tracks",
         "output/data/firstprinciples/classroom.json:schema",
         "output/data/firstprinciples/energy_demo.json:schema",
         "output/data/firstprinciples/sequential_shift.json:schema",
@@ -558,8 +558,8 @@ def test_caption_claim_source_field_resolution(project_root: Path) -> None:
     assert _source_field_resolves("$.rows", ["output/data/theorem_traceability_matrix.json"], root)
     assert _source_field_resolves("parameter_sweep.csv:closed_form_mi", ["output/data/parameter_sweep.csv"], root)
     assert not _source_field_resolves("parameter_sweep.csv:not_a_column", ["output/data/parameter_sweep.csv"], root)
-    assert _source_field_resolves("manuscript/sheaf/tracks.yaml:tracks", ["manuscript/sheaf/tracks.yaml"], root)
-    assert not _source_field_resolves("manuscript/sheaf/tracks.yaml:track_registry", ["manuscript/sheaf/tracks.yaml"], root)
+    assert _source_field_resolves("docs/manuscript/sheaf/tracks.yaml:tracks", ["docs/manuscript/sheaf/tracks.yaml"], root)
+    assert not _source_field_resolves("docs/manuscript/sheaf/tracks.yaml:track_registry", ["docs/manuscript/sheaf/tracks.yaml"], root)
     assert not _source_field_resolves("$.totally_made_up", ["output/data/parameter_sweep.csv"], root)
 
     # degenerate selectors bind nothing and must be rejected
@@ -676,9 +676,9 @@ def test_graphical_abstract_represents_artifact_validation_spine(project_root: P
 def test_opd_reader_map_is_intro_bound_and_source_backed(project_root: Path) -> None:
     from visualizations.figure_registry import load_section_figures, render_section_figures
 
-    manifest = (project_root / "manuscript" / "sheaf" / "manifest.yaml").read_text(encoding="utf-8")
+    manifest = (project_root / "docs" / "manuscript" / "sheaf" / "manifest.yaml").read_text(encoding="utf-8")
     assert "intro_motivation" in manifest
-    assert "manuscript/sections/imrad/intro_motivation/visualization.md" in manifest
+    assert "docs/manuscript/sections/imrad/intro_motivation/visualization.md" in manifest
     refs = load_section_figures(project_root).get("intro_motivation", ())
     assert [ref.figure_id for ref in refs] == ["opd_reader_map"]
     rendered = render_section_figures(project_root, "intro_motivation")
@@ -758,7 +758,7 @@ def test_si_tmaze_model_matrices_figure_is_registered_and_nonblank(project_root:
 def test_appendix_formalism_uses_registry_tokens(project_root: Path) -> None:
     path = (
         project_root
-        / "manuscript"
+        / "docs" / "manuscript"
         / "sections"
         / "imrad"
         / "appendix_full_sheaf"

@@ -43,7 +43,7 @@ _READY_MANUSCRIPT_CHECK_KEYS: tuple[str, ...] = (
 
 
 def refresh_generated_gate_artifacts(project_root: Path) -> None:
-    """Refresh generated manuscript/semantic artifacts after mutation tests.
+    """Refresh generated docs/manuscript/semantic artifacts after mutation tests.
 
     Negative-control tests restore the single file they mutated byte-for-byte in
     their own ``finally`` *before* calling this. When that restore already leaves
@@ -126,7 +126,7 @@ def _gate_artifacts_ready(project_root: Path, *, include_manuscript: bool = Fals
     from roadmap_tracks.supplemental import release_attestation_consistent_and_current
 
     root = project_root.resolve()
-    if not (root / "manuscript" / "config.yaml").is_file():
+    if not (root / "docs" / "manuscript" / "config.yaml").is_file():
         return True
     try:
         # Mixed experiment_plan_metrics is re-evaluated with structural leaf

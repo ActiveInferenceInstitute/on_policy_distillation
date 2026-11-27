@@ -4,9 +4,8 @@
 logic in `../src/`, orchestration in `../scripts/`, and generated artifacts
 under `../output/`.
 
-The tree is modular: `architecture/`, `models/`, `manuscript/`, `reviews/`,
-`development/`, `reproducibility/`, `reference/`, plus top-level `glossary.md`
-and `faq.md`. Each subdirectory carries its own `README.md` (index) and
+The tree is modular: `architecture/`, `models/`, `docs/manuscript/`, `reviews/`,
+`development/`, `reproducibility/`, `reference/`, including `reference/glossary.md` and `reference/faq.md`. Each subdirectory carries its own `README.md` (index) and
 `AGENTS.md` (editing rules). `README.md` here is the map — keep it in sync
 when adding or removing pages. Docs pages must never hard-code generated
 numbers: cite the producing artifact path or the `{{token}}` name instead
@@ -19,8 +18,8 @@ model-checking, interop, adversarial audit, evidence fields, release bundle,
 theorem traceability, gate ergonomics, assumption index, animation delta,
 manuscript staleness) or sheaf section:
 
-- Update `../manuscript/sheaf/tracks.yaml` (registry) and `../manuscript/sheaf/manifest.yaml` (bindings).
-- Update section bundles under `../manuscript/sections/`.
+- Update `manuscript/sheaf/tracks.yaml` (registry) and `manuscript/sheaf/manifest.yaml` (bindings).
+- Update section bundles under `manuscript/sections/`.
 - Update `../tracks.yaml` pipeline gates when a track gains artifacts or scripts.
 - Update project tests under `../tests/`; update sibling-template contract tests
   only when the public template render contract changes.

@@ -10,7 +10,7 @@ produce the same manuscript.
 | Token | Source |
 | --- | --- |
 | `pipeline_track_count` | required tracks in `tracks.yaml` |
-| `sheaf_track_count` | `manuscript/sheaf/tracks.yaml` registry size |
+| `sheaf_track_count` | `docs/manuscript/sheaf/tracks.yaml` registry size |
 | `appendix_sheaf_track_count` | tracks bound in `appendix_full_sheaf` manifest row |
 | `imrad_manifest_rows`, `composed_section_count`, `imrad_group_count` | live manifest (`src/manuscript/sheaf/counts.py`) |
 | `coverage_present`, `coverage_bound`, `coverage_missing` | coverage matrix at variable generation |
@@ -21,7 +21,7 @@ Compose emits `{{token}}` placeholders. `scripts/z_generate_manuscript_variables
 
 ## Editing workflow
 
-1. Edit fragments under `manuscript/sections/imrad/` and `manuscript/sheaf/manifest.yaml`.
+1. Edit fragments under `docs/manuscript/sections/imrad/` and `docs/manuscript/sheaf/manifest.yaml`.
 2. `uv run python scripts/compose_manuscript.py`
 3. `uv run python scripts/z_generate_manuscript_variables.py` (or pipeline stage)
 

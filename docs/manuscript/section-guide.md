@@ -4,17 +4,17 @@ Per-section map of the composed manuscript. For each section file: its IMRAD rol
 the claim it carries, the key hydration tokens it uses (a representative subset —
 see [`hydration-tokens.md`](hydration-tokens.md) for the system), and which sheaf
 fragment tracks feed it. Track names are the keys declared in
-[`../../manuscript/sheaf/tracks.yaml`](../../manuscript/sheaf/tracks.yaml).
+[`../../manuscript/sheaf/tracks.yaml`](sheaf/tracks.yaml).
 
 Numbered files are composed outputs of
 [`../../scripts/compose_manuscript.py`](../../scripts/compose_manuscript.py).
 `00_abstract.md`, `17_conclusion.md`, and `99_references.md` are hand-authored.
-Section labels (`{#sec:…}`) follow [`../../manuscript/SYNTAX.md`](../../manuscript/SYNTAX.md).
+Section labels (`{#sec:…}`) follow [`../../manuscript/SYNTAX.md`](SYNTAX.md).
 
 ## The three scientific tracks
 
 The manuscript repeatedly frames its evidence as three lanes (see
-[`../../manuscript/02_intro_motivation.md`](../../manuscript/02_intro_motivation.md)):
+[`../../manuscript/02_intro_motivation.md`](02_intro_motivation.md)):
 
 - **Analytical** — the Bernoulli–Ising coupling oracle (closed-form MI and free energy).
 - **pymdp** — the on-policy active-inference T-maze rollout and classroom.
@@ -49,7 +49,7 @@ into each section.
 
 ### `00_00_sheaf_coverage.md` — `{#sec:sheaf_coverage}`
 - **IMRAD role:** Front-matter coverage page (regenerated at compose time from
-  `src/manuscript/sheaf/report.py` + `manuscript/sheaf/coverage.yaml`).
+  `src/manuscript/sheaf/report.py` + `docs/manuscript/sheaf/coverage.yaml`).
 - **Claim carried:** Which fragment tracks are present/absent/missing per IMRAD row —
   the gluing record that licenses composing local fragments into one argument.
 - **Key tokens:** `{{coverage_present}}`, `{{coverage_bound}}`, `{{coverage_missing}}`,
@@ -222,7 +222,7 @@ into each section.
 - **Key tokens:** `{{appendix_sheaf_track_count}}`, `{{sheaf_track_count}}`,
   plus the energy tokens shared with `results_free_energy`.
 - **Feeding tracks:** prose plus the appendix row's bound track set from
-  `manuscript/sheaf/manifest.yaml` (the appendix is itself the composability
+  `docs/manuscript/sheaf/manifest.yaml` (the appendix is itself the composability
   proof; equation [`{#eq:appendix_track_count}`]).
 
 ### `19_supplement_reproducibility.md` — `{#sec:methods_sheaf}`
@@ -233,7 +233,7 @@ into each section.
 - **Key tokens:** `{{sheaf_track_count}}`.
 - **Feeding tracks (representative):** prose, layers (generated tables), visualization
   (`sheaf_layers_overview`, `semantic_gluing_graph`, `scholarship_source_map`); the full
-  binding is in `manuscript/sheaf/manifest.yaml`.
+  binding is in `docs/manuscript/sheaf/manifest.yaml`.
 
 ### `20_supplement_validation_statistics.md` — `{#sec:results_invariants}`
 - **IMRAD role:** Supplement — validation invariants and statistics.
@@ -251,9 +251,9 @@ into each section.
   uncertainty, visualization (`invariant_dashboard`, `diversity_tradeoff`); the full
   binding (including lean, model-checking, theorem-traceability, proof-extraction, GNN,
   ontology, animation/animation-delta, manuscript-staleness, and release-notes tracks)
-  is in `manuscript/sheaf/manifest.yaml`.
+  is in `docs/manuscript/sheaf/manifest.yaml`.
 
 ### `99_references.md`
 - **IMRAD role:** References pointer (hand-authored). Points to
-  [`../../manuscript/references.bib`](../../manuscript/references.bib). See
+  [`../../manuscript/references.bib`](references.bib). See
   [`citation-map.md`](citation-map.md) for the bibliography organized by function.

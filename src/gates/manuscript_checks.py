@@ -64,17 +64,17 @@ def _duplicate_track_markers(manuscript_dir: Path) -> list[str]:
 
 
 def _bib_keys(root: Path) -> set[str]:
-    path = root / "manuscript" / "references.bib"
+    path = root / "docs" / "manuscript" / "references.bib"
     if not path.is_file():
         return set()
     return {match.group(1).strip() for match in _BIB_ENTRY_RE.finditer(path.read_text(encoding="utf-8"))}
 
 
 def _citation_source_paths(root: Path) -> list[Path]:
-    section_paths = sorted((root / "manuscript" / "sections").glob("**/*.md"))
+    section_paths = sorted((root / "docs" / "manuscript" / "sections").glob("**/*.md"))
     composed_paths = sorted(
         path
-        for path in (root / "manuscript").glob("*.md")
+        for path in (root / "docs" / "manuscript").glob("*.md")
         if path.name not in _EXCLUDED_CITATION_FILES
     )
     return [path for path in section_paths + composed_paths if path.is_file()]
@@ -128,8 +128,8 @@ def validate_manuscript(project_root: Path, *, only: set[str] | None = None) -> 
         return requested is None or any(key in requested for key in keys)
 
     checks: dict[str, bool] = {}
-    manuscript_dir = root / "manuscript"
-    manifest_path = root / "manuscript" / "sheaf" / "manifest.yaml"
+    manuscript_dir = root / "docs" / "manuscript"
+    manifest_path = root / "docs" / "manuscript" / "sheaf" / "manifest.yaml"
     json_path = root / "output" / "data" / "sheaf_coverage_matrix.json"
     heatmap_path = root / "output" / "figures" / "sheaf_coverage_heatmap.png"
     figure_registry_yaml = root / "figures.yaml"
@@ -138,13 +138,13 @@ def validate_manuscript(project_root: Path, *, only: set[str] | None = None) -> 
     if _wants("sheaf_manifest"):
         checks["sheaf_manifest"] = manifest_path.exists()
     if _wants("sheaf_registry"):
-        checks["sheaf_registry"] = (root / "manuscript" / "sheaf" / "tracks.yaml").exists()
+        checks["sheaf_registry"] = (root / "docs" / "manuscript" / "sheaf" / "tracks.yaml").exists()
     if _wants("figure_registry_yaml"):
         checks["figure_registry_yaml"] = figure_registry_yaml.exists()
     if _wants("generated_figure_registry"):
         checks["generated_figure_registry"] = generated_figure_registry.exists()
     if _wants("sheaf_coverage_page"):
-        checks["sheaf_coverage_page"] = (root / "manuscript" / "00_00_sheaf_coverage.md").exists()
+        checks["sheaf_coverage_page"] = (root / "docs" / "manuscript" / "00_00_sheaf_coverage.md").exists()
     if _wants("sheaf_coverage_json"):
         checks["sheaf_coverage_json"] = json_path.exists()
     if _wants("sheaf_coverage_heatmap"):
@@ -186,7 +186,7 @@ def validate_manuscript(project_root: Path, *, only: set[str] | None = None) -> 
 
         def _section_path(section_id: str) -> Path:
             section = next(s for s in manifest.sections if s.id == section_id)
-            return root / "manuscript" / section.output_name
+            return root / "docs" / "manuscript" / section.output_name
 
         if _wants("full_sheaf_appendix_tracks"):
             full_sheaf_path = _section_path("appendix_full_sheaf")

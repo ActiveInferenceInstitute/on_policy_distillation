@@ -19,7 +19,7 @@ from gate_support import ensure_gate_artifacts
 
 def test_manifest_loads_imrad_sections() -> None:
     root = Path(__file__).resolve().parents[1]
-    manifest = load_manifest(root / "manuscript" / "sheaf" / "manifest.yaml")
+    manifest = load_manifest(root / "docs" / "manuscript" / "sheaf" / "manifest.yaml")
     assert [section.order for section in manifest.sections] == sorted(section.order for section in manifest.sections)
     assert len({section.id for section in manifest.sections}) == len(manifest.sections)
     assert manifest.sections[0].id == "intro"
@@ -36,7 +36,7 @@ def test_manifest_loads_imrad_sections() -> None:
 
 def test_canonical_ontology_placement_preserves_strict_composition_laws() -> None:
     root = Path(__file__).resolve().parents[1]
-    manifest = load_manifest(root / "manuscript" / "sheaf" / "manifest.yaml", project_root=root)
+    manifest = load_manifest(root / "docs" / "manuscript" / "sheaf" / "manifest.yaml", project_root=root)
     registry = load_track_registry(root / manifest.registry_path)
     assert validate_manifest(manifest, root, registry=registry, strict_coverage=True) == []
 
@@ -46,7 +46,7 @@ def test_manifest_and_promotion_reject_duplicate_binding_keys(tmp_path: Path, tr
     from manuscript.sheaf.manifest import load_manifest_data
     from roadmap_tracks.sheaf_tracks_support import _bound_tracks, _manifest_sections
 
-    path = tmp_path / "manuscript" / "sheaf" / "manifest.yaml"
+    path = tmp_path / "docs" / "manuscript" / "sheaf" / "manifest.yaml"
     path.parent.mkdir(parents=True)
     path.write_text(
         "sections:\n"
@@ -89,7 +89,7 @@ def test_manifest_projection_cannot_mutate_cached_bindings(tmp_path: Path) -> No
 
 def test_all_composed_sections_bind_prose() -> None:
     root = Path(__file__).resolve().parents[1]
-    manifest = load_manifest(root / "manuscript" / "sheaf" / "manifest.yaml")
+    manifest = load_manifest(root / "docs" / "manuscript" / "sheaf" / "manifest.yaml")
     missing = [
         section.id
         for section in manifest.sections
@@ -100,7 +100,7 @@ def test_all_composed_sections_bind_prose() -> None:
 
 def test_validate_manifest_reports_missing_file(tmp_path: Path) -> None:
     root = Path(__file__).resolve().parents[1]
-    broken = tmp_path / "manuscript" / "sheaf" / "manifest.yaml"
+    broken = tmp_path / "docs" / "manuscript" / "sheaf" / "manifest.yaml"
     broken.parent.mkdir(parents=True)
     broken.write_text(
         """
@@ -111,7 +111,7 @@ sections:
     order: 1
     title: Broken
     tracks:
-      prose: manuscript/sections/does_not_exist.md
+      prose: docs/manuscript/sections/does_not_exist.md
 """,
         encoding="utf-8",
     )
@@ -130,13 +130,13 @@ sections:
     order: 1
     title: One
     tracks:
-      prose: manuscript/sections/preliminaries/prose.md
+      prose: docs/manuscript/sections/preliminaries/prose.md
   - id: dup
     order: 2
     title: Two
     tracks:
-      not_registered: manuscript/sections/preliminaries/prose.md
-      prose: manuscript/sections/preliminaries/prose.md
+      not_registered: docs/manuscript/sections/preliminaries/prose.md
+      prose: docs/manuscript/sections/preliminaries/prose.md
     track_order: [prose, ghost]
 """,
         encoding="utf-8",
@@ -158,12 +158,12 @@ sections:
     order: 1
     title: No prose
     tracks:
-      formalism: manuscript/sections/imrad/methods_analytical/formalism.md
+      formalism: docs/manuscript/sections/imrad/methods_analytical/formalism.md
 """,
         encoding="utf-8",
     )
     manifest = load_manifest(manifest_path, project_root=root)
-    registry = load_track_registry(root / "manuscript" / "sheaf" / "tracks.yaml")
+    registry = load_track_registry(root / "docs" / "manuscript" / "sheaf" / "tracks.yaml")
 
     issues = validate_manifest(manifest, root, registry=registry)
 
@@ -193,7 +193,7 @@ sections:
     order: 1
     title: S
     tracks:
-      prose: manuscript/sections/preliminaries/prose.md
+      prose: docs/manuscript/sections/preliminaries/prose.md
 """,
         encoding="utf-8",
     )
@@ -213,14 +213,14 @@ sections:
 
 def test_strict_validate_fails_on_gray(tmp_path: Path) -> None:
     root = Path(__file__).resolve().parents[1]
-    manifest = load_manifest(root / "manuscript" / "sheaf" / "manifest.yaml")
-    registry = load_track_registry(root / "manuscript" / "sheaf" / "tracks.yaml")
+    manifest = load_manifest(root / "docs" / "manuscript" / "sheaf" / "manifest.yaml")
+    registry = load_track_registry(root / "docs" / "manuscript" / "sheaf" / "tracks.yaml")
     broken_section = SheafSection(
         id="broken_gray",
         title="Broken",
         short="b",
         order=99,
-        tracks={"prose": "manuscript/sections/does_not_exist.md"},
+        tracks={"prose": "docs/manuscript/sections/does_not_exist.md"},
         output_name="99_broken.md",
     )
     broken_manifest = SheafManifest(
@@ -238,7 +238,7 @@ def test_strict_validate_fails_on_gray(tmp_path: Path) -> None:
 @pytest.mark.render_slow
 def test_group_rows_skip_compose(tmp_path: Path) -> None:
     root = Path(__file__).resolve().parents[1]
-    result = compose_all_sections(root, manuscript_dir=tmp_path / "manuscript")
+    result = compose_all_sections(root, manuscript_dir=tmp_path / "docs" / "manuscript")
     names = {p.name for p in result.paths}
     assert "_group_intro.md" not in names
     assert "02_intro_motivation.md" in names

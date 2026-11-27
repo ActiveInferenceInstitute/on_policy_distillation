@@ -93,7 +93,7 @@ def test_token_provenance_production_gate_fails_on_phantom_provenance_key(tmp_pa
     # match flag lying True.
     phantom = "zzz_phantom_token_never_rendered"
     payload["tokens"].append(
-        {"section": "manuscript/fake.md", "token": phantom, "source": "output/data/manuscript_variables.json", "mapped": True}
+        {"section": "docs/manuscript/fake.md", "token": phantom, "source": "output/data/manuscript_variables.json", "mapped": True}
     )
     payload["provenance_keys"] = sorted(set(payload["provenance_keys"]) | {phantom})
     payload["rendered_tokens_match_provenance_keys"] = True

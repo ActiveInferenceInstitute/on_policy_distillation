@@ -25,7 +25,7 @@ instructions and section indexes, use the [documentation index](documentation-in
 | [`development/`](development/README.md) | [gate](development/gate.md) · [testing](development/testing.md) · [conventions](development/conventions.md) · [extending](development/extending.md) | the gate's arms and measured wall times; test suites/markers/fast lanes; code conventions and the writer/validator boundary; how to add a track, model, figure, or section |
 | [`reproducibility/`](reproducibility/README.md) | [artifacts](reproducibility/artifacts.md) · [rendering](reproducibility/rendering.md) · [standalone vs template](reproducibility/standalone-vs-template.md) · [test-isolation soak 2026-06-13](reproducibility/test-isolation-soak-2026-06-13.md) | the `output/` contract and determinism; render quickstart and failure modes; when the sibling template checkout is needed |
 | [`reference/`](reference/README.md) | [method inventory](reference/method-inventory.md) (generated) · [configuration & extension](reference/configuration-and-extension.md) · [rendering-reproducibility contract](reference/rendering-reproducibility.md) · [notation supplement](reference/notation-supplement.md) | exhaustive references: every `def`/`class`, every config key, the authoritative rendering contract, notation |
-| top level | [glossary](glossary.md) · [faq](faq.md) | term definitions as *this project* uses them; honest answers to the obvious questions |
+| [Reference and FAQ](reference/README.md) | [glossary](reference/glossary.md) · [faq](reference/faq.md) | term definitions as *this project* uses them; honest answers to the obvious questions |
 
 ## Quick start
 
@@ -68,4 +68,4 @@ for the declared toy objects, *not* a universal theorem about OPD, LLMs, or
 biology. Expected free energy enters only on the planning side (the pymdp
 agent). External Qwen/Thinking Machines numbers are literature-reported
 context, never reproduced results. The full statement with assumptions lives
-in [`manuscript/claims-and-scope.md`](manuscript/claims-and-scope.md).
+in [`docs/manuscript/claims-and-scope.md`](manuscript/claims-and-scope.md).

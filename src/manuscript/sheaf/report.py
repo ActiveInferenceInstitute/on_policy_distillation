@@ -39,7 +39,7 @@ class ReportConfig:
     show_imrad_headers: bool = True
     show_summary_stats: bool = True
     show_track_legend: bool = True
-    heatmap_figure_path: str = "../output/figures/sheaf_coverage_heatmap.png"
+    heatmap_figure_path: str = "../../output/figures/sheaf_coverage_heatmap.png"
 
 
 @dataclass(frozen=True)
@@ -83,7 +83,7 @@ def load_coverage_config(path: Path, *, project_root: Path | None = None) -> Cov
                 show_summary_stats=bool(report_raw.get("show_summary_stats", True)),
                 show_track_legend=bool(report_raw.get("show_track_legend", True)),
                 heatmap_figure_path=str(
-                    report_raw.get("heatmap_figure_path", "../output/figures/sheaf_coverage_heatmap.png")
+                    report_raw.get("heatmap_figure_path", "../../output/figures/sheaf_coverage_heatmap.png")
                 ),
             ),
             heatmap=HeatmapConfig(
@@ -116,8 +116,8 @@ def load_coverage_config(path: Path, *, project_root: Path | None = None) -> Cov
 
 
 def default_coverage_config_path(project_root: Path) -> Path:
-    """Return the default manuscript/sheaf/coverage.yaml path under the project root."""
-    return project_root.resolve() / "manuscript" / "sheaf" / "coverage.yaml"
+    """Return the default docs/manuscript/sheaf/coverage.yaml path under the project root."""
+    return project_root.resolve() / "docs" / "manuscript" / "sheaf" / "coverage.yaml"
 
 
 def build_coverage_report(
@@ -165,7 +165,7 @@ def render_report_markdown(report: CoverageReport, *, project_root: Path) -> str
     lines = [f"# {cfg.title} {{#sec:sheaf_coverage}}", ""]
     lines.append(
         "This page summarizes which **sheaf fragment tracks** are bound for each IMRAD "
-        "row in `manuscript/sheaf/manifest.yaml`. The matrix is regenerated at compose time."
+        "row in `docs/manuscript/sheaf/manifest.yaml`. The matrix is regenerated at compose time."
     )
     lines.append("")
     if cfg.show_summary_stats:
@@ -215,7 +215,7 @@ def render_report_markdown(report: CoverageReport, *, project_root: Path) -> str
 
 
 def write_coverage_page(project_root: Path) -> Path:
-    """Build the coverage report from the live manifest and write manuscript/00_00_sheaf_coverage.md.
+    """Build the coverage report from the live manifest and write docs/manuscript/00_00_sheaf_coverage.md.
 
     Returns the written path.
     """
@@ -225,6 +225,6 @@ def write_coverage_page(project_root: Path) -> Path:
     ctx = load_sheaf_coverage_context(root)
     config = load_coverage_config(default_coverage_config_path(root), project_root=root)
     report = build_coverage_report(ctx.matrix, ctx.manifest, config)
-    out = root / "manuscript" / "00_00_sheaf_coverage.md"
+    out = root / "docs" / "manuscript" / "00_00_sheaf_coverage.md"
     out.write_text(render_report_markdown(report, project_root=root), encoding="utf-8")
     return out

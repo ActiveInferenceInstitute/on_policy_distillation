@@ -13,10 +13,10 @@ gates.
 | --- | --- | --- | --- |
 | `pymdp.yaml` | `src/simulation/pymdp_config.py::load_pymdp_config()` (used by `si_runner`, `si_loop`, `si_artifacts`, `src/manuscript/variables.py`, claim ledger) | Canonical planner/profile, SI search horizon, rollout timesteps, cue validity, agent gamma, seeds, graph-world topology, logging | **Live** — every key read |
 | `figures.yaml` | `src/visualizations/figure_registry.py::load_figure_registry()` / `load_section_figures()`; `figure_style.py` for the `style:` block | Figure captions, alt text, widths, filenames, per-section figure bindings, palette/DPI/font roles | **Live** |
-| `manuscript/sheaf/tracks.yaml` | `src/manuscript/sheaf/compose.py`, `status.py`, `laws.py` | Fragment-type registry: compose order, renderer, optional flag per track | **Live** |
-| `manuscript/sheaf/manifest.yaml` | `src/manuscript/sheaf/compose.py` | IMRAD section rows and their track→fragment-path bindings | **Live** |
+| `docs/manuscript/sheaf/tracks.yaml` | `src/manuscript/sheaf/compose.py`, `status.py`, `laws.py` | Fragment-type registry: compose order, renderer, optional flag per track | **Live** |
+| `docs/manuscript/sheaf/manifest.yaml` | `src/manuscript/sheaf/compose.py` | IMRAD section rows and their track→fragment-path bindings | **Live** |
 | `tracks.yaml` (root) | `src/manuscript/variables.py` (track counts), pipeline gates | Required pipeline tracks and the artifact contract surface | **Live** |
-| `manuscript/config.yaml` | `src/manuscript/pdf_render.py`, `render_helpers.py` | Paper title/authors, margins, DOI/repository fields, transmission bookends | **Live** (read with fallbacks) |
+| `docs/manuscript/config.yaml` | `src/manuscript/pdf_render.py`, `render_helpers.py` | Paper title/authors, margins, DOI/repository fields, transmission bookends | **Live** (read with fallbacks) |
 | `data/claim_ledger.yaml` | `src/gates/claim_ledger.py` | Typed claims: artifact path + predicate (equals/min/set_equals/approx/re-derivation forms) | **Live** |
 | `domain_profile.yaml` | nothing in `src/` or `scripts/` | Figure-type / artifact-expectation inventory | **Advisory only** — documentation metadata, not code-consumed |
 | `experiment_plan.yaml` | nothing reads the YAML (the `experiment_plan_metrics` validate check is computed from artifact checks, not from this file) | Conditions/metrics narrative | **Advisory only** |
@@ -118,8 +118,8 @@ A figure that misses one of these surfaces cascades ~10 test failures
    belong in the body figures and tables instead.
 4. **Section binding** — add the id under `figures.yaml` `section_figures.<section>`.
    The section must bind the `visualization` track in
-   `manuscript/sheaf/manifest.yaml` (a one-line placeholder fragment under
-   `manuscript/sections/imrad/<section>/visualization.md` plus the manifest
+   `docs/manuscript/sheaf/manifest.yaml` (a one-line placeholder fragment under
+   `docs/manuscript/sections/imrad/<section>/visualization.md` plus the manifest
    `visualization:` entry).
 5. **Source map** — add entries to all three dicts in
    `src/roadmap_tracks/integration_audit_artifacts.py`: figure → source
@@ -145,10 +145,10 @@ uv run --extra dev python -m pytest tests/test_figures.py --no-cov -q
 
 ## Add a sheaf track
 
-1. Declare the track in `manuscript/sheaf/tracks.yaml` (order, renderer —
+1. Declare the track in `docs/manuscript/sheaf/tracks.yaml` (order, renderer —
    usually `markdown`, label, `optional` flag).
-2. Bind fragments per section in `manuscript/sheaf/manifest.yaml`
-   (`<track>: manuscript/sections/imrad/<section>/<track>.md`).
+2. Bind fragments per section in `docs/manuscript/sheaf/manifest.yaml`
+   (`<track>: docs/manuscript/sections/imrad/<section>/<track>.md`).
 3. Author the fragments; hydrate all numbers via `{{tokens}}`.
 4. If the track has a generated artifact, follow the promotion rule in
    `TODO.md`: producer script, deterministic artifact, manuscript consumer,
@@ -185,7 +185,7 @@ gate arms.
 
 - **Gray cells on the coverage page** — a manifest binding points at a missing
   fragment path. Check the `tracks:` block of that section in
-  `manuscript/sheaf/manifest.yaml` against the filesystem.
+  `docs/manuscript/sheaf/manifest.yaml` against the filesystem.
 - **`{{token}}` appears literally in output** — either the token is not
   produced by `src/manuscript/variables.py`, or its format spec is outside
   `_TOKEN_RE` (the fail-closed collector cannot flag a spec it cannot parse —

@@ -10,7 +10,7 @@ confined to this repo; pushed to `origin/main`.
   uncommitted `uv.lock` change left untouched (not staged, not committed).
 - Inventory: 240 tracked markdown files across `docs/` (architecture,
   development, manuscript, models, reference, reproducibility, reviews),
-  `manuscript/`, per-directory `README.md`/`AGENTS.md`, root `README.md`,
+  `docs/manuscript/`, per-directory `README.md`/`AGENTS.md`, root `README.md`,
   `AGENTS.md`, `ISA.md`, `STANDALONE.md`, `TODO.md`, `.aii/`, `gnn/`, `lean/`,
   `tests/`. Metadata surfaces (`CITATION.cff`, `.zenodo.json`, `codemeta.json`,
   `LICENSE`, `pyproject.toml`) cross-checked consistent.
@@ -28,12 +28,12 @@ instead); plus manual verification of every contested fact against the tree
 metadata surfaces).
 
 Key verified facts:
-- `manuscript/references.bib` holds 133 `@` entries (docs claimed 117).
+- `docs/manuscript/references.bib` holds 133 `@` entries (docs claimed 117).
 - `appendix_full_sheaf` binds 22 of 33 registry tracks (docs claimed "all
   registered" / "full proof row except layers"); `layers` binds in
   `methods_sheaf`, `animation`/`lean`/`gnn`/`model_checking`/etc. bind in
   `results_invariants`.
-- `analysis.scripts` in `manuscript/config.yaml` (mirrored by
+- `analysis.scripts` in `docs/manuscript/config.yaml` (mirrored by
   `DEFAULT_ANALYSIS_SCRIPTS`) puts `generate_firstprinciples.py` AFTER
   `generate_toy_sweep_tracks.py`; three docs showed the pre-fix order.
   `run_full_chain.py` does not run `generate_method_inventory.py`.
@@ -42,7 +42,7 @@ Key verified facts:
   `test_figure_generators_match_registry`, `--no-classroom`,
   `--list-tracks`/`--validate-only`/`--strict` all exist as documented.
 - v1.0.2 release state: tags `v1.0.0`–`v1.0.2`; concept and version DOIs
-  resolve; `manuscript/config.yaml` carries populated `doi`/`version_doi`.
+  resolve; `docs/manuscript/config.yaml` carries populated `doi`/`version_doi`.
 
 ## Phase 2 — Scoped findings (in TODO.md)
 
@@ -55,7 +55,7 @@ open/deferred list. See `TODO.md`.
 8 commits, 27 files changed (+284/−103); details in TODO.md and commit
 messages:
 
-1. `3e09402` docs: pipeline order aligned with `manuscript/config.yaml`
+1. `3e09402` docs: pipeline order aligned with `docs/manuscript/config.yaml`
    (README, pipeline.md, rendering-reproducibility.md).
 2. `0b744d7` docs: appendix/supplement track-binding claims corrected
    (AGENTS.md, section-guide.md, sheaf-compose-contract.md).

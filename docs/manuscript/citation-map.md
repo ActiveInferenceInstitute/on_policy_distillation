@@ -1,12 +1,12 @@
 # Citation Map
 
-The bibliography ([`../../manuscript/references.bib`](../../manuscript/references.bib);
-entry count is verified at regeneration time with `grep -c '^@' manuscript/references.bib`)
+The bibliography ([`../../manuscript/references.bib`](references.bib);
+entry count is verified at regeneration time with `grep -c '^@' docs/manuscript/references.bib`)
 organized by **function** — what role each source plays in the argument —
 rather than alphabetically. Every key below is present in `references.bib`. The
 preprint/archival status of sources is tracked machine-readably in
 `output/data/scholarship_source_matrix.json` (see the `scholarship` track and
-[`../../manuscript/15_discussion_outlook.md`](../../manuscript/15_discussion_outlook.md)).
+[`../../manuscript/15_discussion_outlook.md`](15_discussion_outlook.md)).
 
 A key may legitimately appear in more than one group; it is listed under its primary
 function and cross-referenced where load-bearing elsewhere.
@@ -214,7 +214,7 @@ see [`claims-and-scope.md`](claims-and-scope.md) §(d). The Thinking Machines so
 ## Note on completeness
 
 `references.bib` holds the live entry set (audit with
-`grep -c '^@' manuscript/references.bib`); this map groups the load-bearing keys cited
+`grep -c '^@' docs/manuscript/references.bib`); this map groups the load-bearing keys cited
 across the abstract, introduction, methods, results, discussion, and conclusion. Some
 entries appear only inside generated supplemental tables
 (`output/data/firstprinciples/*_table.md`) or the notation supplement; those carry no

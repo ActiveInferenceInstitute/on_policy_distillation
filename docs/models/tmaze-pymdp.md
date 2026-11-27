@@ -8,8 +8,8 @@ observations through rollouts and is scored against a privileged target. It is
 the minimal executable model of an on-policy student.
 
 Manuscript home:
-[`../../manuscript/06_methods_pymdp.md`](../../manuscript/06_methods_pymdp.md)
-and [`../../manuscript/12_results_si_tmaze.md`](../../manuscript/12_results_si_tmaze.md).
+[`../../manuscript/06_methods_pymdp.md`](../manuscript/06_methods_pymdp.md)
+and [`../../manuscript/12_results_si_tmaze.md`](../manuscript/12_results_si_tmaze.md).
 Runtime contract: [`../../pymdp.yaml`](../../pymdp.yaml).
 
 ## The agent

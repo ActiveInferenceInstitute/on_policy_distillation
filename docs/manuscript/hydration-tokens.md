@@ -6,7 +6,7 @@ hand-written number may appear in prose. Derived from
 [`../../scripts/inject_variables.py`](../../scripts/inject_variables.py),
 [`../../scripts/z_generate_manuscript_variables.py`](../../scripts/z_generate_manuscript_variables.py),
 [`../../src/manuscript/hydrate.py`](../../src/manuscript/hydrate.py), and
-[`../../manuscript/SYNTAX.md`](../../manuscript/SYNTAX.md).
+[`../../manuscript/SYNTAX.md`](SYNTAX.md).
 
 This is the mechanism that makes [`claims-and-scope.md`](claims-and-scope.md)'s "every
 reported number is hydrated from a generated artifact" enforceable rather than aspirational.
@@ -36,7 +36,7 @@ last.
 - **Substitution** is performed by `substitute_snake_case_tokens()` and
   `write_resolved_manuscript()` in
   [`../../src/manuscript/hydrate.py`](../../src/manuscript/hydrate.py), which reads each
-  `manuscript/*.md`, replaces tokens, and writes the resolved copy to
+  `docs/manuscript/*.md`, replaces tokens, and writes the resolved copy to
   `output/manuscript/`.
 - **Figure captions and alt text** carry tokens too; they are resolved at figure-render
   time by `render_figure_markdown()` in
@@ -102,12 +102,12 @@ so the count of violations is itself a hydrated, checkable number.
 
 Practical consequence for editors: to change a number in the manuscript, fix the producer
 that owns the artifact and regenerate — do not edit the prose. See
-[`AGENTS.md`](AGENTS.md) and [`section-guide.md`](section-guide.md) for which tokens each
+[`AGENTS.md`](guides/AGENTS.md) and [`section-guide.md`](section-guide.md) for which tokens each
 section uses.
 
 ## Excluded files
 
 `write_resolved_manuscript()` skips files in `EXCLUDED_DOC_FILENAMES` (documentation
-files such as `SYNTAX.md`, `README.md`, `AGENTS.md` under `manuscript/`) and copies
+files such as `SYNTAX.md`, `README.md`, `AGENTS.md` under `docs/manuscript/`) and copies
 `config.yaml`, `preamble.md`, and `*.bib` through unchanged. Only the section markdown is
 token-substituted.

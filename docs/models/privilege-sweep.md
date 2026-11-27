@@ -8,7 +8,7 @@ cue privilege across a grid, and reports how the belief-entropy advantage and th
 reverse-KL distillation signal scale. It carries its own identical-agent control.
 
 Manuscript home:
-[`../../manuscript/12_results_si_tmaze.md`](../../manuscript/12_results_si_tmaze.md).
+[`../../manuscript/12_results_si_tmaze.md`](../manuscript/12_results_si_tmaze.md).
 The deterministic toy-sweep artifacts that frame the analytical grid alongside it
 live in
 [`../../src/roadmap_tracks/toy_sweep.py`](../../src/roadmap_tracks/toy_sweep.py).

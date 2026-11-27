@@ -2,7 +2,7 @@
 
 The manuscript is a manifest-indexed composition model. The registry declares
 track semantics and renderers, the manifest binds tracks to section fragments,
-and the composer writes flat `manuscript/NN_*.md` files for the PDF pipeline. The
+and the composer writes flat `docs/manuscript/NN_*.md` files for the PDF pipeline. The
 word "sheaf" is not decoration: [`src/manuscript/sheaf/laws.py`](../../src/manuscript/sheaf/laws.py)
 verifies the sheaf *axioms* the composer implicitly assumes, making the claim
 runnable and falsifiable.
@@ -16,15 +16,15 @@ for module APIs see
 
 | File | Role |
 | --- | --- |
-| [`manuscript/sheaf/tracks.yaml`](../../manuscript/sheaf/tracks.yaml) | Fragment **registry**: each track's compose `order`, `renderer` id, `label`, and optional flag. |
-| [`manuscript/sheaf/manifest.yaml`](../../manuscript/sheaf/manifest.yaml) | Section list with per-section `tracks:` map (track → fragment path) and optional `track_order`. |
-| [`manuscript/sheaf/coverage.yaml`](../../manuscript/sheaf/coverage.yaml) | Heatmap styling for the coverage artifacts. |
+| [`docs/manuscript/sheaf/tracks.yaml`](../manuscript/sheaf/tracks.yaml) | Fragment **registry**: each track's compose `order`, `renderer` id, `label`, and optional flag. |
+| [`docs/manuscript/sheaf/manifest.yaml`](../manuscript/sheaf/manifest.yaml) | Section list with per-section `tracks:` map (track → fragment path) and optional `track_order`. |
+| [`docs/manuscript/sheaf/coverage.yaml`](../manuscript/sheaf/coverage.yaml) | Heatmap styling for the coverage artifacts. |
 
 Tracks are declared with a numeric `order` (e.g. `prose: 10`, `formalism: 20`,
 `pymdp: 40`, `lean: 70`, `ontology: 90`). Two renderers are *generated* —
 `section_figures` (from `figures.yaml`) and `layers_report` (registry + binding
 tables) — and carry no file-type contract. Editable fragment sources live under
-[`manuscript/sections/imrad/`](../../manuscript/sections/imrad/); that is where
+[`docs/manuscript/sections/imrad/`](../manuscript/sections/imrad/); that is where
 prose is edited, never the flat composed `NN_*.md` outputs.
 
 ## The module map
@@ -92,7 +92,7 @@ mutation that breaks the law, proven to be caught — so the gate binds the laws
    every bound track — Markdown fragments are read from disk; generated renderers
    synthesize their body. There are no section-id special cases.
 3. **Glue.** Bodies concatenate in resolved order into one flat
-   `manuscript/NN_*.md` named by the section's `output_name`. Group rows
+   `docs/manuscript/NN_*.md` named by the section's `output_name`. Group rows
    (`compose: false`) emit IMRAD dividers but carry no fragments.
 4. **Coverage.** `emit_coverage_artifacts` writes
    `output/data/sheaf_coverage_matrix.json` (black = present, white = absent,

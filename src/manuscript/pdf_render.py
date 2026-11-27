@@ -104,7 +104,7 @@ def _combine_manuscript_markdown(project_root: Path) -> tuple[Path, Path]:
     from manuscript.variables import generate_variables
 
     root = project_root.resolve()
-    manuscript_dir = root / "manuscript"
+    manuscript_dir = root / "docs" / "manuscript"
     out_pdf_dir = root / "output" / "pdf"
     out_pdf_dir.mkdir(parents=True, exist_ok=True)
 
@@ -135,7 +135,7 @@ def render_combined_tex(project_root: Path) -> Path:
     if shutil.which("pandoc") is None:
         raise RuntimeError("pandoc not found on PATH (required to render the combined .tex)")
     root = project_root.resolve()
-    manuscript_dir = root / "manuscript"
+    manuscript_dir = root / "docs" / "manuscript"
     combined_md, out_pdf_dir = _combine_manuscript_markdown(root)
     header_tex = out_pdf_dir / "_standalone_preamble.tex"
     header_tex.write_text(extract_preamble(manuscript_dir / "preamble.md") + "\n", encoding="utf-8")
@@ -171,7 +171,7 @@ def render_pdf(project_root: Path) -> int:
             print(f"error: `{tool}` not found on PATH (required for standalone render)", file=sys.stderr)
             return 2
 
-    manuscript_dir = root / "manuscript"
+    manuscript_dir = root / "docs" / "manuscript"
     combined_md, out_pdf_dir = _combine_manuscript_markdown(root)
     combined_text = combined_md.read_text(encoding="utf-8")
     # Keep the historical standalone path as a mirror so older diagnostics do

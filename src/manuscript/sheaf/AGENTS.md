@@ -1,6 +1,6 @@
 # Sheaf composition package (`src/manuscript/sheaf/`)
 
-Deterministic glue from `manuscript/sheaf/manifest.yaml` + `manuscript/sheaf/tracks.yaml` into flat `manuscript/NN_*.md` sections, with a B/W/G coverage matrix and heatmap.
+Deterministic glue from `docs/manuscript/sheaf/manifest.yaml` + `docs/manuscript/sheaf/tracks.yaml` into flat `docs/manuscript/NN_*.md` sections, with a B/W/G coverage matrix and heatmap.
 
 ## Module map
 
@@ -60,5 +60,5 @@ uv run python scripts/compose_manuscript.py --validate-only --strict
 
 ## Parent docs
 
-- [`manuscript/sheaf/AGENTS.md`](../../../manuscript/sheaf/AGENTS.md) — YAML registries
+- [`docs/manuscript/sheaf/AGENTS.md`](../../../docs/manuscript/sheaf/AGENTS.md) — YAML registries
 - [`../../AGENTS.md`](../../AGENTS.md) — project overview

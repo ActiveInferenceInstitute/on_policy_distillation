@@ -16,7 +16,7 @@ from typing import Any
 
 import yaml
 
-# Format spec must mirror the renderer in manuscript/hydrate.py (_TOKEN_RE): it
+# Format spec must mirror the renderer in docs/manuscript/hydrate.py (_TOKEN_RE): it
 # accepts e/f/g conversions (and an optional sign), not only fixed-point `:.Nf`.
 # A narrower regex here silently drops scientific-notation tokens ({{x:.1e}}) from
 # token provenance and the hardcoded-variable audit, so those gates pass vacuously
@@ -58,7 +58,7 @@ def _sha256(path: Path) -> str:
 
 
 def _analysis_scripts(root: Path) -> list[str]:
-    data = yaml.safe_load((root / "manuscript" / "config.yaml").read_text(encoding="utf-8")) or {}
+    data = yaml.safe_load((root / "docs" / "manuscript" / "config.yaml").read_text(encoding="utf-8")) or {}
     return [str(script) for script in ((data.get("analysis") or {}).get("scripts") or [])]
 
 
@@ -204,7 +204,7 @@ def build_cross_track_symbol_table(project_root: Path) -> dict[str, Any]:
                         "source": (
                             section_path.relative_to(root).as_posix()
                             if section_path is not None
-                            else "manuscript/sheaf/manifest.yaml"
+                            else "docs/manuscript/sheaf/manifest.yaml"
                         ),
                         "consumer": section_term or "",
                         "consistent": term_consistent,
@@ -323,7 +323,7 @@ def build_manuscript_token_provenance(project_root: Path) -> dict[str, Any]:
 
     variables = {**generate_variables(root, require_analysis_outputs=False), **variables}
     rows = []
-    paths = sorted((root / "manuscript").glob("*.md")) + sorted((root / "manuscript" / "sections").glob("**/*.md"))
+    paths = sorted((root / "docs" / "manuscript").glob("*.md")) + sorted((root / "docs" / "manuscript" / "sections").glob("**/*.md"))
     excluded = {"AGENTS.md", "README.md", "SYNTAX.md", "preamble.md"}
     rendered_tokens: set[str] = set()
     for path in paths:
@@ -387,10 +387,10 @@ def build_hardcoded_variable_audit(project_root: Path) -> dict[str, Any]:
     variables = format_variables(raw_variables)
     authored_top_level = [
         path
-        for path in sorted((root / "manuscript").glob("*.md"))
+        for path in sorted((root / "docs" / "manuscript").glob("*.md"))
         if path.name in {"00_abstract.md", "17_conclusion.md"}
     ]
-    paths = authored_top_level + sorted((root / "manuscript" / "sections").glob("**/*.md"))
+    paths = authored_top_level + sorted((root / "docs" / "manuscript" / "sections").glob("**/*.md"))
     excluded = set(EXCLUDED_DOC_FILENAMES) | {"99_references.md"}
     source_by_path: dict[str, str] = {}
     used_tokens_by_path: dict[str, set[str]] = {}
@@ -467,7 +467,7 @@ def build_manuscript_staleness_report(project_root: Path) -> dict[str, Any]:
 
     sources = [
         (path, path.read_text(encoding="utf-8"))
-        for path in sorted((root / "manuscript").glob("*.md"))
+        for path in sorted((root / "docs" / "manuscript").glob("*.md"))
         if path.name not in EXCLUDED_DOC_FILENAMES
     ]
     occurrences = [(path, text, list(TOKEN_MATCH_RE.finditer(text))) for path, text in sources]
@@ -590,7 +590,7 @@ GATE_INDEX_ROWS: tuple[tuple[str, tuple[str, ...], str, str, str], ...] = (
     ),
     (
         "validate_manuscript",
-        ("manuscript/sheaf", "output/manuscript"),
+        ("docs/manuscript/sheaf", "output/manuscript"),
         "uv run python scripts/compose_manuscript.py --validate-only --strict",
         "strict manuscript compose validation across the sheaf tree",
         "delete a bound manuscript fragment or inject an unknown token",

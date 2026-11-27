@@ -20,7 +20,7 @@ this page is the operational tour.
 | `output/logs/*` | Run logs. | producers. |
 
 `output/data/*.json` and `output/reports/*.json` are produced by project
-scripts and validation-spine modules. `manuscript/0*.md` (except hand-authored
+scripts and validation-spine modules. `docs/manuscript/0*.md` (except hand-authored
 front/back matter) are composed from sheaf fragments by
 `scripts/compose_manuscript.py`; `output/manuscript/*.md` is then hydrated from
 those plus `output/data/manuscript_variables.json`. `output/pdf/*` and
@@ -59,7 +59,7 @@ uv run python scripts/run_full_chain.py --render    # + render the PDF
 uv run python scripts/run_full_chain.py --dry-run   # print the plan
 ```
 
-`run_full_chain.py` reads the analysis order from `manuscript/config.yaml`
+`run_full_chain.py` reads the analysis order from `docs/manuscript/config.yaml`
 `analysis.scripts` (the single source of truth — nothing is hard-coded in the
 runner), validates, and — because `release_attestation.json` attests the
 *previous* `validation_report.json` — re-runs the attestation tail and
