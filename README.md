@@ -18,11 +18,13 @@ certificates, validates the outputs, and renders the PDF:
 git clone https://github.com/ActiveInferenceInstitute/on_policy_distillation
 cd on_policy_distillation
 uv sync --locked --extra dev
+uv run --locked --extra dev python scripts/gate.py negative-controls
 uv run python scripts/run_full_chain.py --render
 ```
 
-`scripts/run_full_chain.py --render` is the one-command path; the gate arms
-below (`chain`, then `render`) are the same two steps, run separately.
+The `negative-controls` arm records the observations required by the release
+checks. With those observations in place, `scripts/run_full_chain.py --render`
+runs the analysis chain and renders the checked manuscript.
 
 The individual scripts remain available for debugging or narrow development.
 Their order is declared in `docs/manuscript/config.yaml` and should not be

@@ -6,9 +6,16 @@ post-processing. The authoritative contract for both is
 [`../reference/rendering-reproducibility.md`](../reference/rendering-reproducibility.md);
 this page is the quickstart.
 
-Render only after the analysis tree is generated and validated — see
-[`artifacts.md`](artifacts.md). The simplest correct sequence is
-`uv run python scripts/run_full_chain.py --render`.
+Record the negative-control observations before generating and validating the
+analysis tree. The [validation gate](../development/gate.md) describes which
+checks consume these observations.
+
+```bash
+uv run --locked --extra dev python scripts/gate.py negative-controls
+uv run python scripts/run_full_chain.py --render
+```
+
+See [the artifact guide](artifacts.md) for the generated evidence layout.
 
 ## Path 1 — standalone (portable)
 
