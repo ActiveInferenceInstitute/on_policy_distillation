@@ -3,11 +3,11 @@
 The scope contract for the manuscript. This page states precisely what the paper
 claims, what it does **not** claim, the variational/expected free-energy separation,
 and how external empirical context is handled. It is derived from
-[`../../manuscript/00_abstract.md`](00_abstract.md),
-[`../../manuscript/03_intro_contributions.md`](03_intro_contributions.md),
-[`../../manuscript/05_methods_analytical.md`](05_methods_analytical.md),
-[`../../manuscript/15_discussion_outlook.md`](15_discussion_outlook.md),
-and [`../../manuscript/17_conclusion.md`](17_conclusion.md).
+[`../../manuscript/00_abstract.md`](../00_abstract.md),
+[`../../manuscript/03_intro_contributions.md`](../03_intro_contributions.md),
+[`../../manuscript/05_methods_analytical.md`](../05_methods_analytical.md),
+[`../../manuscript/15_discussion_outlook.md`](../15_discussion_outlook.md),
+and [`../../manuscript/17_conclusion.md`](../17_conclusion.md).
 
 If you are about to describe a result more broadly than this page allows, the broader
 statement is out of scope.
@@ -117,7 +117,7 @@ distinction machine-readable
 ## The Proposition, verbatim
 
 Quoted exactly from
-[`../../manuscript/05_methods_analytical.md`](05_methods_analytical.md)
+[`../../manuscript/05_methods_analytical.md`](../05_methods_analytical.md)
 (the assumptions A1–A4 and the four-part conclusion). Token placeholders appear as in
 source; their resolved values come through hydration (see
 [`hydration-tokens.md`](hydration-tokens.md)).

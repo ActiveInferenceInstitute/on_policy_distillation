@@ -7,6 +7,7 @@ add or remove the corresponding entry whenever a documentation page changes path
 The documentation hub provides topic-based routing.
 
 
+
 - [AGENTS.md](AGENTS.md)
 - [README.md](README.md)
 - [architecture/AGENTS.md](architecture/AGENTS.md)
@@ -42,14 +43,14 @@ The documentation hub provides topic-based routing.
 - [manuscript/AGENTS.md](manuscript/AGENTS.md)
 - [manuscript/README.md](manuscript/README.md)
 - [manuscript/SYNTAX.md](manuscript/SYNTAX.md)
-- [manuscript/citation-map.md](manuscript/citation-map.md)
-- [manuscript/claims-and-scope.md](manuscript/claims-and-scope.md)
-- [manuscript/figures.md](manuscript/figures.md)
 - [manuscript/guides/AGENTS.md](manuscript/guides/AGENTS.md)
 - [manuscript/guides/README.md](manuscript/guides/README.md)
-- [manuscript/hydration-tokens.md](manuscript/hydration-tokens.md)
+- [manuscript/guides/citation-map.md](manuscript/guides/citation-map.md)
+- [manuscript/guides/claims-and-scope.md](manuscript/guides/claims-and-scope.md)
+- [manuscript/guides/figures.md](manuscript/guides/figures.md)
+- [manuscript/guides/hydration-tokens.md](manuscript/guides/hydration-tokens.md)
+- [manuscript/guides/section-guide.md](manuscript/guides/section-guide.md)
 - [manuscript/preamble.md](manuscript/preamble.md)
-- [manuscript/section-guide.md](manuscript/section-guide.md)
 - [manuscript/sections/AGENTS.md](manuscript/sections/AGENTS.md)
 - [manuscript/sections/README.md](manuscript/sections/README.md)
 - [manuscript/sections/imrad/AGENTS.md](manuscript/sections/imrad/AGENTS.md)

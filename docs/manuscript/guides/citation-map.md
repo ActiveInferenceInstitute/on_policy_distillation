@@ -1,12 +1,12 @@
 # Citation Map
 
-The bibliography ([`../../manuscript/references.bib`](references.bib);
+The bibliography ([`../../manuscript/references.bib`](../references.bib);
 entry count is verified at regeneration time with `grep -c '^@' docs/manuscript/references.bib`)
 organized by **function** — what role each source plays in the argument —
 rather than alphabetically. Every key below is present in `references.bib`. The
 preprint/archival status of sources is tracked machine-readably in
 `output/data/scholarship_source_matrix.json` (see the `scholarship` track and
-[`../../manuscript/15_discussion_outlook.md`](15_discussion_outlook.md)).
+[`../../manuscript/15_discussion_outlook.md`](../15_discussion_outlook.md)).
 
 A key may legitimately appear in more than one group; it is listed under its primary
 function and cross-referenced where load-bearing elsewhere.

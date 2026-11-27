@@ -244,13 +244,13 @@ Severity guide: **Minor** = typo / broken link / wrong path / formatting;
   fragment track types" / "the full proof row except `layers`"; `layers` binds
   in `methods_sheaf` and the Lean/GNN/ontology/model-checking/animation tracks
   in `results_invariants`. Corrected in AGENTS.md, README.md,
-  `docs/manuscript/section-guide.md` (supplement feeding-track lists marked
+  `docs/manuscript/guides/section-guide.md` (supplement feeding-track lists marked
   representative), `docs/architecture/sheaf-compose-contract.md`.
   ✓ commit `0b744d7`
 - **MAJOR `OPD-DOCS-3`** — Bibliography count drift: docs claimed 117 entries;
   `docs/manuscript/references.bib` holds 133 (volatile). Replaced snapshot counts
   with the live `grep -c '^@' docs/manuscript/references.bib` verification
-  (`docs/manuscript/citation-map.md`, `docs/manuscript/guides/README.md`); the
+  (`docs/manuscript/guides/citation-map.md`, `docs/manuscript/guides/README.md`); the
   deep-review ledger keeps 117 as a review-time fact, qualified.
   ✓ commit `e544747`
 - **MEDIUM `OPD-DOCS-4`** — Dead template-relative links in the public

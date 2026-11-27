@@ -169,7 +169,7 @@ def test_public_docs_list_every_registered_current_figure(project_root: Path) ->
 
 
 def test_figure_docs_signpost_cover_scope_and_accessibility_audit(project_root: Path) -> None:
-    figure_docs = (project_root / "docs" / "manuscript" / "figures.md").read_text(encoding="utf-8")
+    figure_docs = (project_root / "docs" / "manuscript" / "guides" / "figures.md").read_text(encoding="utf-8")
     viz_readme = (project_root / "src" / "visualizations" / "README.md").read_text(encoding="utf-8")
     root_readme = (project_root / "README.md").read_text(encoding="utf-8")
     combined = "\n".join([figure_docs, viz_readme, root_readme])

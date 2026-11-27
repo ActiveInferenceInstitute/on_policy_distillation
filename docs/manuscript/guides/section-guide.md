@@ -4,17 +4,17 @@ Per-section map of the composed manuscript. For each section file: its IMRAD rol
 the claim it carries, the key hydration tokens it uses (a representative subset —
 see [`hydration-tokens.md`](hydration-tokens.md) for the system), and which sheaf
 fragment tracks feed it. Track names are the keys declared in
-[`../../manuscript/sheaf/tracks.yaml`](sheaf/tracks.yaml).
+[`../../manuscript/sheaf/tracks.yaml`](../sheaf/tracks.yaml).
 
 Numbered files are composed outputs of
-[`../../scripts/compose_manuscript.py`](../../scripts/compose_manuscript.py).
+[`../../scripts/compose_manuscript.py`](../../../scripts/compose_manuscript.py).
 `00_abstract.md`, `17_conclusion.md`, and `99_references.md` are hand-authored.
-Section labels (`{#sec:…}`) follow [`../../manuscript/SYNTAX.md`](SYNTAX.md).
+Section labels (`{#sec:…}`) follow [`../../manuscript/SYNTAX.md`](../SYNTAX.md).
 
 ## The three scientific tracks
 
 The manuscript repeatedly frames its evidence as three lanes (see
-[`../../manuscript/02_intro_motivation.md`](02_intro_motivation.md)):
+[`../../manuscript/02_intro_motivation.md`](../02_intro_motivation.md)):
 
 - **Analytical** — the Bernoulli–Ising coupling oracle (closed-form MI and free energy).
 - **pymdp** — the on-policy active-inference T-maze rollout and classroom.
@@ -255,5 +255,5 @@ into each section.
 
 ### `99_references.md`
 - **IMRAD role:** References pointer (hand-authored). Points to
-  [`../../manuscript/references.bib`](references.bib). See
+  [`../../manuscript/references.bib`](../references.bib). See
   [`citation-map.md`](citation-map.md) for the bibliography organized by function.

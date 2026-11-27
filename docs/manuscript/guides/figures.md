@@ -1,19 +1,19 @@
 # Figures: Inventory and Provenance
 
 How figures are declared, generated, captioned, and bound to their source data. Derived
-from [`../../figures.yaml`](../../figures.yaml) (structure only — it is large),
-[`../../scripts/generate_figures.py`](../../scripts/generate_figures.py),
-[`../../src/visualizations/figure_registry.py`](../../src/visualizations/figure_registry.py),
+from [`../../figures.yaml`](../../../figures.yaml) (structure only — it is large),
+[`../../scripts/generate_figures.py`](../../../scripts/generate_figures.py),
+[`../../src/visualizations/figure_registry.py`](../../../src/visualizations/figure_registry.py),
 the figure-source / hash gates in
-[`../../src/gates/output_checks.py`](../../src/gates/output_checks.py) and
-[`../../src/roadmap_tracks/integration_audit_artifacts.py`](../../src/roadmap_tracks/integration_audit_artifacts.py),
-and the figure tables in [`../../manuscript/SYNTAX.md`](SYNTAX.md).
+[`../../src/gates/output_checks.py`](../../../src/gates/output_checks.py) and
+[`../../src/roadmap_tracks/integration_audit_artifacts.py`](../../../src/roadmap_tracks/integration_audit_artifacts.py),
+and the figure tables in [`../../manuscript/SYNTAX.md`](../SYNTAX.md).
 
 ## Source of truth
 
-[`../../figures.yaml`](../../figures.yaml) is the single source of truth for figure ids,
+[`../../figures.yaml`](../../../figures.yaml) is the single source of truth for figure ids,
 captions, alt text, widths, and section bindings (echoed in
-[`../reference/rendering-reproducibility.md`](../reference/rendering-reproducibility.md):
+[`../reference/rendering-reproducibility.md`](../../reference/rendering-reproducibility.md):
 the stale second registry `docs/manuscript/refs/labels.yaml` is intentionally absent). Its
 top-level structure is:
 
@@ -37,12 +37,12 @@ top-level structure is:
 
 ## Generation
 
-[`../../scripts/generate_figures.py`](../../scripts/generate_figures.py) is a thin
+[`../../scripts/generate_figures.py`](../../../scripts/generate_figures.py) is a thin
 orchestrator: it calls `generate_all_figures(PROJECT_ROOT)` from
 `src/visualizations/figures.py` and prints each output path. Generators are organized by
 module — `figures`, `figures_interpretability`, `figures_diagrams`, `figures_intro`,
 `figures_sheaf`, `figures_validation`, `figures_abstract` — and the id→generator mapping is tabulated in
-[`../../manuscript/SYNTAX.md`](SYNTAX.md) (e.g.
+[`../../manuscript/SYNTAX.md`](../SYNTAX.md) (e.g.
 `figure_ising_mi_curve`, `figures_interpretability.figure_correspondence_map`).
 
 Figures are **deterministic**: no sampling, fixed inputs. Captions say so explicitly
@@ -83,13 +83,13 @@ regenerate the producer.
 
 Every figure is bound to the data artifact(s) that produced it. `build_figure_source_map()`
 in
-[`../../src/roadmap_tracks/integration_audit_artifacts.py`](../../src/roadmap_tracks/integration_audit_artifacts.py)
+[`../../src/roadmap_tracks/integration_audit_artifacts.py`](../../../src/roadmap_tracks/integration_audit_artifacts.py)
 emits `output/data/figure_source_map.json` (schema
 `template_active_inference.figure_source_map.v1`) with, per registry figure: its
 `sources` (relative data paths), whether those `source_paths_exist`, its caption/alt
 tokens, image dimensions, and a `mapped` flag. The gate
 `_figure_source_map_ok()` in
-[`../../src/gates/output_checks.py`](../../src/gates/output_checks.py) passes **only**
+[`../../src/gates/output_checks.py`](../../../src/gates/output_checks.py) passes **only**
 when the schema matches, `all_figures_mapped is True`, and every row's source rows are
 complete. Captions reinforce this by naming their source inline — e.g.
 `distillation_divergence_geometry` cites
@@ -150,7 +150,7 @@ Captions are not free prose. They:
   `{{param_sweep_grid_points}}`, `{{sweep_max_residual:.1e}}`,
   `{{free_energy_mean_field_gap_max:.3f}}`). They are resolved at render time by
   `render_figure_markdown()` in
-  [`../../src/visualizations/figure_registry.py`](../../src/visualizations/figure_registry.py)
+  [`../../src/visualizations/figure_registry.py`](../../../src/visualizations/figure_registry.py)
   using the same `substitute_snake_case_tokens()` as the prose hydrator, so a caption
   number can never drift from its artifact. See [`hydration-tokens.md`](hydration-tokens.md).
 - **Name their source artifact** so the provenance is readable in the figure itself.
@@ -187,7 +187,7 @@ captions/alts resolves from a generated artifact.
 ## Registry reference
 
 The full figure id → PNG → generator table lives in
-[`../../manuscript/SYNTAX.md`](SYNTAX.md) ("Figure label registry"); the
+[`../../manuscript/SYNTAX.md`](../SYNTAX.md) ("Figure label registry"); the
 id → section bindings live in `figures.yaml` → `section_figures`. Reference a figure in
 prose as `[@fig:<registry-id>]` (e.g. `[@fig:ising_mi_curve]`), never with a literal
 placeholder.
