@@ -113,11 +113,11 @@ def _running_reader(
 def _pytest_project(root: Path, *, wait_during_collection: bool = False) -> None:
     (root / "tests").mkdir()
     (root / "scripts").mkdir()
-    (root / "manuscript").mkdir()
+    (root / "docs" / "manuscript").mkdir(parents=True)
     (root / "output" / "data").mkdir(parents=True)
     shutil.copyfile(PROJECT_ROOT / "conftest.py", root / "conftest.py")
     shutil.copyfile(PROJECT_ROOT / "scripts" / "run_full_chain.py", root / "scripts" / "run_full_chain.py")
-    shutil.copyfile(PROJECT_ROOT / "manuscript" / "config.yaml", root / "manuscript" / "config.yaml")
+    shutil.copyfile(PROJECT_ROOT / "docs" / "manuscript" / "config.yaml", root / "docs" / "manuscript" / "config.yaml")
     (root / "output" / "data" / "finite.json").write_text('{"observations": [0, 1, 2]}\n', encoding="utf-8")
     reader = """
 import json

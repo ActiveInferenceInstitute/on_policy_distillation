@@ -49,7 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--list-tracks",
         action="store_true",
-        help="Print registered track ids from manuscript/sheaf/tracks.yaml and exit.",
+        help="Print registered track ids from docs/manuscript/sheaf/tracks.yaml and exit.",
     )
     parser.add_argument(
         "--missing",
@@ -125,7 +125,7 @@ def run_compose_cli(
         return 0
 
     manifest = load_manifest(
-        project_root / "manuscript" / "sheaf" / "manifest.yaml",
+        project_root / "docs" / "manuscript" / "sheaf" / "manifest.yaml",
         project_root=project_root,
     )
     if args.validate_only:

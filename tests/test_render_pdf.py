@@ -70,7 +70,7 @@ def test_cover_image_dimensions_are_config_driven() -> None:
     assert "front.get(\"max_height\")" in src
     assert "width={abstract_width},height={abstract_max_height}" in src
     assert "0.52\\textheight" not in src
-    config = yaml.safe_load((PROJECT_ROOT / "manuscript" / "config.yaml").read_text(encoding="utf-8"))
+    config = yaml.safe_load((PROJECT_ROOT / "docs" / "manuscript" / "config.yaml").read_text(encoding="utf-8"))
     front = config["front_matter"]["graphical_abstract"]
     assert front["max_height"] == r"0.58\textheight"
 
@@ -148,7 +148,7 @@ def test_render_pdf_returns_two_when_tools_missing(monkeypatch, tmp_path: Path, 
 
 
 def _prepare_pdf_project(tmp_path: Path) -> Path:
-    manuscript = tmp_path / "manuscript"
+    manuscript = tmp_path / "docs" / "manuscript"
     manuscript.mkdir(parents=True)
     (manuscript / "config.yaml").write_text(
         "metadata:\n  geometry: margin=0.6in\npaper:\n  title: Test PDF\n", encoding="utf-8"

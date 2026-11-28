@@ -921,9 +921,9 @@ def test_validate_claim_ledger_branch_edges(monkeypatch: pytest.MonkeyPatch, tmp
     )
     assert claim_ledger.validate_claim_ledger(tmp_path) is False
 
-    manifest_dir = tmp_path / "manuscript" / "sheaf"
+    manifest_dir = tmp_path / "docs" / "manuscript" / "sheaf"
     manifest_dir.mkdir(parents=True)
-    (manifest_dir / "manifest.yaml").write_text("registry_path: manuscript/sheaf/tracks.yaml\n", encoding="utf-8")
+    (manifest_dir / "manifest.yaml").write_text("registry_path: docs/manuscript/sheaf/tracks.yaml\n", encoding="utf-8")
     (manifest_dir / "tracks.yaml").write_text("tracks: []\n", encoding="utf-8")
     ledger.write_text(
         "claims:\n"
@@ -935,7 +935,7 @@ def test_validate_claim_ledger_branch_edges(monkeypatch: pytest.MonkeyPatch, tmp
     monkeypatch.setattr(
         sheaf,
         "load_manifest",
-        lambda *args, **kwargs: type("Manifest", (), {"registry_path": "manuscript/sheaf/tracks.yaml"})(),
+        lambda *args, **kwargs: type("Manifest", (), {"registry_path": "docs/manuscript/sheaf/tracks.yaml"})(),
     )
     monkeypatch.setattr(sheaf, "load_track_registry", lambda *args, **kwargs: object())
     monkeypatch.setattr(sheaf, "load_coverage_json", lambda *args, **kwargs: {"cells": []})

@@ -38,11 +38,11 @@ def test_run_full_chain_help_exits_zero() -> None:
 
 
 def test_run_full_chain_dry_run_plan_matches_config() -> None:
-    """The plan is read from manuscript/config.yaml, never hard-coded."""
+    """The plan is read from docs/manuscript/config.yaml, never hard-coded."""
     proc = _run("run_full_chain.py", "--dry-run")
     assert proc.returncode == 0
     plan = [line for line in proc.stdout.splitlines() if line and not line.startswith("#")]
-    config = yaml.safe_load((PROJECT_ROOT / "manuscript" / "config.yaml").read_text(encoding="utf-8"))
+    config = yaml.safe_load((PROJECT_ROOT / "docs" / "manuscript" / "config.yaml").read_text(encoding="utf-8"))
     declared = list(config["analysis"]["scripts"])
     assert plan[: len(declared)] == declared
     assert plan[len(declared)] == "validate_outputs.py"

@@ -1173,9 +1173,9 @@ figures:
         caption_terms:
           - "no metric values"
         sources:
-          - "manuscript/sheaf/tracks.yaml"
+          - "docs/manuscript/sheaf/tracks.yaml"
         source_fields:
-          - "manuscript/sheaf/tracks.yaml:tracks"
+          - "docs/manuscript/sheaf/tracks.yaml:tracks"
         scope: "quantitative-free finite-model cover orientation"
         display_transform: schematic
 

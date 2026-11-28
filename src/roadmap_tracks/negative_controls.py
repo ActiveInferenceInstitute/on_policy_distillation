@@ -189,12 +189,12 @@ def case_inputs(project_root: Path, case_id: str) -> tuple[dict[str, bytes], dic
     if case_id in {"missing_sheaf_track_producer", "missing_manuscript_binding", "empirical_adapter_live"}:
         import yaml
 
-        for rel in ("manuscript/config.yaml", "manuscript/sheaf/manifest.yaml", "manuscript/sheaf/tracks.yaml"):
+        for rel in ("docs/manuscript/config.yaml", "docs/manuscript/sheaf/manifest.yaml", "docs/manuscript/sheaf/tracks.yaml"):
             baseline[rel] = (root / rel).read_bytes()
         mutated = dict(baseline)
-        rel = {"missing_sheaf_track_producer": "manuscript/config.yaml",
-               "missing_manuscript_binding": "manuscript/sheaf/manifest.yaml",
-               "empirical_adapter_live": "manuscript/sheaf/tracks.yaml"}[case_id]
+        rel = {"missing_sheaf_track_producer": "docs/manuscript/config.yaml",
+               "missing_manuscript_binding": "docs/manuscript/sheaf/manifest.yaml",
+               "empirical_adapter_live": "docs/manuscript/sheaf/tracks.yaml"}[case_id]
         payload = yaml.safe_load(baseline[rel])
         if case_id == "missing_sheaf_track_producer":
             payload["analysis"]["scripts"].remove("generate_sheaf_tracks.py")
@@ -222,8 +222,8 @@ def case_inputs(project_root: Path, case_id: str) -> tuple[dict[str, bytes], dic
         import yaml
         from artifact_contracts import ARTIFACT_CONSUMERS, ARTIFACT_GATES, ARTIFACT_PRODUCERS, SEMANTIC_SCHEMA
 
-        baseline["manuscript/config.yaml"] = (root / "manuscript/config.yaml").read_bytes()
-        configured = yaml.safe_load(baseline["manuscript/config.yaml"])["analysis"]["scripts"]
+        baseline["docs/manuscript/config.yaml"] = (root / "docs/manuscript/config.yaml").read_bytes()
+        configured = yaml.safe_load(baseline["docs/manuscript/config.yaml"])["analysis"]["scripts"]
         graph = {
             rel: {"producer": producer, "produced_by_configured_analysis": producer in configured,
                   "consumers": list(ARTIFACT_CONSUMERS.get(rel, ())),
@@ -322,7 +322,7 @@ def case_definition(case: MutationCase) -> dict[str, Any]:
 def authored_binding(project_root: Path) -> dict[str, str]:
     root = project_root.resolve()
     paths: set[Path] = set()
-    for directory in ("src", "tests", "scripts", "gnn", "lean", "data", "manuscript/sheaf", "manuscript/sections"):
+    for directory in ("src", "tests", "scripts", "gnn", "lean", "data", "docs/manuscript/sheaf", "docs/manuscript/sections"):
         paths.update(path for path in (root / directory).rglob("*")
                      if path.is_file() and not {"__pycache__", ".lake", ".venv"}.intersection(path.parts)
                      and path.suffix not in {".pyc", ".png", ".gif"})
@@ -330,7 +330,7 @@ def authored_binding(project_root: Path) -> dict[str, str]:
                  if path.is_file() and (path.suffix in {".yaml", ".toml", ".lock"} or path.name == "conftest.py"))
     if not paths:
         raise ValueError("negative-control evidence requires the authored source/test/config tree")
-    paths.add(root / "manuscript" / "config.yaml")
+    paths.add(root / "docs" / "manuscript" / "config.yaml")
     return {path.relative_to(root).as_posix(): _file_digest(path) for path in sorted(paths)}
 
 

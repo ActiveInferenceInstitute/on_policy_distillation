@@ -136,7 +136,7 @@ PDF render all green afterward.
 - [x] ISC-35: codemeta.json version matches CITATION.cff/.zenodo.json; keyword typo fixed; URL current.
 - [x] ISC-36: .zenodo.json coherent with both.
 - [x] ISC-37: TODO.md retitled to this project; completed rows (stubs, appendix hydration, appendix figures, EFE nonvacuous) marked done with pointers; AI-STALE-SUMMARY-1 and AI-TEST-ISOLATION-1 updated by this run.
-- [x] ISC-38: figures.yaml header comment + manuscript/config.yaml.example URL updated.
+- [x] ISC-38: figures.yaml header comment + docs/manuscript/config.yaml.example URL updated.
 - [x] ISC-39: Anti: schema namespace strings NOT renamed (decision documented).
 
 ### D6 — Project ISA
@@ -252,7 +252,7 @@ PDF render all green afterward.
   refuted with live values: q_pi entropy varies 0.026–6.192 nats; H_b(σ(λ)) spans 0.693→0.090;
   the uniformly-zero artifact was a different one (sensitivity_sweep), which is exactly why its
   figure was dropped. Blockers 1 and 3 adopted (suite awaited + two-order single-process runs;
-  DOI tree-grep found manuscript/config.yaml carrying the template's Zenodo DOIs on the PDF
+  DOI tree-grep found docs/manuscript/config.yaml carrying the template's Zenodo DOIs on the PDF
   cover — blanked, reserve-DOI-first comment added).
 - 2026-06-10: **Chunk-2 failure was the doc-contract doing its job**: the new figures were
   missing from README/AGENTS/SYNTAX figure lists; fixed all three surfaces, contract green.
@@ -318,13 +318,13 @@ PDF render all green afterward.
 - ISC-20..22: captions hydrated ({{correspondence_row_count}}=25, {{posterior_grid_available_count}}=14/14, taxonomy 35/26/12); taxonomy caption discloses jitter dodging; "shown N of M" derived from data in panel title ("14 of 14 grid rows measured").
 - ISC-23..27: sweep regenerated → "rows: 105 max_abs_residual: 4.579669976578771e-16" with observables [conditional_policy_entropy, joint_entropy, marginal_entropy, posterior_correlation, same_state_probability]; closed form verified at λ=0 → 0.6931471805599453 = ln 2; lying-row + dropped-observable controls green in `test_roadmap_promotion.py` ("10 passed" after fix); assumption index "all_equations_indexed: True" with conditional_entropy_closed_form; TODO row struck with proof pointer.
 - ISC-28..33: composed files carry the three [@fig:] references + definitions (grep quoted in session); `_combined_manuscript.md` has "unresolved tokens {{: 0"; refs counts [2,2,2] figures + eq definition; validate manuscript checks all true (incl. scope-boundary + hardcoded-variable audit).
-- ISC-34..39: CITATION.cff/codemeta/.zenodo all retitled "On-Policy Distillation is Active Inference", repo docxology/on_policy, version 0.4.0 unified, template DOI removed; Advisor-prompted tree-grep found 2 MORE wrong DOIs in manuscript/config.yaml (template's 20417021/20420352 on the PDF cover) → blanked with reserve-DOI-first comment; schema namespace untouched (ISC-39, Decisions).
+- ISC-34..39: CITATION.cff/codemeta/.zenodo all retitled "On-Policy Distillation is Active Inference", repo docxology/on_policy, version 0.4.0 unified, template DOI removed; Advisor-prompted tree-grep found 2 MORE wrong DOIs in docs/manuscript/config.yaml (template's 20417021/20420352 on the PDF cover) → blanked with reserve-DOI-first comment; schema namespace untouched (ISC-39, Decisions).
 - ISC-40..41: this ISA replaced the wrong-project copy; decisions logged below.
 - ISC-42..47: docs/reference/configuration-and-extension.md written; README + docs/reference/README link it; every referenced script verified on disk ("all guide commands verified").
 - ISC-48..51: evict_bootstrap (ROOTS+FINGERPRINTS) + fixture wired; fingerprint surface +2 ready-only artifacts; artifact-validation cluster green single-process in two orders ("39 passed", "51 passed"); chunked suite TOTAL "435 passed, 1 failed" → the 1 failure was the doc-contract test catching the un-listed new figures (fixed across README/AGENTS/SYNTAX, then "8 passed" + chunk re-run "30 passed").
 - ISC-54: validate_outputs ALL TRUE post-regeneration (twice: after full chain and after DOI/config fix).
 - ISC-55: PDF rendered 5,483,996 bytes; `pdftotext | grep -c "??"` → 0 dangling crossrefs; float-overflow warning fixed via correspondence width 0.99→0.84 + re-render.
-- ISC-57: Advisor (Inference.ts smart) verdict REVISE with 3 blockers — all dispositioned: (1) suite awaited → green incl. two single-process orderings; (2) zero-entropy contradiction REFUTED with live values (dropped figure was sensitivity_sweep graph-world entropy ≡ 0.0; kept entropy panels vary 0.026–6.192 nats and H_b(σ) spans 0.693→0.090); (3) DOI tree-grep performed → found + fixed manuscript/config.yaml. Ride-alongs adopted: inverse negative controls, threat-model docstring, 1e-12 literal confirmed.
+- ISC-57: Advisor (Inference.ts smart) verdict REVISE with 3 blockers — all dispositioned: (1) suite awaited → green incl. two single-process orderings; (2) zero-entropy contradiction REFUTED with live values (dropped figure was sensitivity_sweep graph-world entropy ≡ 0.0; kept entropy panels vary 0.026–6.192 nats and H_b(σ) spans 0.693→0.090); (3) DOI tree-grep performed → found + fixed docs/manuscript/config.yaml. Ride-alongs adopted: inverse negative controls, threat-model docstring, 1e-12 literal confirmed.
 - ISC-58..59: DEFERRED-VERIFY → OPD-XVENDOR-1. Quoted evidence: codex exec → "ERROR: You've hit your usage limit ... try again at 6:31 PM."; Anvil: "MOONSHOT_API_KEY missing".
 
 ## Run-9 session record (2026-06-11) — appended; full detail in commits f73bcc0/2e6b74b + memory `project-opd-active-inference-state`

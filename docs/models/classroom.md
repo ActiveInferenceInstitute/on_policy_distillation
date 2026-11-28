@@ -10,7 +10,7 @@ KL between their first-action distributions is the distillation signal the
 student would descend to absorb the teacher's privileged belief.
 
 Manuscript home:
-[`../../manuscript/12_results_si_tmaze.md`](../../manuscript/12_results_si_tmaze.md).
+[`../../manuscript/12_results_si_tmaze.md`](../manuscript/12_results_si_tmaze.md).
 
 ## The two agents
 

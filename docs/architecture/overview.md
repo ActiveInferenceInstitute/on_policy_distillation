@@ -18,7 +18,7 @@ evidence; the last three compose, hydrate, and check it.
 | Analytical oracle | [`src/analytical/`](../../src/analytical/) | closed-form sweeps, the free-energy decomposition identity, core invariants | The hard-to-vary mathematical ground truth (Ising/Bernoulli toy, mutual information, decomposition). |
 | pymdp simulation | [`src/simulation/`](../../src/simulation/) | T-maze sophisticated-inference rollout, policy comparison, posterior grid, runtime diagnostics | The on-policy student: a real pymdp `sophisticated_inference` planner, logged step by step. |
 | firstprinciples classroom | [`src/firstprinciples/`](../../src/firstprinciples/) | correspondence map, divergence geometry, reward-tilted target, SDPG/exposure-bias demos, sequential-shift sensitivity, two-agent classroom | The intellectual core — the audited active-inference ↔ OPD dictionary, finite shift witnesses, and executable teacher/student classroom. |
-| Sheaf manuscript compose | [`src/manuscript/sheaf/`](../../src/manuscript/sheaf/) | flat `manuscript/NN_*.md`, coverage matrix, layers report | Glues per-section track fragments into flat IMRAD sections, verifying the sheaf axioms first. |
+| Sheaf manuscript compose | [`src/manuscript/sheaf/`](../../src/manuscript/sheaf/) | flat `docs/manuscript/NN_*.md`, coverage matrix, layers report | Glues per-section track fragments into flat IMRAD sections, verifying the sheaf axioms first. |
 | Gates / validation | [`src/gates/`](../../src/gates/), [`src/validation_spine/`](../../src/validation_spine/) | `output/reports/validation_report.json`, invariants, schema checks | The fail-closed acceptance surface — re-derives aggregates, validates schemas, checks invariants. |
 | Formal layers | [`lean/`](../../lean/), [`src/gnn/`](../../src/gnn/), [`src/ontology/`](../../src/ontology/), [`src/roadmap_tracks/formal_interop.py`](../../src/roadmap_tracks/formal_interop.py) | Lean theorem inventory, GNN round-trip, ontology concordance, model-checking witnesses | Machine-checked *boundary* witnesses and cross-track notation agreement. |
 
@@ -52,7 +52,7 @@ chain:
 4. **Composed section.** Before any of this, the sheaf composer
    ([`scripts/compose_manuscript.py`](../../scripts/compose_manuscript.py)) glued
    the section's per-track fragments — prose, formalism, pymdp, visualization —
-   into a flat `manuscript/NN_*.md`, after verifying the sheaf laws.
+   into a flat `docs/manuscript/NN_*.md`, after verifying the sheaf laws.
 5. **PDF.** The render step produces `output/pdf/*`. Per the contract, PDF and
    web outputs are render results, not sources of truth; figure numbering belongs
    to pandoc-crossref.
@@ -73,7 +73,7 @@ The release attestation attests the *previous* `validation_report.json`, so a
 single linear pass can leave the attestation one step stale. Rather than ask the
 operator to "re-run the tail and validate again" by hand,
 [`scripts/run_full_chain.py`](../../scripts/run_full_chain.py) encodes the
-canonical script order from `manuscript/config.yaml`, then re-runs the
+canonical script order from `docs/manuscript/config.yaml`, then re-runs the
 convergence tail and re-validates to a bounded fixed point (`--max-passes`,
 default 3). Its exit code is honest: 0 only when the final `validate_outputs`
 pass is green. See [`pipeline.md`](pipeline.md) for the full order.

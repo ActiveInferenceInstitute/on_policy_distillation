@@ -2,7 +2,7 @@
 """One-command convergent pipeline runner (thin orchestrator).
 
 Runs the canonical analysis chain in the order declared by
-``manuscript/config.yaml`` ``analysis.scripts`` (the single source of truth —
+``docs/manuscript/config.yaml`` ``analysis.scripts`` (the single source of truth —
 nothing is hard-coded here), then validates, then — because
 ``release_attestation.json`` attests the *previous* ``validation_report.json``
 (see ``src/roadmap_tracks/supplemental.py``) — re-runs the attestation tail and
@@ -61,11 +61,11 @@ RENDER = "render_pdf.py"
 
 
 def canonical_scripts(project_root: Path) -> list[str]:
-    """The declared analysis order from manuscript/config.yaml (source of truth)."""
-    config = yaml.safe_load((project_root / "manuscript" / "config.yaml").read_text(encoding="utf-8"))
+    """The declared analysis order from docs/manuscript/config.yaml (source of truth)."""
+    config = yaml.safe_load((project_root / "docs" / "manuscript" / "config.yaml").read_text(encoding="utf-8"))
     scripts = list(((config.get("analysis") or {}).get("scripts")) or [])
     if not scripts:
-        raise SystemExit("manuscript/config.yaml declares no analysis.scripts — nothing to run")
+        raise SystemExit("docs/manuscript/config.yaml declares no analysis.scripts — nothing to run")
     return scripts
 
 

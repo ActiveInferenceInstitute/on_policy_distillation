@@ -136,7 +136,7 @@ def test_missing_receipts_are_documented_not_observed(tmp_path: Path) -> None:
 
 def _copy_authored(project_root: Path, destination: Path) -> Path:
     destination.mkdir()
-    for name in ("src", "tests", "scripts", "gnn", "lean", "data", "manuscript"):
+    for name in ("src", "tests", "scripts", "gnn", "lean", "data", "docs/manuscript"):
         shutil.copytree(project_root / name, destination / name,
                         ignore=shutil.ignore_patterns("__pycache__", ".lake", ".venv", "*.pyc"))
     for path in project_root.iterdir():
@@ -229,7 +229,7 @@ def test_forged_or_failed_receipt_never_certifies_a_case(
 
 @pytest.mark.artifact_slow
 @pytest.mark.parametrize("relative", ["src/roadmap_tracks/negative_controls.py",
-                                      "tests/test_negative_control_receipts.py", "manuscript/config.yaml"])
+                                      "tests/test_negative_control_receipts.py", "docs/manuscript/config.yaml"])
 def test_changed_authored_bytes_require_new_evidence(recorded_root: Path, tmp_path: Path, relative: str) -> None:
     root = tmp_path / "source"
     shutil.copytree(recorded_root, root)

@@ -197,7 +197,7 @@ def test_hardcoded_variable_audit_flags_literal_generated_value(project_root: Pa
     if not literal:
         pytest.skip("pymdp config hash unavailable")
 
-    path = project_root / "manuscript" / "sections" / "imrad" / "intro_motivation" / "prose.md"
+    path = project_root / "docs" / "manuscript" / "sections" / "imrad" / "intro_motivation" / "prose.md"
     original = path.read_text(encoding="utf-8")
     try:
         clean = build_hardcoded_variable_audit(project_root)

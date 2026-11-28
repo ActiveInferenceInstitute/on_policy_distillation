@@ -234,7 +234,7 @@ def test_no_orphan_hand_figure_labels_in_composed_manuscript() -> None:
     root = Path(__file__).resolve().parents[1]
     compose_all_sections(root)
     offenders = []
-    for md in sorted((root / "manuscript").glob("[0-9][0-9]_*.md")):
+    for md in sorted((root / "docs" / "manuscript").glob("[0-9][0-9]_*.md")):
         text = md.read_text(encoding="utf-8")
         assert "Reproduced from [@fig:ising_mi_curve]" not in text
         for i, line in enumerate(text.splitlines(), 1):
@@ -253,8 +253,8 @@ def test_model_surface_map_clarifies_no_gridworld_claim() -> None:
     compose_all_sections(root)
     text = "\n".join(
         [
-            (root / "manuscript" / "02_intro_motivation.md").read_text(encoding="utf-8"),
-            (root / "manuscript" / "17_conclusion.md").read_text(encoding="utf-8"),
+            (root / "docs" / "manuscript" / "02_intro_motivation.md").read_text(encoding="utf-8"),
+            (root / "docs" / "manuscript" / "17_conclusion.md").read_text(encoding="utf-8"),
         ]
     )
     for phrase in (

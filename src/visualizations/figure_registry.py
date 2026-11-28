@@ -154,10 +154,10 @@ def render_figure_markdown(
     # `figure_number` / `caption_prefix` are retained for signature back-compat but are
     # intentionally unused: pandoc-crossref owns figure numbering (single source of truth).
     # Hand-written "Figure N (section)." prefixes previously double-numbered every figure
-    # against pandoc's auto-caption — see manuscript/SYNTAX.md and src/visualizations/AGENTS.md.
+    # against pandoc's auto-caption — see docs/manuscript/SYNTAX.md and src/visualizations/AGENTS.md.
     del figure_number, caption_prefix
     spec = load_figure_registry(project_root)[figure_id]
-    rel = f"../output/figures/{spec.filename}"
+    rel = f"../../output/figures/{spec.filename}"
     alt = spec.alt
     caption = spec.caption
     if variables:

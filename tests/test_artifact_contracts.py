@@ -33,12 +33,12 @@ def test_required_output_contract_has_no_duplicates() -> None:
 
 
 def test_configured_analysis_order_matches_contract(project_root: Path) -> None:
-    config = yaml.safe_load((project_root / "manuscript" / "config.yaml").read_text(encoding="utf-8"))
+    config = yaml.safe_load((project_root / "docs" / "manuscript" / "config.yaml").read_text(encoding="utf-8"))
     assert config["analysis"]["scripts"] == [step.script for step in DEFAULT_ANALYSIS_SCRIPTS]
 
 
 def test_required_outputs_have_configured_producers(project_root: Path) -> None:
-    config = yaml.safe_load((project_root / "manuscript" / "config.yaml").read_text(encoding="utf-8"))
+    config = yaml.safe_load((project_root / "docs" / "manuscript" / "config.yaml").read_text(encoding="utf-8"))
     configured = set(config["analysis"]["scripts"])
     missing_producers = sorted(set(REQUIRED_OUTPUTS) - set(ARTIFACT_PRODUCERS))
     unknown_producers = sorted(set(ARTIFACT_PRODUCERS.values()) - configured)

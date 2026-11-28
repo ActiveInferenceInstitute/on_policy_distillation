@@ -536,7 +536,7 @@ def test_promotion_projection_preserves_canonical_model_and_generic_bindings(tmp
     from roadmap_tracks.sheaf_tracks_support import _bound_tracks, _manifest_sections
 
     source = Path(__file__).resolve().parents[1]
-    manifest_rel = Path("manuscript/sheaf/manifest.yaml")
+    manifest_rel = Path("docs/manuscript/sheaf/manifest.yaml")
     (tmp_path / manifest_rel).parent.mkdir(parents=True)
     shutil.copyfile(source / manifest_rel, tmp_path / manifest_rel)
     sections = {section["id"]: section for section in _manifest_sections(tmp_path)}
@@ -550,7 +550,7 @@ def test_promotion_projection_preserves_canonical_model_and_generic_bindings(tmp
 def test_promoted_scripts_are_configured_between_validation_spine_and_hydration(project_root: Path) -> None:
     from orchestration.pipeline_manifest import DEFAULT_ANALYSIS_SCRIPTS
 
-    configured = yaml.safe_load((project_root / "manuscript" / "config.yaml").read_text(encoding="utf-8"))["analysis"][
+    configured = yaml.safe_load((project_root / "docs" / "manuscript" / "config.yaml").read_text(encoding="utf-8"))["analysis"][
         "scripts"
     ]
     promoted = [

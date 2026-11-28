@@ -59,7 +59,8 @@ def load_manifest(
     if project_root is not None:
         root = project_root.resolve()
     elif manifest_path.parent.name == "sheaf" and manifest_path.parent.parent.name == "manuscript":
-        root = manifest_path.parent.parent.parent
+        container = manifest_path.parent.parent.parent
+        root = container.parent if container.name == "docs" else container
     else:
         root = manifest_path.parent
     registry = registry_path or (root / DEFAULT_REGISTRY_REL)

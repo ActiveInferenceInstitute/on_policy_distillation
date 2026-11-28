@@ -32,7 +32,7 @@ def _write_json(path: Path, payload: dict[str, Any]) -> Path:
 
 
 def _bib_entries(root: Path) -> dict[str, str]:
-    path = root / "manuscript" / "references.bib"
+    path = root / "docs" / "manuscript" / "references.bib"
     if not path.is_file():
         return {}
     text = path.read_text(encoding="utf-8")
@@ -58,9 +58,9 @@ def _arxiv_id(entry: str) -> str:
 
 
 def _manuscript_citation_text(root: Path) -> str:
-    paths = sorted((root / "manuscript" / "sections").glob("**/*.md")) + sorted(
+    paths = sorted((root / "docs" / "manuscript" / "sections").glob("**/*.md")) + sorted(
         path
-        for path in (root / "manuscript").glob("*.md")
+        for path in (root / "docs" / "manuscript").glob("*.md")
         if path.name not in {"99_references.md", "SYNTAX.md", "README.md", "AGENTS.md"}
     )
     return "\n".join(path.read_text(encoding="utf-8") for path in paths if path.is_file())
@@ -72,12 +72,12 @@ def _citation_present(text: str, key: str) -> bool:
 
 
 def _registry_tracks(root: Path) -> set[str]:
-    tracks = (_load_yaml(root / "manuscript" / "sheaf" / "tracks.yaml").get("tracks") or {}).keys()
+    tracks = (_load_yaml(root / "docs" / "manuscript" / "sheaf" / "tracks.yaml").get("tracks") or {}).keys()
     return {str(track) for track in tracks}
 
 
 def _manifest_sections(root: Path) -> set[str]:
-    sections = _load_yaml(root / "manuscript" / "sheaf" / "manifest.yaml").get("sections") or []
+    sections = _load_yaml(root / "docs" / "manuscript" / "sheaf" / "manifest.yaml").get("sections") or []
     return {str(section.get("id")) for section in sections if isinstance(section, dict) and section.get("id")}
 
 

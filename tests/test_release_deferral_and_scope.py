@@ -114,8 +114,8 @@ def test_forged_deferral_and_stale_present_images_fail(tmp_path: Path, mutation:
     "No biological Markov blanket is claimed and a biological boundary is established.",
 ])
 def test_each_affirmative_scope_clause_is_rejected(tmp_path: Path, text: str) -> None:
-    manuscript = tmp_path / "manuscript"
-    manuscript.mkdir()
+    manuscript = tmp_path / "docs" / "manuscript"
+    manuscript.mkdir(parents=True)
     (manuscript / "00_abstract.md").write_text(text, encoding="utf-8")
     hits = _scope_forbidden_hits(text)
     assert hits and any(not hit["negated"] for hit in hits)
@@ -133,8 +133,8 @@ def test_each_affirmative_scope_clause_is_rejected(tmp_path: Path, text: str) ->
     "Qwen and Thinking Machines are external context, not reproduced results.",
 ])
 def test_all_negated_guardrails_remain_legitimate(tmp_path: Path, text: str) -> None:
-    manuscript = tmp_path / "manuscript"
-    manuscript.mkdir()
+    manuscript = tmp_path / "docs" / "manuscript"
+    manuscript.mkdir(parents=True)
     (manuscript / "00_abstract.md").write_text(text, encoding="utf-8")
     hits = _scope_forbidden_hits(text)
     assert hits and all(hit["negated"] for hit in hits)
@@ -144,8 +144,8 @@ def test_all_negated_guardrails_remain_legitimate(tmp_path: Path, text: str) -> 
 
 
 def test_explicit_future_file_policy_is_unchanged(tmp_path: Path) -> None:
-    manuscript = tmp_path / "manuscript"
-    manuscript.mkdir()
+    manuscript = tmp_path / "docs" / "manuscript"
+    manuscript.mkdir(parents=True)
     for name in ("15_discussion_outlook.md", "17_conclusion.md"):
         (manuscript / name).write_text("We measured production LLMs.", encoding="utf-8")
     report = build_scope_boundary_audit(tmp_path)
@@ -154,8 +154,8 @@ def test_explicit_future_file_policy_is_unchanged(tmp_path: Path) -> None:
 
 
 def test_selected_scope_gate_authenticates_current_clauses(tmp_path: Path) -> None:
-    manuscript = tmp_path / "manuscript"
-    manuscript.mkdir()
+    manuscript = tmp_path / "docs" / "manuscript"
+    manuscript.mkdir(parents=True)
     source = manuscript / "00_abstract.md"
     source.write_text("We do not measure production LLMs.\n", encoding="utf-8")
     path = tmp_path / "output/reports/scope_boundary_audit.json"

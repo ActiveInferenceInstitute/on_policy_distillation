@@ -73,7 +73,7 @@ def build_artifact_license_audit(project_root: Path) -> dict[str, Any]:
     project_license = "MIT"
     import yaml
 
-    config = yaml.safe_load((root / "manuscript" / "config.yaml").read_text(encoding="utf-8")) or {}
+    config = yaml.safe_load((root / "docs" / "manuscript" / "config.yaml").read_text(encoding="utf-8")) or {}
     project_license = str((config.get("metadata") or {}).get("license") or project_license)
     rows = []
     for row in provenance.get("rows") or []:
@@ -84,7 +84,7 @@ def build_artifact_license_audit(project_root: Path) -> dict[str, Any]:
                 "artifact": rel,
                 "license": project_license,
                 "source_kind": "generated_local" if generated else "project_source",
-                "license_safe": generated or rel.startswith(("manuscript/", "src/", "data/", "lean/", "gnn/")),
+                "license_safe": generated or rel.startswith(("docs/manuscript/", "src/", "data/", "lean/", "gnn/")),
                 "producer": row.get("producer", ""),
             }
         )
@@ -199,11 +199,11 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         ],
         "multi_track_architecture": [
             "tracks.yaml",
-            "manuscript/sheaf/tracks.yaml",
+            "docs/manuscript/sheaf/tracks.yaml",
             "output/data/manuscript_variables.json",
         ],
         "lean_boundary_status": ["lean/OnPolicyDistillation"],
-        "gnn_ontology_concordance": ["gnn", "manuscript/sections/imrad"],
+        "gnn_ontology_concordance": ["gnn", "docs/manuscript/sections/imrad"],
         "semantic_gluing_graph": [
             "output/data/validation_dependency_graph.json",
             "output/data/sheaf_gluing_certificate.json",
@@ -217,9 +217,9 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
             "output/data/causal_ablation_matrix.json",
             "output/reports/ablation_sensitivity_report.json",
         ],
-        "scholarship_source_map": ["output/data/scholarship_source_matrix.json", "manuscript/references.bib"],
+        "scholarship_source_map": ["output/data/scholarship_source_matrix.json", "docs/manuscript/references.bib"],
         "graphical_abstract": [
-            "manuscript/sheaf/tracks.yaml",
+            "docs/manuscript/sheaf/tracks.yaml",
             "output/data/firstprinciples/classroom.json",
             "output/data/firstprinciples/energy_demo.json",
             "output/data/firstprinciples/sequential_shift.json",
@@ -370,13 +370,13 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         ],
         "multi_track_architecture": [
             "tracks.yaml:tracks",
-            "manuscript/sheaf/tracks.yaml:tracks",
+            "docs/manuscript/sheaf/tracks.yaml:tracks",
             "$.free_energy_mean_field_gap_max",
             "$.si_tmaze_policy_entropy_drop_after_cue",
             "$.proof_extraction_theorem_count",
         ],
         "lean_boundary_status": ["lean/OnPolicyDistillation/*.lean"],
-        "gnn_ontology_concordance": ["gnn/*.gnn.md", "manuscript/sections/imrad/*/ontology.yaml"],
+        "gnn_ontology_concordance": ["gnn/*.gnn.md", "docs/manuscript/sections/imrad/*/ontology.yaml"],
         "semantic_gluing_graph": [
             "$.artifacts",
             "$.edges",
@@ -386,7 +386,7 @@ def build_figure_source_map(project_root: Path) -> dict[str, Any]:
         "causal_ablation_heatmap": ["$.rows[*].topology", "$.rows[*].perturbation", "$.rows[*].effect"],
         "scholarship_source_map": ["$.rows[*].citation_key", "$.rows[*].method_role", "$.rows[*].artifact"],
         "graphical_abstract": [
-            "manuscript/sheaf/tracks.yaml:tracks",
+            "docs/manuscript/sheaf/tracks.yaml:tracks",
             "output/data/firstprinciples/classroom.json:schema",
             "output/data/firstprinciples/energy_demo.json:schema",
             "output/data/firstprinciples/sequential_shift.json:schema",
@@ -1618,7 +1618,7 @@ def build_scope_boundary_audit(project_root: Path) -> dict[str, Any]:
     rows = []
     violations: list[str] = []
     allowed_future_files = {"15_discussion_outlook.md", "17_conclusion.md"}
-    for path in sorted((root / "manuscript").glob("[0-9][0-9]_*.md")):
+    for path in sorted((root / "docs" / "manuscript").glob("[0-9][0-9]_*.md")):
         text = path.read_text(encoding="utf-8")
         all_hits = _scope_forbidden_hits(text)
         forbidden_hits = [hit for hit in all_hits if not hit["negated"]]

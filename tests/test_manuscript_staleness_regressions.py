@@ -22,10 +22,10 @@ from roadmap_tracks.integration_audit_builders import TOKEN_MATCH_RE
 
 def _project(tmp_path: Path, text: str) -> Path:
     source = Path(__file__).resolve().parents[1]
-    manuscript = tmp_path / "manuscript"
-    manuscript.mkdir()
-    shutil.copytree(source / "manuscript" / "sheaf", manuscript / "sheaf")
-    for rel in ("tracks.yaml", "pymdp.yaml", "figures.yaml", "manuscript/config.yaml"):
+    manuscript = tmp_path / "docs" / "manuscript"
+    manuscript.mkdir(parents=True)
+    shutil.copytree(source / "docs" / "manuscript" / "sheaf", manuscript / "sheaf")
+    for rel in ("tracks.yaml", "pymdp.yaml", "figures.yaml", "docs/manuscript/config.yaml"):
         shutil.copyfile(source / rel, tmp_path / rel)
     (manuscript / "00_abstract.md").write_text(text, encoding="utf-8")
     return tmp_path
@@ -112,7 +112,7 @@ def test_missing_hydrated_file_and_unmapped_occurrence_fail_closed(tmp_path: Pat
     assert missing["all_fresh"] is False
     assert missing["rows"][0]["fresh"] is False
 
-    (root / "manuscript" / "00_abstract.md").write_text("Value {{unmapped_variable}}.\n", encoding="utf-8")
+    (root / "docs" / "manuscript" / "00_abstract.md").write_text("Value {{unmapped_variable}}.\n", encoding="utf-8")
     (root / "output" / "manuscript" / "00_abstract.md").write_text("Value .\n", encoding="utf-8")
     unmapped = build_manuscript_staleness_report(root)
     assert unmapped["rows"][0]["mapped"] is False
@@ -168,7 +168,7 @@ def test_source_occurrence_movement_invalidates_same_count_saved_report(tmp_path
     assert _hydrate(root)["all_fresh"] is True
     saved_path = write_manuscript_staleness_report(root)
     saved = json.loads(saved_path.read_text(encoding="utf-8"))
-    source_path = root / "manuscript" / "00_abstract.md"
+    source_path = root / "docs" / "manuscript" / "00_abstract.md"
     source_path.write_text(source_path.read_text(encoding="utf-8").replace("right", "later right"), encoding="utf-8")
     live = _hydrate(root)
     assert live["all_fresh"] is True
@@ -219,13 +219,13 @@ def test_extra_literal_at_token_boundary_cannot_pass_as_matching_prefix(tmp_path
 
 def test_token_free_markdown_drift_breaks_canonical_hydration(tmp_path: Path) -> None:
     root = _project(tmp_path, "Tracks {{pipeline_track_count}}.\n")
-    (root / "manuscript" / "17_conclusion.md").write_text("Finite scope.\n", encoding="utf-8")
+    (root / "docs" / "manuscript" / "17_conclusion.md").write_text("Finite scope.\n", encoding="utf-8")
     assert _hydrate(root)["all_fresh"] is True
     report_path = write_manuscript_staleness_report(root)
     (root / "output" / "manuscript" / "17_conclusion.md").write_text("Different scope.\n", encoding="utf-8")
     live = build_manuscript_staleness_report(root)
     assert all(row["fresh"] for row in live["rows"])
-    conclusion = next(section for section in live["sections"] if section["section"] == "manuscript/17_conclusion.md")
+    conclusion = next(section for section in live["sections"] if section["section"] == "docs/manuscript/17_conclusion.md")
     assert conclusion["token_occurrence_count"] == 0
     assert conclusion["canonical_hydration_matches"] is False
     assert live["all_fresh"] is False

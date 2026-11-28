@@ -183,7 +183,7 @@ def _load_pipeline_track_labels(project_root: Path) -> list[str]:
 
 
 def _load_sheaf_track_labels(project_root: Path) -> list[str]:
-    path = project_root / "manuscript" / "sheaf" / "tracks.yaml"
+    path = project_root / "docs" / "manuscript" / "sheaf" / "tracks.yaml"
     raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     tracks = raw.get("tracks") or {}
     ordered = sorted(tracks.items(), key=lambda item: int((item[1] or {}).get("order", 0)))
@@ -467,7 +467,7 @@ def figure_lean_boundary_status(project_root: Path) -> Path:
 def figure_gnn_ontology_concordance(project_root: Path) -> Path:
     root = project_root.resolve()
     gnn_path = root / "gnn" / "bernoulli_toy.gnn.md"
-    ontology_path = root / "manuscript" / "sections" / "imrad" / "methods_analytical" / "ontology.yaml"
+    ontology_path = root / "docs" / "manuscript" / "sections" / "imrad" / "methods_analytical" / "ontology.yaml"
     model = parse_gnn_file(gnn_path)
     section_ontology = load_section_ontology(ontology_path)
     pairs: list[tuple[str, str, str]] = []

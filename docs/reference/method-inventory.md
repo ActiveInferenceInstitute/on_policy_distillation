@@ -622,7 +622,7 @@ Total documented definitions: 1130
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
 | 16 | `function` | `extract_preamble` | docstring | Return the LaTeX inside the ```latex fence of preamble.md (or ""). |
-| 28 | `function` | `geometry_string` | docstring | Read page geometry from ``manuscript/config.yaml``; fall back to 0.5 in margins. |
+| 28 | `function` | `geometry_string` | docstring | Read page geometry from ``docs/manuscript/config.yaml``; fall back to 0.5 in margins. |
 
 ## `src/manuscript/sheaf/cli.py`
 
@@ -772,11 +772,11 @@ Total documented definitions: 1130
 | 46 | `class` | `CoverageConfig` | docstring | Combined coverage configuration: report, heatmap, and color settings. |
 | 55 | `class` | `CoverageReport` | docstring | Coverage matrix plus aggregated bound/present/missing totals and per-section row stats. |
 | 67 | `function` | `load_coverage_config` | docstring | Load CoverageConfig from a YAML file, falling back to defaults when absent. |
-| 118 | `function` | `default_coverage_config_path` | docstring | Return the default manuscript/sheaf/coverage.yaml path under the project root. |
+| 118 | `function` | `default_coverage_config_path` | docstring | Return the default docs/manuscript/sheaf/coverage.yaml path under the project root. |
 | 123 | `function` | `build_coverage_report` | docstring | Aggregate per-section bound/present/missing counts from the matrix into a CoverageReport. |
 | 155 | `function` | `_imrad_heading` | inventory fallback | Inventory fallback for function `_imrad_heading` defined at `src/manuscript/sheaf/report.py:155`. |
 | 159 | `function` | `render_report_markdown` | docstring | Render the sheaf coverage page markdown (totals, legend, IMRAD outline, registered figures). |
-| 217 | `function` | `write_coverage_page` | docstring | Build the coverage report from the live manifest and write manuscript/00_00_sheaf_coverage.md. |
+| 217 | `function` | `write_coverage_page` | docstring | Build the coverage report from the live manifest and write docs/manuscript/00_00_sheaf_coverage.md. |
 
 ## `src/manuscript/sheaf/semantic.py`
 
@@ -805,7 +805,7 @@ Total documented definitions: 1130
 | 453 | `function` | `_section_records` | inventory fallback | Inventory fallback for function `_section_records` defined at `src/manuscript/sheaf/semantic.py:453`. |
 | 479 | `function` | `_claim_records` | inventory fallback | Inventory fallback for function `_claim_records` defined at `src/manuscript/sheaf/semantic.py:479`. |
 | 501 | `function` | `build_evidence_crosswalk` | docstring | Build a claim-to-artifact crosswalk from the typed claim ledger. |
-| 523 | `function` | `build_validation_dependency_graph` | docstring | Build script → artifact → manuscript/gate dependency records. |
+| 523 | `function` | `build_validation_dependency_graph` | docstring | Build script → artifact → docs/manuscript/gate dependency records. |
 | 530 | `function` | `validate_configured_artifact_producers` | docstring | Fail when required generated artifacts lack configured analysis producers. |
 | 546 | `function` | `validate_canonical_claim_bindings` | docstring | Require a real typed claim declaration for each canonical artifact. |
 | 562 | `function` | `build_semantic_gluing_certificate` | docstring | Build a JSON-serializable semantic certificate from live project state. |
@@ -1754,7 +1754,7 @@ Total documented definitions: 1130
 
 | line | kind | name | documentation source | summary |
 | ---: | --- | --- | --- | --- |
-| 63 | `function` | `canonical_scripts` | docstring | The declared analysis order from manuscript/config.yaml (source of truth). |
+| 63 | `function` | `canonical_scripts` | docstring | The declared analysis order from docs/manuscript/config.yaml (source of truth). |
 | 72 | `function` | `_run` | inventory fallback | Inventory fallback for function `_run` defined at `scripts/run_full_chain.py:72`. |
 | 86 | `function` | `_release_attestation_current` | docstring | Return true only when the attestation pins the current validation report. |
 | 105 | `function` | `main` | inventory fallback | Inventory fallback for function `main` defined at `scripts/run_full_chain.py:105`. |

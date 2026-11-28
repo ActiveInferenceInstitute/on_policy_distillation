@@ -32,15 +32,15 @@ def test_live_track_surface_uses_canonical_ids(project_root: Path) -> None:
     from gates.artifact_manifest import REQUIRED_OUTPUTS
     from roadmap_tracks.sheaf_tracks import CANONICAL_TRACKS, LEGACY_ARTIFACTS
 
-    registry = yaml.safe_load((project_root / "manuscript" / "sheaf" / "tracks.yaml").read_text())["tracks"]
-    manifest = yaml.safe_load((project_root / "manuscript" / "sheaf" / "manifest.yaml").read_text())
+    registry = yaml.safe_load((project_root / "docs" / "manuscript" / "sheaf" / "tracks.yaml").read_text())["tracks"]
+    manifest = yaml.safe_load((project_root / "docs" / "manuscript" / "sheaf" / "manifest.yaml").read_text())
     public_tracks = {
         str(row["id"])
         for row in yaml.safe_load((project_root / "tracks.yaml").read_text())["tracks"]
         if isinstance(row, dict) and row.get("id")
     }
     claims = yaml.safe_load((project_root / "data" / "claim_ledger.yaml").read_text()).get("claims") or []
-    configured = yaml.safe_load((project_root / "manuscript" / "config.yaml").read_text())["analysis"]["scripts"]
+    configured = yaml.safe_load((project_root / "docs" / "manuscript" / "config.yaml").read_text())["analysis"]["scripts"]
 
     bound_tracks = {
         str(track_id) for section in manifest["sections"] for track_id in ((section.get("tracks") or {}).keys())
@@ -438,9 +438,9 @@ def test_canonical_track_contract_negative_controls(project_root: Path) -> None:
     )
 
     ensure_gate_artifacts(project_root)
-    config_path = project_root / "manuscript" / "config.yaml"
-    manifest_path = project_root / "manuscript" / "sheaf" / "manifest.yaml"
-    registry_path = project_root / "manuscript" / "sheaf" / "tracks.yaml"
+    config_path = project_root / "docs" / "manuscript" / "config.yaml"
+    manifest_path = project_root / "docs" / "manuscript" / "sheaf" / "manifest.yaml"
+    registry_path = project_root / "docs" / "manuscript" / "sheaf" / "tracks.yaml"
     ledger_path = project_root / "data" / "claim_ledger.yaml"
     originals = {
         config_path: config_path.read_text(encoding="utf-8"),
@@ -617,7 +617,7 @@ def test_bootstrap_readiness_accepts_only_authentic_unobserved_state(project_roo
                    for issue in validate_integration_audit_artifacts(root, require_release_evidence=False))
     finally:
         audit_path.write_bytes(audit_bytes)
-    abstract = root / "manuscript/00_abstract.md"
+    abstract = root / "docs/manuscript/00_abstract.md"
     abstract_bytes = abstract.read_bytes()
     abstract.write_text("This finite toy is illustrative; we measured production LLMs.\n", encoding="utf-8")
     try:

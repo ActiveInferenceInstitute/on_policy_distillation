@@ -219,7 +219,7 @@ absolute paths, and generated/tool-owned trees. Anchor existence and remote URL
 availability are outside its scope.
 
 The existing rendering shape already matches the reference conventions: pandoc
-Markdown under `manuscript/`, variables produced into
+Markdown under `docs/manuscript/`, variables produced into
 `output/data/manuscript_variables.json`, a validated `figures.yaml` registry,
 and one authoritative `scripts/render_pdf.py` facade. No template or GNN
 registry changes were needed. Both direct and arm renders succeeded with

@@ -152,7 +152,7 @@ def test_oracle_negative_controls_fail_for_the_asserted_reason(tmp_path: Path) -
 def test_semantic_writer_refreshes_attestation_after_certificate_changes(tmp_path: Path) -> None:
     from manuscript.sheaf.semantic import write_semantic_gluing_outputs
 
-    sheaf = tmp_path / "manuscript/sheaf"
+    sheaf = tmp_path / "docs/manuscript/sheaf"
     sheaf.mkdir(parents=True)
     (sheaf / "manifest.yaml").write_text("sections: []\n", encoding="utf-8")
     (sheaf / "tracks.yaml").write_text("tracks: {}\n", encoding="utf-8")

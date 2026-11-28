@@ -66,7 +66,7 @@ def test_validate_manuscript_public_only_rejects_unknown_key(project_root: Path)
 def test_validate_manuscript_methods_sheaf_layers_negative(project_root: Path) -> None:
     from manuscript.sheaf import compose_all_sections
 
-    path = project_root / "manuscript" / "19_supplement_reproducibility.md"
+    path = project_root / "docs" / "manuscript" / "19_supplement_reproducibility.md"
     if not path.is_file():
         compose_all_sections(project_root)
     original = path.read_text(encoding="utf-8")
@@ -99,7 +99,7 @@ def test_validate_manuscript_methods_sheaf_layers_negative_markers(
 ) -> None:
     from manuscript.sheaf import compose_all_sections
 
-    path = project_root / "manuscript" / "19_supplement_reproducibility.md"
+    path = project_root / "docs" / "manuscript" / "19_supplement_reproducibility.md"
     if not path.is_file():
         compose_all_sections(project_root)
     original = path.read_text(encoding="utf-8")
@@ -117,7 +117,7 @@ def test_validate_manuscript_methods_sheaf_layers_negative_markers(
 
 
 def test_validate_manuscript_full_sheaf_appendix_tracks_negative(project_root: Path) -> None:
-    path = project_root / "manuscript" / "18_supplement_full_coverage.md"
+    path = project_root / "docs" / "manuscript" / "18_supplement_full_coverage.md"
     original = path.read_text(encoding="utf-8")
     stat = path.stat()
     try:
@@ -183,7 +183,7 @@ def test_validate_manuscript_gnn_concordance_negative(project_root: Path) -> Non
 
 
 def test_validate_manuscript_tokens_registered_negative(project_root: Path) -> None:
-    path = project_root / "manuscript" / "00_abstract.md"
+    path = project_root / "docs" / "manuscript" / "00_abstract.md"
     original = path.read_text(encoding="utf-8")
     stat = path.stat()
     try:
@@ -201,7 +201,7 @@ def test_validate_manuscript_tokens_registered_negative(project_root: Path) -> N
 def test_validate_manuscript_citation_keys_resolved_negative(project_root: Path) -> None:
     from manuscript.sheaf.cli import run_compose_cli
 
-    path = project_root / "manuscript" / "sections" / "imrad" / "methods_sheaf" / "prose.md"
+    path = project_root / "docs" / "manuscript" / "sections" / "imrad" / "methods_sheaf" / "prose.md"
     original = path.read_text(encoding="utf-8")
     stat = path.stat()
     try:
@@ -221,7 +221,7 @@ def test_validate_manuscript_duplicate_track_marker_negative(project_root: Path)
     """A composed section with a doubled sheaf-track marker must fail the gate."""
     from manuscript.sheaf import compose_all_sections
 
-    path = project_root / "manuscript" / "07_methods_lean.md"
+    path = project_root / "docs" / "manuscript" / "07_methods_lean.md"
     if not path.is_file():
         compose_all_sections(project_root)
     original = path.read_text(encoding="utf-8")
@@ -244,9 +244,9 @@ def test_validate_manuscript_duplicate_track_marker_negative(project_root: Path)
 def test_manuscript_review_citation_keys_and_overclaim_guards(project_root: Path) -> None:
     """Review-added sources must be cited, and stale overclaims must stay out."""
     source_paths = [
-        project_root / "manuscript" / "00_abstract.md",
-        project_root / "manuscript" / "17_conclusion.md",
-        *sorted((project_root / "manuscript" / "sections" / "imrad").glob("*/prose.md")),
+        project_root / "docs" / "manuscript" / "00_abstract.md",
+        project_root / "docs" / "manuscript" / "17_conclusion.md",
+        *sorted((project_root / "docs" / "manuscript" / "sections" / "imrad").glob("*/prose.md")),
     ]
     rendered_paths = sorted((project_root / "output" / "manuscript").glob("*.md"))
     text = "\n".join(path.read_text(encoding="utf-8") for path in [*source_paths, *rendered_paths] if path.is_file())

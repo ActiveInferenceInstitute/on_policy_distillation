@@ -22,7 +22,7 @@ uv run python scripts/run_full_chain.py
 ```
 
 It runs the canonical analysis chain in the order declared by
-`manuscript/config.yaml` `analysis.scripts`, validates, then re-runs the
+`docs/manuscript/config.yaml` `analysis.scripts`, validates, then re-runs the
 attestation tail until the validation report is green and stable. Add `--render`
 to also build the PDF. Exit code is honest: 0 only when the final
 `validate_outputs` pass exits 0.

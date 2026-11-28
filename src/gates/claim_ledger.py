@@ -383,7 +383,7 @@ def validate_claim_ledger(project_root: Path) -> bool:
     )
 
     ledger = yaml.safe_load(ledger_path.read_text(encoding="utf-8")) or {}
-    manifest_path = root / "manuscript" / "sheaf" / "manifest.yaml"
+    manifest_path = root / "docs" / "manuscript" / "sheaf" / "manifest.yaml"
     manifest = load_manifest(manifest_path, project_root=root) if manifest_path.exists() else None
     registry = (
         load_track_registry(root / manifest.registry_path)
@@ -449,7 +449,7 @@ def verify_claim_bindings(project_root: Path) -> list[str]:
                 f"but recorded rollout planner={summary_planner!r}"
             )
 
-    manifest_path = root / "manuscript" / "sheaf" / "manifest.yaml"
+    manifest_path = root / "docs" / "manuscript" / "sheaf" / "manifest.yaml"
     if manifest_path.is_file():
         from manuscript.sheaf.manifest import load_manifest
 
@@ -457,7 +457,7 @@ def verify_claim_bindings(project_root: Path) -> list[str]:
         invariants_output = next(s.output_name for s in manifest.sections if s.id == "results_invariants")
     else:
         invariants_output = "20_supplement_validation_statistics.md"
-    invariants_section = root / "manuscript" / invariants_output
+    invariants_section = root / "docs" / "manuscript" / invariants_output
     if invariants_section.is_file() and "merged" in invariants_section.read_text(encoding="utf-8").lower():
         from manuscript.invariant_counts import invariants_are_merged
 

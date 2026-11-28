@@ -21,7 +21,7 @@ proven to reject bad input, not just accept good input.
 | Key | Contract |
 | --- | --- |
 | `methods_sheaf_layers` | Composed `19_supplement_reproducibility.md` contains `sheaf_layers_overview.png` plus HTML markers `<!-- sheaf-layers:registry -->`, `<!-- sheaf-layers:binding-matrix -->`, `<!-- sheaf-layers:legend -->` |
-| `manuscript_tokens_registered` | Every `{{token}}` under `manuscript/*.md` maps to a key from `generate_variables()` |
+| `manuscript_tokens_registered` | Every `{{token}}` under `docs/manuscript/*.md` maps to a key from `generate_variables()` |
 | `resolved_manuscript_hydrated` | `output/manuscript/*.md` contains no unresolved `{{` placeholders after `z_generate_manuscript_variables.py` |
 | `full_sheaf_appendix_tracks` | `18_supplement_full_coverage.md` contains every `sheaf-track:{id}` marker bound in the `appendix_full_sheaf` manifest section; counts come from the manifest/registry |
 

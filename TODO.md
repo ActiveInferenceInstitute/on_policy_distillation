@@ -92,7 +92,7 @@ open roadmap rows.
 
 - **Pipeline ordering** — `generate_firstprinciples.py` now runs after
   `generate_toy_sweep_tracks.py` in both `src/artifact_contracts.py`
-  `DEFAULT_ANALYSIS_SCRIPTS` and `manuscript/config.yaml` (kept in sync; the
+  `DEFAULT_ANALYSIS_SCRIPTS` and `docs/manuscript/config.yaml` (kept in sync; the
   `test_pipeline_manifest` order-contract test still passes). This was a genuine
   clean-checkout ordering failure: `precision_ledger.build_payload` reads
   `output/data/analytical_observable_sweep.json` (producer
@@ -233,7 +233,7 @@ Severity guide: **Minor** = typo / broken link / wrong path / formatting;
 ### Completed (this pass)
 
 - **MAJOR `OPD-DOCS-1`** — Documented producer order contradicted
-  `manuscript/config.yaml`: three pages listed `generate_firstprinciples.py`
+  `docs/manuscript/config.yaml`: three pages listed `generate_firstprinciples.py`
   before the validation spine / toy sweep and `generate_method_inventory.py`
   as a pipeline stage. Reordered to the declared `analysis.scripts` exactly
   and moved method-inventory out of the chain (README.md,
@@ -244,21 +244,21 @@ Severity guide: **Minor** = typo / broken link / wrong path / formatting;
   fragment track types" / "the full proof row except `layers`"; `layers` binds
   in `methods_sheaf` and the Lean/GNN/ontology/model-checking/animation tracks
   in `results_invariants`. Corrected in AGENTS.md, README.md,
-  `docs/manuscript/section-guide.md` (supplement feeding-track lists marked
+  `docs/manuscript/guides/section-guide.md` (supplement feeding-track lists marked
   representative), `docs/architecture/sheaf-compose-contract.md`.
   ✓ commit `0b744d7`
 - **MAJOR `OPD-DOCS-3`** — Bibliography count drift: docs claimed 117 entries;
-  `manuscript/references.bib` holds 133 (volatile). Replaced snapshot counts
-  with the live `grep -c '^@' manuscript/references.bib` verification
-  (`docs/manuscript/citation-map.md`, `docs/manuscript/README.md`); the
+  `docs/manuscript/references.bib` holds 133 (volatile). Replaced snapshot counts
+  with the live `grep -c '^@' docs/manuscript/references.bib` verification
+  (`docs/manuscript/guides/citation-map.md`, `docs/manuscript/guides/README.md`); the
   deep-review ledger keeps 117 as a review-time fact, qualified.
   ✓ commit `e544747`
 - **MEDIUM `OPD-DOCS-4`** — Dead template-relative links in the public
   standalone checkout (AGENTS.md parent docs + decision-records reference,
-  `manuscript/SYNTAX.md` overlay pointer). Reworded as descriptive references
+  `docs/manuscript/SYNTAX.md` overlay pointer). Reworded as descriptive references
   to the sibling `template` checkout. ✓ commit `ad05833`
 - **MEDIUM `OPD-DOCS-5`** — Ledger staleness: the critical-review DOI row
-  claimed empty DOI fields while `manuscript/config.yaml` carries populated
+  claimed empty DOI fields while `docs/manuscript/config.yaml` carries populated
   DOIs and v1.0.2 is released; flipped DEFERRED → LANDED (2026-08-02) per the
   ledger's own maintenance note with verified evidence (tags, resolving DOIs,
   metadata surfaces). ✓ commit `16ad4a1`
@@ -267,7 +267,7 @@ Severity guide: **Minor** = typo / broken link / wrong path / formatting;
   copy lives at `projects/working/...` inside the template checkout. Fixed in
   `docs/reproducibility/rendering.md` and
   `docs/reference/rendering-reproducibility.md`. ✓ commit `ad05833`
-- **MINOR `OPD-DOCS-7`** — Wrong module/artifact paths: `manuscript/variables.py`
+- **MINOR `OPD-DOCS-7`** — Wrong module/artifact paths: `docs/manuscript/variables.py`
   → `src/manuscript/variables.py`; `gnn/concordance.py` →
   `src/gnn/concordance.py`; `src/gates/aggregate_rules.py` →
   `src/gates/aggregate_rederivation.py`; `figures/parallel_convergence.png` →
@@ -353,7 +353,7 @@ promotion rule intact.
 
 ## Future sheaf tracks
 
-The proposed ID below is not live. Do not add it to `manuscript/sheaf/tracks.yaml`,
+The proposed ID below is not live. Do not add it to `docs/manuscript/sheaf/tracks.yaml`,
 `tracks.yaml`, manuscript fragments, or public claims until the promotion rule is
 fully satisfied.
 

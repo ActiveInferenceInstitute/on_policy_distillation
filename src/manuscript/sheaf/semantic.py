@@ -61,7 +61,7 @@ def _validation_spine_saved_ok(root: Path, *, require_observations: bool = True)
 def _configured_analysis_scripts(root: Path) -> list[str]:
     import yaml
 
-    config_path = root / "manuscript" / "config.yaml"
+    config_path = root / "docs" / "manuscript" / "config.yaml"
     if not config_path.is_file():
         return []
     data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
@@ -521,7 +521,7 @@ def build_evidence_crosswalk(project_root: Path) -> dict[str, Any]:
 
 
 def build_validation_dependency_graph(project_root: Path) -> dict[str, Any]:
-    """Build script → artifact → manuscript/gate dependency records."""
+    """Build script → artifact → docs/manuscript/gate dependency records."""
     from roadmap_tracks.sheaf_tracks import build_validation_dependency_graph as build_canonical_dependency_graph
 
     return dict(build_canonical_dependency_graph(project_root))

@@ -14,7 +14,7 @@ This page documents what each script *is* and *produces*.
 ## The canonical order
 
 The single source of truth for the order is `analysis.scripts` in
-[`../../manuscript/config.yaml`](../../manuscript/config.yaml).
+[`../../manuscript/config.yaml`](../manuscript/config.yaml).
 [`run_full_chain.py`](../../scripts/run_full_chain.py) reads that list — nothing
 is hard-coded in the runner — executes it, validates, then re-runs the
 convergence tail and re-validates to a bounded fixed point. Prefer it over
@@ -59,7 +59,7 @@ the validation spine must precede the audits.
 
 | Script | Layer | Writes (selected) |
 | --- | --- | --- |
-| [`compose_manuscript.py`](../../scripts/compose_manuscript.py) | sheaf compose | flat `manuscript/NN_*.md`, `output/data/sheaf_coverage_matrix.json`, regenerated `manuscript/00_00_sheaf_coverage.md` |
+| [`compose_manuscript.py`](../../scripts/compose_manuscript.py) | sheaf compose | flat `docs/manuscript/NN_*.md`, `output/data/sheaf_coverage_matrix.json`, regenerated `docs/manuscript/00_00_sheaf_coverage.md` |
 | [`run_analytical_sweep.py`](../../scripts/run_analytical_sweep.py) | analytical | closed-form hyperparameter sweep (`output/data/parameter_sweep.csv`, analytical sweep JSON) |
 | [`simulate_si_tmaze.py`](../../scripts/simulate_si_tmaze.py) | pymdp | `si_tmaze_summary.json`, `si_tmaze_trace.json`, `si_tmaze_model_matrices.json`, `si_policy_comparison.json`, `pymdp_policy_posterior_grid.json`, `pymdp_runtime_diagnostics.json` |
 | [`simulate_si_graph_world.py`](../../scripts/simulate_si_graph_world.py) | pymdp (extension) | deterministic `si_graph_world_summary.json`, `si_graph_world_trace.json` |

@@ -11,8 +11,8 @@ Producers:
 for the canonical four-node world, and the topology family in
 [`../../src/roadmap_tracks/toy_sweep.py`](../../src/roadmap_tracks/toy_sweep.py).
 Manuscript home:
-[`../../manuscript/06_methods_pymdp.md`](../../manuscript/06_methods_pymdp.md)
-and [`../../manuscript/12_results_si_tmaze.md`](../../manuscript/12_results_si_tmaze.md).
+[`../../manuscript/06_methods_pymdp.md`](../manuscript/06_methods_pymdp.md)
+and [`../../manuscript/12_results_si_tmaze.md`](../manuscript/12_results_si_tmaze.md).
 Declared in [`../../tracks.yaml`](../../tracks.yaml) under
 `extension_tracks.graph_world`, with the node list also in
 [`../../pymdp.yaml`](../../pymdp.yaml) (`graph_world.nodes`,

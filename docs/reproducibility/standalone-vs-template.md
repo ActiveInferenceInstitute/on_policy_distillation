@@ -61,8 +61,8 @@ data, which is what makes the project copy-out-and-run:
 - **Engine (code)** — `src/manuscript/sheaf/` (`laws.py` sheaf-axiom oracle,
   `compose.py`, `coverage.py`, `manifest.py`, `registry.py`, `renderers.py`,
   `models.py`).
-- **Bespoke registry (data)** — `manuscript/sheaf/manifest.yaml` (IMRAD rows →
-  fragments), `manuscript/sheaf/tracks.yaml` (track registry),
+- **Bespoke registry (data)** — `docs/manuscript/sheaf/manifest.yaml` (IMRAD rows →
+  fragments), `docs/manuscript/sheaf/tracks.yaml` (track registry),
   [`../../figures.yaml`](../../figures.yaml), [`../../pymdp.yaml`](../../pymdp.yaml).
 
 To reuse the engine elsewhere, copy `src/manuscript/sheaf/` and supply your own

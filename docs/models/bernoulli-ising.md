@@ -8,9 +8,9 @@ literal algebraic form, the track serves as the project's *oracle*: a source of
 exact numbers that the executable simulators are checked against.
 
 Manuscript home:
-[`../../manuscript/05_methods_analytical.md`](../../manuscript/05_methods_analytical.md),
-[`../../manuscript/10_results_mi_sweep.md`](../../manuscript/10_results_mi_sweep.md),
-and [`../../manuscript/11_results_free_energy.md`](../../manuscript/11_results_free_energy.md).
+[`../../manuscript/05_methods_analytical.md`](../manuscript/05_methods_analytical.md),
+[`../../manuscript/10_results_mi_sweep.md`](../manuscript/10_results_mi_sweep.md),
+and [`../../manuscript/11_results_free_energy.md`](../manuscript/11_results_free_energy.md).
 
 ## The two-spin coupling λ
 
@@ -134,7 +134,7 @@ stored summary scalar is left untouched (see the residual re-derivation in
 | `scripts/z_generate_manuscript_variables.py` | `data/manuscript_variables.json` — the hydration values for every token above. |
 
 The GNN declaration `gnn/bernoulli_toy.gnn.md` and the ontology bindings in
-[`05_methods_analytical.md`](../../manuscript/05_methods_analytical.md) make the
+[`05_methods_analytical.md`](../manuscript/05_methods_analytical.md) make the
 symbol map machine-checkable: the concordance diagram certifies the manuscript
 symbols, the GNN spec, and the Active Inference Ontology terms all name the same
 entities.

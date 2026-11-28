@@ -6,9 +6,16 @@ post-processing. The authoritative contract for both is
 [`../reference/rendering-reproducibility.md`](../reference/rendering-reproducibility.md);
 this page is the quickstart.
 
-Render only after the analysis tree is generated and validated — see
-[`artifacts.md`](artifacts.md). The simplest correct sequence is
-`uv run python scripts/run_full_chain.py --render`.
+Record the negative-control observations before generating and validating the
+analysis tree. The [validation gate](../development/gate.md) describes which
+checks consume these observations.
+
+```bash
+uv run --locked --extra dev python scripts/gate.py negative-controls
+uv run python scripts/run_full_chain.py --render
+```
+
+See [the artifact guide](artifacts.md) for the generated evidence layout.
 
 ## Path 1 — standalone (portable)
 
@@ -30,9 +37,9 @@ source commit, tracked worktree changes, and renderer versions. Commit this
 receipt rather than an approximate size or an ignored PDF.
 
 Typography is read from project-owned sources: margins from
-[`../../manuscript/config.yaml`](../../manuscript/config.yaml)
+[`../../manuscript/config.yaml`](../manuscript/config.yaml)
 (`metadata.geometry`), the dense 9 pt body from
-[`../../manuscript/preamble.md`](../../manuscript/preamble.md), and red
+[`../../manuscript/preamble.md`](../manuscript/preamble.md), and red
 hyperlinks from pandoc `colorlinks` variables set by the renderer. No
 `infrastructure/` import is involved (see
 [`standalone-vs-template.md`](standalone-vs-template.md)).
@@ -89,7 +96,7 @@ duplicate labels. To add one, follow
   closed rather than silently rendering a wrong or blank value.
 - **Gray cells on the coverage page** — a manifest binding points at a missing
   fragment path; check the section's `tracks:` block in
-  `manuscript/sheaf/manifest.yaml` against the filesystem.
+  `docs/manuscript/sheaf/manifest.yaml` against the filesystem.
 - **Validation red after a partial regen** — the attestation binds the validation
   report by hash, so a half-regenerated tree fails on staleness. Re-run the
   spine → audit → sheaf → variables chain and validate again (or just use

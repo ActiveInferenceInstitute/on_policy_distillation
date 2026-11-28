@@ -5,7 +5,7 @@ specifications, Active Inference Ontology bindings, and a model-checking/interop
 spine that ties them together. They are the strongest checks in the project, and
 also the most easily over-read. The governing caveat, stated up front:
 
-> The formal layers prove **boundary witnesses and manuscript/notation
+> The formal layers prove **boundary witnesses and docs/manuscript/notation
 > consistency, not the scientific thesis**. That on-policy distillation *is*
 > active inference is argued by the firstprinciples correspondence map and the
 > analytical/pymdp evidence — the formal layers prove finite facts *around* that

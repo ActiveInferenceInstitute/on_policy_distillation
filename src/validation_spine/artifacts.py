@@ -79,10 +79,10 @@ CORE_HASH_EXCLUSIONS: frozenset[str] = frozenset(
 )
 
 CONFIG_INPUTS: tuple[str, ...] = (
-    "manuscript/config.yaml",
-    "manuscript/sheaf/manifest.yaml",
-    "manuscript/sheaf/tracks.yaml",
-    "manuscript/sheaf/coverage.yaml",
+    "docs/manuscript/config.yaml",
+    "docs/manuscript/sheaf/manifest.yaml",
+    "docs/manuscript/sheaf/tracks.yaml",
+    "docs/manuscript/sheaf/coverage.yaml",
     "tracks.yaml",
     "figures.yaml",
     "pymdp.yaml",
@@ -124,7 +124,7 @@ def _load_json(path: Path) -> dict[str, Any]:
 def _configured_analysis_scripts(root: Path) -> list[str]:
     import yaml
 
-    path = root / "manuscript" / "config.yaml"
+    path = root / "docs" / "manuscript" / "config.yaml"
     if not path.is_file():
         return []
     payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}

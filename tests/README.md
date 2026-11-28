@@ -1,7 +1,7 @@
 # Tests
 
 Project test suite for the multi-track Active Inference exemplar. Track counts are
-registry-backed (`tracks.yaml`, `manuscript/sheaf/tracks.yaml`); tests should pin
+registry-backed (`tracks.yaml`, `docs/manuscript/sheaf/tracks.yaml`); tests should pin
 behaviour and generated contracts, not copied numeric prose. Use real numerical
 computations and fixed seeds rather than mocks.
 

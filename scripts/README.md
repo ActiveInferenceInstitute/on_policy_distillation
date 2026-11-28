@@ -35,7 +35,7 @@ Thin orchestrators that import from `../src/` and handle I/O only.
 - `compose_manuscript.py` — sheaf-compose the multi-track sections.
 - `validate_outputs.py` — run the validation gates over generated outputs.
 - `run_full_chain.py` — **one-command convergent runner**: executes the canonical
-  `analysis.scripts` order from `manuscript/config.yaml`, validates, and — because
+  `analysis.scripts` order from `docs/manuscript/config.yaml`, validates, and — because
   `release_attestation.json` attests the *previous* `validation_report.json` —
   re-runs the attestation/figure-hash tail and re-validates to a bounded fixed
   point (`--max-passes`, default 3). Use `--tail-only` after editing manuscript

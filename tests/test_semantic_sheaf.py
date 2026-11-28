@@ -34,7 +34,7 @@ def test_semantic_certificate_covers_tracks_symbols_and_variables(project_root: 
     if counterexample_payload(project_root)["observed_count"] == 0:
         assert cert["ok"] is False
     assert cert["manuscript_variables"]["sheaf_track_count"] == len(
-        load_track_registry(project_root / "manuscript/sheaf/tracks.yaml").tracks
+        load_track_registry(project_root / "docs/manuscript/sheaf/tracks.yaml").tracks
     )
     assert cert["shared_symbols"]["bernoulli"]["J"] == "CrossStreamCouplingPotential"
     assert cert["shared_symbols"]["si_tmaze"]["q_pi"] == "PolicyPosterior"
@@ -155,7 +155,7 @@ def test_semantic_gluing_rejects_missing_or_malformed_saved_certificate(project_
 def test_dependency_graph_rejects_required_artifact_without_configured_producer(project_root: Path) -> None:
     from manuscript.sheaf.semantic import validate_configured_artifact_producers
 
-    config_path = project_root / "manuscript" / "config.yaml"
+    config_path = project_root / "docs" / "manuscript" / "config.yaml"
     original = config_path.read_text(encoding="utf-8")
     try:
         config_path.write_text(original.replace("    - simulate_si_graph_world.py\n", ""), encoding="utf-8")
@@ -338,7 +338,7 @@ def test_semantic_model_symbols_follow_live_manifest_binding(tmp_path: Path, mod
     moved = root / "relocated" / f"{model_id}.yaml"
     moved.parent.mkdir()
     moved.write_bytes(original.read_bytes())
-    manifest_path = root / "manuscript/sheaf/manifest.yaml"
+    manifest_path = root / "docs/manuscript/sheaf/manifest.yaml"
     manifest = load_manifest_data(manifest_path)
     for section in manifest["sections"]:
         tracks = section.get("tracks") or {}

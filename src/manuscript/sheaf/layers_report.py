@@ -15,7 +15,7 @@ def render_track_registry_table(registry: TrackRegistry) -> str:
         "<!-- sheaf-layers:registry -->",
         "## Sheaf fragment track registry",
         "",
-        "Compose order and renderer bindings from `manuscript/sheaf/tracks.yaml`.",
+        "Compose order and renderer bindings from `docs/manuscript/sheaf/tracks.yaml`.",
         "",
         "| Order | Track id | Label | Renderer | Optional |",
         "| ---: | --- | --- | --- | --- |",

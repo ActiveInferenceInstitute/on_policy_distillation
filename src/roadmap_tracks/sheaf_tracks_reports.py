@@ -235,7 +235,7 @@ def _track_artifact(track_id: str) -> str:
         "benchmark": "output/data/toy_benchmark_matrix.json",
         "gnn": "output/reports/gnn_lint_report.json",
         "lean": "output/reports/lean_theorem_inventory.json",
-        "manuscript": "manuscript/sheaf/manifest.yaml",
+        "manuscript": "docs/manuscript/sheaf/manifest.yaml",
         "manuscript_staleness": "output/reports/manuscript_staleness_report.json",
         "ontology": "output/data/ontology_profile_matrix.json",
         "pymdp": "output/data/si_policy_comparison.json",
@@ -250,10 +250,10 @@ def _track_artifact(track_id: str) -> str:
         "artifact_license": CANONICAL_ARTIFACTS["artifact_license"],
         "release_notes": CANONICAL_ARTIFACTS["release_notes"],
         "scholarship": CANONICAL_ARTIFACTS["scholarship"],
-        "prose": "manuscript/sheaf/manifest.yaml",
-        "formalism": "manuscript/sheaf/manifest.yaml",
+        "prose": "docs/manuscript/sheaf/manifest.yaml",
+        "formalism": "docs/manuscript/sheaf/manifest.yaml",
         "layers": "output/data/sheaf_coverage_matrix.json",
-    }.get(track_id, "manuscript/sheaf/manifest.yaml")
+    }.get(track_id, "docs/manuscript/sheaf/manifest.yaml")
 
 
 def build_track_improvement_scope(project_root: Path) -> dict[str, Any]:

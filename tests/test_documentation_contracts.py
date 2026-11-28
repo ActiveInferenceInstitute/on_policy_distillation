@@ -113,7 +113,7 @@ def test_source_docs_include_firstprinciples_package(project_root: Path) -> None
 
 
 def test_imrad_docs_use_local_validation_contracts(project_root: Path) -> None:
-    for path in (project_root / "manuscript" / "sections" / "imrad").rglob("*"):
+    for path in (project_root / "docs" / "manuscript" / "sections" / "imrad").rglob("*"):
         if path.name not in DOC_FILENAMES:
             continue
         text = path.read_text(encoding="utf-8")
@@ -148,7 +148,7 @@ def test_readiness_docs_signpost_canonical_chain_and_soak_validator(project_root
     )
 
     assert "scripts/run_full_chain.py --render" in project_readme
-    assert "manuscript/config.yaml" in project_readme
+    assert "docs/manuscript/config.yaml" in project_readme
     assert "run_test_isolation_soak.py --validate-report" in config_guide
     assert "--require-complete" in config_guide
     assert "scripts/audit_roadmap_tasks.py" in config_guide
@@ -161,7 +161,7 @@ def test_public_docs_list_every_registered_current_figure(project_root: Path) ->
     surfaces = {
         "README.md": (project_root / "README.md").read_text(encoding="utf-8"),
         "AGENTS.md": (project_root / "AGENTS.md").read_text(encoding="utf-8"),
-        "manuscript/SYNTAX.md": (project_root / "manuscript" / "SYNTAX.md").read_text(encoding="utf-8"),
+        "docs/manuscript/SYNTAX.md": (project_root / "docs" / "manuscript" / "SYNTAX.md").read_text(encoding="utf-8"),
     }
     for surface, text in surfaces.items():
         for figure_id in registry:
@@ -169,7 +169,7 @@ def test_public_docs_list_every_registered_current_figure(project_root: Path) ->
 
 
 def test_figure_docs_signpost_cover_scope_and_accessibility_audit(project_root: Path) -> None:
-    figure_docs = (project_root / "docs" / "manuscript" / "figures.md").read_text(encoding="utf-8")
+    figure_docs = (project_root / "docs" / "manuscript" / "guides" / "figures.md").read_text(encoding="utf-8")
     viz_readme = (project_root / "src" / "visualizations" / "README.md").read_text(encoding="utf-8")
     root_readme = (project_root / "README.md").read_text(encoding="utf-8")
     combined = "\n".join([figure_docs, viz_readme, root_readme])
@@ -224,7 +224,7 @@ def test_public_docs_use_working_lifecycle_paths(project_root: Path) -> None:
         project_root / "docs" / "reference" / "README.md",
         project_root / "docs" / "reference" / "AGENTS.md",
         project_root / "docs" / "reference" / "rendering-reproducibility.md",
-        project_root / "manuscript" / "sheaf" / "README.md",
+        project_root / "docs" / "manuscript" / "sheaf" / "README.md",
         project_root / "tests" / "AGENTS.md",
         project_root / "src" / "validation_spine" / "AGENTS.md",
     ]
